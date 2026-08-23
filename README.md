@@ -6,7 +6,7 @@
 
 **Project status:** experimental / pre-implementation
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
-**Current milestone:** Milestone 2 — Marketplace Object Model & Representation — IN REVIEW
+**Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
