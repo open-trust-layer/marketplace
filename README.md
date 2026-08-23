@@ -5,7 +5,7 @@
 > Coordinate exchange around anything that can be referenced, without making ownership, legality, truth, value, or trust centrally owned.
 
 **Project status:** experimental / pre-implementation
-**Current milestone:** Milestone 1 — Foundations
+**Foundation status:** Milestone 1 — Foundations — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
