@@ -1,7 +1,7 @@
 # Marketplace — Foundational Vocabulary
 
-**Status:** Draft v0.1  
-**Milestone:** 1 — Foundations  
+**Status:** Draft v0.1
+**Milestone:** 1 — Foundations
 **Filename:** `specification/0001-market-vocabulary.md`
 
 ---

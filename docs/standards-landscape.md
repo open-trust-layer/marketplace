@@ -1,6 +1,6 @@
 # Initial Standards Landscape
 
-**Status:** Milestone 1 research note  
+**Status:** Milestone 1 research note
 **Normative:** No
 
 This note records established standards and vocabularies that later marketplace specifications should evaluate before inventing overlapping mechanisms.

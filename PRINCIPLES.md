@@ -1,6 +1,6 @@
 # Marketplace — Principles
 
-**Status:** Project principles  
+**Status:** Project principles
 **Applies to:** marketplace semantics, specifications, implementations, discovery, matching, agents, federation, and project governance
 
 The marketplace exists to make economic coordination open and interoperable without making ownership, legality, value, reputation, or trust centrally owned.
