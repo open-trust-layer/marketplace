@@ -75,6 +75,10 @@ def _uri(value: Any, path: str) -> str:
 def _text(value: Any, path: str, *, nonempty: bool = True) -> str:
     if not isinstance(value, str) or (nonempty and not value):
         fail("INVALID_TEXT", f"{path} MUST be {'non-empty ' if nonempty else ''}text")
+    try:
+        validate_record_value(value, path=path)
+    except Exception as exc:
+        fail("INVALID_TEXT", f"{path} is not valid OLP text: {exc}")
     return value
 
 
@@ -147,7 +151,7 @@ def validate_subject(value: Any, path: str = "subject") -> None:
     if "resource_ref" in m:
         validate_resource_ref(m["resource_ref"], f"{path}.resource_ref")
     if "qualifiers" in m:
-        _semantic_map(m["qualifiers"], f"{path}.qualifiers")
+        _semantic_map(m["qualifiers"], f"{path}.qualifiers", allow_empty=False)
 
 
 def validate_action(value: Any, path: str = "action") -> None:
@@ -155,7 +159,7 @@ def validate_action(value: Any, path: str = "action") -> None:
     _keys(m, {"id", "parameters"}, {"id"}, path)
     _uri(m["id"], f"{path}.id")
     if "parameters" in m:
-        _semantic_map(m["parameters"], f"{path}.parameters")
+        _semantic_map(m["parameters"], f"{path}.parameters", allow_empty=False)
 
 
 def validate_terms(value: Any, path: str = "terms") -> None:
@@ -181,6 +185,10 @@ def validate_decimal(value: Any, path: str = "decimal") -> None:
     c, s = m["coefficient"], m["scale"]
     if isinstance(c, bool) or not isinstance(c, int):
         fail("INVALID_DECIMAL", f"{path}.coefficient MUST be integer")
+    try:
+        validate_record_value(c, path=f"{path}.coefficient")
+    except Exception as exc:
+        fail("INVALID_DECIMAL", f"{path}.coefficient is outside the OLP integer domain: {exc}")
     if isinstance(s, bool) or not isinstance(s, int) or not 0 <= s <= 18:
         fail("INVALID_DECIMAL", f"{path}.scale MUST be integer 0..18")
     if c == 0 and s != 0:
@@ -270,7 +278,7 @@ def validate_settlement_preference(value: Any, path: str = "settlement_preferenc
     if m["mode"] not in {"accepted", "preferred", "required", "excluded"}:
         fail("INVALID_ENUM", f"{path}.mode is invalid")
     if "parameters" in m:
-        _semantic_map(m["parameters"], f"{path}.parameters")
+        _semantic_map(m["parameters"], f"{path}.parameters", allow_empty=False)
 
 
 def validate_acceptance_criterion(value: Any, path: str = "acceptance_criterion") -> None:
@@ -280,7 +288,7 @@ def validate_acceptance_criterion(value: Any, path: str = "acceptance_criterion"
     if m["mode"] not in {"required", "informational"}:
         fail("INVALID_ENUM", f"{path}.mode is invalid")
     if "parameters" in m:
-        _semantic_map(m["parameters"], f"{path}.parameters")
+        _semantic_map(m["parameters"], f"{path}.parameters", allow_empty=False)
 
 
 def validate_profile_binding(value: Any, path: str = "profile_binding") -> None:
@@ -288,7 +296,7 @@ def validate_profile_binding(value: Any, path: str = "profile_binding") -> None:
     _keys(m, {"profile", "parameters"}, {"profile"}, path)
     _uri(m["profile"], f"{path}.profile")
     if "parameters" in m:
-        _semantic_map(m["parameters"], f"{path}.parameters")
+        _semantic_map(m["parameters"], f"{path}.parameters", allow_empty=False)
 
 
 def validate_commitment(value: Any, path: str = "commitment") -> None:
@@ -322,9 +330,10 @@ def validate_outcome(value: Any, path: str = "outcome") -> None:
 def _validate_extensions(m: Mapping[str, Any], path: str) -> None:
     extensions = m.get("extensions", {})
     critical = m.get("critical", ())
-    _semantic_map(extensions, f"{path}.extensions")
+    if "extensions" in m:
+        _semantic_map(extensions, f"{path}.extensions", allow_empty=False)
     if "critical" in m:
-        vals = _sorted_unique_text(_array(critical, f"{path}.critical"), f"{path}.critical")
+        vals = _sorted_unique_text(_array(critical, f"{path}.critical", nonempty=True), f"{path}.critical")
         for uri in vals:
             _uri(uri, f"{path}.critical[]")
             if uri not in extensions:

@@ -155,7 +155,9 @@ def build():
     bad_party = deepcopy(agreement_map); bad_party["content"]["commitments"][0]["party"] = {"principal": "did:example:mallory"}
     bad_event = record_mapping(TYPE_EVENT, {"version": 1, "issuer": bob, "event": "https://example.test/events/nocontext"})
     bad_time = deepcopy(event_map); bad_time["content"]["occurred_at"] = "2026-08-24T12:00:00+00:00"
-    bad_critical = deepcopy(intent_map); bad_critical["content"]["extensions"] = {}; bad_critical["content"]["critical"] = ["https://example.test/ext/required"]
+    bad_critical = deepcopy(intent_map); bad_critical["content"]["extensions"] = {"https://example.test/ext/other": True}; bad_critical["content"]["critical"] = ["https://example.test/ext/required"]
+    bad_empty_extensions = deepcopy(intent_map); bad_empty_extensions["content"]["extensions"] = {}
+    bad_empty_critical = deepcopy(intent_map); bad_empty_critical["content"]["critical"] = []
     bad_ref = deepcopy(proposal_map); bad_ref["content"]["response_to"] = [(1, bytes(32))]
 
     negative = [
@@ -167,6 +169,8 @@ def build():
         negative_record("event-without-context", bad_event, "EVENT_CONTEXT_REQUIRED", "A MarketEvent must identify what it concerns."),
         negative_record("event-noncanonical-time", bad_time, "INVALID_TIMESTAMP", "Core timestamp profile uses canonical UTC-second form."),
         negative_record("critical-extension-missing", bad_critical, "CRITICAL_EXTENSION_MISSING", "Critical extensions must be present."),
+        negative_record("empty-content-extensions", bad_empty_extensions, "EMPTY_MAP", "Optional extension maps are omitted rather than represented empty."),
+        negative_record("empty-critical-array", bad_empty_critical, "EMPTY_ARRAY", "Optional critical arrays are omitted rather than represented empty."),
         negative_record("proposal-proof-ref-instead-of-record", bad_ref, "WRONG_REFERENCE_KIND", "response_to must reference Records, not Proofs."),
     ]
 
@@ -182,6 +186,8 @@ def build():
     negative_structures = [
         structure("decimal-trailing-zero", "DecimalV1", {"coefficient": 1230, "scale": 2}, "Duplicate numeric spellings are forbidden.", "NON_CANONICAL_DECIMAL"),
         structure("decimal-zero-nonzero-scale", "DecimalV1", {"coefficient": 0, "scale": 2}, "Zero must use scale zero.", "NON_CANONICAL_DECIMAL"),
+        structure("decimal-coefficient-outside-olp-range", "DecimalV1", {"coefficient": 1 << 64, "scale": 0}, "Decimal coefficients stay inside the OLP-CIE-1 integer domain.", "INVALID_DECIMAL"),
+        structure("action-empty-parameters", "ActionDescriptorV1", {"id": "https://example.test/actions/fix", "parameters": {}}, "Optional semantic maps are omitted rather than represented empty.", "EMPTY_MAP"),
         structure("money-lowercase-currency", "ValueExpressionV1", {"kind": "monetary", "amount": {"coefficient": 1, "scale": 0}, "currency_code": "eur"}, "ISO-style currency codes are uppercase in this helper structure.", "INVALID_CURRENCY"),
         structure("temporal-offset-form", "TemporalConditionV1", {"not_before": "2026-08-24T00:00:00+00:00"}, "Offset variants are rejected by the core canonical timestamp profile.", "INVALID_TIMESTAMP"),
         structure("subject-two-targets", "SubjectBindingV1", {"uri": "urn:example:a", "record_ref": (0, bytes(32))}, "A subject binding has exactly one target.", "SUBJECT_TARGET_CARDINALITY"),

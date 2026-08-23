@@ -1613,7 +1613,12 @@
                 [
                   "extensions",
                   {
-                    "$map": []
+                    "$map": [
+                      [
+                        "https://example.test/ext/other",
+                        true
+                      ]
+                    ]
                   }
                 ],
                 [
@@ -1634,6 +1639,300 @@
         ]
       },
       "expected_error": "CRITICAL_EXTENSION_MISSING"
+    },
+    {
+      "id": "empty-content-extensions",
+      "note": "Optional extension maps are omitted rather than represented empty.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "extensions",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "EMPTY_MAP"
+    },
+    {
+      "id": "empty-critical-array",
+      "note": "Optional critical arrays are omitted rather than represented empty.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "critical",
+                  []
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "EMPTY_ARRAY"
     },
     {
       "id": "proposal-proof-ref-instead-of-record",
@@ -1952,6 +2251,44 @@
       },
       "note": "Zero must use scale zero.",
       "expected_error": "NON_CANONICAL_DECIMAL"
+    },
+    {
+      "id": "decimal-coefficient-outside-olp-range",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            18446744073709551616
+          ],
+          [
+            "scale",
+            0
+          ]
+        ]
+      },
+      "note": "Decimal coefficients stay inside the OLP-CIE-1 integer domain.",
+      "expected_error": "INVALID_DECIMAL"
+    },
+    {
+      "id": "action-empty-parameters",
+      "structure": "ActionDescriptorV1",
+      "value": {
+        "$map": [
+          [
+            "id",
+            "https://example.test/actions/fix"
+          ],
+          [
+            "parameters",
+            {
+              "$map": []
+            }
+          ]
+        ]
+      },
+      "note": "Optional semantic maps are omitted rather than represented empty.",
+      "expected_error": "EMPTY_MAP"
     },
     {
       "id": "money-lowercase-currency",
