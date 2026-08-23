@@ -986,7 +986,7 @@ The resulting architecture is:
 +----------------------------------------------------------------+
 |                Marketplace first-class records                 |
 |                                                                |
-|  MarketIntent          MarketAgreement          MarketEvent |
+|  MarketIntent          MarketAgreement          MarketEvent      |
 +-----------------------+----------------+-----------------------+
                         |
                         v

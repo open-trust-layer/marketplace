@@ -188,7 +188,7 @@ The marketplace can represent an intent concerning a subject without asserting t
 
 - [`PRINCIPLES.md`](PRINCIPLES.md) — constitutional constraints for the project.
 - [`specification/0001-market-vocabulary.md`](specification/0001-market-vocabulary.md) — foundational marketplace vocabulary and semantic separations.
-- [specification/0002-market-object-model.md](specification/0002-market-object-model.md) - first-class record profiles, embedded structures, derived concepts, and OLP representation boundaries.
+- [`specification/0002-market-object-model.md`](specification/0002-market-object-model.md) - first-class record profiles, embedded structures, derived concepts, and OLP representation boundaries.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
 Future specifications will define representation, identity, lifecycle, matching/discovery, agreements, fulfillment, settlement interfaces, federation, privacy, safety/policy boundaries, and conformance incrementally.
