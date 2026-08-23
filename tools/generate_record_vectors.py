@@ -103,12 +103,19 @@ def build():
     })
     intent_vec, intent = positive_record("intent-basic", intent_map, "A fix intent with exact reward and validity terms.")
 
+    proposal_commitment = {
+        "id": "p1",
+        "party": bob,
+        "action": action,
+        "subjects": [subject],
+    }
     proposal_map = record_mapping(TYPE_INTENT, {
         "version": 1,
         "issuer": bob,
         "subjects": [subject],
         "action": action,
         "terms": terms,
+        "commitments": [proposal_commitment],
         "response_to": [record_ref(intent)],
     }, [CORE_PROFILE, PROPOSAL_PROFILE])
     proposal_vec, proposal = positive_record("intent-proposal", proposal_map, "Proposal is a MarketIntent profile with an immutable response reference.")
@@ -140,7 +147,7 @@ def build():
         "event": "https://example.test/events/work-submitted",
         "occurred_at": "2026-08-24T12:00:00Z",
         "related_records": [record_ref(agreement)],
-        "commitment_ids": ["c1"],
+        "commitment_refs": [{"record": record_ref(agreement), "id": "c1"}],
         "outcome": {"type": "https://example.test/outcomes/submitted"},
     })
     event_vec, event = positive_record("event-work-submitted", event_map, "MarketEvent refers to the agreement and commitment without mutating either.")
@@ -153,6 +160,7 @@ def build():
     two_subjects = sort_set([subject, {"uri": "urn:example:software-issue:7"}])
     bad_order = deepcopy(intent_map); bad_order["content"]["subjects"] = list(reversed(two_subjects))
     bad_party = deepcopy(agreement_map); bad_party["content"]["commitments"][0]["party"] = {"principal": "did:example:mallory"}
+    bad_intent_commitment_party = deepcopy(proposal_map); bad_intent_commitment_party["content"]["commitments"][0]["party"] = alice
     bad_event = record_mapping(TYPE_EVENT, {"version": 1, "issuer": bob, "event": "https://example.test/events/nocontext"})
     bad_time = deepcopy(event_map); bad_time["content"]["occurred_at"] = "2026-08-24T12:00:00+00:00"
     bad_critical = deepcopy(intent_map); bad_critical["content"]["extensions"] = {"https://example.test/ext/other": True}; bad_critical["content"]["critical"] = ["https://example.test/ext/required"]
@@ -166,6 +174,7 @@ def build():
         negative_record("response-without-proposal-profile", bad_response, "PROPOSAL_PROFILE_REQUIRED", "response_to is not silently interpreted without the proposal profile."),
         negative_record("intent-noncanonical-subject-order", bad_order, "NON_CANONICAL_ORDER", "Set-like subject arrays must be OLP-CIE-1 sorted."),
         negative_record("agreement-unbound-commitment-party", bad_party, "COMMITMENT_PARTY_NOT_BOUND", "Commitment principal must be present in agreement parties."),
+        negative_record("intent-commitment-party-mismatch", bad_intent_commitment_party, "INTENT_COMMITMENT_PARTY_MISMATCH", "An Intent may only attribute embedded commitments to its issuer principal."),
         negative_record("event-without-context", bad_event, "EVENT_CONTEXT_REQUIRED", "A MarketEvent must identify what it concerns."),
         negative_record("event-noncanonical-time", bad_time, "INVALID_TIMESTAMP", "Core timestamp profile uses canonical UTC-second form."),
         negative_record("critical-extension-missing", bad_critical, "CRITICAL_EXTENSION_MISSING", "Critical extensions must be present."),
@@ -182,6 +191,7 @@ def build():
         structure("value-semantic", "ValueExpressionV1", {"kind": "semantic", "semantic": "https://example.test/value/barter", "value": {"item": "urn:example:item:1"}}, "Non-monetary value remains semantically namespaced."),
         structure("temporal-window", "TemporalConditionV1", {"not_before": "2026-08-24T00:00:00Z", "not_after": "2026-08-25T00:00:00Z"}, "Canonical bounded UTC interval."),
         structure("location-external", "LocationConditionV1", {"scheme": "https://example.test/location/geohash", "value": "u173zq"}, "Location semantics are profile-defined, not hard-coded globally."),
+        structure("commitment-ref", "CommitmentRefV1", {"record": record_ref(agreement), "id": "c1"}, "Container-local commitment identity is paired with its exact record reference."),
     ]
     negative_structures = [
         structure("decimal-trailing-zero", "DecimalV1", {"coefficient": 1230, "scale": 2}, "Duplicate numeric spellings are forbidden.", "NON_CANONICAL_DECIMAL"),
@@ -192,6 +202,7 @@ def build():
         structure("temporal-offset-form", "TemporalConditionV1", {"not_before": "2026-08-24T00:00:00+00:00"}, "Offset variants are rejected by the core canonical timestamp profile.", "INVALID_TIMESTAMP"),
         structure("subject-two-targets", "SubjectBindingV1", {"uri": "urn:example:a", "record_ref": (0, bytes(32))}, "A subject binding has exactly one target.", "SUBJECT_TARGET_CARDINALITY"),
         structure("settlement-invalid-mode", "SettlementPreferenceV1", {"method": "https://example.test/settlement/bank", "mode": "maybe"}, "Settlement preference modes are closed in core-v1.", "INVALID_ENUM"),
+        structure("commitment-ref-invalid-local-id", "CommitmentRefV1", {"record": record_ref(agreement), "id": "9bad"}, "Commitment references preserve the same local-id grammar as their target commitments.", "INVALID_LOCAL_ID"),
     ]
 
     return {

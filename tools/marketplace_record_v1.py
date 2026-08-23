@@ -318,6 +318,14 @@ def validate_commitment(value: Any, path: str = "commitment") -> None:
         _canonical_set(vals, f"{path}.acceptance_criteria")
 
 
+def validate_commitment_ref(value: Any, path: str = "commitment_ref") -> None:
+    m = _map(value, path)
+    _keys(m, {"record", "id"}, {"record", "id"}, path)
+    validate_record_ref(m["record"], f"{path}.record")
+    if not isinstance(m["id"], str) or not _LOCAL_ID_RE.fullmatch(m["id"]):
+        fail("INVALID_LOCAL_ID", f"{path}.id is invalid")
+
+
 def validate_outcome(value: Any, path: str = "outcome") -> None:
     m = _map(value, path)
     _keys(m, {"type", "details"}, {"type"}, path)
@@ -355,7 +363,7 @@ def _validate_common_record(record: RecordV1) -> Mapping[str, Any]:
 
 
 def _validate_intent(record: RecordV1, m: Mapping[str, Any]) -> None:
-    allowed = {"version", "issuer", "subjects", "action", "terms", "constraints", "evidence_requirements", "validity", "settlement_preferences", "profile_bindings", "response_to", "extensions", "critical"}
+    allowed = {"version", "issuer", "subjects", "action", "terms", "constraints", "commitments", "evidence_requirements", "validity", "settlement_preferences", "profile_bindings", "response_to", "extensions", "critical"}
     _keys(m, allowed, {"version", "issuer", "subjects", "action", "terms"}, "content")
     if m["version"] != 1 or isinstance(m["version"], bool): fail("UNSUPPORTED_CONTENT_VERSION", "content.version MUST equal integer 1")
     validate_party(m["issuer"], "content.issuer")
@@ -369,6 +377,15 @@ def _validate_intent(record: RecordV1, m: Mapping[str, Any]) -> None:
             vals = _array(m[key], f"content.{key}", nonempty=True)
             for i, item in enumerate(vals): fn(item, f"content.{key}[{i}]")
             _canonical_set(vals, f"content.{key}")
+    if "commitments" in m:
+        commitments = _array(m["commitments"], "content.commitments", nonempty=True)
+        for i, item in enumerate(commitments): validate_commitment(item, f"content.commitments[{i}]")
+        ids = tuple(item["id"] for item in commitments)
+        _sorted_unique_text(ids, "content.commitments ids")
+        issuer_principal = m["issuer"]["principal"]
+        for c in commitments:
+            if c["party"]["principal"] != issuer_principal:
+                fail("INTENT_COMMITMENT_PARTY_MISMATCH", "intent commitment party principal MUST equal issuer principal")
     if "validity" in m: validate_temporal(m["validity"], "content.validity")
     if PROPOSAL_PROFILE in record.profiles:
         if "response_to" not in m: fail("PROPOSAL_RESPONSE_REQUIRED", "proposal profile requires response_to")
@@ -412,7 +429,7 @@ def _validate_agreement(record: RecordV1, m: Mapping[str, Any]) -> None:
 
 
 def _validate_event(record: RecordV1, m: Mapping[str, Any]) -> None:
-    allowed = {"version", "issuer", "event", "occurred_at", "subjects", "related_records", "commitment_ids", "parties", "outcome", "evidence", "profile_bindings", "extensions", "critical"}
+    allowed = {"version", "issuer", "event", "occurred_at", "subjects", "related_records", "commitment_refs", "parties", "outcome", "evidence", "profile_bindings", "extensions", "critical"}
     _keys(m, allowed, {"version", "issuer", "event"}, "content")
     if m["version"] != 1 or isinstance(m["version"], bool): fail("UNSUPPORTED_CONTENT_VERSION", "content.version MUST equal integer 1")
     validate_party(m["issuer"], "content.issuer")
@@ -427,12 +444,11 @@ def _validate_event(record: RecordV1, m: Mapping[str, Any]) -> None:
         vals = _array(m["related_records"], "content.related_records", nonempty=True); present_context = True
         for i, item in enumerate(vals): validate_record_ref(item, f"content.related_records[{i}]")
         _canonical_set(vals, "content.related_records")
-    if "commitment_ids" in m:
-        vals = _array(m["commitment_ids"], "content.commitment_ids", nonempty=True); present_context = True
-        for item in vals:
-            if not isinstance(item, str) or not _LOCAL_ID_RE.fullmatch(item): fail("INVALID_LOCAL_ID", "content.commitment_ids contains invalid id")
-        _sorted_unique_text(vals, "content.commitment_ids")
-    if not present_context: fail("EVENT_CONTEXT_REQUIRED", "MarketEvent requires subjects, related_records, or commitment_ids")
+    if "commitment_refs" in m:
+        vals = _array(m["commitment_refs"], "content.commitment_refs", nonempty=True); present_context = True
+        for i, item in enumerate(vals): validate_commitment_ref(item, f"content.commitment_refs[{i}]")
+        _canonical_set(vals, "content.commitment_refs")
+    if not present_context: fail("EVENT_CONTEXT_REQUIRED", "MarketEvent requires subjects, related_records, or commitment_refs")
     if "parties" in m:
         vals = _array(m["parties"], "content.parties", nonempty=True)
         for i, item in enumerate(vals): validate_party(item, f"content.parties[{i}]")
@@ -472,5 +488,6 @@ STRUCTURE_VALIDATORS = {
     "AcceptanceCriterionV1": validate_acceptance_criterion,
     "ProfileBindingV1": validate_profile_binding,
     "CommitmentV1": validate_commitment,
+    "CommitmentRefV1": validate_commitment_ref,
     "OutcomeV1": validate_outcome,
 }

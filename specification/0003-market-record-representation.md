@@ -326,6 +326,19 @@ CommitmentV1 = {
 
 `subjects` and `acceptance_criteria`, when present, are non-empty set-like arrays. A Commitment does not automatically establish a legal obligation.
 
+### 23.1 `CommitmentRefV1`
+
+A Commitment identifier is local to its containing immutable record. Cross-record references therefore MUST bind both the exact record and the local identifier:
+
+```text
+CommitmentRefV1 = {
+  record: RecordRef,
+  id: LocalId
+}
+```
+
+`record` and `id` are REQUIRED. A bare `LocalId` MUST NOT be used as a portable commitment reference because two unrelated records may both contain the same local identifier. Syntactic validation does not require dereferencing `record`; applications that need semantic confirmation MAY resolve the record and verify that the referenced Commitment exists.
+
 ## 24. `OutcomeV1`
 
 ```text
@@ -361,6 +374,7 @@ MarketIntentContentV1 = {
   action: ActionDescriptorV1,
   terms: TermsV1,
   constraints?: [ConstraintV1, ...],
+  commitments?: [CommitmentV1, ...],
   evidence_requirements?: [EvidenceRequirementV1, ...],
   validity?: TemporalConditionV1,
   settlement_preferences?: [SettlementPreferenceV1, ...],
@@ -374,6 +388,9 @@ MarketIntentContentV1 = {
 `version`, `issuer`, `subjects`, `action`, and `terms` are REQUIRED. `version` MUST equal integer `1`; `subjects` MUST be non-empty.
 
 The following are set-like: `subjects`, `constraints`, `evidence_requirements`, `settlement_preferences`, `profile_bindings`, and `response_to`.
+
+`commitments`, when present, MUST be non-empty. Commitment IDs MUST be unique and UTF-8 sorted. Every embedded Commitment `party.principal` MUST equal `issuer.principal`; an Intent cannot create a core-level attributable undertaking for another principal merely by naming them. Authority to express the issuer's Intent remains a separate OLP proof/authority evaluation.
+
 Mutable status shortcuts such as `is_active`, `is_withdrawn`, `is_matched`, `is_sold`, `is_completed`, `current_status`, `view_count`, and `ranking_score` are not valid core fields. Later state is additive evidence or derived application state.
 
 ## 27. Proposal specialization
@@ -430,7 +447,7 @@ MarketEventContentV1 = {
   occurred_at?: TimestampV1,
   subjects?: [SubjectBindingV1, ...],
   related_records?: [RecordRef, ...],
-  commitment_ids?: [LocalId, ...],
+  commitment_refs?: [CommitmentRefV1, ...],
   parties?: [PartyBindingV1, ...],
   outcome?: OutcomeV1,
   evidence?: [EvidenceRef, ...],
@@ -442,9 +459,9 @@ MarketEventContentV1 = {
 
 `version`, `issuer`, and `event` are REQUIRED. `version` MUST equal integer `1`.
 
-At least one of `subjects`, `related_records`, or `commitment_ids` MUST be present and non-empty, preventing an unscoped core MarketEvent.
+At least one of `subjects`, `related_records`, or `commitment_refs` MUST be present and non-empty, preventing an unscoped core MarketEvent.
 
-The following are set-like: `subjects`, `related_records`, `parties`, `evidence`, and `profile_bindings`. `commitment_ids` MUST be unique and UTF-8 sorted.
+The following are set-like: `subjects`, `related_records`, `commitment_refs`, `parties`, `evidence`, and `profile_bindings`. A `commitment_refs` member identifies its target unambiguously by exact record reference plus container-local Commitment ID.
 
 `occurred_at`, when present, is an issuer-attributed time assertion, not proof from a trusted global clock. An embedded Outcome is evidence about a result and does not mutate an Agreement, Commitment, Subject, settlement system, or another participant's outcome claim.
 
@@ -458,14 +475,14 @@ MarketIntent: subjects, constraints, evidence_requirements,
 MarketAgreement: parties, subjects, actions, source_records,
                  evidence_requirements, settlement_preferences, profile_bindings
 Commitment: subjects, acceptance_criteria
-MarketEvent: subjects, related_records, parties, evidence, profile_bindings
+MarketEvent: subjects, related_records, commitment_refs, parties, evidence, profile_bindings
 ```
 
 The following are UTF-8 sorted and unique:
 
 ```text
+MarketIntent commitments by commitment.id
 MarketAgreement commitments by commitment.id
-MarketEvent commitment_ids
 content critical extension URIs
 ```
 
@@ -521,7 +538,7 @@ Milestone 3 defines executable vectors at:
 conformance/vectors/record-representation-v1.json
 ```
 
-The committed set covers positive MarketIntent, Proposal, MarketAgreement, and MarketEvent records; exact decimal/quantity/value/time/location structures; and negative mutable-state, proposal, ordering, commitment-party, event-context/time, critical-extension, reference-kind, decimal, subject, currency, and settlement cases.
+The committed set covers positive MarketIntent, Proposal, MarketAgreement, and MarketEvent records; exact decimal/quantity/value/time/location/commitment-reference structures; and negative mutable-state, proposal, ordering, commitment-party, event-context/time, critical-extension, empty-optional, reference-kind, decimal-range/canonicalization, subject, currency, local-reference, and settlement cases.
 
 Positive record vectors include:
 
