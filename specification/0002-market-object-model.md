@@ -260,10 +260,10 @@ A Proposal may still have all properties of a first-class immutable record becau
 
 Conceptually, a Proposal specialization adds semantics such as:
 
-`	ext
+```text
 in_response_to: [OLPRecordRef, ...]
 proposal_profile: SemanticIdentifier
-`
+```
 
 while retaining the MarketIntent content model for issuer, subjects, action, terms, constraints, evidence requirements, validity, and profiles.
 
