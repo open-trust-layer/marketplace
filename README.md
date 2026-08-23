@@ -6,6 +6,7 @@
 
 **Project status:** experimental / pre-implementation
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
+**Current milestone:** Milestone 2 — Marketplace Object Model & Representation — IN REVIEW
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -67,6 +68,20 @@ INTENT
 An intent can describe selling, buying, hiring, providing, requesting, funding, licensing, exchanging, reserving, bidding, donating, coordinating, or other domain-defined actions.
 
 The universal layer does not need a closed taxonomy of `Product`, `Job`, `Vehicle`, `RealEstate`, `Patent`, and thousands of other object classes. Domain profiles may define rich semantics while the core remains small.
+
+### Marketplace object model
+
+Milestone 2 keeps the universal first-class record set deliberately small:
+
+    MarketIntent
+    MarketAgreement
+    MarketEvent
+
+All three use ordinary immutable OLP Records or OLP Event profiling; the Marketplace does not create a second identity-bearing record envelope. Proposal, Offer, Request, Bid, Ask, and similar negotiation forms specialize MarketIntent.
+
+Reusable structures such as SubjectBinding, ActionDescriptor, Terms, Constraint, Commitment, ValueExpression, quantities, time/location conditions, and evidence requirements are embedded by default.
+
+Listing, Match, MarketView, current status, trust, reputation, risk, ranking, recommendation, fair value, and PolicyDecision remain derived/application-specific unless a participant intentionally publishes an attributable OLP claim about them.
 
 ---
 
@@ -173,6 +188,7 @@ The marketplace can represent an intent concerning a subject without asserting t
 
 - [`PRINCIPLES.md`](PRINCIPLES.md) — constitutional constraints for the project.
 - [`specification/0001-market-vocabulary.md`](specification/0001-market-vocabulary.md) — foundational marketplace vocabulary and semantic separations.
+- [specification/0002-market-object-model.md](specification/0002-market-object-model.md) - first-class record profiles, embedded structures, derived concepts, and OLP representation boundaries.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
 Future specifications will define representation, identity, lifecycle, matching/discovery, agreements, fulfillment, settlement interfaces, federation, privacy, safety/policy boundaries, and conformance incrementally.
