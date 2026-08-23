@@ -7,6 +7,7 @@
 **Project status:** experimental / pre-implementation
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
 **Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
+**Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -82,6 +83,20 @@ All three use ordinary immutable OLP Records or OLP Event profiling; the Marketp
 Reusable structures such as SubjectBinding, ActionDescriptor, Terms, Constraint, Commitment, ValueExpression, quantities, time/location conditions, and evidence requirements are embedded by default.
 
 Listing, Match, MarketView, current status, trust, reputation, risk, ranking, recommendation, fair value, and PolicyDecision remain derived/application-specific unless a participant intentionally publishes an attributable OLP claim about them.
+
+### Exact record representation
+
+Milestone 3 makes the three first-class profiles independently constructible and verifiable without creating a second identity system. Exact v1 content shapes, required/optional fields, cardinalities, semantic identifiers, set ordering, references, decimals, quantities, time/location conditions, extensions, and validation boundaries are defined in the record-representation specification.
+
+```text
+Marketplace Record Identity = OLP Record Identity
+Marketplace canonical identity encoding = OLP-CIE-1
+Marketplace record envelope = OLP RecordV1
+```
+
+The core semantic namespace is `https://open-trust-layer.github.io/marketplace/semantics/v1`. Executable conformance coverage currently contains 33 positive/negative record and structure vectors. Positive identities are derived exclusively through the OLP reference implementation pinned by the vector set to source commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`.
+
+Milestone 3 does not freeze a mandatory Marketplace JSON/CBOR wire format or transport API; those remain separate from identity.
 
 ---
 
@@ -189,9 +204,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`PRINCIPLES.md`](PRINCIPLES.md) — constitutional constraints for the project.
 - [`specification/0001-market-vocabulary.md`](specification/0001-market-vocabulary.md) — foundational marketplace vocabulary and semantic separations.
 - [`specification/0002-market-object-model.md`](specification/0002-market-object-model.md) - first-class record profiles, embedded structures, derived concepts, and OLP representation boundaries.
+- [`specification/0003-market-record-representation.md`](specification/0003-market-record-representation.md) - exact v1 abstract representation, semantic identifiers, deterministic structures, and OLP identity inheritance.
+- [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define representation, identity, lifecycle, matching/discovery, agreements, fulfillment, settlement interfaces, federation, privacy, safety/policy boundaries, and conformance incrementally.
+Future specifications will define lifecycle, negotiation, matching/discovery, agreement-formation evidence, fulfillment, settlement interfaces, federation, privacy, safety/policy boundaries, and conformance incrementally.
 
 ---
 

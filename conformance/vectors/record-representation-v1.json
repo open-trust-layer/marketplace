@@ -1,0 +1,2789 @@
+{
+  "format": "marketplace-record-representation-v1-conformance-vectors",
+  "marketplace_semantic_base": "https://open-trust-layer.github.io/marketplace/semantics/v1",
+  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+  "note": "record/value fields use the OLP implementation-neutral conformance projection; this JSON file is not a Marketplace wire format",
+  "positive_records": [
+    {
+      "id": "intent-basic",
+      "note": "A fix intent with exact reward and validity terms.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_record_identity": "r1_qcU6rT-ADJiC75Bg9w7qLSvauhY6zcEmy1dk-LrRlZc",
+      "expected_record_identity_hex": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597",
+      "expected_identity_preimage_hex": "886a4f4c502d5245434f524401785068747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f7265636f72642f6d61726b65742d696e74656e74a7657465726d73a1782168747470733a2f2f6578616d706c652e746573742f7465726d732f726577617264a3646b696e64686d6f6e657461727966616d6f756e74a2657363616c65006b636f656666696369656e741901f46d63757272656e63795f636f64656345555266616374696f6ea1626964782068747470733a2f2f6578616d706c652e746573742f616374696f6e732f66697866697373756572a264726f6c65782468747470733a2f2f6578616d706c652e746573742f726f6c65732f726571756573746572697072696e636970616c716469643a6578616d706c653a616c6963656776657273696f6e01687375626a6563747381a163757269781d75726e3a6578616d706c653a736f6674776172652d69737375653a34326876616c6964697479a1696e6f745f616674657274323032362d30392d30315430303a30303a30305a6b636f6e73747261696e747381a3626964782968747470733a2f2f6578616d706c652e746573742f636f6e73747261696e74732f646561646c696e65646d6f6465696d616e6461746f72796576616c756574323032362d30392d30315430303a30303a30305aa081784b68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f70726f66696c652f636f72652d763180a0"
+    },
+    {
+      "id": "intent-proposal",
+      "note": "Proposal is a MarketIntent profile with an immutable response reference.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "p1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:bob"
+                              ],
+                              [
+                                "role",
+                                "https://example.test/roles/provider"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "response_to",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/proposal-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_record_identity": "r1_64m8GD4-7SQ7ZJP4uhGNPQz2IYTFSbk_ST25FaDD7tA",
+      "expected_record_identity_hex": "eb89bc183e3eed243b6493f8ba118d3d0cf62184c549b93f493db915a0c3eed0",
+      "expected_identity_preimage_hex": "886a4f4c502d5245434f524401785068747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f7265636f72642f6d61726b65742d696e74656e74a7657465726d73a1782168747470733a2f2f6578616d706c652e746573742f7465726d732f726577617264a3646b696e64686d6f6e657461727966616d6f756e74a2657363616c65006b636f656666696369656e741901f46d63757272656e63795f636f64656345555266616374696f6ea1626964782068747470733a2f2f6578616d706c652e746573742f616374696f6e732f66697866697373756572a264726f6c65782368747470733a2f2f6578616d706c652e746573742f726f6c65732f70726f7669646572697072696e636970616c6f6469643a6578616d706c653a626f626776657273696f6e01687375626a6563747381a163757269781d75726e3a6578616d706c653a736f6674776172652d69737375653a34326b636f6d6d69746d656e747381a4626964627031657061727479a264726f6c65782368747470733a2f2f6578616d706c652e746573742f726f6c65732f70726f7669646572697072696e636970616c6f6469643a6578616d706c653a626f6266616374696f6ea1626964782068747470733a2f2f6578616d706c652e746573742f616374696f6e732f666978687375626a6563747381a163757269781d75726e3a6578616d706c653a736f6674776172652d69737375653a34326b726573706f6e73655f746f8182005820a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597a082784b68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f70726f66696c652f636f72652d7631784f68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f70726f66696c652f70726f706f73616c2d763180a0"
+    },
+    {
+      "id": "agreement-basic",
+      "note": "Agreement binds exact parties, terms, commitment, and source records; assent proofs remain detached.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "parties",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "actions",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "c1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:bob"
+                              ],
+                              [
+                                "role",
+                                "https://example.test/roles/provider"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          "acceptance_criteria",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "criterion",
+                                  "https://example.test/criteria/tests-pass"
+                                ],
+                                [
+                                  "mode",
+                                  "required"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "source_records",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597"
+                      }
+                    ],
+                    [
+                      0,
+                      {
+                        "$bytes": "eb89bc183e3eed243b6493f8ba118d3d0cf62184c549b93f493db915a0c3eed0"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_record_identity": "r1_FYF0RVhjdcFxccdXVoGLAvhk_TxB2hd5nYeyuDjINFM",
+      "expected_record_identity_hex": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453",
+      "expected_identity_preimage_hex": "886a4f4c502d5245434f524401785368747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f7265636f72642f6d61726b65742d61677265656d656e74a7657465726d73a1782168747470733a2f2f6578616d706c652e746573742f7465726d732f726577617264a3646b696e64686d6f6e657461727966616d6f756e74a2657363616c65006b636f656666696369656e741901f46d63757272656e63795f636f64656345555267616374696f6e7381a1626964782068747470733a2f2f6578616d706c652e746573742f616374696f6e732f666978677061727469657382a264726f6c65782368747470733a2f2f6578616d706c652e746573742f726f6c65732f70726f7669646572697072696e636970616c6f6469643a6578616d706c653a626f62a264726f6c65782468747470733a2f2f6578616d706c652e746573742f726f6c65732f726571756573746572697072696e636970616c716469643a6578616d706c653a616c6963656776657273696f6e01687375626a6563747381a163757269781d75726e3a6578616d706c653a736f6674776172652d69737375653a34326b636f6d6d69746d656e747381a5626964626331657061727479a264726f6c65782368747470733a2f2f6578616d706c652e746573742f726f6c65732f70726f7669646572697072696e636970616c6f6469643a6578616d706c653a626f6266616374696f6ea1626964782068747470733a2f2f6578616d706c652e746573742f616374696f6e732f666978687375626a6563747381a163757269781d75726e3a6578616d706c653a736f6674776172652d69737375653a343273616363657074616e63655f637269746572696181a2646d6f646568726571756972656469637269746572696f6e782868747470733a2f2f6578616d706c652e746573742f63726974657269612f74657374732d706173736e736f757263655f7265636f7264738282005820a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad1959782005820eb89bc183e3eed243b6493f8ba118d3d0cf62184c549b93f493db915a0c3eed0a081784b68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f70726f66696c652f636f72652d763180a0"
+    },
+    {
+      "id": "event-work-submitted",
+      "note": "MarketEvent refers to the agreement and commitment without mutating either.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "event",
+                  "https://example.test/events/work-submitted"
+                ],
+                [
+                  "occurred_at",
+                  "2026-08-24T12:00:00Z"
+                ],
+                [
+                  "related_records",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "commitment_refs",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "record",
+                          [
+                            0,
+                            {
+                              "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+                            }
+                          ]
+                        ],
+                        [
+                          "id",
+                          "c1"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "outcome",
+                  {
+                    "$map": [
+                      [
+                        "type",
+                        "https://example.test/outcomes/submitted"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_record_identity": "r1_pssXj9RYo8akh5-uEyq8BfgItmOTBI7Fg-LgCPgLfxE",
+      "expected_record_identity_hex": "a6cb178fd458a3c6a4879fae132abc05f808b66393048ec583e2e008f80b7f11",
+      "expected_identity_preimage_hex": "886a4f4c502d5245434f524401784f68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f7265636f72642f6d61726b65742d6576656e74a7656576656e74782a68747470733a2f2f6578616d706c652e746573742f6576656e74732f776f726b2d7375626d697474656466697373756572a264726f6c65782368747470733a2f2f6578616d706c652e746573742f726f6c65732f70726f7669646572697072696e636970616c6f6469643a6578616d706c653a626f62676f7574636f6d65a16474797065782768747470733a2f2f6578616d706c652e746573742f6f7574636f6d65732f7375626d69747465646776657273696f6e016b6f636375727265645f617474323032362d30382d32345431323a30303a30305a6f636f6d6d69746d656e745f7265667381a2626964626331667265636f72648200582015817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c834536f72656c617465645f7265636f726473818200582015817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453a081784b68747470733a2f2f6f70656e2d74727573742d6c617965722e6769746875622e696f2f6d61726b6574706c6163652f73656d616e746963732f76312f70726f66696c652f636f72652d763180a0"
+    }
+  ],
+  "negative_records": [
+    {
+      "id": "intent-unknown-state-field",
+      "note": "Mutable state is not part of MarketIntent content.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "is_active",
+                  true
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "UNKNOWN_FIELD"
+    },
+    {
+      "id": "proposal-missing-response",
+      "note": "proposal-v1 requires response_to.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "p1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:bob"
+                              ],
+                              [
+                                "role",
+                                "https://example.test/roles/provider"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/proposal-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "PROPOSAL_RESPONSE_REQUIRED"
+    },
+    {
+      "id": "response-without-proposal-profile",
+      "note": "response_to is not silently interpreted without the proposal profile.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "response_to",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "PROPOSAL_PROFILE_REQUIRED"
+    },
+    {
+      "id": "intent-noncanonical-subject-order",
+      "note": "Set-like subject arrays must be OLP-CIE-1 sorted.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:7"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "NON_CANONICAL_ORDER"
+    },
+    {
+      "id": "agreement-unbound-commitment-party",
+      "note": "Commitment principal must be present in agreement parties.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "parties",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "actions",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "c1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:mallory"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ],
+                        [
+                          "acceptance_criteria",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "criterion",
+                                  "https://example.test/criteria/tests-pass"
+                                ],
+                                [
+                                  "mode",
+                                  "required"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "source_records",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597"
+                      }
+                    ],
+                    [
+                      0,
+                      {
+                        "$bytes": "eb89bc183e3eed243b6493f8ba118d3d0cf62184c549b93f493db915a0c3eed0"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "COMMITMENT_PARTY_NOT_BOUND"
+    },
+    {
+      "id": "intent-commitment-party-mismatch",
+      "note": "An Intent may only attribute embedded commitments to its issuer principal.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "p1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:alice"
+                              ],
+                              [
+                                "role",
+                                "https://example.test/roles/requester"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "response_to",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "a9c53aad3f800c9882ef9060f70eea2d2bdaba163acdc126cb5764f8bad19597"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/proposal-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "INTENT_COMMITMENT_PARTY_MISMATCH"
+    },
+    {
+      "id": "event-without-context",
+      "note": "A MarketEvent must identify what it concerns.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "event",
+                  "https://example.test/events/nocontext"
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "EVENT_CONTEXT_REQUIRED"
+    },
+    {
+      "id": "event-noncanonical-time",
+      "note": "Core timestamp profile uses canonical UTC-second form.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "event",
+                  "https://example.test/events/work-submitted"
+                ],
+                [
+                  "occurred_at",
+                  "2026-08-24T12:00:00+00:00"
+                ],
+                [
+                  "related_records",
+                  [
+                    [
+                      0,
+                      {
+                        "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+                      }
+                    ]
+                  ]
+                ],
+                [
+                  "commitment_refs",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "record",
+                          [
+                            0,
+                            {
+                              "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+                            }
+                          ]
+                        ],
+                        [
+                          "id",
+                          "c1"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "outcome",
+                  {
+                    "$map": [
+                      [
+                        "type",
+                        "https://example.test/outcomes/submitted"
+                      ]
+                    ]
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "INVALID_TIMESTAMP"
+    },
+    {
+      "id": "critical-extension-missing",
+      "note": "Critical extensions must be present.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "extensions",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/ext/other",
+                        true
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "critical",
+                  [
+                    "https://example.test/ext/required"
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "CRITICAL_EXTENSION_MISSING"
+    },
+    {
+      "id": "empty-content-extensions",
+      "note": "Optional extension maps are omitted rather than represented empty.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "extensions",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "EMPTY_MAP"
+    },
+    {
+      "id": "empty-critical-array",
+      "note": "Optional critical arrays are omitted rather than represented empty.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/deadline"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "2026-09-01T00:00:00Z"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "validity",
+                  {
+                    "$map": [
+                      [
+                        "not_after",
+                        "2026-09-01T00:00:00Z"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "critical",
+                  []
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "EMPTY_ARRAY"
+    },
+    {
+      "id": "proposal-proof-ref-instead-of-record",
+      "note": "response_to must reference Records, not Proofs.",
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/terms/reward",
+                        {
+                          "$map": [
+                            [
+                              "kind",
+                              "monetary"
+                            ],
+                            [
+                              "amount",
+                              {
+                                "$map": [
+                                  [
+                                    "coefficient",
+                                    500
+                                  ],
+                                  [
+                                    "scale",
+                                    0
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "currency_code",
+                              "EUR"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "commitments",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "p1"
+                        ],
+                        [
+                          "party",
+                          {
+                            "$map": [
+                              [
+                                "principal",
+                                "did:example:bob"
+                              ],
+                              [
+                                "role",
+                                "https://example.test/roles/provider"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "action",
+                          {
+                            "$map": [
+                              [
+                                "id",
+                                "https://example.test/actions/fix"
+                              ]
+                            ]
+                          }
+                        ],
+                        [
+                          "subjects",
+                          [
+                            {
+                              "$map": [
+                                [
+                                  "uri",
+                                  "urn:example:software-issue:42"
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "response_to",
+                  [
+                    [
+                      1,
+                      {
+                        "$bytes": "0000000000000000000000000000000000000000000000000000000000000000"
+                      }
+                    ]
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/proposal-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "WRONG_REFERENCE_KIND"
+    }
+  ],
+  "positive_structures": [
+    {
+      "id": "decimal-canonical",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            12345
+          ],
+          [
+            "scale",
+            2
+          ]
+        ]
+      },
+      "note": "Canonical decimal 123.45."
+    },
+    {
+      "id": "decimal-zero",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            0
+          ],
+          [
+            "scale",
+            0
+          ]
+        ]
+      },
+      "note": "Zero has unique canonical form."
+    },
+    {
+      "id": "quantity-hours",
+      "structure": "QuantityV1",
+      "value": {
+        "$map": [
+          [
+            "value",
+            {
+              "$map": [
+                [
+                  "coefficient",
+                  500
+                ],
+                [
+                  "scale",
+                  0
+                ]
+              ]
+            }
+          ],
+          [
+            "unit",
+            "https://qudt.org/vocab/unit/HR"
+          ]
+        ]
+      },
+      "note": "Exact quantity with URI-named unit."
+    },
+    {
+      "id": "value-money",
+      "structure": "ValueExpressionV1",
+      "value": {
+        "$map": [
+          [
+            "kind",
+            "monetary"
+          ],
+          [
+            "amount",
+            {
+              "$map": [
+                [
+                  "coefficient",
+                  500
+                ],
+                [
+                  "scale",
+                  0
+                ]
+              ]
+            }
+          ],
+          [
+            "currency_code",
+            "EUR"
+          ]
+        ]
+      },
+      "note": "Monetary expression is exact and does not assert fair value."
+    },
+    {
+      "id": "value-semantic",
+      "structure": "ValueExpressionV1",
+      "value": {
+        "$map": [
+          [
+            "kind",
+            "semantic"
+          ],
+          [
+            "semantic",
+            "https://example.test/value/barter"
+          ],
+          [
+            "value",
+            {
+              "$map": [
+                [
+                  "item",
+                  "urn:example:item:1"
+                ]
+              ]
+            }
+          ]
+        ]
+      },
+      "note": "Non-monetary value remains semantically namespaced."
+    },
+    {
+      "id": "temporal-window",
+      "structure": "TemporalConditionV1",
+      "value": {
+        "$map": [
+          [
+            "not_before",
+            "2026-08-24T00:00:00Z"
+          ],
+          [
+            "not_after",
+            "2026-08-25T00:00:00Z"
+          ]
+        ]
+      },
+      "note": "Canonical bounded UTC interval."
+    },
+    {
+      "id": "location-external",
+      "structure": "LocationConditionV1",
+      "value": {
+        "$map": [
+          [
+            "scheme",
+            "https://example.test/location/geohash"
+          ],
+          [
+            "value",
+            "u173zq"
+          ]
+        ]
+      },
+      "note": "Location semantics are profile-defined, not hard-coded globally."
+    },
+    {
+      "id": "commitment-ref",
+      "structure": "CommitmentRefV1",
+      "value": {
+        "$map": [
+          [
+            "record",
+            [
+              0,
+              {
+                "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+              }
+            ]
+          ],
+          [
+            "id",
+            "c1"
+          ]
+        ]
+      },
+      "note": "Container-local commitment identity is paired with its exact record reference."
+    }
+  ],
+  "negative_structures": [
+    {
+      "id": "decimal-trailing-zero",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            1230
+          ],
+          [
+            "scale",
+            2
+          ]
+        ]
+      },
+      "note": "Duplicate numeric spellings are forbidden.",
+      "expected_error": "NON_CANONICAL_DECIMAL"
+    },
+    {
+      "id": "decimal-zero-nonzero-scale",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            0
+          ],
+          [
+            "scale",
+            2
+          ]
+        ]
+      },
+      "note": "Zero must use scale zero.",
+      "expected_error": "NON_CANONICAL_DECIMAL"
+    },
+    {
+      "id": "decimal-coefficient-outside-olp-range",
+      "structure": "DecimalV1",
+      "value": {
+        "$map": [
+          [
+            "coefficient",
+            18446744073709551616
+          ],
+          [
+            "scale",
+            0
+          ]
+        ]
+      },
+      "note": "Decimal coefficients stay inside the OLP-CIE-1 integer domain.",
+      "expected_error": "INVALID_DECIMAL"
+    },
+    {
+      "id": "action-empty-parameters",
+      "structure": "ActionDescriptorV1",
+      "value": {
+        "$map": [
+          [
+            "id",
+            "https://example.test/actions/fix"
+          ],
+          [
+            "parameters",
+            {
+              "$map": []
+            }
+          ]
+        ]
+      },
+      "note": "Optional semantic maps are omitted rather than represented empty.",
+      "expected_error": "EMPTY_MAP"
+    },
+    {
+      "id": "money-lowercase-currency",
+      "structure": "ValueExpressionV1",
+      "value": {
+        "$map": [
+          [
+            "kind",
+            "monetary"
+          ],
+          [
+            "amount",
+            {
+              "$map": [
+                [
+                  "coefficient",
+                  1
+                ],
+                [
+                  "scale",
+                  0
+                ]
+              ]
+            }
+          ],
+          [
+            "currency_code",
+            "eur"
+          ]
+        ]
+      },
+      "note": "ISO-style currency codes are uppercase in this helper structure.",
+      "expected_error": "INVALID_CURRENCY"
+    },
+    {
+      "id": "temporal-offset-form",
+      "structure": "TemporalConditionV1",
+      "value": {
+        "$map": [
+          [
+            "not_before",
+            "2026-08-24T00:00:00+00:00"
+          ]
+        ]
+      },
+      "note": "Offset variants are rejected by the core canonical timestamp profile.",
+      "expected_error": "INVALID_TIMESTAMP"
+    },
+    {
+      "id": "subject-two-targets",
+      "structure": "SubjectBindingV1",
+      "value": {
+        "$map": [
+          [
+            "uri",
+            "urn:example:a"
+          ],
+          [
+            "record_ref",
+            [
+              0,
+              {
+                "$bytes": "0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            ]
+          ]
+        ]
+      },
+      "note": "A subject binding has exactly one target.",
+      "expected_error": "SUBJECT_TARGET_CARDINALITY"
+    },
+    {
+      "id": "settlement-invalid-mode",
+      "structure": "SettlementPreferenceV1",
+      "value": {
+        "$map": [
+          [
+            "method",
+            "https://example.test/settlement/bank"
+          ],
+          [
+            "mode",
+            "maybe"
+          ]
+        ]
+      },
+      "note": "Settlement preference modes are closed in core-v1.",
+      "expected_error": "INVALID_ENUM"
+    },
+    {
+      "id": "commitment-ref-invalid-local-id",
+      "structure": "CommitmentRefV1",
+      "value": {
+        "$map": [
+          [
+            "record",
+            [
+              0,
+              {
+                "$bytes": "15817445586375c17171c75756818b02f864fd3c41da17799d87b2b838c83453"
+              }
+            ]
+          ],
+          [
+            "id",
+            "9bad"
+          ]
+        ]
+      },
+      "note": "Commitment references preserve the same local-id grammar as their target commitments.",
+      "expected_error": "INVALID_LOCAL_ID"
+    }
+  ]
+}
