@@ -343,6 +343,12 @@ An agreement profile MAY require a defined set of proofs or countersignature rel
 
 That sufficiency conclusion is still contextual to the selected profile and policy.
 
+### 9.4 Agreement record declaration does not self-prove formation
+
+The mere existence of a Record whose Marketplace profile identifies it as a MarketAgreement does not prove that all named parties assented.
+
+A conforming implementation MUST evaluate whatever assent evidence the selected agreement profile requires before concluding that agreement formation is sufficiently evidenced. A malicious or mistaken participant can publish a syntactically valid record naming other parties; record validity alone does not turn that assertion into their assent.
+
 ---
 
 ## 10. First-class record profile: MarketEvent
