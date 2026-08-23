@@ -249,40 +249,34 @@ Marketplace core MUST NOT require one closed direction taxonomy when the generic
 
 ---
 
-## 8. First-class record profile: MarketProposal
+## 8. MarketIntent specialization: Proposal
 
-A **MarketProposal** is a first-class immutable OLP Record representing an attributable response that proposes a specific set of Terms for possible agreement, normally in relation to one or more prior MarketIntents or MarketProposals.
+A **Proposal** is a specialized MarketIntent that responds to one or more prior MarketIntents and presents specific Terms for possible agreement.
 
-MarketProposal is first-class because negotiation requires exact identity of each proposal revision and because a Proposal may need independent proof, rejection, acceptance evidence, expiry interpretation, supersession, dispute, and countersignature.
+Proposal does not require a separate universal record category. It uses the MarketIntent record profile plus profile semantics and explicit references or OLP relationship evidence identifying the records to which it responds.
 
-Conceptually:
+This choice preserves the Milestone 1 rule that negotiation direction is contextual and keeps the universal object model small.
 
-```text
-MarketProposalContentV1 = {
-    "proposer": PartyBinding,
-    "in_response_to"?: [OLPRecordRef, ...],
-    "subjects": [SubjectBinding, ...],
-    "action": ActionDescriptor,
-    "terms": Terms,
-    "constraints"?: [Constraint, ...],
-    "commitments"?: [Commitment, ...],
-    "evidence_requirements"?: [EvidenceRequirement, ...],
-    "validity"?: TemporalCondition,
-    "profiles"?: [ProfileBinding, ...]
-}
-```
+A Proposal may still have all properties of a first-class immutable record because the underlying MarketIntent is itself a first-class OLP Record: stable identity, detached proof, lifecycle evidence, dispute, supersession, and portability.
 
-### 8.1 Proposal revision creates a new record
+Conceptually, a Proposal specialization adds semantics such as:
+
+`	ext
+in_response_to: [OLPRecordRef, ...]
+proposal_profile: SemanticIdentifier
+`
+
+while retaining the MarketIntent content model for issuer, subjects, action, terms, constraints, evidence requirements, validity, and profiles.
+
+### 8.1 Proposal revision creates a new MarketIntent record
 
 Changing identity-bearing Proposal Terms creates a different OLP Record Identity.
 
-A later Proposal MUST NOT silently overwrite an earlier Proposal.
-
-Negotiation history is additive.
+A later Proposal MUST NOT silently overwrite an earlier Proposal. Negotiation history is additive.
 
 ### 8.2 Proposal does not equal acceptance
 
-A MarketProposal does not become a MarketAgreement merely because another participant publishes a compatible Proposal or because a matching engine associates them.
+A Proposal does not become a MarketAgreement merely because another participant publishes a compatible Proposal or because a matching engine associates them.
 
 Agreement formation requires explicit evidence according to the applicable agreement profile.
 
@@ -768,7 +762,7 @@ No Marketplace relationship implies automatic transitivity, trust propagation, l
 
 Withdrawal, suspension, resumption, retirement, revocation, deprecation, compromise, and other applicable lifecycle changes MUST use additive evidence consistent with OLP lifecycle semantics.
 
-Historical MarketIntent, MarketProposal, MarketAgreement, and MarketEvent records remain immutable.
+Historical MarketIntent, MarketAgreement, and MarketEvent records remain immutable.
 
 For example:
 
@@ -839,7 +833,6 @@ Profiles MUST define what data is identity-bearing, what is externally reference
 A **Marketplace Profile** may specialize:
 
 - MarketIntent;
-- MarketProposal;
 - MarketAgreement;
 - MarketEvent;
 - Actions;
@@ -921,7 +914,7 @@ If such information needs portable evidentiary meaning, it must be intentionally
 
 First-class record status does not imply public visibility.
 
-A MarketIntent, MarketProposal, MarketAgreement, or MarketEvent MAY be private, selectively disclosed, peer-to-peer, encrypted at transport/storage layers, or disclosed only to selected Participants according to later profiles.
+A MarketIntent, MarketAgreement, or MarketEvent MAY be private, selectively disclosed, peer-to-peer, encrypted at transport/storage layers, or disclosed only to selected Participants according to later profiles.
 
 Implementations MUST NOT assume that all Marketplace records belong in a globally enumerable public index.
 
@@ -988,7 +981,7 @@ The resulting architecture is:
 +----------------------------------------------------------------+
 |                Marketplace first-class records                 |
 |                                                                |
-|  MarketIntent   MarketProposal   MarketAgreement   MarketEvent |
+|  MarketIntent          MarketAgreement          MarketEvent |
 +-----------------------+----------------+-----------------------+
                         |
                         v
@@ -1049,7 +1042,7 @@ participant type                        != object-model privilege
 
 Milestone 2 is complete when:
 
-- the four first-class Marketplace record profiles are accepted as the initial universal set;
+- the three first-class Marketplace record profiles are accepted as the initial universal set;
 - embedded structures are distinguished from first-class records;
 - derived/application concepts are explicitly kept out of universal protocol state;
 - OLP identity, proofs, relationships, and lifecycle remain the evidence substrate;
