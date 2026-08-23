@@ -131,14 +131,13 @@ A concept MUST remain derived/application-specific when its meaning is an evalua
 
 ## 6. Marketplace object taxonomy
 
-Milestone 2 defines four core first-class Marketplace record profiles:
+Milestone 2 defines three core first-class Marketplace record profiles:
 
-```text
-MarketIntent
-MarketProposal
-MarketAgreement
-MarketEvent
-```
+    MarketIntent
+    MarketAgreement
+    MarketEvent
+
+Proposal, Offer, Request, Bid, Ask, and similar negotiation or direction forms are specializations/profiles of MarketIntent, not separate universal record categories.
 
 The following are reusable embedded structures by default:
 
@@ -470,7 +469,7 @@ Those properties require separate evidence and evaluation where relevant.
 
 ## 14. Reusable embedded structure: Terms
 
-**Terms** are the structured identity-bearing conditions proposed or assented to within a MarketIntent, MarketProposal, or MarketAgreement.
+**Terms** are the structured identity-bearing conditions proposed or assented to within a MarketIntent or MarketAgreement.
 
 Terms MAY include profile-defined components for:
 
@@ -535,7 +534,7 @@ Examples include commitments to:
 - maintain a service level; or
 - respond by a deadline.
 
-A Commitment SHOULD be embedded in the exact MarketProposal or MarketAgreement whose Terms give it meaning.
+A Commitment SHOULD be embedded in the exact MarketIntent (including a Proposal specialization) or MarketAgreement whose Terms give it meaning.
 
 Each Commitment SHOULD have a container-local stable identifier when later MarketEvents or fulfillment evidence need to identify one commitment within the containing immutable record.
 
@@ -926,7 +925,7 @@ Profiles SHOULD minimize unnecessary correlation identifiers and disclosure whil
 
 ## 33. Safety and policy boundary
 
-The ability to represent a MarketIntent, MarketProposal, MarketAgreement, MarketEvent, Action, Term, or Subject does not make it safe, lawful, ethical, authorized, or executable.
+The ability to represent a MarketIntent, MarketAgreement, MarketEvent, Action, Term, or Subject does not make it safe, lawful, ethical, authorized, or executable.
 
 Marketplace implementations MUST treat externally supplied Marketplace data as untrusted.
 
