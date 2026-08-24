@@ -1,0 +1,5597 @@
+{
+  "cases": [
+    {
+      "expected": {
+        "fingerprint": "oiiKikklQlImACwOaSHEJP137ktDBcWUZuGYDiI1EY0",
+        "query": {
+          "context": {},
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "target": {
+            "kind": "principal",
+            "value": "did:example:bob"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-principal-target-valid",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "1tcO9-wmXDradcYid6ZRugL0JftbSoZrmVLPF-778Sc",
+        "query": {
+          "context": {},
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "target": {
+            "kind": "record",
+            "value": "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-record-target-valid",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "record",
+          "value": "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "ZtzQMtojYSQ_agVSMi-Hyv_obBHOQ6Y9uzdfCnzPMgk",
+        "query": {
+          "context": {},
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "target": {
+            "kind": "subject-uri",
+            "value": "urn:example:trust:42"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-subject-target-valid",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "subject-uri",
+          "value": "urn:example:trust:42"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "Y1cterA2AuvTe6jF005hnNtLrzxEDc-4xXSxB_9scbw",
+        "query": {
+          "context": {
+            "https://example.test/context/risk-class": "medium"
+          },
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "target": {
+            "kind": "principal",
+            "value": "did:example:bob"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-context-bound",
+      "kind": "query",
+      "query": {
+        "context": {
+          "https://example.test/context/risk-class": "medium"
+        },
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "nM1bmYga2d0ziXB8kXNHl2NVbM3rq5rpebxjIJNwTc4",
+        "query": {
+          "context": {},
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "record_types": [
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          "sources_any": [
+            "https://peer-a.example/evidence"
+          ],
+          "target": {
+            "kind": "principal",
+            "value": "did:example:bob"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-source-scope-valid",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "sources_any": [
+          "https://peer-a.example/evidence"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "action",
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/actions/provide-service"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "terms",
+                      {
+                        "$map": []
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "parties",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "principal",
+                              "did:example:bob"
+                            ],
+                            [
+                              "role",
+                              "https://example.test/roles/provider"
+                            ]
+                          ]
+                        },
+                        {
+                          "$map": [
+                            [
+                              "principal",
+                              "did:example:alice"
+                            ],
+                            [
+                              "role",
+                              "https://example.test/roles/requester"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "actions",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "id",
+                              "https://example.test/actions/provide-service"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "terms",
+                      {
+                        "$map": []
+                      }
+                    ],
+                    [
+                      "commitments",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "id",
+                              "c1"
+                            ],
+                            [
+                              "party",
+                              {
+                                "$map": [
+                                  [
+                                    "principal",
+                                    "did:example:bob"
+                                  ],
+                                  [
+                                    "role",
+                                    "https://example.test/roles/provider"
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "action",
+                              {
+                                "$map": [
+                                  [
+                                    "id",
+                                    "https://example.test/actions/provide-service"
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "subjects",
+                              [
+                                {
+                                  "$map": [
+                                    [
+                                      "uri",
+                                      "urn:example:trust:42"
+                                    ]
+                                  ]
+                                }
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "duplicate_delivery_count": 0,
+        "excluded_reasons_by_record": {},
+        "excluded_record_ids": [],
+        "global_completeness": "UNKNOWN",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "selected_record_ids": [
+          "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g",
+          "r1_jevJk4emj6HIiz4Dlq8YW4WLMBa6ZetbMRUS9pwNtu0",
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g": [
+            "https://peer-a.example/evidence"
+          ],
+          "r1_jevJk4emj6HIiz4Dlq8YW4WLMBa6ZetbMRUS9pwNtu0": [
+            "https://peer-a.example/evidence"
+          ],
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg": [
+            "https://peer-b.example/evidence"
+          ],
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        }
+      },
+      "id": "selection-all-core-records",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "action",
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/actions/provide-service"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "terms",
+                      {
+                        "$map": []
+                      }
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "parties",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "principal",
+                              "did:example:bob"
+                            ],
+                            [
+                              "role",
+                              "https://example.test/roles/provider"
+                            ]
+                          ]
+                        },
+                        {
+                          "$map": [
+                            [
+                              "principal",
+                              "did:example:alice"
+                            ],
+                            [
+                              "role",
+                              "https://example.test/roles/requester"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "actions",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "id",
+                              "https://example.test/actions/provide-service"
+                            ]
+                          ]
+                        }
+                      ]
+                    ],
+                    [
+                      "terms",
+                      {
+                        "$map": []
+                      }
+                    ],
+                    [
+                      "commitments",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "id",
+                              "c1"
+                            ],
+                            [
+                              "party",
+                              {
+                                "$map": [
+                                  [
+                                    "principal",
+                                    "did:example:bob"
+                                  ],
+                                  [
+                                    "role",
+                                    "https://example.test/roles/provider"
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "action",
+                              {
+                                "$map": [
+                                  [
+                                    "id",
+                                    "https://example.test/actions/provide-service"
+                                  ]
+                                ]
+                              }
+                            ],
+                            [
+                              "subjects",
+                              [
+                                {
+                                  "$map": [
+                                    [
+                                      "uri",
+                                      "urn:example:trust:42"
+                                    ]
+                                  ]
+                                }
+                              ]
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "duplicate_delivery_count": 0,
+        "excluded_reasons_by_record": {
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg": [
+            "SOURCE_SCOPE_MISMATCH"
+          ]
+        },
+        "excluded_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+        ],
+        "global_completeness": "UNKNOWN",
+        "query_fingerprint": "nM1bmYga2d0ziXB8kXNHl2NVbM3rq5rpebxjIJNwTc4",
+        "selected_record_ids": [
+          "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g",
+          "r1_jevJk4emj6HIiz4Dlq8YW4WLMBa6ZetbMRUS9pwNtu0",
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g": [
+            "https://peer-a.example/evidence"
+          ],
+          "r1_jevJk4emj6HIiz4Dlq8YW4WLMBa6ZetbMRUS9pwNtu0": [
+            "https://peer-a.example/evidence"
+          ],
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        }
+      },
+      "id": "selection-source-filter-is-explicit",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "sources_any": [
+          "https://peer-a.example/evidence"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "duplicate_delivery_count": 1,
+        "excluded_reasons_by_record": {},
+        "excluded_record_ids": [],
+        "global_completeness": "UNKNOWN",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        }
+      },
+      "id": "selection-exact-replay-deduplicated",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "duplicate_delivery_count": 0,
+        "excluded_reasons_by_record": {},
+        "excluded_record_ids": [],
+        "global_completeness": "UNKNOWN",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence",
+            "https://peer-b.example/evidence"
+          ]
+        }
+      },
+      "id": "selection-preserves-multiple-source-provenance",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/profiled"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://example.test/profiles/trust-extra",
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "duplicate_delivery_count": 0,
+        "excluded_reasons_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "RECORD_SCOPE_MISMATCH"
+          ]
+        },
+        "excluded_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "global_completeness": "UNKNOWN",
+        "query_fingerprint": "3G6U00HAeKyaseeFbgWYDOWsKmfVTcuCbL53Fmp-zSk",
+        "selected_record_ids": [
+          "r1_6MEMK7oDvi7Hw2Jq41dGA_dQJq76ZYl14UIgAsylriE"
+        ],
+        "source_uris_by_record": {
+          "r1_6MEMK7oDvi7Hw2Jq41dGA_dQJq76ZYl14UIgAsylriE": [
+            "https://peer-a.example/evidence"
+          ]
+        }
+      },
+      "id": "selection-profile-filter",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "profiles_all": [
+          "https://example.test/profiles/trust-extra"
+        ],
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "Pj29v7El-R5lXokJY5ILMRCzC3xf4I951FoR4lgBMZQ",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_SUPPORT_WITHOUT_OPPOSITION_OR_UNCERTAINTY",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "_i8-QSbEOk-tVPB_gXIcZ3MzVb0dib7McJOeTVU6qNQ",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "EVIDENCE_SUFFICIENT_UNDER_METHOD",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-support-sufficient-under-method",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "ElEENK8gvfTWSM9xYrJ0yr4XBOj_tZvXhRl2c7hLACs",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_OPPOSITION_WITHOUT_SUPPORT_OR_UNCERTAINTY",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+        ],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "IlVb2Yp8-XHtmnjxMkKtDnb8wObeCF2dgEEWAl7kpc0",
+        "selected_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+        ],
+        "source_uris_by_record": {
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg": [
+            "https://peer-b.example/evidence"
+          ]
+        },
+        "status": "EVIDENCE_INSUFFICIENT_UNDER_METHOD",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_OPPOSES",
+            "disputed": false,
+            "domain_status": "OPPOSES",
+            "reasons": [],
+            "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-opposition-insufficient-under-method",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "OPPOSES",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "2-RWqHL19Fek3S7FAvOmVB5N94z8haHkf6sR8LDXGKo",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_SUPPORT_AND_OPPOSITION_PRESENT",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+        ],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "RDHXdUfXvsh6C-1cCpZxY3XJFRIhfnrxvt9OM2bwinM",
+        "selected_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg": [
+            "https://peer-b.example/evidence"
+          ],
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "CONFLICTING_EVIDENCE",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_OPPOSES",
+            "disputed": false,
+            "domain_status": "OPPOSES",
+            "reasons": [],
+            "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+          },
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-conflict-preserved",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        },
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "OPPOSES",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "V7MMK0VqJQzY-hS6GECudHAP7L_w00JqNMQyz_-vUos",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_DISPUTED_EVIDENCE_PRESENT",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "V00dn29AKR0pPogGG3wbQiVb8xEq9U-jOtHkx5kdYWM",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "DISPUTED_EVIDENCE",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": true,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-disputed-evidence-preserved",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": true,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "-S4jKb3-ur9PabsvB0UhNy6_6l_bhvOmLMDBjJNp6-s",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "SELECTED_EVIDENCE_REMAINS_UNRESOLVED",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "Ch9ByVheZ618OrhNkBjOhIC20usqnXu90CVuHkTGidg",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "UNRESOLVED",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "PROOF_UNKNOWN"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ]
+      },
+      "id": "evaluation-unknown-proof-indeterminate",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "UNKNOWN",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "-Tm4OlKP3_w8UM07jMx1F0tw0XUY3bP6Sr5bmdH1hSQ",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "final_rule": "NO_COUNTABLE_DIRECTIONAL_EVIDENCE",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "mxkbNrvW_HUmDvi5LXJcrHtykKy-PiRD1pC2zSr1PM8",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "EXCLUDED_UNUSABLE",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "PROOF_FAILED"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-failed-proof-not-positive",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "FAILED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "P5iVqbo-c6q2MKloLbfVbhmOeeT49bY2xKallFnZIHM",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "NO_COUNTABLE_DIRECTIONAL_EVIDENCE",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "TF6pofsaEynTbs78-fEWN5F10m55yox-_PO-qTyNazA",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_NEUTRAL",
+            "disputed": false,
+            "domain_status": "NEUTRAL",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-neutral-evidence-is-not-positive",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "NEUTRAL",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "9z4j2L3X7bIltKDTwsPE0ZeTIKmRT_vOAAbPEemDuOY",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "final_rule": "NO_COUNTABLE_DIRECTIONAL_EVIDENCE",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "_vJQ6gIptl-6XtL25i3ZmikZqfZo_DhS8Xu9BNX34EI",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "EXCLUDED_UNUSABLE",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "SOURCE_NOT_ACCEPTED"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-source-policy-does-not-become-trust",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": false
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "pM910xl3PkPrgImJkNMXR0ypbxme8kW-tZvAQqGWuCs",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "SELECTED_EVIDENCE_REMAINS_UNRESOLVED",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "NseP0IRQrgiVx8t03_l9jQ8CNy6Nfn7qLKycHJNQhTM",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "UNRESOLVED",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "CRITICAL_SEMANTICS_UNDERSTOOD_FALSE"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ]
+      },
+      "id": "evaluation-unknown-critical-semantics-indeterminate",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": false,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "tHbSHVHpFpywA0syITpH9rOyfT5EdrRooDJz9aQmwjo",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "SELECTED_EVIDENCE_REMAINS_UNRESOLVED",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "rbUXq5XMqXWBh-jLjYsm2QxrtlILmRvc_6YEsI-KSP0",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "UNRESOLVED",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "AUTHORITY_UNKNOWN"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ]
+      },
+      "id": "evaluation-authority-unknown-indeterminate",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "UNKNOWN",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "fM3yiIXnSd05AyYMOQVNZQJ2W9UTMHPq4BCSUqr_fH8",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "final_rule": "NO_COUNTABLE_DIRECTIONAL_EVIDENCE",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "nJggujCg3QKzBPFi3hLAX_HUJKBJ01ZE3EzygXhE-SU",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "EXCLUDED_UNUSABLE",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [
+              "LIFECYCLE_ADVERSE"
+            ],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-adverse-lifecycle-excluded",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ADVERSE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "8YTdBLrnkLhA3U8X0Yz-yiIdMyi_yW1HD7GPJeU15mI",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "NO_COUNTABLE_DIRECTIONAL_EVIDENCE",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "q0Wqc47EhFbSYaqBjPO_jzYioQJoWJg21mpKGOW15hM",
+        "selected_record_ids": [],
+        "source_uris_by_record": {},
+        "status": "INDETERMINATE",
+        "supporting_record_ids": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-empty-open-world-indeterminate",
+      "kind": "evaluation",
+      "observations": [],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "2-RWqHL19Fek3S7FAvOmVB5N94z8haHkf6sR8LDXGKo",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_SUPPORT_AND_OPPOSITION_PRESENT",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+        ],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "RDHXdUfXvsh6C-1cCpZxY3XJFRIhfnrxvt9OM2bwinM",
+        "selected_record_ids": [
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg": [
+            "https://peer-b.example/evidence"
+          ],
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "CONFLICTING_EVIDENCE",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_OPPOSES",
+            "disputed": false,
+            "domain_status": "OPPOSES",
+            "reasons": [],
+            "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg"
+          },
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-order-independent",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "OPPOSES",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "source_accepted": true
+        },
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 1,
+        "evaluation_input_fingerprint": "Pj29v7El-R5lXokJY5ILMRCzC3xf4I951FoR4lgBMZQ",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_SUPPORT_WITHOUT_OPPOSITION_OR_UNCERTAINTY",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "_i8-QSbEOk-tVPB_gXIcZ3MzVb0dib7McJOeTVU6qNQ",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence"
+          ]
+        },
+        "status": "EVIDENCE_SUFFICIENT_UNDER_METHOD",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-transport-replay-does-not-change-semantic-input",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected": {
+        "absence_is_negative_evidence": false,
+        "disputed_record_ids": [],
+        "duplicate_delivery_count": 0,
+        "evaluation_input_fingerprint": "RdD99FUS5msLaJlLmfkWO_VcQ84IQmajh_17gWRhbf8",
+        "excluded_by_query_reasons": {},
+        "excluded_by_query_record_ids": [],
+        "excluded_unusable_record_ids": [],
+        "final_rule": "COUNTABLE_SUPPORT_WITHOUT_OPPOSITION_OR_UNCERTAINTY",
+        "global_completeness": "UNKNOWN",
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "neutral_record_ids": [],
+        "numeric_confidence_standardized": false,
+        "opposing_record_ids": [],
+        "protocol_decision": false,
+        "purpose": "https://example.test/purpose/select-provider",
+        "query_fingerprint": "aUwk7iL24Spp4XMG6kqKm3vGIji7wZx_oKgW2PRmrr4",
+        "result_fingerprint": "B-s8ed8OSxXU98uwVhcKSw5LJs9JnmO_IlzUiVanK_k",
+        "selected_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "source_uris_by_record": {
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM": [
+            "https://peer-a.example/evidence",
+            "https://peer-b.example/evidence"
+          ]
+        },
+        "status": "EVIDENCE_SUFFICIENT_UNDER_METHOD",
+        "supporting_record_ids": [
+          "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "trace": [
+          {
+            "decision": "COUNT_SUPPORTS",
+            "disputed": false,
+            "domain_status": "SUPPORTS",
+            "reasons": [],
+            "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+          }
+        ],
+        "universal_trust_score": false,
+        "universal_truth": false,
+        "unresolved_record_ids": []
+      },
+      "id": "evaluation-multi-source-provenance-bound",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "Y7AwqOvYO6D1gYjEObZVHCBTYsoNsAk8NNObYiw3qPc",
+        "query": {
+          "context": {},
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/credit-risk",
+          "record_types": [
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          "target": {
+            "kind": "principal",
+            "value": "did:example:bob"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-purpose-changes-fingerprint",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/credit-risk",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected": {
+        "fingerprint": "0CdvXAxLCW7luurqjaiaJOrFZGtnedS3VPwl3XoA9lc",
+        "query": {
+          "context": {
+            "https://example.test/context/risk-class": "high"
+          },
+          "max_records": 32,
+          "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+          "purpose": "https://example.test/purpose/select-provider",
+          "record_types": [
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          "target": {
+            "kind": "principal",
+            "value": "did:example:bob"
+          },
+          "version": 1
+        }
+      },
+      "id": "query-context-changes-fingerprint",
+      "kind": "query",
+      "query": {
+        "context": {
+          "https://example.test/context/risk-class": "high"
+        },
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    }
+  ],
+  "format": "marketplace-trust-evaluation-v1-conformance-vectors",
+  "identities": {
+    "agreement": "r1_VJ2VdjzMJdGEIedNUZKNkFgaxa0CcIGPrxL2Wj2Q8_g",
+    "intent": "r1_jevJk4emj6HIiz4Dlq8YW4WLMBa6ZetbMRUS9pwNtu0",
+    "negative_event": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+    "positive_event": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM"
+  },
+  "negative_cases": [
+    {
+      "expected_error": "INVALID_EVIDENCE_QUERY",
+      "id": "query-boolean-version",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": true
+      }
+    },
+    {
+      "expected_error": "INVALID_EVIDENCE_QUERY",
+      "id": "query-future-version",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 2
+      }
+    },
+    {
+      "expected_error": "INVALID_URI",
+      "id": "query-non-uri-method",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "core",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_URI",
+      "id": "query-non-uri-purpose",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "trust",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_RESOURCE_LIMIT",
+      "id": "query-max-records-zero",
+      "kind": "query",
+      "query": {
+        "max_records": 0,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_RESOURCE_LIMIT",
+      "id": "query-max-records-ceiling",
+      "kind": "query",
+      "query": {
+        "max_records": 4097,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_RESOURCE_LIMIT",
+      "id": "query-max-records-boolean",
+      "kind": "query",
+      "query": {
+        "max_records": true,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_EVIDENCE_QUERY",
+      "id": "query-extra-field",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "score": 0.9,
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_EVALUATION_TARGET",
+      "id": "query-invalid-target-kind",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "user",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_RECORD_ID",
+      "id": "query-invalid-record-target",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "record",
+          "value": "r1_bad"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "UNSUPPORTED_RECORD_TYPE",
+      "id": "query-unsupported-record-type",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://example.test/record/other"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "NONCANONICAL_SET",
+      "id": "query-unsorted-source-set",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "sources_any": [
+          "https://peer-b.example/evidence",
+          "https://peer-a.example/evidence"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_URI",
+      "id": "query-invalid-context-key",
+      "kind": "query",
+      "query": {
+        "context": {
+          "not-a-uri": "x"
+        },
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "UNSUPPORTED_EVALUATION_METHOD",
+      "id": "evaluation-unsupported-method",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://example.test/trust/method/other",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INCOMPLETE_EVIDENCE_OBSERVATIONS",
+      "id": "evaluation-missing-observation",
+      "kind": "evaluation",
+      "observations": [],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "OBSERVATION_OUTSIDE_SELECTED_EVIDENCE",
+      "id": "evaluation-observation-outside-selection",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "OPPOSES",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_mvhNMvsf6k6StxfcPSjKxeeZZZCQY55aOChpgRPp_Hg",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "DUPLICATE_EVIDENCE_OBSERVATION",
+      "id": "evaluation-duplicate-observation",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        },
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_OBSERVATION_STATUS",
+      "id": "observation-invalid-proof-status",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "TRUSTED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_EVIDENCE_OBSERVATION",
+      "id": "observation-inexact-boolean",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": 1
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        },
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:alice"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/requester"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-negative-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-b.example/evidence"
+        }
+      ],
+      "expected_error": "RESOURCE_LIMIT_EXCEEDED",
+      "id": "selection-resource-limit",
+      "kind": "selection",
+      "query": {
+        "max_records": 1,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "not-a-uri"
+        }
+      ],
+      "expected_error": "INVALID_URI",
+      "id": "selection-invalid-source-uri",
+      "kind": "selection",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "EMPTY_SET",
+      "id": "query-empty-record-types",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "NONCANONICAL_SET",
+      "id": "query-duplicate-profile-set",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "profiles_all": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+        ],
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "NONCANONICAL_SET",
+      "id": "query-duplicate-source-set",
+      "kind": "query",
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "sources_any": [
+          "https://peer-a.example/evidence",
+          "https://peer-a.example/evidence"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_OBSERVATION_STATUS",
+      "id": "observation-invalid-identity_status",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "TRUSTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_OBSERVATION_STATUS",
+      "id": "observation-invalid-authority_status",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "TRUSTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_OBSERVATION_STATUS",
+      "id": "observation-invalid-lifecycle_status",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "SUPPORTS",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "TRUSTED",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "candidates": [
+        {
+          "record": {
+            "$map": [
+              [
+                "envelope_version",
+                1
+              ],
+              [
+                "type",
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event"
+              ],
+              [
+                "content",
+                {
+                  "$map": [
+                    [
+                      "version",
+                      1
+                    ],
+                    [
+                      "issuer",
+                      {
+                        "$map": [
+                          [
+                            "principal",
+                            "did:example:bob"
+                          ],
+                          [
+                            "role",
+                            "https://example.test/roles/provider"
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      "event",
+                      "https://open-trust-layer.github.io/marketplace/semantics/v1/event/trust-positive-example"
+                    ],
+                    [
+                      "subjects",
+                      [
+                        {
+                          "$map": [
+                            [
+                              "uri",
+                              "urn:example:trust:42"
+                            ]
+                          ]
+                        }
+                      ]
+                    ]
+                  ]
+                }
+              ],
+              [
+                "profiles",
+                [
+                  "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+                ]
+              ]
+            ]
+          },
+          "source": "https://peer-a.example/evidence"
+        }
+      ],
+      "expected_error": "INVALID_OBSERVATION_STATUS",
+      "id": "observation-invalid-domain_status",
+      "kind": "evaluation",
+      "observations": [
+        {
+          "authority_status": "ACCEPTED",
+          "critical_understood": true,
+          "disputed": false,
+          "domain_status": "TRUSTED",
+          "identity_status": "ACCEPTED",
+          "lifecycle_status": "ACCEPTABLE",
+          "proof_status": "VERIFIED",
+          "record_id": "r1_vWtwPEAdCsNim1gDqP1_fXmWw-Oz_yBdXT1PFLAN6RM",
+          "source_accepted": true
+        }
+      ],
+      "query": {
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_EVALUATION_CONTEXT",
+      "id": "query-context-resource-limit",
+      "kind": "query",
+      "query": {
+        "context": {
+          "https://example.test/context/000": 0,
+          "https://example.test/context/001": 1,
+          "https://example.test/context/002": 2,
+          "https://example.test/context/003": 3,
+          "https://example.test/context/004": 4,
+          "https://example.test/context/005": 5,
+          "https://example.test/context/006": 6,
+          "https://example.test/context/007": 7,
+          "https://example.test/context/008": 8,
+          "https://example.test/context/009": 9,
+          "https://example.test/context/010": 10,
+          "https://example.test/context/011": 11,
+          "https://example.test/context/012": 12,
+          "https://example.test/context/013": 13,
+          "https://example.test/context/014": 14,
+          "https://example.test/context/015": 15,
+          "https://example.test/context/016": 16,
+          "https://example.test/context/017": 17,
+          "https://example.test/context/018": 18,
+          "https://example.test/context/019": 19,
+          "https://example.test/context/020": 20,
+          "https://example.test/context/021": 21,
+          "https://example.test/context/022": 22,
+          "https://example.test/context/023": 23,
+          "https://example.test/context/024": 24,
+          "https://example.test/context/025": 25,
+          "https://example.test/context/026": 26,
+          "https://example.test/context/027": 27,
+          "https://example.test/context/028": 28,
+          "https://example.test/context/029": 29,
+          "https://example.test/context/030": 30,
+          "https://example.test/context/031": 31,
+          "https://example.test/context/032": 32,
+          "https://example.test/context/033": 33,
+          "https://example.test/context/034": 34,
+          "https://example.test/context/035": 35,
+          "https://example.test/context/036": 36,
+          "https://example.test/context/037": 37,
+          "https://example.test/context/038": 38,
+          "https://example.test/context/039": 39,
+          "https://example.test/context/040": 40,
+          "https://example.test/context/041": 41,
+          "https://example.test/context/042": 42,
+          "https://example.test/context/043": 43,
+          "https://example.test/context/044": 44,
+          "https://example.test/context/045": 45,
+          "https://example.test/context/046": 46,
+          "https://example.test/context/047": 47,
+          "https://example.test/context/048": 48,
+          "https://example.test/context/049": 49,
+          "https://example.test/context/050": 50,
+          "https://example.test/context/051": 51,
+          "https://example.test/context/052": 52,
+          "https://example.test/context/053": 53,
+          "https://example.test/context/054": 54,
+          "https://example.test/context/055": 55,
+          "https://example.test/context/056": 56,
+          "https://example.test/context/057": 57,
+          "https://example.test/context/058": 58,
+          "https://example.test/context/059": 59,
+          "https://example.test/context/060": 60,
+          "https://example.test/context/061": 61,
+          "https://example.test/context/062": 62,
+          "https://example.test/context/063": 63,
+          "https://example.test/context/064": 64,
+          "https://example.test/context/065": 65,
+          "https://example.test/context/066": 66,
+          "https://example.test/context/067": 67,
+          "https://example.test/context/068": 68,
+          "https://example.test/context/069": 69,
+          "https://example.test/context/070": 70,
+          "https://example.test/context/071": 71,
+          "https://example.test/context/072": 72,
+          "https://example.test/context/073": 73,
+          "https://example.test/context/074": 74,
+          "https://example.test/context/075": 75,
+          "https://example.test/context/076": 76,
+          "https://example.test/context/077": 77,
+          "https://example.test/context/078": 78,
+          "https://example.test/context/079": 79,
+          "https://example.test/context/080": 80,
+          "https://example.test/context/081": 81,
+          "https://example.test/context/082": 82,
+          "https://example.test/context/083": 83,
+          "https://example.test/context/084": 84,
+          "https://example.test/context/085": 85,
+          "https://example.test/context/086": 86,
+          "https://example.test/context/087": 87,
+          "https://example.test/context/088": 88,
+          "https://example.test/context/089": 89,
+          "https://example.test/context/090": 90,
+          "https://example.test/context/091": 91,
+          "https://example.test/context/092": 92,
+          "https://example.test/context/093": 93,
+          "https://example.test/context/094": 94,
+          "https://example.test/context/095": 95,
+          "https://example.test/context/096": 96,
+          "https://example.test/context/097": 97,
+          "https://example.test/context/098": 98,
+          "https://example.test/context/099": 99,
+          "https://example.test/context/100": 100,
+          "https://example.test/context/101": 101,
+          "https://example.test/context/102": 102,
+          "https://example.test/context/103": 103,
+          "https://example.test/context/104": 104,
+          "https://example.test/context/105": 105,
+          "https://example.test/context/106": 106,
+          "https://example.test/context/107": 107,
+          "https://example.test/context/108": 108,
+          "https://example.test/context/109": 109,
+          "https://example.test/context/110": 110,
+          "https://example.test/context/111": 111,
+          "https://example.test/context/112": 112,
+          "https://example.test/context/113": 113,
+          "https://example.test/context/114": 114,
+          "https://example.test/context/115": 115,
+          "https://example.test/context/116": 116,
+          "https://example.test/context/117": 117,
+          "https://example.test/context/118": 118,
+          "https://example.test/context/119": 119,
+          "https://example.test/context/120": 120,
+          "https://example.test/context/121": 121,
+          "https://example.test/context/122": 122,
+          "https://example.test/context/123": 123,
+          "https://example.test/context/124": 124,
+          "https://example.test/context/125": 125,
+          "https://example.test/context/126": 126,
+          "https://example.test/context/127": 127,
+          "https://example.test/context/128": 128
+        },
+        "max_records": 32,
+        "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/trust-evaluation/method/core-evidence-v1",
+        "purpose": "https://example.test/purpose/select-provider",
+        "target": {
+          "kind": "principal",
+          "value": "did:example:bob"
+        },
+        "version": 1
+      }
+    }
+  ],
+  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c"
+}
