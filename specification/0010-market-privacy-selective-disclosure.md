@@ -157,6 +157,7 @@ Different valid disclosure sets MAY satisfy the same task under different policy
 M10 preserves OLP 0010 privacy warnings unchanged.
 
 A privacy warning is diagnostic evidence about disclosure risk. It MUST NOT automatically invalidate otherwise conforming evidence or convert the disclosure result into a trust, legal, moderation, or authorization decision.
+
 ## 15. Marketplace privacy warnings
 
 M10 adds deterministic Marketplace-specific warning codes for linkability or sensitive workflow disclosure that OLP core cannot infer from Marketplace semantics alone.
