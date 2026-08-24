@@ -25,17 +25,30 @@ Generate and validate with:
 python tools/generate_lifecycle_vectors.py
 python tools/validate_lifecycle_vectors.py
 ```
-
 The formation vectors use deterministic Ed25519 keys only for conformance reproducibility and validate real detached OLP proofs over the exact Agreement records.
 
-Both Milestone 3 and Milestone 4 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 5 — Matching & Discovery
+
+`vectors/matching-discovery-v1.json` contains 31 positive/evaluation and negative vectors covering exact discovery filters, zero-result/open-world behavior, verified index projections, method-relative constraint aggregation, ranking plurality, federated deduplication/provenance, resource limits, and cursor binding.
+
+Generate and validate with:
+
+```text
+python tools/generate_matching_vectors.py
+python tools/validate_matching_vectors.py
+```
+
+The matching/discovery helpers define deterministic processing boundaries only. They do not create a universal Match, ranking, recommendation, global index, or Marketplace wire format.
+
+All Milestone 3–5 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
 ```
 
 A future Marketplace release MUST bind to a released OLP compatibility target rather than this draft source pin.
-
 ## Acceptance workflow
 
-A milestone acceptance pass regenerates vectors, requires byte-for-byte equality with the committed files, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, and runs `git diff --check` before merge.
+A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
+
+Milestone 5 acceptance additionally requires all earlier Marketplace vector suites to remain green.
