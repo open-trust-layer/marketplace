@@ -53,7 +53,20 @@ python tools/validate_fulfillment_vectors.py
 
 The fulfillment helper defines deterministic method-relative processing boundaries only. It does not create universal fulfillment truth, mutable Agreement state, settlement semantics, or dispute adjudication.
 
-All Milestone 3–6 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 7 — Settlement Interfaces & Economic Exchange
+
+`vectors/settlement-interfaces-v1.json` contains 57 positive/evaluation and negative vectors covering exact Commitment targeting, rail-neutral settlement outcomes, attempt/completion/failure, reversal/refund causality, escrow hold/release, asset transfer, preference constraints, external rail verification, multi-rail preservation, disputes, critical semantics, deduplication, and resource limits.
+
+Generate and validate with:
+
+```text
+python tools/generate_settlement_vectors.py
+python tools/validate_settlement_vectors.py
+```
+
+The settlement helper evaluates evidence only. It does not execute payments, custody assets, establish ownership/title, define a mandatory rail, perform cross-rail arithmetic, or establish universal legal finality.
+
+All Milestone 3–7 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -64,4 +77,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 6 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 7 acceptance additionally requires all earlier Marketplace vector suites to remain green.

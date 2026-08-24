@@ -11,6 +11,7 @@
 **Lifecycle status:** Milestone 4 — Lifecycle & Negotiation Semantics — COMPLETE
 **Matching/discovery status:** Milestone 5 — Matching & Discovery Semantics — COMPLETE
 **Fulfillment/performance status:** Milestone 6 — Fulfillment & Performance Semantics — COMPLETE
+**Settlement status:** Milestone 7 — Settlement Interfaces & Economic Exchange Semantics — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -143,6 +144,20 @@ conflict                   != canonical winner
 
 Every core fulfillment event targets an exact `{Agreement RecordRef, Commitment id}` pair. Positive fulfillment remains method-relative and requires accepted evidence for the selected method; missing evidence remains incomplete rather than automatic non-performance. The Milestone 6 executable set contains 47 positive/evaluation and negative vectors.
 
+### Settlement interfaces and economic exchange
+
+Milestone 7 defines rail-neutral settlement attempts, completion/failure, reversals/refunds, escrow hold/release, and asset-transfer evidence as ordinary immutable `MarketEvent` records targeted to exact Agreement Commitments.
+
+```text
+settlement evidence         != objective transfer
+settlement                  != fulfillment
+asset-transfer evidence     != ownership or legal title
+rail verification           != legal finality
+multi-rail evidence         != canonical rail
+```
+
+Attribution, authority, and rail verification are separate relying-party inputs. `SettlementPreferenceV1` constrains rail admissibility only where its semantics are understood; parameterized requirements are never guessed. Core preserves multi-rail evidence without exchange-rate invention or cross-rail arithmetic. The Milestone 7 executable set contains 57 positive/evaluation and negative vectors.
+
 ---
 
 ## What this project is
@@ -197,6 +212,8 @@ discovery                   != endorsement
 intent                      != agreement
 agreement                   != legal enforceability
 agreement                   != settlement
+settlement evidence          != objective transfer
+rail reference               != universal transaction proof
 payment                     != fulfillment
 performance evidence        != fulfillment truth
 delivery                    != acceptance
@@ -256,10 +273,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0004-market-lifecycle-negotiation.md`](specification/0004-market-lifecycle-negotiation.md) - additive negotiation history, withdrawal/expiration, formation evidence, amendments, concurrency, and lifecycle boundaries.
 - [`specification/0005-market-matching-discovery.md`](specification/0005-market-matching-discovery.md) - source-scoped discovery, matching aggregation, ranking plurality, federation, and cursor boundaries.
 - [`specification/0006-market-fulfillment-performance.md`](specification/0006-market-fulfillment-performance.md) - commitment-targeted performance, delivery, inspection, acceptance, disputes, and method-relative fulfillment.
+- [`specification/0007-market-settlement-interfaces.md`](specification/0007-market-settlement-interfaces.md) - rail-neutral settlement evidence, reversals/refunds, escrow, asset transfer, preference constraints, and finality boundaries.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define settlement interfaces, federation transports, privacy profiles, safety/policy boundaries, dispute-resolution profiles, and further conformance incrementally.
+Future specifications will define federation transports, privacy profiles, safety/policy boundaries, dispute-resolution profiles, and further conformance incrementally.
 
 ---
 
