@@ -45,6 +45,7 @@ This is a draft reproducibility pin, not a fork of OLP.
 10. Different conforming matching or ranking methods MAY disagree without creating a protocol conflict.
 11. Index metadata is derived and untrusted until checked against the referenced immutable record.
 12. Network discovery MUST remain explicit, policy-controlled, bounded, and privacy-aware.
+
 ## 5. Marketplace discovery service type
 
 Marketplace v1 defines one service-type URI for advertising a market-discovery endpoint through the existing OLP discovery-hint mechanism:
@@ -106,6 +107,7 @@ When the referenced record is available, a consumer MUST recompute its OLP Recor
 A mismatching index projection is not repaired by overwriting the immutable record. The projection is stale, corrupt, malicious, or otherwise unsuitable for that use.
 
 Index-only metadata such as popularity counters, ranking scores, moderation state, click counts, or source-local availability MAY exist in applications, but MUST NOT be confused with authenticated `MarketIntentV1` fields.
+
 ## 8. `DiscoveryQueryV1`
 
 The core discovery query is a processing input, not an OLP Record and not a Marketplace evidence object.
@@ -127,6 +129,7 @@ The four optional arrays are non-empty set-like arrays when present. They MUST b
 Core-v1 deliberately standardizes only exact filters over authenticated Intent fields. Full-text search, vector similarity, geospatial search, category expansion, ontology inference, price-range interpretation, and domain-specific semantic search remain profile- or implementation-defined.
 
 Unknown core query fields MUST fail rather than be silently ignored.
+
 ## 9. Query fingerprints
 
 A processor MAY bind source-local result pages, caches, cursors, or audit records to a normalized query fingerprint.
@@ -148,6 +151,7 @@ This fingerprint identifies the exact normalized processing query used by the co
 A conforming discovery evaluator SHOULD expose at least the service type, source URI, query fingerprint, exact result Record identities, result count, source-relative completeness, freshness, and whether nonconforming candidates were ignored.
 
 Result records in the executable profile are ordered lexically by canonical OLP `r1_` presentation solely to make serialization and vectors reproducible. That ordering MUST NOT be described as rank, relevance, preference, quality, trust, recency, value, or protocol priority.
+
 ## 11. Completeness, freshness, and absence
 
 Core-v1 source-relative completeness values are:
@@ -173,6 +177,7 @@ These values describe the discovery processor's declared source context. `COMPLE
 Marketplace v1 defines global completeness as unknown. A discovery source MUST NOT claim that its result set proves the global absence of another Intent, Subject, participant, listing, or opportunity.
 
 Zero results therefore mean only that the evaluated source returned no conforming matches under the declared query and processing context.
+
 ## 12. Matching methods
 
 Marketplace v1 does not define one universal compatibility algorithm.
@@ -195,6 +200,7 @@ UNSUPPORTED
 A matching implementation MUST retain enough provenance to identify the exact left and right Record identities and the matching method used.
 
 Before returning a positive compatibility conclusion, the processor/method MUST understand every Marketplace content-extension URI marked `critical` on either selected Intent. Unknown critical semantics force `INDETERMINATE`; they MUST NOT be ignored merely because structural validation or other constraints succeed.
+
 ## 13. Constraint observations
 
 A matching method MAY produce one observation for an exact `ConstraintV1` embedded in either selected Intent.
@@ -239,6 +245,7 @@ The conclusion is `INDETERMINATE` when the base status is `UNKNOWN` or `UNSUPPOR
 Only when the base status is `SATISFIED`, method inputs are complete for the declared method, and every mandatory constraint is satisfied may the core aggregation return `COMPATIBLE_UNDER_METHOD`.
 
 Even then, the result remains method-relative. It neither creates an Agreement nor proves legal, operational, economic, safety, authority, or fulfillment compatibility.
+
 ## 16. Ranking and recommendation
 
 A ranking is an ordered evaluator view over exact RecordRefs under an identified method. The method MUST be an absolute URI.
@@ -279,6 +286,7 @@ normalized query fingerprint
 A cursor MUST NOT be replayed against another source, method, or normalized query. Core-v1 limits the opaque cursor value to 1..4096 bytes.
 
 Cursor validity does not prove that the underlying source is complete, stable, fresh, trustworthy, or unchanged between pages.
+
 ## 19. Resolution before consequential use
 
 A search result that names a Record identity is still only a discovery result until the referenced record is obtained and its OLP Record Identity is recomputed.
@@ -296,6 +304,7 @@ Discovery freshness describes the source view or source material under its decla
 A `FRESH` discovery result may still refer to an Intent that has relevant withdrawal, expiration, supersession, dispute, or other lifecycle evidence outside the source view.
 
 Conversely, a `STALE` or `UNKNOWN` discovery result is not automatically invalid evidence. Applications decide whether to re-resolve or refresh before consequential action.
+
 ## 21. Privacy
 
 Discovery queries can reveal economic interests, subjects, counterparties, locations, actions, profiles, or private negotiation intent.
@@ -391,6 +400,7 @@ federated frequency            != truth or relevance
 cursor validity                != source trustworthiness
 policy filtering               != protocol invalidity
 ```
+
 ## 28. Cross-scale examples
 
 A software-bug marketplace may discover Intents by an exact action URI and Subject URI, then use a method that understands repository/test/reward profile semantics. A mandatory licensing constraint that the method cannot evaluate keeps the match indeterminate.

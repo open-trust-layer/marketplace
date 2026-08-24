@@ -56,6 +56,8 @@ class MarketplaceDiscoveryError(ValueError):
 
 def fail(code: str, message: str) -> None:
     raise MarketplaceDiscoveryError(code, message)
+
+
 def _require_uri(value: Any, path: str) -> str:
     if not isinstance(value, str) or not is_absolute_uri(value):
         fail("INVALID_URI", f"{path} MUST be an absolute URI")
@@ -82,6 +84,8 @@ def _sorted_unique_uri_values(value: Any, path: str) -> tuple[str, ...]:
     if items != expected:
         fail("NONCANONICAL_QUERY_SET", f"{path} MUST be unique and UTF-8 sorted")
     return items
+
+
 def validate_discovery_query(query: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(query, Mapping):
         fail("INVALID_QUERY", "DiscoveryQueryV1 MUST be a map")
@@ -110,6 +114,8 @@ def _subject_uris(record: RecordV1) -> set[str]:
         for item in record.content.get("subjects", ())
         if isinstance(item, Mapping) and isinstance(item.get("uri"), str)
     }
+
+
 def _matches_query(record: RecordV1, query: Mapping[str, Any]) -> bool:
     if record.type != TYPE_INTENT:
         return False
