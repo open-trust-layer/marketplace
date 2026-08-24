@@ -79,7 +79,20 @@ python tools/validate_federation_vectors.py
 
 The federation helper profiles OLP transport/capability primitives. It does not create a global Marketplace server, global index, canonical peer graph, deletion-by-absence semantics, exactly-once transport, or a second Marketplace evidence envelope.
 
-All Milestone 3–8 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 9 — Trust Evaluation & Evidence Query Semantics
+
+`vectors/trust-evaluation-v1.json` contains 56 positive/evaluation and negative/adversarial vectors covering query targets, purpose/context/source/profile scope, exact Record-Identity selection, provenance, exclusion reasons, replay deduplication, proof/identity/authority/lifecycle/domain observation separation, method-relative support/opposition/conflict/dispute/indeterminate results, unknown critical semantics, explainable traces, deterministic fingerprints, and resource/error boundaries.
+
+Generate and validate with:
+
+```text
+python tools/generate_trust_evaluation_vectors.py
+python tools/validate_trust_evaluation_vectors.py
+```
+
+The trust-evaluation helper standardizes one reproducible reference method only. It does not create a universal trust score, reputation object, ranking, recommendation, numeric confidence standard, source authority, or protocol truth.
+
+All Milestone 3–9 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -90,4 +103,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 8 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 9 acceptance additionally requires all earlier Marketplace vector suites to remain green.
