@@ -13,6 +13,8 @@
 **Fulfillment/performance status:** Milestone 6 — Fulfillment & Performance Semantics — COMPLETE
 **Settlement status:** Milestone 7 — Settlement Interfaces & Economic Exchange Semantics — COMPLETE
 **Federation/interoperability status:** Milestone 8 — Federation Transport & Marketplace Interoperability APIs — COMPLETE
+**Trust evaluation status:** Milestone 9 — Trust Evaluation & Evidence Query Semantics — COMPLETE
+**Privacy/disclosure status:** Milestone 10 — Privacy, Selective Disclosure & Data Minimization Profiles — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -186,6 +188,19 @@ missing evidence             != negative evidence
 ```
 
 The reference method preserves proof, identity, authority, lifecycle, source policy, critical-semantics and domain-direction observations as separate dimensions. Results remain `SUFFICIENT/INSUFFICIENT UNDER METHOD`, conflicting, disputed, or indeterminate, with exact Record identities, provenance, exclusion reasons and explainable traces. The Milestone 9 executable set contains 56 positive/evaluation and negative/adversarial vectors.
+### Privacy, selective disclosure, and data minimization
+
+Milestone 10 profiles OLP 0010 for Marketplace workflows instead of creating a second privacy envelope or redactable Marketplace record format. Disclosure remains whole-object and graph-subset selection over exact immutable evidence, with explicit task purpose and dependency closure.
+
+```text
+selective disclosure       != field deletion
+withheld evidence           != nonexistent evidence
+task-scoped minimized       != globally minimal
+privacy warning             != invalid evidence
+privacy planning            != authorization / consent / trust
+```
+
+The core profile recognizes discovery, negotiation, fulfillment-verification, settlement-verification, federation-exchange, and trust-evaluation tasks. It preserves OLP disclosure results, adds deterministic Marketplace correlation warnings, requires explicit network/privacy context, and bounds roots, inventories, resources, capabilities, dependencies, and warning lists. The Milestone 10 executable set contains 52 positive/evaluation and negative/adversarial vectors.
 
 ---
 
@@ -257,6 +272,9 @@ transport serialization     != Record Identity
 source completeness         != global completeness
 sync absence                != deletion/retirement
 receiver policy             != protocol validity
+selective disclosure        != field deletion
+withheld evidence            != nonexistent evidence
+privacy warning              != protocol invalidity
 ```
 
 These separations are constraints, not merely documentation language.
@@ -309,10 +327,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0007-market-settlement-interfaces.md`](specification/0007-market-settlement-interfaces.md) - rail-neutral settlement evidence, reversals/refunds, escrow, asset transfer, preference constraints, and finality boundaries.
 - [`specification/0008-market-federation-transport.md`](specification/0008-market-federation-transport.md) - OLP-based federation capabilities, snapshot/sync exchange, cursor/replay/idempotency boundaries, source provenance, and receiver outcomes.
 - [`specification/0009-market-trust-evaluation.md`](specification/0009-market-trust-evaluation.md) - method-relative evidence queries, exact provenance, observation dimensions, explainable traces, conflict/dispute preservation, and non-universal trust evaluation.
+- [`specification/0010-market-privacy-selective-disclosure.md`](specification/0010-market-privacy-selective-disclosure.md) - OLP-based Marketplace privacy tasks, selective disclosure, correlation warnings, open-world withholding, and bounded data minimization.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define privacy profiles, safety/policy boundaries, dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.
+Future specifications will define safety/policy boundaries, dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.
 
 ---
 

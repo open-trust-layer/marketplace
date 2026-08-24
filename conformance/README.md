@@ -92,7 +92,20 @@ python tools/validate_trust_evaluation_vectors.py
 
 The trust-evaluation helper standardizes one reproducible reference method only. It does not create a universal trust score, reputation object, ranking, recommendation, numeric confidence standard, source authority, or protocol truth.
 
-All Milestone 3–9 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 10 — Privacy, Selective Disclosure & Data Minimization Profiles
+
+`vectors/privacy-selective-disclosure-v1.json` contains 52 positive/evaluation and negative/adversarial vectors covering OLP-based task-scoped disclosure, exact Marketplace roots, explicit dependency closure, open-world withholding, correlation warnings, offline/online tradeoffs, native selective-disclosure presentations, explicit network context, and top-level/nested resource limits.
+
+Generate and validate with:
+
+```text
+python tools/generate_privacy_vectors.py
+python tools/validate_privacy_vectors.py
+```
+
+The privacy helper profiles OLP 0010. It does not create a second privacy envelope, redact immutable Marketplace records, synthesize undisclosed external claims, establish global linkability, evaluate authorization/consent/trust, or permit hidden network fallback.
+
+All Milestone 3–10 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -103,4 +116,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 9 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 10 acceptance additionally requires all earlier Marketplace vector suites to remain green.
