@@ -1,0 +1,5604 @@
+{
+  "format": "marketplace-matching-discovery-v1-conformance-vectors",
+  "marketplace_semantic_base": "https://open-trust-layer.github.io/marketplace/semantics/v1",
+  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+  "note": "record/ref/value fields use OLP implementation-neutral conformance projection; this JSON file is not a Marketplace wire format",
+  "record_identities": {
+    "request": "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw",
+    "offer_bob": "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+    "offer_carol": "r1_HE5VVa1QUEoJbBcyCp3wL_AktDCacVj6QJEZaBGfv6U",
+    "delivery": "r1_vqF-HZM0qlVH2CdvivZk9_jASV8NNVD3I8mYkHw3EB8"
+  },
+  "cases": [
+    {
+      "id": "discovery-exact-action-filter",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:carol"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:43"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:parcel:9"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/deliver"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "action_ids_any",
+            [
+              "https://example.test/actions/fix"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+      "freshness": "FRESH",
+      "expected": {
+        "result_count": 3,
+        "nonconforming_candidates_ignored": 1,
+        "global_completeness": "UNKNOWN",
+        "absence_is_negative_evidence": false,
+        "ordering": "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+      }
+    },
+    {
+      "id": "discovery-exact-subject-filter",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:carol"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:43"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "subject_uris_any",
+            [
+              "urn:example:software-issue:42"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+      "freshness": "FRESH",
+      "expected": {
+        "result_count": 2,
+        "global_completeness": "UNKNOWN",
+        "absence_is_negative_evidence": false
+      }
+    },
+    {
+      "id": "discovery-exact-issuer-filter",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:carol"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:43"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:parcel:9"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/deliver"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "issuer_principals_any",
+            [
+              "did:example:bob"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+      "freshness": "FRESH",
+      "expected": {
+        "result_count": 2,
+        "nonconforming_candidates_ignored": 1,
+        "global_completeness": "UNKNOWN"
+      }
+    },
+    {
+      "id": "discovery-zero-results-not-negative-evidence",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "issuer_principals_any",
+            [
+              "did:example:nobody"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "PARTIAL_SOURCE",
+      "freshness": "UNKNOWN",
+      "expected": {
+        "result_count": 0,
+        "completeness": "PARTIAL_SOURCE",
+        "global_completeness": "UNKNOWN",
+        "absence_is_negative_evidence": false
+      }
+    },
+    {
+      "id": "federation-deduplicates-record-identity",
+      "kind": "federation",
+      "views": [
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-a.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+                "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+              ]
+            ],
+            [
+              "result_count",
+              2
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              0
+            ],
+            [
+              "completeness",
+              "COMPLETE_FOR_DECLARED_SOURCE"
+            ],
+            [
+              "freshness",
+              "FRESH"
+            ],
+            [
+              "global_completeness",
+              "UNKNOWN"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-b.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A"
+              ]
+            ],
+            [
+              "result_count",
+              1
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              0
+            ],
+            [
+              "completeness",
+              "PARTIAL_SOURCE"
+            ],
+            [
+              "freshness",
+              "UNKNOWN"
+            ],
+            [
+              "global_completeness",
+              "UNKNOWN"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        }
+      ],
+      "expected": {
+        "result_count": 2,
+        "global_completeness": "UNKNOWN",
+        "canonical_ranking": false,
+        "absence_is_negative_evidence": false
+      }
+    },
+    {
+      "id": "verified-index-entry",
+      "kind": "index",
+      "entry": {
+        "$map": [
+          [
+            "record_ref",
+            [
+              0,
+              {
+                "$bytes": "c014badaa3709fadd14fe59139278739133a51f2d2b8b354546b1d50886033d0"
+              }
+            ]
+          ],
+          [
+            "issuer",
+            "did:example:bob"
+          ],
+          [
+            "action",
+            "https://example.test/actions/fix"
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected": {
+        "record": "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+        "status": "VERIFIED_AGAINST_RECORD",
+        "index_metadata_is_authoritative": false
+      }
+    },
+    {
+      "id": "match-critical-extension-unsupported",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "extensions",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/extensions/matching-context",
+                        "required-for-matching"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "critical",
+                  [
+                    "https://example.test/extensions/matching-context"
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "understood_critical": [],
+      "expected": {
+        "unsupported_critical_semantics": [
+          "https://example.test/extensions/matching-context"
+        ],
+        "conclusion": "INDETERMINATE",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-critical-extension-understood",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "extensions",
+                  {
+                    "$map": [
+                      [
+                        "https://example.test/extensions/matching-context",
+                        "required-for-matching"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "critical",
+                  [
+                    "https://example.test/extensions/matching-context"
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "understood_critical": [
+        "https://example.test/extensions/matching-context"
+      ],
+      "expected": {
+        "unsupported_critical_semantics": [],
+        "conclusion": "COMPATIBLE_UNDER_METHOD",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-mandatory-satisfied-preference-unsatisfied",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected": {
+        "mandatory_unsatisfied": 0,
+        "mandatory_unknown": 0,
+        "preferred_unsatisfied": 1,
+        "preference_unknown": 0,
+        "conclusion": "COMPATIBLE_UNDER_METHOD",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-mandatory-unsatisfied",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected": {
+        "mandatory_unsatisfied": 1,
+        "mandatory_unknown": 0,
+        "preferred_unsatisfied": 0,
+        "preference_unknown": 0,
+        "conclusion": "INCOMPATIBLE_UNDER_METHOD",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-mandatory-unsupported",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSUPPORTED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected": {
+        "mandatory_unsatisfied": 0,
+        "mandatory_unknown": 1,
+        "preferred_unsatisfied": 0,
+        "preference_unknown": 1,
+        "conclusion": "INDETERMINATE",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-mandatory-observation-missing",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected": {
+        "mandatory_unsatisfied": 0,
+        "mandatory_unknown": 1,
+        "preferred_unsatisfied": 0,
+        "preference_unknown": 1,
+        "conclusion": "INDETERMINATE",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-evidence-incomplete",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "INCOMPLETE",
+      "expected": {
+        "mandatory_unsatisfied": 0,
+        "mandatory_unknown": 0,
+        "preferred_unsatisfied": 1,
+        "preference_unknown": 0,
+        "conclusion": "INDETERMINATE",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "match-method-base-unsupported",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "UNSUPPORTED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected": {
+        "mandatory_unsatisfied": 0,
+        "mandatory_unknown": 0,
+        "preferred_unsatisfied": 1,
+        "preference_unknown": 0,
+        "conclusion": "INDETERMINATE",
+        "protocol_truth": false,
+        "creates_agreement": false
+      }
+    },
+    {
+      "id": "ranking-method-a",
+      "kind": "ranking",
+      "method": "https://example.test/ranking/method/a",
+      "record_refs": [
+        [
+          0,
+          {
+            "$bytes": "c850181af9d55cd4960a2e735197cce0c0755fc667a836736d35649d2acb056c"
+          }
+        ],
+        [
+          0,
+          {
+            "$bytes": "c014badaa3709fadd14fe59139278739133a51f2d2b8b354546b1d50886033d0"
+          }
+        ]
+      ],
+      "expected": {
+        "method": "https://example.test/ranking/method/a",
+        "ordered_refs": [
+          "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw",
+          "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A"
+        ],
+        "canonical": false,
+        "protocol_truth": false
+      }
+    },
+    {
+      "id": "ranking-method-b-disagrees",
+      "kind": "ranking",
+      "method": "https://example.test/ranking/method/b",
+      "record_refs": [
+        [
+          0,
+          {
+            "$bytes": "c014badaa3709fadd14fe59139278739133a51f2d2b8b354546b1d50886033d0"
+          }
+        ],
+        [
+          0,
+          {
+            "$bytes": "c850181af9d55cd4960a2e735197cce0c0755fc667a836736d35649d2acb056c"
+          }
+        ]
+      ],
+      "expected": {
+        "method": "https://example.test/ranking/method/b",
+        "ordered_refs": [
+          "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+          "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+        ],
+        "canonical": false,
+        "protocol_truth": false
+      }
+    },
+    {
+      "id": "cursor-bound-to-source-method-query",
+      "kind": "cursor",
+      "binding": {
+        "$map": [
+          [
+            "source",
+            "https://index-a.example.test/discovery"
+          ],
+          [
+            "method",
+            "https://example.test/discovery/method/exact"
+          ],
+          [
+            "query_fingerprint",
+            "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+          ],
+          [
+            "cursor",
+            {
+              "$bytes": "706167652d32"
+            }
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "method": "https://example.test/discovery/method/exact",
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "subject_uris_any",
+            [
+              "urn:example:software-issue:42"
+            ]
+          ]
+        ]
+      },
+      "expected": "CURSOR_BOUND_TO_SOURCE_METHOD_QUERY"
+    }
+  ],
+  "negative_cases": [
+    {
+      "id": "discovery-query-script-forbidden",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "script",
+            "return true"
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "UNKNOWN_SOURCE",
+      "freshness": "UNKNOWN",
+      "expected_error": "UNKNOWN_QUERY_FIELD"
+    },
+    {
+      "id": "discovery-query-duplicate-set-value",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "action_ids_any",
+            [
+              "https://example.test/actions/fix",
+              "https://example.test/actions/fix"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "UNKNOWN_SOURCE",
+      "freshness": "UNKNOWN",
+      "expected_error": "NONCANONICAL_QUERY_SET"
+    },
+    {
+      "id": "discovery-global-completeness-value-forbidden",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "subject_uris_any",
+            [
+              "urn:example:software-issue:42"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "GLOBAL_COMPLETE",
+      "freshness": "UNKNOWN",
+      "expected_error": "INVALID_COMPLETENESS"
+    },
+    {
+      "id": "discovery-resource-limit",
+      "kind": "discovery",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ],
+                  [
+                    "constraints",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/speed"
+                          ],
+                          [
+                            "mode",
+                            "preferred"
+                          ],
+                          [
+                            "value",
+                            "fast"
+                          ]
+                        ]
+                      },
+                      {
+                        "$map": [
+                          [
+                            "id",
+                            "https://example.test/constraints/license"
+                          ],
+                          [
+                            "mode",
+                            "mandatory"
+                          ],
+                          [
+                            "value",
+                            "urn:example:license:eu"
+                          ]
+                        ]
+                      }
+                    ]
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:bob"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/provider"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:software-issue:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/fix"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "subject_uris_any",
+            [
+              "urn:example:software-issue:42"
+            ]
+          ]
+        ]
+      },
+      "source": "https://index-a.example.test/discovery",
+      "completeness": "UNKNOWN_SOURCE",
+      "freshness": "UNKNOWN",
+      "max_records": 1,
+      "expected_error": "RESOURCE_LIMIT_EXCEEDED"
+    },
+    {
+      "id": "index-record-ref-mismatch",
+      "kind": "index",
+      "entry": {
+        "$map": [
+          [
+            "record_ref",
+            [
+              0,
+              {
+                "$bytes": "c850181af9d55cd4960a2e735197cce0c0755fc667a836736d35649d2acb056c"
+              }
+            ]
+          ],
+          [
+            "issuer",
+            "did:example:bob"
+          ],
+          [
+            "action",
+            "https://example.test/actions/fix"
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "INDEX_IDENTITY_MISMATCH"
+    },
+    {
+      "id": "index-projection-mismatch",
+      "kind": "index",
+      "entry": {
+        "$map": [
+          [
+            "record_ref",
+            [
+              0,
+              {
+                "$bytes": "c014badaa3709fadd14fe59139278739133a51f2d2b8b354546b1d50886033d0"
+              }
+            ]
+          ],
+          [
+            "issuer",
+            "did:example:bob"
+          ],
+          [
+            "action",
+            "https://example.test/actions/deliver"
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "record": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "INDEX_PROJECTION_MISMATCH"
+    },
+    {
+      "id": "match-observation-constraint-not-found",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/other"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    true
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected_error": "OBSERVATION_CONSTRAINT_NOT_FOUND"
+    },
+    {
+      "id": "match-duplicate-observation",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "https://open-trust-layer.github.io/marketplace/semantics/v1/matching/method/example-exact-v1",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected_error": "DUPLICATE_MATCH_OBSERVATION"
+    },
+    {
+      "id": "match-method-must-be-uri",
+      "kind": "match",
+      "left": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:alice"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/requester"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ],
+                [
+                  "constraints",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/speed"
+                        ],
+                        [
+                          "mode",
+                          "preferred"
+                        ],
+                        [
+                          "value",
+                          "fast"
+                        ]
+                      ]
+                    },
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/constraints/license"
+                        ],
+                        [
+                          "mode",
+                          "mandatory"
+                        ],
+                        [
+                          "value",
+                          "urn:example:license:eu"
+                        ]
+                      ]
+                    }
+                  ]
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "right": {
+        "$map": [
+          [
+            "envelope_version",
+            1
+          ],
+          [
+            "type",
+            "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+          ],
+          [
+            "content",
+            {
+              "$map": [
+                [
+                  "version",
+                  1
+                ],
+                [
+                  "issuer",
+                  {
+                    "$map": [
+                      [
+                        "principal",
+                        "did:example:bob"
+                      ],
+                      [
+                        "role",
+                        "https://example.test/roles/provider"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "subjects",
+                  [
+                    {
+                      "$map": [
+                        [
+                          "uri",
+                          "urn:example:software-issue:42"
+                        ]
+                      ]
+                    }
+                  ]
+                ],
+                [
+                  "action",
+                  {
+                    "$map": [
+                      [
+                        "id",
+                        "https://example.test/actions/fix"
+                      ]
+                    ]
+                  }
+                ],
+                [
+                  "terms",
+                  {
+                    "$map": []
+                  }
+                ]
+              ]
+            }
+          ],
+          [
+            "profiles",
+            [
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+            ]
+          ]
+        ]
+      },
+      "method": "not-a-uri",
+      "base_status": "SATISFIED",
+      "observations": [
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/license"
+                  ],
+                  [
+                    "mode",
+                    "mandatory"
+                  ],
+                  [
+                    "value",
+                    "urn:example:license:eu"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "SATISFIED"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "side",
+              "left"
+            ],
+            [
+              "constraint",
+              {
+                "$map": [
+                  [
+                    "id",
+                    "https://example.test/constraints/speed"
+                  ],
+                  [
+                    "mode",
+                    "preferred"
+                  ],
+                  [
+                    "value",
+                    "fast"
+                  ]
+                ]
+              }
+            ],
+            [
+              "status",
+              "UNSATISFIED"
+            ]
+          ]
+        }
+      ],
+      "evidence_completeness": "COMPLETE_FOR_METHOD_INPUTS",
+      "expected_error": "INVALID_URI"
+    },
+    {
+      "id": "ranking-duplicate-record-ref",
+      "kind": "ranking",
+      "method": "https://example.test/ranking/method/a",
+      "record_refs": [
+        [
+          0,
+          {
+            "$bytes": "c850181af9d55cd4960a2e735197cce0c0755fc667a836736d35649d2acb056c"
+          }
+        ],
+        [
+          0,
+          {
+            "$bytes": "c850181af9d55cd4960a2e735197cce0c0755fc667a836736d35649d2acb056c"
+          }
+        ]
+      ],
+      "expected_error": "DUPLICATE_RANKED_RESULT"
+    },
+    {
+      "id": "federation-global-completeness-claim",
+      "kind": "federation",
+      "views": [
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-a.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+                "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+              ]
+            ],
+            [
+              "result_count",
+              2
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              0
+            ],
+            [
+              "completeness",
+              "COMPLETE_FOR_DECLARED_SOURCE"
+            ],
+            [
+              "freshness",
+              "FRESH"
+            ],
+            [
+              "global_completeness",
+              "COMPLETE"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        }
+      ],
+      "expected_error": "GLOBAL_COMPLETENESS_FORBIDDEN"
+    },
+    {
+      "id": "federation-noncanonical-record-identity",
+      "kind": "federation",
+      "views": [
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-a.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9B",
+                "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+              ]
+            ],
+            [
+              "result_count",
+              2
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              0
+            ],
+            [
+              "completeness",
+              "COMPLETE_FOR_DECLARED_SOURCE"
+            ],
+            [
+              "freshness",
+              "FRESH"
+            ],
+            [
+              "global_completeness",
+              "UNKNOWN"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        }
+      ],
+      "expected_error": "INVALID_DISCOVERY_VIEW"
+    },
+    {
+      "id": "federation-query-mismatch",
+      "kind": "federation",
+      "views": [
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-a.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+                "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+              ]
+            ],
+            [
+              "result_count",
+              2
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              0
+            ],
+            [
+              "completeness",
+              "COMPLETE_FOR_DECLARED_SOURCE"
+            ],
+            [
+              "freshness",
+              "FRESH"
+            ],
+            [
+              "global_completeness",
+              "UNKNOWN"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        },
+        {
+          "$map": [
+            [
+              "service_type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/service/market-discovery"
+            ],
+            [
+              "source",
+              "https://index-a.example.test/discovery"
+            ],
+            [
+              "query_fingerprint",
+              "8xMZqA_l1ClDK5eV78339Pz0_-GdZVB511Rkbhp6t5U"
+            ],
+            [
+              "result_refs",
+              [
+                "r1_HE5VVa1QUEoJbBcyCp3wL_AktDCacVj6QJEZaBGfv6U",
+                "r1_wBS62qNwn63RT-WROSeHORM6UfLSuLNUVGsdUIhgM9A",
+                "r1_yFAYGvnVXNSWCi5zUZfM4MB1X8ZnqDZzbTVknSrLBWw"
+              ]
+            ],
+            [
+              "result_count",
+              3
+            ],
+            [
+              "nonconforming_candidates_ignored",
+              1
+            ],
+            [
+              "completeness",
+              "COMPLETE_FOR_DECLARED_SOURCE"
+            ],
+            [
+              "freshness",
+              "FRESH"
+            ],
+            [
+              "global_completeness",
+              "UNKNOWN"
+            ],
+            [
+              "absence_is_negative_evidence",
+              false
+            ],
+            [
+              "ordering",
+              "REPRODUCIBLE_IDENTITY_ORDER_NOT_RANKING"
+            ]
+          ]
+        }
+      ],
+      "expected_error": "FEDERATION_QUERY_MISMATCH"
+    },
+    {
+      "id": "cursor-source-mismatch",
+      "kind": "cursor",
+      "binding": {
+        "$map": [
+          [
+            "source",
+            "https://index-a.example.test/discovery"
+          ],
+          [
+            "method",
+            "https://example.test/discovery/method/exact"
+          ],
+          [
+            "query_fingerprint",
+            "5qeQE0_-VHyIPcBJWPmebSo6WhuQ5K4R-EX91gGVWns"
+          ],
+          [
+            "cursor",
+            {
+              "$bytes": "706167652d32"
+            }
+          ]
+        ]
+      },
+      "source": "https://index-b.example.test/discovery",
+      "method": "https://example.test/discovery/method/exact",
+      "query": {
+        "$map": [
+          [
+            "version",
+            1
+          ],
+          [
+            "subject_uris_any",
+            [
+              "urn:example:software-issue:42"
+            ]
+          ]
+        ]
+      },
+      "expected_error": "CURSOR_SOURCE_MISMATCH"
+    }
+  ]
+}
