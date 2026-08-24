@@ -9,6 +9,7 @@
 **Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
 **Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
 **Lifecycle status:** Milestone 4 — Lifecycle & Negotiation Semantics — COMPLETE
+**Matching/discovery status:** Milestone 5 — Matching & Discovery Semantics — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -112,6 +113,20 @@ conflict             != canonical winner
 ```
 
 The protocol does not select a universal current proposal, current Agreement, latest-wins branch, or winner when concurrent/conflicting evidence exists. The Milestone 4 executable set contains 26 positive/negative lifecycle and negotiation vectors.
+
+### Matching and discovery
+
+Milestone 5 defines source-scoped discovery, exact verified index projections, method-relative matching, ranking plurality, federated result merging, and cursor binding without turning search visibility or compatibility into protocol truth.
+
+```text
+search result              != resolved evidence
+source completeness        != global completeness
+match                      != protocol truth
+compatibility under method != agreement
+ranking                    != canonical ordering
+```
+
+The core exact-query profile operates only over authenticated Intent fields. Mandatory constraints that are unsatisfied block compatibility under the selected method; mandatory semantics that are missing, unknown, or unsupported keep the result indeterminate. Different matching and ranking methods may legitimately disagree. The Milestone 5 executable set contains 31 positive/evaluation and negative matching/discovery vectors.
 
 ---
 
@@ -221,10 +236,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0002-market-object-model.md`](specification/0002-market-object-model.md) - first-class record profiles, embedded structures, derived concepts, and OLP representation boundaries.
 - [`specification/0003-market-record-representation.md`](specification/0003-market-record-representation.md) - exact v1 abstract representation, semantic identifiers, deterministic structures, and OLP identity inheritance.
 - [`specification/0004-market-lifecycle-negotiation.md`](specification/0004-market-lifecycle-negotiation.md) - additive negotiation history, withdrawal/expiration, formation evidence, amendments, concurrency, and lifecycle boundaries.
+- [`specification/0005-market-matching-discovery.md`](specification/0005-market-matching-discovery.md) - source-scoped discovery, matching aggregation, ranking plurality, federation, and cursor boundaries.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define matching/discovery, fulfillment, settlement interfaces, federation, privacy, safety/policy boundaries, and further conformance incrementally.
+Future specifications will define fulfillment, settlement interfaces, federation transports, privacy profiles, safety/policy boundaries, and further conformance incrementally.
 
 ---
 
