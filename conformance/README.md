@@ -1,16 +1,41 @@
-﻿# Marketplace Conformance Vectors
+# Marketplace Conformance Vectors
 
-Milestone 3 provides executable Marketplace Record Representation v1 vectors in `vectors/record-representation-v1.json`.
+Marketplace conformance is executable and transport-neutral. Vector files use OLP's implementation-neutral conformance projection; they are not normative Marketplace wire formats.
 
-The vectors are generated and validated against the Open Layer Protocol reference implementation. The committed set currently contains 33 positive/negative record and reusable-structure vectors. The file records the exact OLP source commit used for identity derivation (`41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c` for the Milestone 3 acceptance set).
+## Milestone 3 — Record Representation
 
-From a checkout of both repositories, with the OLP reference implementation installed or on `PYTHONPATH`:
+`vectors/record-representation-v1.json` contains 33 positive/negative record and reusable-structure vectors.
+
+Generate and validate with:
 
 ```text
 python tools/generate_record_vectors.py
 python tools/validate_record_vectors.py
 ```
 
-`generate_record_vectors.py` derives Record Identity and identity-preimage bytes exclusively through OLP APIs. `validate_record_vectors.py` verifies every positive identity and every expected negative Marketplace semantic failure.
+Record identities and identity-preimage bytes are derived exclusively through OLP APIs.
 
-The JSON vector representation uses OLP's implementation-neutral conformance projection. It is not a normative Marketplace wire format.
+## Milestone 4 — Lifecycle & Negotiation
+
+`vectors/lifecycle-negotiation-v1.json` contains 26 positive/evaluation and negative vectors covering proposal graphs, response events, withdrawal, temporal applicability, agreement formation, amendments, supersession conflicts, incomplete history, and concurrent lifecycle evidence.
+
+Generate and validate with:
+
+```text
+python tools/generate_lifecycle_vectors.py
+python tools/validate_lifecycle_vectors.py
+```
+
+The formation vectors use deterministic Ed25519 keys only for conformance reproducibility and validate real detached OLP proofs over the exact Agreement records.
+
+Both Milestone 3 and Milestone 4 vector sets pin the OLP source commit used for reproducibility:
+
+```text
+41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+```
+
+A future Marketplace release MUST bind to a released OLP compatibility target rather than this draft source pin.
+
+## Acceptance workflow
+
+A milestone acceptance pass regenerates vectors, requires byte-for-byte equality with the committed files, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, and runs `git diff --check` before merge.
