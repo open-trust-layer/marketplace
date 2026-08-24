@@ -61,6 +61,8 @@ def _record_ref_from_value(value: Any, path: str) -> EvidenceRefV1:
     if ref.kind != EvidenceKind.RECORD:
         fail("WRONG_REFERENCE_KIND", f"{path} MUST reference an OLP Record")
     return ref
+
+
 def is_proposal(record: RecordV1) -> bool:
     validate_market_record(record)
     return record.type == TYPE_INTENT and PROPOSAL_PROFILE in record.profiles
@@ -189,6 +191,8 @@ def validate_proposal_response_event(event_record: RecordV1, proposal: RecordV1)
     if ref != _record_ref(proposal):
         fail("PROPOSAL_RESPONSE_EVENT_TARGET", "proposal response event targets a different record")
     return "ACCEPTANCE_ASSERTED" if event == EVENT_PROPOSAL_ACCEPTANCE else "DECLINE_ASSERTED"
+
+
 def withdrawal_statement(
     target: RecordV1,
     *,
@@ -281,6 +285,8 @@ def evaluate_temporal_applicability(intent: RecordV1, evaluation_time: str) -> s
     if "not_after" in validity and now >= _parse_timestamp(validity["not_after"]):
         return "AFTER_DECLARED_WINDOW"
     return "WITHIN_DECLARED_WINDOW"
+
+
 @dataclass(frozen=True, slots=True)
 class AssentEvidence:
     principal: str
@@ -329,6 +335,8 @@ def _proof_satisfies_assent(
         and evidence.attribution_accepted
     )
     return ok, dimensions
+
+
 def evaluate_agreement_formation(
     agreement: RecordV1,
     evidence: Iterable[AssentEvidence],
@@ -374,6 +382,8 @@ def evaluate_agreement_formation(
         "legal_enforceability": "NOT_EVALUATED",
         "universal_truth": False,
     }
+
+
 def validate_amendment_relationship(
     amended: RecordV1,
     previous: RecordV1,
@@ -431,6 +441,8 @@ def evaluate_supersession(target: RecordV1, relationships: Iterable[RecordV1]) -
         "canonical_successor": None,
         "authority": "NOT_EVALUATED",
     }
+
+
 def evaluate_acceptance_withdrawal_coexistence(
     proposal: RecordV1,
     response_event: RecordV1,

@@ -32,6 +32,8 @@ VECTORS = ROOT / "conformance" / "vectors" / "lifecycle-negotiation-v1.json"
 
 def decode(value):
     return materialize_map(unproject_abstract(value), allowed_key_types=(str, int))
+
+
 def record_from(value) -> RecordV1:
     return RecordV1.from_mapping(decode(value))
 
@@ -65,6 +67,8 @@ def actual_olp_commit() -> str:
         return subprocess.check_output(["git", "-C", str(repo), "rev-parse", "HEAD"], text=True).strip()
     except Exception:
         return "unknown"
+
+
 def formation_evidence(items) -> tuple[AssentEvidence, ...]:
     evidence = []
     for item in items:
@@ -148,6 +152,8 @@ def run_case(item):
         )
         return select(result, item.get("expected", {}))
     raise MarketplaceLifecycleError("UNSUPPORTED_VECTOR_KIND", f"unsupported vector kind {kind!r}")
+
+
 def main() -> int:
     data = json.loads(VECTORS.read_text(encoding="utf-8"))
     errors: list[str] = []

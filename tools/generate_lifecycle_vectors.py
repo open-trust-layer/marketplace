@@ -74,6 +74,8 @@ def record_mapping(record: RecordV1) -> dict:
     if record.extensions:
         value["extensions"] = record.extensions
     return value
+
+
 def proof_mapping(proof: OLPProof) -> dict:
     value = {
         "type": proof.type,
