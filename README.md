@@ -173,6 +173,20 @@ receiver policy          != protocol validity
 
 Snapshot and incremental-sync requests carry explicit normalized scopes and optional opaque cursors bound to source + operation + scope. Exchange results carry canonical scope fingerprints, sorted unique OLP Record identities, source-relative completeness, and explicit truncation/cursor state. Exact Record Identity is recomputed on receipt; duplicate immutable evidence is replay-safe; receiver accept/reject/defer/ignore outcomes remain source-local. The Milestone 8 executable set contains 93 positive/evaluation and negative vectors.
 
+### Trust evaluation and evidence queries
+
+Milestone 9 defines method-relative, explainable evidence evaluation without introducing a universal trust score, reputation object, canonical ranking, or trust authority. Queries bind a method URI, purpose, target, context, evidence scope, source scope, and explicit resource limits.
+
+```text
+selected evidence            != supporting evidence
+supporting evidence          != truth
+proof verification           != authority acceptance
+method-relative sufficiency  != universal trust
+missing evidence             != negative evidence
+```
+
+The reference method preserves proof, identity, authority, lifecycle, source policy, critical-semantics and domain-direction observations as separate dimensions. Results remain `SUFFICIENT/INSUFFICIENT UNDER METHOD`, conflicting, disputed, or indeterminate, with exact Record identities, provenance, exclusion reasons and explainable traces. The Milestone 9 executable set contains 56 positive/evaluation and negative/adversarial vectors.
+
 ---
 
 ## What this project is
@@ -294,10 +308,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0006-market-fulfillment-performance.md`](specification/0006-market-fulfillment-performance.md) - commitment-targeted performance, delivery, inspection, acceptance, disputes, and method-relative fulfillment.
 - [`specification/0007-market-settlement-interfaces.md`](specification/0007-market-settlement-interfaces.md) - rail-neutral settlement evidence, reversals/refunds, escrow, asset transfer, preference constraints, and finality boundaries.
 - [`specification/0008-market-federation-transport.md`](specification/0008-market-federation-transport.md) - OLP-based federation capabilities, snapshot/sync exchange, cursor/replay/idempotency boundaries, source provenance, and receiver outcomes.
+- [`specification/0009-market-trust-evaluation.md`](specification/0009-market-trust-evaluation.md) - method-relative evidence queries, exact provenance, observation dimensions, explainable traces, conflict/dispute preservation, and non-universal trust evaluation.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define privacy profiles, safety/policy boundaries, dispute-resolution profiles, deployment profiles, and further conformance incrementally.
+Future specifications will define privacy profiles, safety/policy boundaries, dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.
 
 ---
 
