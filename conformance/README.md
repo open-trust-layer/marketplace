@@ -40,7 +40,20 @@ python tools/validate_matching_vectors.py
 
 The matching/discovery helpers define deterministic processing boundaries only. They do not create a universal Match, ranking, recommendation, global index, or Marketplace wire format.
 
-All Milestone 3–5 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 6 — Fulfillment & Performance
+
+`vectors/fulfillment-performance-v1.json` contains 47 positive/evaluation and negative vectors covering exact Commitment targeting, performance/delivery extent, inspection criteria, acceptance/rejection, completion/failure assertions, disputes, critical semantics, deduplication, resource limits, and settlement separation.
+
+Generate and validate with:
+
+```text
+python tools/generate_fulfillment_vectors.py
+python tools/validate_fulfillment_vectors.py
+```
+
+The fulfillment helper defines deterministic method-relative processing boundaries only. It does not create universal fulfillment truth, mutable Agreement state, settlement semantics, or dispute adjudication.
+
+All Milestone 3–6 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -51,4 +64,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 5 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 6 acceptance additionally requires all earlier Marketplace vector suites to remain green.

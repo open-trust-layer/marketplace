@@ -10,6 +10,7 @@
 **Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
 **Lifecycle status:** Milestone 4 — Lifecycle & Negotiation Semantics — COMPLETE
 **Matching/discovery status:** Milestone 5 — Matching & Discovery Semantics — COMPLETE
+**Fulfillment/performance status:** Milestone 6 — Fulfillment & Performance Semantics — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -128,6 +129,20 @@ ranking                    != canonical ordering
 
 The core exact-query profile operates only over authenticated Intent fields. Mandatory constraints that are unsatisfied block compatibility under the selected method; mandatory semantics that are missing, unknown, or unsupported keep the result indeterminate. Different matching and ranking methods may legitimately disagree. The Milestone 5 executable set contains 31 positive/evaluation and negative matching/discovery vectors.
 
+### Fulfillment and performance
+
+Milestone 6 defines commitment-targeted performance, delivery, inspection, acceptance/rejection, completion/failure, and dispute evidence without introducing mutable Agreement state or a fourth Marketplace record type.
+
+```text
+performance assertion      != objective performance
+delivery                   != acceptance
+completion assertion       != fulfillment truth
+settlement/payment         != fulfillment
+conflict                   != canonical winner
+```
+
+Every core fulfillment event targets an exact `{Agreement RecordRef, Commitment id}` pair. Positive fulfillment remains method-relative and requires accepted evidence for the selected method; missing evidence remains incomplete rather than automatic non-performance. The Milestone 6 executable set contains 47 positive/evaluation and negative vectors.
+
 ---
 
 ## What this project is
@@ -183,6 +198,9 @@ intent                      != agreement
 agreement                   != legal enforceability
 agreement                   != settlement
 payment                     != fulfillment
+performance evidence        != fulfillment truth
+delivery                    != acceptance
+completion assertion        != fulfillment truth
 fulfillment evidence        != acceptance
 price                       != value
 evidence                    != truth
@@ -237,10 +255,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0003-market-record-representation.md`](specification/0003-market-record-representation.md) - exact v1 abstract representation, semantic identifiers, deterministic structures, and OLP identity inheritance.
 - [`specification/0004-market-lifecycle-negotiation.md`](specification/0004-market-lifecycle-negotiation.md) - additive negotiation history, withdrawal/expiration, formation evidence, amendments, concurrency, and lifecycle boundaries.
 - [`specification/0005-market-matching-discovery.md`](specification/0005-market-matching-discovery.md) - source-scoped discovery, matching aggregation, ranking plurality, federation, and cursor boundaries.
+- [`specification/0006-market-fulfillment-performance.md`](specification/0006-market-fulfillment-performance.md) - commitment-targeted performance, delivery, inspection, acceptance, disputes, and method-relative fulfillment.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define fulfillment, settlement interfaces, federation transports, privacy profiles, safety/policy boundaries, and further conformance incrementally.
+Future specifications will define settlement interfaces, federation transports, privacy profiles, safety/policy boundaries, dispute-resolution profiles, and further conformance incrementally.
 
 ---
 
