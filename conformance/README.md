@@ -68,7 +68,7 @@ The settlement helper evaluates evidence only. It does not execute payments, cus
 
 ## Milestone 8 — Federation Transport & Interoperability APIs
 
-`vectors/federation-transport-v1.json` contains 81 positive/evaluation and negative vectors covering capability negotiation, explicit federation scopes, snapshot/sync requests, opaque cursor binding, source-scoped page completeness, Record-Identity replay deduplication, submission idempotency, receiver outcomes, OLP extension envelopes, exact version typing, and adversarial resource/scope/replay cases.
+`vectors/federation-transport-v1.json` contains 93 positive/evaluation and negative vectors covering capability negotiation, explicit federation scopes, snapshot/sync requests and results, opaque cursor binding, canonical result fingerprints/Record identities, source-scoped page completeness, Record-Identity replay deduplication, submission idempotency, receiver outcomes, exact M8 core OLP extension message types, exact version typing, and adversarial resource/scope/replay cases.
 
 Generate and validate with:
 

@@ -651,6 +651,39 @@
       "source": "https://peer-a.example/federation"
     },
     {
+      "expected": {
+        "absence_is_deletion_evidence": false,
+        "global_completeness": "UNKNOWN",
+        "next_cursor_present": false,
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      },
+      "id": "snapshot-result-valid",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
       "completeness": "PARTIAL_SOURCE",
       "expected": {
         "absence_is_deletion_evidence": false,
@@ -758,6 +791,36 @@
         "version": 1
       },
       "source": "https://peer-a.example/federation"
+    },
+    {
+      "expected": {
+        "absence_is_deletion_evidence": false,
+        "global_completeness": "UNKNOWN",
+        "next_cursor_present": true,
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": true,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "PARTIAL_SOURCE",
+        "version": 1
+      },
+      "id": "snapshot-result-truncated-valid",
+      "kind": "result",
+      "result": {
+        "next_cursor": "page-2",
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": true,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "PARTIAL_SOURCE",
+        "version": 1
+      }
     },
     {
       "completeness": "UNKNOWN_SOURCE",
@@ -3133,12 +3196,17 @@
       "expected": {
         "message_type": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/message/snapshot-result-v1",
         "payload": {
+          "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+          "page_truncated": false,
           "record_ids": [
             "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
             "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
             "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
           ],
-          "source": "https://peer-a.example/federation"
+          "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+          "source": "https://peer-a.example/federation",
+          "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+          "version": 1
         },
         "transport_authentication_is_object_proof": false,
         "transport_defines_record_identity": false
@@ -3148,12 +3216,17 @@
       "kind": "envelope",
       "message_type": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/message/snapshot-result-v1",
       "payload": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
         "record_ids": [
           "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
           "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
           "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
         ],
-        "source": "https://peer-a.example/federation"
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
       }
     },
     {
@@ -6820,6 +6893,314 @@
       ],
       "kind": "merge",
       "max_records": 1
+    },
+    {
+      "expected_error": "INVALID_FEDERATION_RESULT",
+      "id": "result-boolean-version",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": true
+      }
+    },
+    {
+      "expected_error": "INVALID_SCOPE_FINGERPRINT",
+      "id": "result-invalid-scope-fingerprint",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "NONCANONICAL_RECORD_ID_SET",
+      "id": "result-duplicate-record-ids",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_RECORD_ID",
+      "id": "result-invalid-record-id",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_not-canonical"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "INVALID_CURSOR",
+      "id": "result-truncated-without-cursor",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": true,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "PARTIAL_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "UNEXPECTED_CURSOR",
+      "id": "result-final-with-cursor",
+      "kind": "result",
+      "result": {
+        "next_cursor": "unexpected",
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "expected_error": "UNSUPPORTED_FEDERATION_OPERATION",
+      "id": "result-unsupported-operation",
+      "kind": "result",
+      "result": {
+        "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/submission-v1",
+        "page_truncated": false,
+        "record_ids": [
+          "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI",
+          "r1__axDfc-x0vMfNg1zCVomrrNuuTmY4EXClA7KHfOPXPc",
+          "r1_krAuHnpOl5qW631XJC4ecOQISaB93rVNQ0bFvU0ed1w"
+        ],
+        "scope_fingerprint": "2dA02CPhEm5iURdiNEO9wsvwOjqDHvnfqXDr9rGuN_s",
+        "source": "https://peer-a.example/federation",
+        "source_completeness": "COMPLETE_FOR_DECLARED_SOURCE",
+        "version": 1
+      }
+    },
+    {
+      "completeness": "PARTIAL_SOURCE",
+      "expected_error": "INVALID_RESOURCE_LIMIT",
+      "has_more": false,
+      "id": "page-resource-ceiling-cannot-be-raised",
+      "kind": "page",
+      "max_records": 10001,
+      "operation": "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1",
+      "records": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:federation:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/coordinate"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "scope": {
+        "record_types": [
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-agreement",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-event",
+          "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+        ],
+        "version": 1
+      },
+      "source": "https://peer-a.example/federation"
+    },
+    {
+      "existing": [],
+      "expected_error": "INVALID_RESOURCE_LIMIT",
+      "id": "merge-resource-ceiling-cannot-be-raised",
+      "incoming": [
+        {
+          "$map": [
+            [
+              "envelope_version",
+              1
+            ],
+            [
+              "type",
+              "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+            ],
+            [
+              "content",
+              {
+                "$map": [
+                  [
+                    "version",
+                    1
+                  ],
+                  [
+                    "issuer",
+                    {
+                      "$map": [
+                        [
+                          "principal",
+                          "did:example:alice"
+                        ],
+                        [
+                          "role",
+                          "https://example.test/roles/requester"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "subjects",
+                    [
+                      {
+                        "$map": [
+                          [
+                            "uri",
+                            "urn:example:federation:42"
+                          ]
+                        ]
+                      }
+                    ]
+                  ],
+                  [
+                    "action",
+                    {
+                      "$map": [
+                        [
+                          "id",
+                          "https://example.test/actions/coordinate"
+                        ]
+                      ]
+                    }
+                  ],
+                  [
+                    "terms",
+                    {
+                      "$map": []
+                    }
+                  ]
+                ]
+              }
+            ],
+            [
+              "profiles",
+              [
+                "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/core-v1"
+              ]
+            ]
+          ]
+        }
+      ],
+      "kind": "merge",
+      "max_records": 10001
+    },
+    {
+      "expected_error": "UNSUPPORTED_FEDERATION_MESSAGE_TYPE",
+      "id": "envelope-unknown-core-message-type",
+      "kind": "envelope_make",
+      "message_type": "https://example.test/federation/message/vendor-v1",
+      "payload": {}
     }
   ],
   "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c"

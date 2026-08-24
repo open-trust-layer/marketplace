@@ -18,7 +18,7 @@ from marketplace_federation_v1 import (
     bind_cursor, bind_idempotency, evaluate_exchange_page,
     make_transport_envelope, merge_received_records, negotiate_capabilities,
     scope_fingerprint, validate_capability_advertisement, validate_cursor_binding,
-    validate_exchange_request, validate_idempotency_replay,
+    validate_exchange_request, validate_exchange_result, validate_idempotency_replay,
     validate_scope, validate_submission_outcomes, validate_transport_envelope,
 )
 
@@ -188,6 +188,15 @@ def build() -> dict:
         "source": source_a, "operation": OP_SNAPSHOT, "scope": scope_all,
         "completeness": COMPLETE_FOR_DECLARED_SOURCE, "has_more": False,
     }, page_complete)
+    complete_result = {
+        "version": 1, "source": source_a, "operation": OP_SNAPSHOT,
+        "scope_fingerprint": page_complete["scope_fingerprint"],
+        "record_ids": page_complete["record_ids"],
+        "source_completeness": COMPLETE_FOR_DECLARED_SOURCE,
+        "page_truncated": False,
+    }
+    add("snapshot-result-valid", "result", {"result": jsonable(complete_result)},
+        validate_exchange_result(complete_result))
     page_truncated = evaluate_exchange_page(
         (intent,), source=source_a, operation=OP_SNAPSHOT,
         scope=scope_all, completeness=PARTIAL_SOURCE,
@@ -198,6 +207,17 @@ def build() -> dict:
         "operation": OP_SNAPSHOT, "scope": scope_all,
         "completeness": PARTIAL_SOURCE, "has_more": True, "next_cursor": "page-2",
     }, page_truncated)
+    truncated_result = {
+        "version": 1, "source": source_a, "operation": OP_SNAPSHOT,
+        "scope_fingerprint": page_truncated["scope_fingerprint"],
+        "record_ids": page_truncated["record_ids"],
+        "source_completeness": PARTIAL_SOURCE,
+        "page_truncated": True, "next_cursor": b"page-2",
+    }
+    truncated_result_wire = dict(truncated_result)
+    truncated_result_wire["next_cursor"] = "page-2"
+    add("snapshot-result-truncated-valid", "result", {"result": jsonable(truncated_result_wire)},
+        validate_exchange_result(truncated_result))
 
     sync_page = evaluate_exchange_page(
         (intent, intent), source=source_a, operation=OP_SYNC,
@@ -281,7 +301,7 @@ def build() -> dict:
         "message_type": MSG_SYNC_REQUEST, "payload": sync_request,
         "expected_message_type": MSG_SYNC_REQUEST,
     }, validate_transport_envelope(sync_envelope, MSG_SYNC_REQUEST))
-    result_payload = {"source": source_a, "record_ids": page_complete["record_ids"]}
+    result_payload = complete_result
     result_envelope = make_transport_envelope(MSG_SNAPSHOT_RESULT, result_payload)
     add("olp-extension-envelope-snapshot-result", "envelope", {
         "message_type": MSG_SNAPSHOT_RESULT, "payload": jsonable(result_payload),
@@ -537,6 +557,39 @@ def build() -> dict:
     negative("merge-resource-limit", "merge", {
         "existing": [], "incoming": [projected_record(intent), projected_record(agreement)], "max_records": 1,
     }, "RESOURCE_LIMIT_EXCEEDED")
+
+    bad_result_version = dict(complete_result)
+    bad_result_version["version"] = True
+    negative("result-boolean-version", "result", {"result": jsonable(bad_result_version)}, "INVALID_FEDERATION_RESULT")
+    bad_result_fingerprint = dict(complete_result)
+    bad_result_fingerprint["scope_fingerprint"] = "x" * 43
+    negative("result-invalid-scope-fingerprint", "result", {"result": jsonable(bad_result_fingerprint)}, "INVALID_SCOPE_FINGERPRINT")
+    bad_result_duplicate_ids = dict(complete_result)
+    bad_result_duplicate_ids["record_ids"] = (complete_result["record_ids"][0], complete_result["record_ids"][0])
+    negative("result-duplicate-record-ids", "result", {"result": jsonable(bad_result_duplicate_ids)}, "NONCANONICAL_RECORD_ID_SET")
+    bad_result_record_id = dict(complete_result)
+    bad_result_record_id["record_ids"] = ("r1_not-canonical",)
+    negative("result-invalid-record-id", "result", {"result": jsonable(bad_result_record_id)}, "INVALID_RECORD_ID")
+    bad_result_truncated = dict(complete_result)
+    bad_result_truncated["page_truncated"] = True
+    bad_result_truncated["source_completeness"] = PARTIAL_SOURCE
+    negative("result-truncated-without-cursor", "result", {"result": jsonable(bad_result_truncated)}, "INVALID_CURSOR")
+    bad_result_final_cursor = dict(complete_result)
+    bad_result_final_cursor["next_cursor"] = "unexpected"
+    negative("result-final-with-cursor", "result", {"result": jsonable(bad_result_final_cursor)}, "UNEXPECTED_CURSOR")
+    bad_result_operation = dict(complete_result)
+    bad_result_operation["operation"] = OP_SUBMISSION
+    negative("result-unsupported-operation", "result", {"result": jsonable(bad_result_operation)}, "UNSUPPORTED_FEDERATION_OPERATION")
+    negative("page-resource-ceiling-cannot-be-raised", "page", {
+        "records": [projected_record(intent)], "source": source_a, "operation": OP_SNAPSHOT,
+        "scope": scope_all, "completeness": PARTIAL_SOURCE, "has_more": False, "max_records": 10001,
+    }, "INVALID_RESOURCE_LIMIT")
+    negative("merge-resource-ceiling-cannot-be-raised", "merge", {
+        "existing": [], "incoming": [projected_record(intent)], "max_records": 10001,
+    }, "INVALID_RESOURCE_LIMIT")
+    negative("envelope-unknown-core-message-type", "envelope_make", {
+        "message_type": "https://example.test/federation/message/vendor-v1", "payload": {},
+    }, "UNSUPPORTED_FEDERATION_MESSAGE_TYPE")
     return {
         "format": "marketplace-federation-transport-v1-conformance-vectors",
         "olp_reference_source_commit": olp_commit(),

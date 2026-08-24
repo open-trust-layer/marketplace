@@ -171,7 +171,7 @@ replay/idempotency       != exactly-once delivery
 receiver policy          != protocol validity
 ```
 
-Snapshot and incremental-sync requests carry explicit normalized scopes and optional opaque cursors bound to source + operation + scope. Exact Record Identity is recomputed on receipt; duplicate immutable evidence is replay-safe; receiver accept/reject/defer/ignore outcomes remain source-local. The Milestone 8 executable set contains 81 positive/evaluation and negative vectors.
+Snapshot and incremental-sync requests carry explicit normalized scopes and optional opaque cursors bound to source + operation + scope. Exchange results carry canonical scope fingerprints, sorted unique OLP Record identities, source-relative completeness, and explicit truncation/cursor state. Exact Record Identity is recomputed on receipt; duplicate immutable evidence is replay-safe; receiver accept/reject/defer/ignore outcomes remain source-local. The Milestone 8 executable set contains 93 positive/evaluation and negative vectors.
 
 ---
 

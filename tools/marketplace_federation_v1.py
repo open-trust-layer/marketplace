@@ -15,7 +15,7 @@ from olp import RecordV1
 from olp.encoding.deterministic_cbor import encode as olp_encode
 from olp.encoding.record_identity import record_identity_text
 from olp.errors import ConformanceError
-from olp.transport import TransportEnvelopeV1
+from olp.transport import TransportEnvelopeV1, decode_identity_text
 from olp.values import is_absolute_uri
 
 from marketplace_record_v1 import (
@@ -39,6 +39,10 @@ MSG_SNAPSHOT_RESULT = f"{BASE}/federation/message/snapshot-result-v1"
 MSG_SYNC_REQUEST = f"{BASE}/federation/message/sync-request-v1"
 MSG_SYNC_RESULT = f"{BASE}/federation/message/sync-result-v1"
 MSG_SUBMISSION_RESULT = f"{BASE}/federation/message/submission-result-v1"
+CORE_MESSAGE_TYPES = {
+    MSG_SNAPSHOT_REQUEST, MSG_SNAPSHOT_RESULT, MSG_SYNC_REQUEST,
+    MSG_SYNC_RESULT, MSG_SUBMISSION_RESULT,
+}
 
 CORE_RECORD_TYPES = {TYPE_INTENT, TYPE_AGREEMENT, TYPE_EVENT}
 COMPLETENESS = {"COMPLETE_FOR_DECLARED_SOURCE", "PARTIAL_SOURCE", "UNKNOWN_SOURCE"}
@@ -78,6 +82,12 @@ def _bounded_tuple(values: Iterable[Any], limit: int, code: str) -> tuple[Any, .
     if len(items) > limit:
         fail(code, f"input exceeds configured limit {limit}")
     return items
+
+
+def _page_limit(value: Any) -> int:
+    if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= MAX_PAGE_RECORDS:
+        fail("INVALID_RESOURCE_LIMIT", "page record limit MUST be within the M8 v1 bound")
+    return value
 
 
 def _sorted_unique_uris(values: Iterable[Any], path: str) -> tuple[str, ...]:
@@ -278,6 +288,7 @@ def evaluate_exchange_page(
     if operation not in {OP_SNAPSHOT, OP_SYNC}:
         fail("UNSUPPORTED_FEDERATION_OPERATION", "page operation is not snapshot or sync")
     normalized_scope = validate_scope(scope)
+    max_records = _page_limit(max_records)
     completeness, has_more, next_cursor = _validate_page_controls(completeness, has_more, next_cursor)
     unique, duplicate_count = _record_set(records, max_records)
     for record in unique.values():
@@ -306,6 +317,7 @@ def merge_received_records(
     *,
     max_records: int = MAX_PAGE_RECORDS,
 ) -> dict[str, Any]:
+    max_records = _page_limit(max_records)
     existing_map, existing_duplicates = _record_set(existing, max_records)
     incoming_map, incoming_duplicates = _record_set(incoming, max_records)
     added: list[str] = []
@@ -437,8 +449,49 @@ def validate_submission_outcomes(
     }
 
 
+def validate_exchange_result(value: Any) -> dict[str, Any]:
+    if not isinstance(value, Mapping):
+        fail("INVALID_FEDERATION_RESULT", "federation result MUST be a map")
+    required = {"version", "source", "operation", "scope_fingerprint", "record_ids", "source_completeness", "page_truncated"}
+    allowed = required | {"next_cursor"}
+    version = value.get("version")
+    if set(value) - allowed or not required.issubset(value) or not isinstance(version, int) or isinstance(version, bool) or version != 1:
+        fail("INVALID_FEDERATION_RESULT", "federation result shape/version is invalid")
+    source = _require_uri(value["source"], "source")
+    operation = _require_uri(value["operation"], "operation")
+    if operation not in {OP_SNAPSHOT, OP_SYNC}:
+        fail("UNSUPPORTED_FEDERATION_OPERATION", "result operation is unsupported")
+    fingerprint = value["scope_fingerprint"]
+    if not isinstance(fingerprint, str) or len(fingerprint) != 43:
+        fail("INVALID_SCOPE_FINGERPRINT", "scope fingerprint MUST be canonical SHA-256 base64url text")
+    try:
+        raw = base64.urlsafe_b64decode(fingerprint + "=")
+    except Exception:
+        fail("INVALID_SCOPE_FINGERPRINT", "scope fingerprint is malformed")
+    canonical = base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+    if len(raw) != 32 or canonical != fingerprint:
+        fail("INVALID_SCOPE_FINGERPRINT", "scope fingerprint is non-canonical")
+    record_ids = _bounded_tuple(value["record_ids"], MAX_PAGE_RECORDS, "RESOURCE_LIMIT_EXCEEDED")
+    if len(record_ids) != len(set(record_ids)) or record_ids != tuple(sorted(record_ids)):
+        fail("NONCANONICAL_RECORD_ID_SET", "result record_ids MUST be sorted and unique")
+    for identity in record_ids:
+        if not isinstance(identity, str):
+            fail("INVALID_RECORD_ID", "result record id MUST be text")
+        try:
+            decode_identity_text(identity, expected_kind="record")
+        except Exception:
+            fail("INVALID_RECORD_ID", "result record id MUST be canonical OLP Record Identity text")
+    completeness, truncated, next_cursor = _validate_page_controls(value["source_completeness"], value["page_truncated"], value.get("next_cursor"))
+    return {"version": 1, "source": source, "operation": operation, "scope_fingerprint": fingerprint,
+            "record_ids": record_ids, "source_completeness": completeness, "page_truncated": truncated,
+            "next_cursor_present": next_cursor is not None, "global_completeness": "UNKNOWN",
+            "absence_is_deletion_evidence": False}
+
+
 def make_transport_envelope(message_type: Any, payload: Any) -> tuple[Any, ...]:
     message_type = _require_uri(message_type, "message_type")
+    if message_type not in CORE_MESSAGE_TYPES:
+        fail("UNSUPPORTED_FEDERATION_MESSAGE_TYPE", "message type is not an M8 core federation message")
     try:
         envelope = TransportEnvelopeV1(message_type=message_type, payload=payload)
     except Exception as exc:
@@ -485,6 +538,8 @@ def validate_exchange_request(value: Any) -> dict[str, Any]:
 
 def validate_transport_envelope(value: Any, expected_message_type: Any) -> dict[str, Any]:
     expected = _require_uri(expected_message_type, "expected_message_type")
+    if expected not in CORE_MESSAGE_TYPES:
+        fail("UNSUPPORTED_FEDERATION_MESSAGE_TYPE", "expected message type is not an M8 core federation message")
     if not isinstance(value, (tuple, list)) or len(value) != 4:
         fail("INVALID_OLP_TRANSPORT_ENVELOPE", "OLP transport envelope MUST have four elements")
     marker, version, message_type, payload = value
@@ -494,6 +549,8 @@ def validate_transport_envelope(value: Any, expected_message_type: Any) -> dict[
         fail("INVALID_OLP_TRANSPORT_ENVELOPE", "transport envelope version MUST be integer")
     if version != 1:
         fail("UNSUPPORTED_TRANSPORT_ENVELOPE_VERSION", "Marketplace M8 requires OLP transport envelope v1")
+    if message_type not in CORE_MESSAGE_TYPES:
+        fail("UNSUPPORTED_FEDERATION_MESSAGE_TYPE", "received message type is not an M8 core federation message")
     try:
         envelope = TransportEnvelopeV1(message_type=message_type, payload=payload)
     except Exception as exc:

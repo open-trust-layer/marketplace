@@ -13,7 +13,7 @@ from marketplace_federation_v1 import (
     bind_cursor, bind_idempotency, evaluate_exchange_page,
     make_transport_envelope, merge_received_records, negotiate_capabilities,
     scope_fingerprint, validate_capability_advertisement, validate_cursor_binding,
-    validate_exchange_request, validate_idempotency_replay, validate_scope,
+    validate_exchange_request, validate_exchange_result, validate_idempotency_replay, validate_scope,
     validate_submission_outcomes, validate_transport_envelope,
 )
 
@@ -71,6 +71,11 @@ def run_case(item):
         if isinstance(request.get("cursor"), str):
             request["cursor"] = request["cursor"].encode("utf-8")
         return validate_exchange_request(request)
+    if kind == "result":
+        result = dict(item["result"])
+        if isinstance(result.get("next_cursor"), str):
+            result["next_cursor"] = result["next_cursor"].encode("utf-8")
+        return validate_exchange_result(result)
     if kind == "page":
         return evaluate_exchange_page(
             records_from(item["records"]),

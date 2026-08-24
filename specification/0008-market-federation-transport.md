@@ -113,7 +113,7 @@ The core limit map is exact:
 }
 ```
 
-A profile MAY negotiate lower operational limits. M8 v1 MUST NOT silently accept values above these executable-profile bounds when claiming M8 vector compatibility.
+A profile MAY negotiate lower operational limits. Callers MAY lower local page/merge processing limits but MUST NOT raise the M8 v1 ceiling above 10,000 records. M8 v1 MUST NOT silently accept values above these executable-profile bounds when claiming M8 vector compatibility.
 
 ## 9. Capability negotiation
 
@@ -151,6 +151,8 @@ https://open-trust-layer.github.io/marketplace/semantics/v1/federation/message/s
 ```
 
 Snapshot and sync requests/results use Marketplace extension message types inside OLP transport envelopes. Marketplace submission MAY profile OLP's existing bundle-submission transport rather than defining a parallel record-submission envelope; `submission-result-v1` provides Marketplace per-record receiver outcomes where required.
+
+The M8 **core conformance helper** accepts exactly the five message types listed above. Other absolute-URI transport extensions require a separate extension profile and MUST NOT be silently treated as one of the M8 core messages.
 
 ## 11. Federation scope
 
@@ -256,6 +258,25 @@ Every supplied Record MUST validate as a conforming Marketplace `MarketIntentV1`
 A record outside the declared scope MUST be rejected by the executable core profile rather than silently reclassified into the scope.
 
 Result ordering in the conformance helper is lexical canonical `r1_` ordering only for reproducible serialization. It is explicitly **not** chronology, ranking, trust, recency, priority, or source ordering.
+
+### 17.1 Core exchange-result payload
+
+The M8 core result payload is:
+
+```text
+FederationExchangeResultV1 = {
+  version: 1,
+  source: AbsoluteURI,
+  operation: snapshot-v1 | incremental-sync-v1,
+  scope_fingerprint: CanonicalSHA256Base64url,
+  record_ids: SortedUniqueCanonicalOLPRecordIdentities,
+  source_completeness: COMPLETE_FOR_DECLARED_SOURCE | PARTIAL_SOURCE | UNKNOWN_SOURCE,
+  page_truncated: Boolean,
+  next_cursor?: OpaqueBytes
+}
+```
+
+The scope fingerprint MUST be canonical unpadded base64url for exactly 32 SHA-256 bytes. Every `record_ids` entry MUST be canonical OLP Record Identity text, sorted and unique. A truncated result requires a bounded `next_cursor`; a final result MUST NOT carry one. Result metadata does not replace transmission of the corresponding Records and does not prove global completeness, authorization, or deletion-by-absence.
 
 ## 18. Completeness, pagination, and truncation
 
@@ -479,7 +500,7 @@ The committed M8 vector file is:
 conformance/vectors/federation-transport-v1.json
 ```
 
-The acceptance set contains **81 vectors**: 26 positive/evaluation cases and 55 negative/adversarial cases.
+The acceptance set contains **93 vectors**: 28 positive/evaluation cases and 65 negative/adversarial cases.
 
 Coverage includes capability state/negotiation, scope fingerprints, snapshot and sync requests, cursor-carrying sync requests, complete/partial/truncated pages, source-scoped Record validation, replay deduplication, post-union resource bounds, cursor context isolation, idempotency payload binding, receiver outcomes, OLP extension envelopes, exact version-domain typing, and malformed/unsupported/resource-abuse cases.
 
