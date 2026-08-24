@@ -66,7 +66,20 @@ python tools/validate_settlement_vectors.py
 
 The settlement helper evaluates evidence only. It does not execute payments, custody assets, establish ownership/title, define a mandatory rail, perform cross-rail arithmetic, or establish universal legal finality.
 
-All Milestone 3–7 vector sets pin the OLP source commit used for reproducibility:
+## Milestone 8 — Federation Transport & Interoperability APIs
+
+`vectors/federation-transport-v1.json` contains 93 positive/evaluation and negative vectors covering capability negotiation, explicit federation scopes, snapshot/sync requests and results, opaque cursor binding, canonical result fingerprints/Record identities, source-scoped page completeness, Record-Identity replay deduplication, submission idempotency, receiver outcomes, exact M8 core OLP extension message types, exact version typing, and adversarial resource/scope/replay cases.
+
+Generate and validate with:
+
+```text
+python tools/generate_federation_vectors.py
+python tools/validate_federation_vectors.py
+```
+
+The federation helper profiles OLP transport/capability primitives. It does not create a global Marketplace server, global index, canonical peer graph, deletion-by-absence semantics, exactly-once transport, or a second Marketplace evidence envelope.
+
+All Milestone 3–8 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -77,4 +90,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 7 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 8 acceptance additionally requires all earlier Marketplace vector suites to remain green.

@@ -12,6 +12,7 @@
 **Matching/discovery status:** Milestone 5 — Matching & Discovery Semantics — COMPLETE
 **Fulfillment/performance status:** Milestone 6 — Fulfillment & Performance Semantics — COMPLETE
 **Settlement status:** Milestone 7 — Settlement Interfaces & Economic Exchange Semantics — COMPLETE
+**Federation/interoperability status:** Milestone 8 — Federation Transport & Marketplace Interoperability APIs — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -158,6 +159,20 @@ multi-rail evidence         != canonical rail
 
 Attribution, authority, and rail verification are separate relying-party inputs. `SettlementPreferenceV1` constrains rail admissibility only where its semantics are understood; parameterized requirements are never guessed. Core preserves multi-rail evidence without exchange-rate invention or cross-rail arithmetic. The Milestone 7 executable set contains 57 positive/evaluation and negative vectors.
 
+### Federation transport and interoperability
+
+Milestone 8 profiles OLP transport/capability primitives for source-scoped Marketplace federation without introducing a second wire envelope, global marketplace server, canonical peer graph, or mutable shared state.
+
+```text
+transport delivery       != evidence identity
+source completeness      != global completeness
+sync absence             != deletion
+replay/idempotency       != exactly-once delivery
+receiver policy          != protocol validity
+```
+
+Snapshot and incremental-sync requests carry explicit normalized scopes and optional opaque cursors bound to source + operation + scope. Exchange results carry canonical scope fingerprints, sorted unique OLP Record identities, source-relative completeness, and explicit truncation/cursor state. Exact Record Identity is recomputed on receipt; duplicate immutable evidence is replay-safe; receiver accept/reject/defer/ignore outcomes remain source-local. The Milestone 8 executable set contains 93 positive/evaluation and negative vectors.
+
 ---
 
 ## What this project is
@@ -224,6 +239,10 @@ evidence                    != truth
 verification                != endorsement
 reputation                  != universal trust
 protocol expressibility     != permission
+transport serialization     != Record Identity
+source completeness         != global completeness
+sync absence                != deletion/retirement
+receiver policy             != protocol validity
 ```
 
 These separations are constraints, not merely documentation language.
@@ -274,10 +293,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0005-market-matching-discovery.md`](specification/0005-market-matching-discovery.md) - source-scoped discovery, matching aggregation, ranking plurality, federation, and cursor boundaries.
 - [`specification/0006-market-fulfillment-performance.md`](specification/0006-market-fulfillment-performance.md) - commitment-targeted performance, delivery, inspection, acceptance, disputes, and method-relative fulfillment.
 - [`specification/0007-market-settlement-interfaces.md`](specification/0007-market-settlement-interfaces.md) - rail-neutral settlement evidence, reversals/refunds, escrow, asset transfer, preference constraints, and finality boundaries.
+- [`specification/0008-market-federation-transport.md`](specification/0008-market-federation-transport.md) - OLP-based federation capabilities, snapshot/sync exchange, cursor/replay/idempotency boundaries, source provenance, and receiver outcomes.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define federation transports, privacy profiles, safety/policy boundaries, dispute-resolution profiles, and further conformance incrementally.
+Future specifications will define privacy profiles, safety/policy boundaries, dispute-resolution profiles, deployment profiles, and further conformance incrementally.
 
 ---
 
