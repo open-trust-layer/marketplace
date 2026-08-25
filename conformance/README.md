@@ -120,7 +120,7 @@ python tools/validate_policy_vectors.py
 The policy helper produces a local process result only. It does not create a universal censor, regulator, moderation authority, permission oracle, policy language, trusted timestamp authority, or authenticated PolicyDecision record. Authority evidence and authorization proofs remain evidence inputs rather than final permission.
 
 
-All Milestone 3–11 vector sets pin the OLP source commit used for reproducibility:
+All manifest-registered vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -143,7 +143,7 @@ With an OLP checkout at the exact commit stored in `olp-source-pin.txt`:
 python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 ```
 
-The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all 472 committed vectors in milestone order, replays all nine generators byte-for-byte in an isolated temporary repository copy, and runs `git diff --check`. Each subprocess has a finite timeout.
+The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all registered committed vectors in manifest order, replays every registered generator byte-for-byte in an isolated temporary repository copy, and runs Git whitespace checks. With Milestone 13 registered, the current semantic surface is 554 vectors. Each subprocess has a finite timeout.
 
 For focused diagnostics only, generator replay may be skipped:
 
@@ -154,3 +154,16 @@ python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout> --skip
 Skipping replay is not a Milestone 12 acceptance pass.
 
 GitHub Actions invokes the same provider-neutral gate after composing the Marketplace checkout and the exact public OLP dependency. CI therefore does not carry a separate acceptance implementation.
+
+## Milestone 13 — Dispute Resolution Profiles & Resolution Evidence
+
+`vectors/dispute-resolution-v1.json` contains 82 positive/evaluation and negative/adversarial vectors covering exact OLP dispute targeting, method-bound admissibility, source/authority/proof/lifecycle separation, unknown critical semantics, uphold/reject/partial/conflict outcomes, human-review/additional-evidence states, exact reuse binding, duplicate delivery, result integrity, resource limits, and the non-authorization/remedy boundary.
+
+Generate and validate with:
+
+```text
+python tools/generate_dispute_resolution_vectors.py
+python tools/validate_dispute_resolution_vectors.py
+```
+
+The M13 helper evaluates dispute and resolution evidence only. It does not mutate challenged evidence, establish universal truth or legal judgment, choose a universal arbitrator, define remedies, or authorize protected side effects.

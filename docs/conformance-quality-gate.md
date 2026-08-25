@@ -23,9 +23,9 @@ The gate performs, in order:
 1. exact OLP source-pin verification;
 2. side-effect-free repository structure/content audit;
 3. deterministic offline unit tests for the gate itself;
-4. all Milestone 3–11 vector validators in fixed order;
-5. byte-for-byte generator replay in an isolated temporary repository copy; and
-6. `git diff --check` for the current working diff.
+4. all manifest-registered vector validators in fixed order;
+5. byte-for-byte replay of every manifest-registered generator in an isolated temporary repository copy; and
+6. Git whitespace checks across the working tree, staged index, and committed `HEAD^..HEAD` delta.
 
 Every subprocess has an explicit finite timeout. Suites execute sequentially; M12 introduces no unbounded task fan-out or hidden concurrency.
 
