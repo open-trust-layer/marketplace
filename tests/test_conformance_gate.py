@@ -40,8 +40,8 @@ class ConformanceGateTests(unittest.TestCase):
         return GateConfig(repo_root=repo, olp_root=olp, timeout_seconds=timeout)
 
     def test_suite_order_and_total_are_deterministic(self):
-        self.assertEqual(tuple(suite.key for suite in SUITES), ("m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11", "m13", "m14"))
-        self.assertEqual(EXPECTED_TOTAL, 641)
+        self.assertEqual(tuple(suite.key for suite in SUITES), ("m3", "m4", "m5", "m6", "m7", "m8", "m9", "m10", "m11", "m13", "m14", "m15"))
+        self.assertEqual(EXPECTED_TOTAL, 745)
 
     def test_verify_olp_pin_accepts_exact_checkout(self):
         with tempfile.TemporaryDirectory() as temp_dir:

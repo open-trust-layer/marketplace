@@ -143,7 +143,7 @@ With an OLP checkout at the exact commit stored in `olp-source-pin.txt`:
 python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 ```
 
-The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all registered committed vectors in manifest order, replays every registered generator byte-for-byte in an isolated temporary repository copy, and runs Git whitespace checks. With Milestones 13–14 registered, the current semantic surface is 641 vectors. Each subprocess has a finite timeout.
+The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all registered committed vectors in manifest order, replays every registered generator byte-for-byte in an isolated temporary repository copy, and runs Git whitespace checks. With Milestones 13–15 registered, the current semantic surface is 745 vectors. Each subprocess has a finite timeout.
 
 For focused diagnostics only, generator replay may be skipped:
 
@@ -180,3 +180,15 @@ python tools/validate_deployment_vectors.py
 ```
 
 The M14 helper performs pure local configuration/readiness evaluation only. It does not probe endpoints, access secrets, mutate storage, authenticate operators, establish transport security, or authorize protected side effects.
+## Milestone 15 — Domain Evaluator Method Profiles & Criterion Aggregation
+
+`vectors/domain-evaluator-methods-v1.json` contains 103 positive/evaluation and negative/adversarial vectors covering method/domain/purpose binding, required and optional criteria, method-local weights and thresholds, unknown critical semantics, support/opposition/neutral/conflict outcomes, exact duplicate normalization, context and Record-Identity binding, result integrity, method-profile collisions, exact reuse, malformed host-language inputs, canonical ordering, and resource ceilings.
+
+Generate and validate with:
+
+```text
+python tools/generate_domain_evaluator_vectors.py
+python tools/validate_domain_evaluator_vectors.py
+```
+
+The M15 helper derives only a method-relative domain status for M9. It does not fetch evidence, verify proofs, establish identity or authority, select sources, resolve disputes, create universal scores, standardize numeric confidence, establish cross-method comparability, or authorize protected side effects.
