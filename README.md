@@ -202,6 +202,22 @@ privacy planning            != authorization / consent / trust
 
 The core profile recognizes discovery, negotiation, fulfillment-verification, settlement-verification, federation-exchange, and trust-evaluation tasks. It preserves OLP disclosure results, adds deterministic Marketplace correlation warnings, requires explicit network/privacy context, and bounds roots, inventories, resources, capabilities, dependencies, and warning lists. The Milestone 10 executable set contains 52 positive/evaluation and negative/adversarial vectors.
 
+
+### Safety, policy, and authorization boundaries
+
+Milestone 11 defines a local, method-relative PolicyDecision process for protected Marketplace operations without creating a global censor, regulator, moderation authority, allow/deny registry, or protocol-level permission oracle.
+
+```text
+valid record             != permitted action
+authority evidence       != final authorization
+policy ALLOW             != universal permission
+policy DENY              != universal prohibition
+result fingerprint       != result authentication
+```
+
+The reference method binds policy observations to an exact method, local decision scope, operation, actor, target, context, and required-dimension set. It preserves evidence validity, proof validity, authentication, attribution, identity, authority, delegation, lifecycle, authorization, trust, legal/compliance, safety, business-policy, and moderation observations as separate dimensions. Protected side effects require explicit authorization, while stale, unsupported, unresolved, conflicting, or missing required dimensions fail closed without being silently converted into universal prohibition. The Milestone 11 executable set contains 77 positive/evaluation and negative/adversarial vectors.
+
+
 ---
 
 ## What this project is
@@ -275,6 +291,10 @@ receiver policy             != protocol validity
 selective disclosure        != field deletion
 withheld evidence            != nonexistent evidence
 privacy warning              != protocol invalidity
+authority evidence          != final authorization
+policy ALLOW                != universal permission
+policy DENY                 != universal prohibition
+result fingerprint          != result authentication
 ```
 
 These separations are constraints, not merely documentation language.
@@ -328,10 +348,11 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0008-market-federation-transport.md`](specification/0008-market-federation-transport.md) - OLP-based federation capabilities, snapshot/sync exchange, cursor/replay/idempotency boundaries, source provenance, and receiver outcomes.
 - [`specification/0009-market-trust-evaluation.md`](specification/0009-market-trust-evaluation.md) - method-relative evidence queries, exact provenance, observation dimensions, explainable traces, conflict/dispute preservation, and non-universal trust evaluation.
 - [`specification/0010-market-privacy-selective-disclosure.md`](specification/0010-market-privacy-selective-disclosure.md) - OLP-based Marketplace privacy tasks, selective disclosure, correlation warnings, open-world withholding, and bounded data minimization.
+- [`specification/0011-market-safety-policy-authorization.md`](specification/0011-market-safety-policy-authorization.md) - local method-relative policy decisions, authorization gates, explainable outcomes, replay binding, and non-universal permission boundaries.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define safety/policy boundaries, dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.
+Future specifications will define dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.
 
 ---
 

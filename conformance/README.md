@@ -105,7 +105,22 @@ python tools/validate_privacy_vectors.py
 
 The privacy helper profiles OLP 0010. It does not create a second privacy envelope, redact immutable Marketplace records, synthesize undisclosed external claims, establish global linkability, evaluate authorization/consent/trust, or permit hidden network fallback.
 
-All Milestone 3–10 vector sets pin the OLP source commit used for reproducibility:
+
+## Milestone 11 — Safety, Policy & Authorization Boundaries
+
+`vectors/safety-policy-authorization-v1.json` contains 77 positive/evaluation and negative/adversarial vectors covering all 11 core operations, explicit authorization gates for protected side effects, separate policy dimensions, method-relative outcome aggregation, conflict preservation, temporal applicability, source/reason/evidence provenance, observation subject binding, result integrity, decision reuse, and resource/error boundaries.
+
+Generate and validate with:
+
+```text
+python tools/generate_policy_vectors.py
+python tools/validate_policy_vectors.py
+```
+
+The policy helper produces a local process result only. It does not create a universal censor, regulator, moderation authority, permission oracle, policy language, trusted timestamp authority, or authenticated PolicyDecision record. Authority evidence and authorization proofs remain evidence inputs rather than final permission.
+
+
+All Milestone 3–11 vector sets pin the OLP source commit used for reproducibility:
 
 ```text
 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
@@ -116,4 +131,4 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
-Milestone 10 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Milestone 11 acceptance additionally requires all earlier Marketplace vector suites to remain green.
