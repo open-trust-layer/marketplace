@@ -132,3 +132,25 @@ A future Marketplace release MUST bind to a released OLP compatibility target ra
 A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
 
 Milestone 11 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+
+## Milestone 12 — Unified Conformance & Continuous Integration Quality Gate
+
+Milestone 12 adds one canonical acceptance command around the existing Milestone 3–11 validators. It does not replace or reinterpret any semantic suite.
+
+With an OLP checkout at the exact commit stored in `olp-source-pin.txt`:
+
+```text
+python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
+```
+
+The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all 472 committed vectors in milestone order, replays all nine generators byte-for-byte in an isolated temporary repository copy, and runs `git diff --check`. Each subprocess has a finite timeout.
+
+For focused diagnostics only, generator replay may be skipped:
+
+```text
+python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout> --skip-generator-replay
+```
+
+Skipping replay is not a Milestone 12 acceptance pass.
+
+GitHub Actions invokes the same provider-neutral gate after composing the Marketplace checkout and the exact public OLP dependency. CI therefore does not carry a separate acceptance implementation.

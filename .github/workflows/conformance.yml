@@ -1,0 +1,40 @@
+name: Marketplace conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out Marketplace
+        uses: actions/checkout@v7.0.1
+        with:
+          path: marketplace
+          fetch-depth: 0
+
+      - name: Check out pinned Open Layer Protocol
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: open-trust-layer/protocol
+          ref: 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+          path: olp
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install OLP reference dependency
+        run: python -m pip install --disable-pip-version-check -e ./olp
+
+      - name: Run Marketplace acceptance gate
+        working-directory: marketplace
+        run: python tools/conformance_gate.py --olp-root ../olp --timeout 90

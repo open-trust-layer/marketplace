@@ -15,6 +15,8 @@
 **Federation/interoperability status:** Milestone 8 — Federation Transport & Marketplace Interoperability APIs — COMPLETE
 **Trust evaluation status:** Milestone 9 — Trust Evaluation & Evidence Query Semantics — COMPLETE
 **Privacy/disclosure status:** Milestone 10 — Privacy, Selective Disclosure & Data Minimization Profiles — COMPLETE
+**Safety/policy status:** Milestone 11 — Safety, Policy & Authorization Boundaries — COMPLETE
+**Conformance/CI status:** Milestone 12 — Unified Conformance & Continuous Integration Quality Gate — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -217,6 +219,18 @@ result fingerprint       != result authentication
 
 The reference method binds policy observations to an exact method, local decision scope, operation, actor, target, context, and required-dimension set. It preserves evidence validity, proof validity, authentication, attribution, identity, authority, delegation, lifecycle, authorization, trust, legal/compliance, safety, business-policy, and moderation observations as separate dimensions. Protected side effects require explicit authorization, while stale, unsupported, unresolved, conflicting, or missing required dimensions fail closed without being silently converted into universal prohibition. The Milestone 11 executable set contains 77 positive/evaluation and negative/adversarial vectors.
 
+### Unified conformance and CI quality gate
+
+Milestone 12 turns the nine independent Milestone 3–11 suites into one bounded, reproducible acceptance workflow without changing Marketplace semantics. The provider-neutral gate verifies the exact OLP source pin, audits repository invariants, runs deterministic unit tests and all 472 semantic vectors, replays every generator in an isolated temporary copy, and performs a final whitespace check.
+
+```text
+python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
+```
+
+GitHub Actions is only an infrastructure adapter around that same local command. Every subprocess has a finite timeout, suite order is deterministic, generator replay cannot rewrite the developer worktree, and CI requires no privileged secret for ordinary pull-request validation.
+
+The Marketplace remains experimental/pre-implementation: M12 improves the reliability of the specification/conformance foundation; it does not introduce a hosted marketplace, application runtime, payment rail, trust authority, or new protocol truth.
+
 
 ---
 
@@ -350,6 +364,8 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0010-market-privacy-selective-disclosure.md`](specification/0010-market-privacy-selective-disclosure.md) - OLP-based Marketplace privacy tasks, selective disclosure, correlation warnings, open-world withholding, and bounded data minimization.
 - [`specification/0011-market-safety-policy-authorization.md`](specification/0011-market-safety-policy-authorization.md) - local method-relative policy decisions, authorization gates, explainable outcomes, replay binding, and non-universal permission boundaries.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
+- [`docs/conformance-quality-gate.md`](docs/conformance-quality-gate.md) - M12 unified local/CI acceptance architecture, dependency pinning, timeout, and isolated replay boundaries.
+- [`conformance/olp-source-pin.txt`](conformance/olp-source-pin.txt) - exact draft OLP source compatibility pin verified by the acceptance gate.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
 Future specifications will define dispute-resolution profiles, deployment profiles, domain-specific evaluator methods, and further conformance incrementally.

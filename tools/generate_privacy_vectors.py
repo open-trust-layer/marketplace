@@ -361,7 +361,7 @@ from olp.model.evidence import EvidenceKind
 def main() -> int:
     data = build()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    OUT.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     print(f"wrote {OUT}")
     print(f"positive/evaluation cases: {len(data['cases'])}")
     print(f"negative cases: {len(data['negative_cases'])}")
