@@ -20,6 +20,7 @@
 **Dispute-resolution status:** Milestone 13 — Dispute Resolution Profiles & Resolution Evidence — COMPLETE
 **Deployment status:** Milestone 14 — Deployment Profiles & Runtime Boundaries — COMPLETE
 **Domain evaluator status:** Milestone 15 — Domain Evaluator Method Profiles & Criterion Aggregation — COMPLETE
+**Remedy/workflow status:** Milestone 16 — Remedy & Workflow Profiles — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -224,7 +225,7 @@ The reference method binds policy observations to an exact method, local decisio
 
 ### Unified conformance and CI quality gate
 
-Milestone 12 established one bounded, reproducible acceptance workflow around the then-nine Milestone 3–11 suites without changing Marketplace semantics. The manifest now also registers Milestones 13–15, so the provider-neutral gate verifies the exact OLP source pin, audits repository invariants, runs deterministic unit tests and all 745 semantic vectors, replays all twelve generators in an isolated temporary copy, and performs working-tree, staged-index, and committed-delta whitespace checks.
+Milestone 12 established one bounded, reproducible acceptance workflow around the then-nine Milestone 3–11 suites without changing Marketplace semantics. The manifest now also registers Milestones 13–16, so the provider-neutral gate verifies the exact OLP source pin, audits repository invariants, runs deterministic unit tests and all 816 semantic vectors, replays all thirteen generators in an isolated temporary copy, and performs working-tree, staged-index, and committed-delta whitespace checks.
 
 ```text
 python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
@@ -275,6 +276,21 @@ positive domain result         != authorization
 ```
 
 The reference criterion-threshold profile preserves support/opposition conflict, fails closed on unresolved required or unknown critical semantics, treats missing optional criteria as non-adverse, and binds exact reuse to normalized method profile, request, Record Identity, context, and observations. M9 remains authoritative for proof, identity, authority, lifecycle, source, dispute, and overall trust treatment.
+
+### Remedy and workflow profiles
+
+Milestone 16 defines method-relative post-outcome coordination proposals over exact supplied Record Identities and source-result observations without creating a universal court, mandatory remedy workflow, mutable case state, settlement executor, or authorization authority.
+
+```text
+workflow proposal             != legal remedy or obligation
+protected action proposal     != authorization or execution
+proposed refund               != settlement evidence
+proposed replacement          != fulfillment evidence
+conflicting applicable rules  != canonical winning remedy
+result fingerprint            != result authentication
+```
+
+The pure offline reference planner preserves incompatible proposed actions, rejects cyclic and dangling dependencies, fails closed on unknown critical semantics and missing required evidence, normalizes duplicate deliveries, and binds exact reuse to method profile, domain, purpose, target identities, source outcomes, context, and proposal graph. Protected steps remain non-executable without a separate fresh M11 authorization decision.
 
 ---
 
@@ -410,12 +426,13 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0012-market-dispute-resolution.md`](specification/0012-market-dispute-resolution.md) - method-relative OLP dispute admission, attributable resolution evidence, conflict preservation, exact reuse binding, and side-effect separation.
 - [`specification/0013-market-deployment-profiles.md`](specification/0013-market-deployment-profiles.md) - portable runtime composition, replaceable adapter roles, deterministic readiness, capability backing, secret-safe descriptors, and side-effect authorization separation.
 - [`specification/0014-market-domain-evaluator-methods.md`](specification/0014-market-domain-evaluator-methods.md) - domain-scoped criterion methods, method-local thresholds, exact profile/result binding, conflict preservation, and non-universal evaluation boundaries.
+- [`specification/0015-market-remedy-workflow-profiles.md`](specification/0015-market-remedy-workflow-profiles.md) - outcome-bound coordination proposals, deterministic workflow graphs, conflict visibility, exact reuse, and fresh protected-action authorization boundaries.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/conformance-quality-gate.md`](docs/conformance-quality-gate.md) - M12 unified local/CI acceptance architecture, dependency pinning, timeout, and isolated replay boundaries.
 - [`conformance/olp-source-pin.txt`](conformance/olp-source-pin.txt) - exact draft OLP source compatibility pin verified by the acceptance gate.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define remedy/workflow profiles where appropriate, selected deployment adapters where interoperability benefits justify them, additional domain evaluator methods where interoperability benefits justify them, and further conformance incrementally.
+Future specifications will define selected deployment adapters where interoperability benefits justify them, additional domain evaluator methods where interoperability benefits justify them, specialized coordination profiles, and further conformance incrementally.
 
 ---
 

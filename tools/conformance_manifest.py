@@ -32,6 +32,7 @@ SUITES: tuple[ConformanceSuite, ...] = (
     ConformanceSuite("m13", "Dispute Resolution", "validate_dispute_resolution_vectors.py", "generate_dispute_resolution_vectors.py", "dispute-resolution-v1.json", 82),
     ConformanceSuite("m14", "Deployment Profiles", "validate_deployment_vectors.py", "generate_deployment_vectors.py", "deployment-profiles-v1.json", 87),
     ConformanceSuite("m15", "Domain Evaluator Methods", "validate_domain_evaluator_vectors.py", "generate_domain_evaluator_vectors.py", "domain-evaluator-methods-v1.json", 104),
+    ConformanceSuite("m16", "Remedy & Workflow Profiles", "validate_remedy_workflow_vectors.py", "generate_remedy_workflow_vectors.py", "remedy-workflow-v1.json", 71),
 )
 
 EXPECTED_TOTAL = sum(suite.expected_count for suite in SUITES)
