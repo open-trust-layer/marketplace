@@ -18,6 +18,7 @@
 **Safety/policy status:** Milestone 11 — Safety, Policy & Authorization Boundaries — COMPLETE
 **Conformance/CI status:** Milestone 12 — Unified Conformance & Continuous Integration Quality Gate — COMPLETE
 **Dispute-resolution status:** Milestone 13 — Dispute Resolution Profiles & Resolution Evidence — COMPLETE
+**Deployment status:** Milestone 14 — Deployment Profiles & Runtime Boundaries — COMPLETE
 
 This project explores a global, interoperable marketplace architecture whose subject scale ranges from very small objects and tasks to arbitrarily large structures: a software bug, a physical item, a service, a company, infrastructure, an asteroid, a planet, or a galaxy may all be *subjects of market intent*.
 
@@ -222,7 +223,7 @@ The reference method binds policy observations to an exact method, local decisio
 
 ### Unified conformance and CI quality gate
 
-Milestone 12 established one bounded, reproducible acceptance workflow around the then-nine Milestone 3–11 suites without changing Marketplace semantics. The manifest now also registers Milestone 13, so the provider-neutral gate verifies the exact OLP source pin, audits repository invariants, runs deterministic unit tests and all 554 semantic vectors, replays all ten generators in an isolated temporary copy, and performs working-tree, staged-index, and committed-delta whitespace checks.
+Milestone 12 established one bounded, reproducible acceptance workflow around the then-nine Milestone 3–11 suites without changing Marketplace semantics. The manifest now also registers Milestones 13–14, so the provider-neutral gate verifies the exact OLP source pin, audits repository invariants, runs deterministic unit tests and all 641 semantic vectors, replays all eleven generators in an isolated temporary copy, and performs working-tree, staged-index, and committed-delta whitespace checks.
 
 ```text
 python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
@@ -245,6 +246,20 @@ resolution                      != authorization
 ```
 
 The reference M13 profile produces bounded, deterministic, explainable results such as uphold/reject under method, partial/mixed resolution, conflicting resolution evidence, additional-evidence/human-review requirements, indeterminate, or no admissible supplied dispute. Protected side effects still require the Milestone 11 authorization boundary.
+
+### Deployment profiles
+
+Milestone 14 defines portable deployment composition and local readiness without creating one mandatory Marketplace server, database, queue, cloud, container platform, or transport. Runtime components bind explicit roles to replaceable adapters; services declare the roles that back each capability.
+
+```text
+deployment descriptor          != Marketplace Record
+configured endpoint            != reachable endpoint
+component readiness            != operator authority
+service capability             != authorization
+READY                           != external availability
+```
+
+The reference M14 profile derives `READY`, `DEGRADED`, or `NOT_READY` from exact local observations, suppresses capability advertisement when deployment-critical semantics are unknown, rejects credential-like descriptor fields, and requires every side-effect service to depend on both policy/authorization and side-effect-executor roles. M11 authorization is still required for each protected operation.
 
 
 ---
@@ -379,12 +394,13 @@ The marketplace can represent an intent concerning a subject without asserting t
 - [`specification/0010-market-privacy-selective-disclosure.md`](specification/0010-market-privacy-selective-disclosure.md) - OLP-based Marketplace privacy tasks, selective disclosure, correlation warnings, open-world withholding, and bounded data minimization.
 - [`specification/0011-market-safety-policy-authorization.md`](specification/0011-market-safety-policy-authorization.md) - local method-relative policy decisions, authorization gates, explainable outcomes, replay binding, and non-universal permission boundaries.
 - [`specification/0012-market-dispute-resolution.md`](specification/0012-market-dispute-resolution.md) - method-relative OLP dispute admission, attributable resolution evidence, conflict preservation, exact reuse binding, and side-effect separation.
+- [`specification/0013-market-deployment-profiles.md`](specification/0013-market-deployment-profiles.md) - portable runtime composition, replaceable adapter roles, deterministic readiness, capability backing, secret-safe descriptors, and side-effect authorization separation.
 - [`conformance/README.md`](conformance/README.md) - executable representation vectors and reproducibility workflow.
 - [`docs/conformance-quality-gate.md`](docs/conformance-quality-gate.md) - M12 unified local/CI acceptance architecture, dependency pinning, timeout, and isolated replay boundaries.
 - [`conformance/olp-source-pin.txt`](conformance/olp-source-pin.txt) - exact draft OLP source compatibility pin verified by the acceptance gate.
 - [`docs/standards-landscape.md`](docs/standards-landscape.md) - initial prior-art and interoperability targets.
 
-Future specifications will define deployment profiles, domain-specific evaluator methods, remedy/workflow profiles where appropriate, and further conformance incrementally.
+Future specifications will define domain-specific evaluator methods, remedy/workflow profiles where appropriate, selected deployment adapters where interoperability benefits justify them, and further conformance incrementally.
 
 ---
 

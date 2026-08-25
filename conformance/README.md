@@ -129,9 +129,9 @@ All manifest-registered vector sets pin the OLP source commit used for reproduci
 A future Marketplace release MUST bind to a released OLP compatibility target rather than this draft source pin.
 ## Acceptance workflow
 
-A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and runs `git diff --check` before merge.
+A milestone acceptance pass regenerates every applicable vector file, requires byte-for-byte equality with the committed artifact, validates every positive and negative case, compiles the Python tooling, checks Markdown links/fences/encoding, validates JSON, and passes the repository Git whitespace checks before merge.
 
-Milestone 11 acceptance additionally requires all earlier Marketplace vector suites to remain green.
+Each later semantic milestone is added to the manifest only when its suite passes alongside every earlier registered Marketplace vector suite.
 
 ## Milestone 12 — Unified Conformance & Continuous Integration Quality Gate
 
@@ -143,7 +143,7 @@ With an OLP checkout at the exact commit stored in `olp-source-pin.txt`:
 python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 ```
 
-The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all registered committed vectors in manifest order, replays every registered generator byte-for-byte in an isolated temporary repository copy, and runs Git whitespace checks. With Milestone 13 registered, the current semantic surface is 554 vectors. Each subprocess has a finite timeout.
+The gate verifies the OLP checkout first, audits repository invariants, runs deterministic unit tests, validates all registered committed vectors in manifest order, replays every registered generator byte-for-byte in an isolated temporary repository copy, and runs Git whitespace checks. With Milestones 13–14 registered, the current semantic surface is 641 vectors. Each subprocess has a finite timeout.
 
 For focused diagnostics only, generator replay may be skipped:
 
@@ -167,3 +167,16 @@ python tools/validate_dispute_resolution_vectors.py
 ```
 
 The M13 helper evaluates dispute and resolution evidence only. It does not mutate challenged evidence, establish universal truth or legal judgment, choose a universal arbitrator, define remedies, or authorize protected side effects.
+
+## Milestone 14 — Deployment Profiles & Runtime Boundaries
+
+`vectors/deployment-profiles-v1.json` contains 87 positive/evaluation and negative/adversarial vectors covering portable component/service composition, replaceable adapter bindings, required/optional readiness, capability backing, unknown critical semantics, side-effect authorization-gate composition, secret-like field rejection, deterministic reuse, conflicting observations, and resource ceilings.
+
+Generate and validate with:
+
+```text
+python tools/generate_deployment_vectors.py
+python tools/validate_deployment_vectors.py
+```
+
+The M14 helper performs pure local configuration/readiness evaluation only. It does not probe endpoints, access secrets, mutate storage, authenticate operators, establish transport security, or authorize protected side effects.
