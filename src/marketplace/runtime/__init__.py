@@ -1,10 +1,23 @@
 """Public runtime surface for the non-normative Marketplace reference core."""
-from .contracts import BoundedRecordSource, DiscoveryEvaluator, StoreDisposition
+from .contracts import (
+    BoundedRecordSource,
+    DiscoveryEvaluator,
+    ExactRecordSource,
+    MatchEvaluator,
+    StoreDisposition,
+)
 from .discovery import (
     InvalidDiscoveryEvaluatorResult,
     InvalidDiscoveryLimitError,
     LocalDiscoveryService,
     RuntimeDiscoveryError,
+)
+from .matching import (
+    InvalidLocalRecordIdentityError,
+    InvalidMatchEvaluatorResult,
+    LocalMatchService,
+    LocalRecordNotFoundError,
+    RuntimeMatchError,
 )
 from .node import IngestOutcome, InvalidIdentityProviderResult, MarketplaceNode, RuntimeNodeError
 from .repository import (
@@ -25,10 +38,16 @@ __all__ = [
     "DEFAULT_EPHEMERAL_RETENTION_SECONDS",
     "DEFAULT_MAX_ENTRIES",
     "DiscoveryEvaluator",
+    "ExactRecordSource",
     "InvalidDiscoveryEvaluatorResult",
     "InvalidDiscoveryLimitError",
+    "InvalidLocalRecordIdentityError",
+    "InvalidMatchEvaluatorResult",
     "LocalDiscoveryService",
+    "LocalMatchService",
+    "LocalRecordNotFoundError",
     "MAX_CONFIGURED_ENTRIES",
+    "MatchEvaluator",
     "RETENTION_CLASS_EPHEMERAL",
     "InMemoryEphemeralRecordRepository",
     "IngestOutcome",
@@ -39,6 +58,7 @@ __all__ = [
     "RepositoryClosedError",
     "RepositoryReadLimitExceededError",
     "RuntimeDiscoveryError",
+    "RuntimeMatchError",
     "RuntimeNodeError",
     "RuntimeRepositoryError",
     "StoreDisposition",
