@@ -65,10 +65,6 @@ def _fail(code: str, message: str) -> None:
     raise ArtifactGateError(code, message)
 
 
-def _sha256_bytes(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
 def _sha256_path(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -83,7 +79,7 @@ def _urlsafe_sha256(data: bytes) -> str:
 
 
 def _wheel_component(value: str) -> str:
-    return re.sub(r"[^A-Za-z0-9.]+", "_", value).replace(".", ".")
+    return re.sub(r"[^A-Za-z0-9.]+", "_", value)
 
 
 def _run(
@@ -161,6 +157,22 @@ def _source_commit(repo_root: Path, timeout: float) -> str:
     if not _HEX_COMMIT_RE.fullmatch(value):
         _fail("SOURCE_COMMIT_FORMAT", f"git returned invalid source commit {value!r}")
     return value
+
+
+def _verify_clean_source(repo_root: Path, timeout: float) -> None:
+    """Prevent provenance from attributing modified bytes to an unmodified HEAD."""
+    result = _run(
+        ("git", "status", "--porcelain=v1", "--untracked-files=all"),
+        cwd=repo_root,
+        env=dict(os.environ),
+        timeout=timeout,
+        label="Marketplace source cleanliness check",
+    )
+    if result.stdout.strip():
+        _fail(
+            "SOURCE_NOT_CLEAN",
+            "artifact provenance requires a clean source checkout; commit or remove worktree changes first",
+        )
 
 
 def _verify_build_backend() -> None:
@@ -319,6 +331,11 @@ def _normalized_payload_digest(archive: zipfile.ZipFile, names: tuple[str, ...],
 
 
 def audit_wheel(path: Path, *, expected_name: str, expected_version: str) -> WheelAudit:
+    expected_filename = (
+        f"{_wheel_component(expected_name)}-{_wheel_component(expected_version)}-py3-none-any.whl"
+    )
+    if path.name != expected_filename:
+        _fail("WHEEL_FILENAME", f"expected wheel filename {expected_filename!r}, got {path.name!r}")
     wheel_sha = _sha256_path(path)
     if not _HEX_SHA256_RE.fullmatch(wheel_sha):
         _fail("WHEEL_HASH", "internal wheel SHA-256 formatting failure")
@@ -399,6 +416,12 @@ def provenance_report(
     olp_source_commit: str,
     runtime_dependency_count: int,
 ) -> dict[str, object]:
+    if not _HEX_COMMIT_RE.fullmatch(source_commit):
+        _fail("SOURCE_COMMIT_FORMAT", "Marketplace source commit MUST be lowercase 40-hex")
+    if not _HEX_COMMIT_RE.fullmatch(olp_source_commit):
+        _fail("OLP_PIN_FORMAT", "OLP source commit MUST be lowercase 40-hex")
+    if runtime_dependency_count != 0:
+        _fail("RUNTIME_DEPENDENCIES", "provenance requires zero declared runtime dependencies")
     return {
         "artifact_sha256": audit.sha256,
         "build_backend": {
@@ -411,7 +434,8 @@ def provenance_report(
         "package_name": audit.package_name,
         "package_version": audit.package_version,
         "payload_sha256": audit.payload_sha256,
-        "provenance_schema": "marketplace-local-artifact-provenance-v1",
+        "provenance_schema": "marketplace-local-artifact-provenance",
+        "provenance_version": 1,
         "reference_adapters_present": True,
         "signed": False,
         "source_date_epoch": SOURCE_DATE_EPOCH,
@@ -431,6 +455,7 @@ def run_gate(repo_root: Path, *, timeout: float = DEFAULT_TIMEOUT_SECONDS) -> di
     repo_root = repo_root.resolve()
     if not repo_root.is_dir():
         _fail("REPO_ROOT", f"repository root does not exist: {repo_root}")
+    _verify_clean_source(repo_root, timeout)
     _verify_build_backend()
     package_name, package_version, dependency_count = _project_metadata(repo_root)
     source_commit = _source_commit(repo_root, timeout)
