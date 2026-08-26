@@ -1,0 +1,183 @@
+from __future__ import annotations
+
+import base64
+import csv
+import hashlib
+import io
+import tempfile
+import unittest
+import zipfile
+from pathlib import Path
+
+from package_artifact_gate import (
+    ArtifactGateError,
+    SOURCE_DATE_EPOCH,
+    _build_environment,
+    audit_wheel,
+    canonical_report_json,
+    provenance_report,
+)
+
+PACKAGE = "open-layer-marketplace"
+VERSION = "0.0.1.dev0"
+DIST_INFO = "open_layer_marketplace-0.0.1.dev0.dist-info"
+REQUIRED = {
+    "marketplace/__init__.py": b"",
+    "marketplace/runtime/__init__.py": b"",
+    "marketplace/runtime/composition.py": b"# runtime\n",
+    "marketplace/reference/__init__.py": b"",
+    "marketplace/reference/record_v1.py": b"# record\n",
+    "marketplace/reference/matching_v1.py": b"# matching\n",
+}
+
+
+def urlsafe_sha256(data: bytes) -> str:
+    digest = hashlib.sha256(data).digest()
+    return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
+
+
+def write_wheel(
+    path: Path,
+    *,
+    metadata_extra: str = "",
+    wheel_extra: str = "",
+    extra_members: dict[str, bytes] | None = None,
+    tamper_record_for: str | None = None,
+    symlink_member: str | None = None,
+) -> None:
+    members = dict(REQUIRED)
+    members[f"{DIST_INFO}/METADATA"] = (
+        "Metadata-Version: 2.4\n"
+        f"Name: {PACKAGE}\n"
+        f"Version: {VERSION}\n"
+        f"{metadata_extra}"
+        "\n"
+    ).encode("utf-8")
+    members[f"{DIST_INFO}/WHEEL"] = (
+        "Wheel-Version: 1.0\n"
+        "Generator: test\n"
+        "Root-Is-Purelib: true\n"
+        "Tag: py3-none-any\n"
+        f"{wheel_extra}"
+        "\n"
+    ).encode("utf-8")
+    if extra_members:
+        members.update(extra_members)
+
+    rows: list[list[str]] = []
+    for name, data in sorted(members.items()):
+        digest = urlsafe_sha256(data)
+        if name == tamper_record_for:
+            digest = "A" * 43
+        rows.append([name, f"sha256={digest}", str(len(data))])
+    record_name = f"{DIST_INFO}/RECORD"
+    rows.append([record_name, "", ""])
+    buffer = io.StringIO(newline="")
+    csv.writer(buffer, lineterminator="\n").writerows(rows)
+    members[record_name] = buffer.getvalue().encode("utf-8")
+
+    with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, data in sorted(members.items()):
+            info = zipfile.ZipInfo(name, date_time=(2000, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o100644 << 16
+            archive.writestr(info, data)
+        if symlink_member is not None:
+            info = zipfile.ZipInfo(symlink_member, date_time=(2000, 1, 1, 0, 0, 0))
+            info.external_attr = 0o120777 << 16
+            archive.writestr(info, b"marketplace/__init__.py")
+
+
+class PackageArtifactGateTests(unittest.TestCase):
+    def test_valid_wheel_passes_content_metadata_and_record_audit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
+            write_wheel(path)
+            audit = audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(audit.package_name, PACKAGE)
+            self.assertEqual(audit.package_version, VERSION)
+            self.assertEqual(audit.dist_info, DIST_INFO)
+            self.assertEqual(len(audit.sha256), 64)
+            self.assertEqual(len(audit.payload_sha256), 64)
+
+    def test_parent_traversal_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(path, extra_members={"../escape.txt": b"bad"})
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "UNSAFE_WHEEL_PATH")
+
+    def test_symlink_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(path, symlink_member="marketplace/link.py")
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_SYMLINK")
+
+    def test_runtime_dependency_metadata_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(path, metadata_extra="Requires-Dist: requests>=2\n")
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_METADATA_DEPENDENCY")
+
+    def test_unexpected_repository_payload_root_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(path, extra_members={"tools/leak.py": b"secret = False\n"})
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_PAYLOAD_ROOT")
+
+    def test_tampered_record_hash_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(path, tamper_record_for="marketplace/reference/record_v1.py")
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_RECORD_HASH")
+
+    def test_entry_points_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bad.whl"
+            write_wheel(
+                path,
+                extra_members={f"{DIST_INFO}/entry_points.txt": b"[console_scripts]\nmarketplace=x:y\n"},
+            )
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_ENTRY_POINTS")
+
+    def test_build_environment_fixes_reproducibility_controls_and_removes_pythonpath(self):
+        env = _build_environment()
+        self.assertEqual(env["SOURCE_DATE_EPOCH"], str(SOURCE_DATE_EPOCH))
+        self.assertEqual(env["PYTHONHASHSEED"], "0")
+        self.assertEqual(env["TZ"], "UTC")
+        self.assertEqual(env["PIP_NO_INDEX"], "1")
+        self.assertNotIn("PYTHONPATH", env)
+
+    def test_provenance_is_canonical_unsigned_unpublished_and_commit_bound(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
+            write_wheel(path)
+            audit = audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            report = provenance_report(
+                audit,
+                source_commit="1" * 40,
+                olp_source_commit="2" * 40,
+                runtime_dependency_count=0,
+            )
+            self.assertFalse(report["signed"])
+            self.assertFalse(report["published"])
+            self.assertEqual(report["marketplace_source_commit"], "1" * 40)
+            self.assertEqual(report["olp_source_commit"], "2" * 40)
+            encoded = canonical_report_json(report)
+            self.assertEqual(encoded, canonical_report_json(report))
+            self.assertNotIn(" ", encoded)
+
+
+if __name__ == "__main__":
+    unittest.main()
