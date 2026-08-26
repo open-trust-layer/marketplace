@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "open-layer-marketplace"
+version = "0.0.1.dev0"
+description = "Experimental transport-neutral runtime for the Open Layer Marketplace"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{name = "Open Trust Foundation"}]
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["marketplace*"]

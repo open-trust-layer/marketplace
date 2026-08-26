@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import unquote
@@ -12,6 +13,7 @@ from conformance_manifest import SUITES, read_olp_pin
 _LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 _FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 _URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+_DEV_VERSION_RE = re.compile(r"^0\.0\.\d+\.dev\d+$")
 _ALLOWED_CONTROLS = {"\n", "\r", "\t"}
 _REQUIRED_GOVERNANCE_FILES = (
     Path("DEVELOPMENT_POLICY.md"),
@@ -20,6 +22,9 @@ _REQUIRED_GOVERNANCE_FILES = (
     Path(".github/CODEOWNERS"),
     Path(".github/pull_request_template.md"),
 )
+_EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
+_EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
+_EXPECTED_LICENSE = "Apache-2.0"
 
 
 @dataclass(frozen=True)
@@ -100,6 +105,56 @@ def _audit_required_governance_files(repo_root: Path, findings: list[str]) -> No
             findings.append(f"MISSING_GOVERNANCE_FILE {relative_path.as_posix()}")
 
 
+def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
+    path = repo_root / "pyproject.toml"
+    if not path.is_file():
+        findings.append("MISSING_PACKAGING_FILE pyproject.toml")
+        return
+    try:
+        document = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        findings.append(f"PYPROJECT_PARSE {path}: {exc}")
+        return
+
+    build_system = document.get("build-system")
+    if not isinstance(build_system, dict):
+        findings.append("PYPROJECT_BUILD_SYSTEM build-system MUST be a table")
+    else:
+        if build_system.get("build-backend") != "setuptools.build_meta":
+            findings.append("PYPROJECT_BUILD_BACKEND MUST equal setuptools.build_meta")
+        if build_system.get("requires") != _EXPECTED_BUILD_REQUIRES:
+            findings.append(
+                "PYPROJECT_BUILD_REQUIRES MUST equal " + repr(_EXPECTED_BUILD_REQUIRES)
+            )
+
+    project = document.get("project")
+    if not isinstance(project, dict):
+        findings.append("PYPROJECT_PROJECT project MUST be a table")
+        return
+    if project.get("name") != _EXPECTED_PACKAGE_NAME:
+        findings.append(f"PYPROJECT_NAME MUST equal {_EXPECTED_PACKAGE_NAME!r}")
+    version = project.get("version")
+    if not isinstance(version, str) or not _DEV_VERSION_RE.fullmatch(version):
+        findings.append("PYPROJECT_VERSION MUST be an experimental 0.0.N.devN version")
+    if project.get("license") != _EXPECTED_LICENSE:
+        findings.append(f"PYPROJECT_LICENSE MUST equal {_EXPECTED_LICENSE!r}")
+    if project.get("dependencies") != []:
+        findings.append("PYPROJECT_RUNTIME_DEPENDENCIES MUST remain an empty array in M21")
+    if project.get("scripts") not in (None, {}):
+        findings.append("PYPROJECT_SCRIPTS runtime console scripts are not permitted in M21")
+    if project.get("entry-points") not in (None, {}):
+        findings.append("PYPROJECT_ENTRY_POINTS plugin/entry-point discovery is not permitted in M21")
+
+    tool = document.get("tool")
+    setuptools = tool.get("setuptools", {}) if isinstance(tool, dict) else {}
+    packages = setuptools.get("packages", {}) if isinstance(setuptools, dict) else {}
+    find = packages.get("find", {}) if isinstance(packages, dict) else {}
+    if not isinstance(find, dict) or find.get("where") != ["src"]:
+        findings.append("PYPROJECT_PACKAGE_ROOT package discovery MUST use where = ['src']")
+    if not isinstance(find, dict) or find.get("include") != ["marketplace*"]:
+        findings.append("PYPROJECT_PACKAGE_INCLUDE MUST include only marketplace*")
+
+
 def _collect_top_level_case_ids(document: object, path: Path, findings: list[str]) -> list[str]:
     if not isinstance(document, dict):
         findings.append(f"VECTOR_ROOT {path}: top-level JSON value MUST be an object")
@@ -161,6 +216,7 @@ def audit_repository(repo_root: Path) -> AuditReport:
         raise RepositoryAuditError([f"OLP_PIN_CONFIG {exc}"]) from exc
 
     _audit_required_governance_files(repo_root, findings)
+    _audit_packaging(repo_root, findings)
 
     markdown_files = sorted(
         path for path in repo_root.rglob("*.md")
