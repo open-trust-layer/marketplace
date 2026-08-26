@@ -26,12 +26,15 @@ _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
     Path("src/marketplace/reference/record_v1.py"),
     Path("src/marketplace/reference/matching_v1.py"),
+    Path("src/marketplace/reference/federation_v1.py"),
     Path("tools/marketplace_record_v1.py"),
     Path("tools/marketplace_matching_v1.py"),
+    Path("tools/marketplace_federation_v1.py"),
 )
 _REFERENCE_WRAPPERS = (
     Path("tools/marketplace_record_v1.py"),
     Path("tools/marketplace_matching_v1.py"),
+    Path("tools/marketplace_federation_v1.py"),
 )
 _EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
 _EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
@@ -176,7 +179,7 @@ def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
         findings.append("PYPROJECT_RUNTIME_DEPENDENCIES base runtime dependencies MUST remain an empty array")
     if project.get("optional-dependencies") not in (None, {}):
         findings.append(
-            "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted in M22"
+            "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted"
         )
     if project.get("scripts") not in (None, {}):
         findings.append("PYPROJECT_SCRIPTS runtime console scripts are not permitted")
