@@ -39,6 +39,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",
     "marketplace/runtime/federation.py",
+    "marketplace/runtime/network_policy.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",
