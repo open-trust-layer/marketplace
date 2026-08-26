@@ -163,6 +163,74 @@ def run_unit_tests(config: GateConfig, executor: CommandExecutor) -> None:
     _print_command_output(result)
 
 
+def run_package_smoke(config: GateConfig, executor: CommandExecutor) -> None:
+    """Install/import the runtime without repository import-path leakage or index access."""
+    print("=== Isolated runtime package smoke ===")
+    repo_root = config.repo_root.resolve()
+    with tempfile.TemporaryDirectory(prefix="marketplace-package-smoke-") as temp_dir:
+        temp_root = Path(temp_dir).resolve()
+        install_target = temp_root / "installed"
+        install_target.mkdir()
+
+        install_env = dict(os.environ)
+        install_env.pop("PYTHONPATH", None)
+        install_env["PYTHONDONTWRITEBYTECODE"] = "1"
+        install_env["PIP_NO_INDEX"] = "1"
+        install_env["PIP_NO_INPUT"] = "1"
+        install_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+        install_env["PYTHONNOUSERSITE"] = "1"
+        result = run_checked(
+            executor,
+            (
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--no-deps",
+                "--no-build-isolation",
+                "--target",
+                str(install_target),
+                str(repo_root),
+            ),
+            cwd=temp_root,
+            env=install_env,
+            timeout=config.timeout_seconds,
+            label="isolated runtime package install",
+        )
+        _print_command_output(result)
+
+        smoke = """import pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(root))
+import marketplace
+import marketplace.runtime as runtime
+for module in (marketplace, runtime):
+    origin = pathlib.Path(module.__file__).resolve()
+    try:
+        origin.relative_to(root)
+    except ValueError as exc:
+        raise SystemExit(f\"module escaped install target: {module.__name__} -> {origin}\") from exc
+for name in (\"MarketplaceRuntime\", \"compose_runtime\", \"create_in_memory_runtime\"):
+    if not hasattr(runtime, name):
+        raise SystemExit(f\"missing installed runtime API: {name}\")
+print(\"isolated runtime import PASS\")
+"""
+        import_env = dict(os.environ)
+        import_env.pop("PYTHONPATH", None)
+        import_env["PYTHONDONTWRITEBYTECODE"] = "1"
+        import_env["PYTHONNOUSERSITE"] = "1"
+        result = run_checked(
+            executor,
+            (sys.executable, "-I", "-c", smoke, str(install_target)),
+            cwd=temp_root,
+            env=import_env,
+            timeout=config.timeout_seconds,
+            label="isolated runtime package import",
+        )
+        _print_command_output(result)
+    print("isolated runtime package smoke PASS")
+
+
 def run_validators(config: GateConfig, executor: CommandExecutor) -> None:
     env = _build_environment(config)
     for suite in SUITES:
@@ -269,6 +337,7 @@ def run_gate(config: GateConfig, executor: CommandExecutor | None = None) -> Non
     )
 
     run_unit_tests(config, executor)
+    run_package_smoke(config, executor)
     run_validators(config, executor)
     if config.replay_generators:
         replay_generators(config, executor)
