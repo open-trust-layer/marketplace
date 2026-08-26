@@ -26,7 +26,10 @@ from marketplace.runtime import (
     compose_offline_federation_service,
     create_in_memory_runtime,
 )
-from marketplace.runtime.https_transport import HttpsFederationTransportLimits
+from marketplace.runtime.https_transport import (
+    FederationHttpsTransportError,
+    HttpsFederationTransportLimits,
+)
 from marketplace.runtime.network_policy import FederationEgressPolicy, authorize_federation_endpoint
 from marketplace.runtime.record_retrieval import (
     RECORD_RETRIEVAL_OPERATION,
