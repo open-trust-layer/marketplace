@@ -1,7 +1,7 @@
 # Coding Agent Instructions — Open Layer Marketplace
 
-**Development-method baseline:** Coding Agent Development Principles v1.3  
-**Baseline Git blob:** `a3bd11c662517a2b59815131d1bfce34cef1aa71`  
+**Development-method baseline:** Coding Agent Development Principles v1.3
+**Baseline Git blob:** `a3bd11c662517a2b59815131d1bfce34cef1aa71`
 **Adopted:** 2026-08-26
 
 This repository adopts the v1.3 engineering method for coding-agent work. The adoption is project-scoped and does not import data, credentials, memory, permissions, or repository settings from another project.
