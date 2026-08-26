@@ -22,7 +22,7 @@ _REQUIRED_GOVERNANCE_FILES = (
     Path(".github/CODEOWNERS"),
     Path(".github/pull_request_template.md"),
 )
-_EXPECTED_BUILD_REQUIRES = ["setuptools>=77"]
+_EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
 _EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
 _EXPECTED_LICENSE = "Apache-2.0"
 
@@ -145,7 +145,8 @@ def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
     if project.get("entry-points") not in (None, {}):
         findings.append("PYPROJECT_ENTRY_POINTS plugin/entry-point discovery is not permitted in M21")
 
-    setuptools = document.get("tool", {}).get("setuptools", {})
+    tool = document.get("tool")
+    setuptools = tool.get("setuptools", {}) if isinstance(tool, dict) else {}
     packages = setuptools.get("packages", {}) if isinstance(setuptools, dict) else {}
     find = packages.get("find", {}) if isinstance(packages, dict) else {}
     if not isinstance(find, dict) or find.get("where") != ["src"]:
