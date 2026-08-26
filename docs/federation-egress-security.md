@@ -28,7 +28,7 @@ The package exposes the M25 boundary at:
 marketplace.runtime.network_policy
 ```
 
-The module uses only deterministic standard-library parsing/classification helpers and contains no DNS/network/TLS/process/environment/credential access.
+The module uses only a reviewed deterministic standard-library import surface for parsing and address classification. It contains no DNS/network/TLS/process/environment/credential access, file I/O, or dynamic code execution.
 
 ## Endpoint policy
 
@@ -82,15 +82,16 @@ expires_at_epoch
 
 The maximum reference authorization lifetime is 300 seconds, and a selected policy may make it shorter.
 
-`validate_endpoint_authorization(...)` revalidates the endpoint and policy at use time and fails closed when:
+`validate_endpoint_authorization(...)` does not trust the dataclass instance merely because its type is correct. It revalidates the public/fabricatable authorization shape, exact negative authority flags, endpoint, policy and operation at use time and fails closed when:
 
+- authorization identifier, policy identifier/version, time values, or operation collection are malformed;
 - policy id/version changed;
 - endpoint/host/port/path no longer match exactly;
 - operation is not explicitly authorized;
 - authorization is not yet valid;
 - authorization is expired;
 - the validity window exceeds current policy;
-- the authorization carries an authority-escalation claim.
+- any negative authority flag is not exactly `false`.
 
 The result is local operator egress-policy evidence only.
 
@@ -115,9 +116,11 @@ The reference classifier rejects addresses that are:
 - multicast;
 - unspecified;
 - reserved/non-global;
-- IPv4-mapped IPv6.
+- IPv4-mapped IPv6;
+- IPv6 transition/tunnel forms such as 6to4 and Teredo;
+- IPv6 translation/NAT64 prefixes `64:ff9b::/96` and `64:ff9b:1::/48`.
 
-Only global-unicast IPv4/IPv6 results are accepted. Results are bounded, deduplicated, and canonicalized.
+Only ordinary global-unicast IPv4/IPv6 results outside those transition/translation forms are accepted. Results are bounded, deduplicated, and canonicalized.
 
 The returned `ResolvedEndpointAddresses` explicitly records:
 
@@ -157,9 +160,19 @@ If proxy support is ever added, it requires an explicit separately reviewed poli
 
 ## Executable no-network invariant
 
-M25 tests inspect `src/marketplace/runtime/network_policy.py` and reject imports/access paths for concrete network/process/environment/credential capabilities, including socket, SSL/TLS, HTTP clients, URL request clients, subprocesses, `os`, `.netrc`, and dynamic import/eval/exec.
+M25 tests inspect `src/marketplace/runtime/network_policy.py` and constrain it to the reviewed import surface:
 
-The module may parse URLs through `urllib.parse`; it cannot use `urllib.request`.
+```text
+__future__
+ipaddress
+re
+collections.abc
+dataclasses
+typing
+urllib.parse
+```
+
+They also reject dynamic import/eval/exec, file opening/compilation, and concrete DNS/network/TLS/process/environment/credential capabilities. The module may parse URLs through `urllib.parse`; it cannot use `urllib.request`.
 
 The base package dependency list remains empty.
 
