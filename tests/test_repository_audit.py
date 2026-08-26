@@ -13,7 +13,7 @@ from repository_audit import (
 )
 
 _VALID_PYPROJECT = """[build-system]
-requires = [\"setuptools>=77\"]
+requires = [\"setuptools==80.9.0\"]
 build-backend = \"setuptools.build_meta\"
 
 [project]
@@ -71,6 +71,18 @@ class RepositoryAuditTests(unittest.TestCase):
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertEqual(findings, [])
+
+    def test_packaging_audit_rejects_unreviewed_build_backend_version(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            text = _VALID_PYPROJECT.replace("setuptools==80.9.0", "setuptools>=77")
+            (root / "pyproject.toml").write_text(text, encoding="utf-8")
+            findings: list[str] = []
+            _audit_packaging(root, findings)
+            self.assertIn(
+                "PYPROJECT_BUILD_REQUIRES MUST equal ['setuptools==80.9.0']",
+                findings,
+            )
 
     def test_packaging_audit_rejects_runtime_dependency(self):
         with tempfile.TemporaryDirectory() as temp_dir:
