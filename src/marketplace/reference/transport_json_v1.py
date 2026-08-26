@@ -11,7 +11,7 @@ import json
 from collections.abc import Mapping
 from typing import Any
 
-from olp.transport import TransportEnvelopeV1
+from olp.transport import TransportEnvelopeV1, materialize_map
 
 
 class MarketplaceTransportJsonError(ValueError):
@@ -59,7 +59,7 @@ def encode_transport_envelope_json(envelope: Any) -> bytes:
 
 
 def decode_transport_envelope_json(body: bytes) -> tuple[Any, ...]:
-    """Decode strict UTF-8 JSON and delegate OJVE/envelope validation to pinned OLP."""
+    """Decode strict UTF-8 JSON and materialize the M8 string-key payload."""
     if not isinstance(body, bytes) or not body:
         _fail("INVALID_JSON_BYTES", "transport JSON body MUST be non-empty bytes")
     if body.startswith(b"\xef\xbb\xbf"):
@@ -82,9 +82,8 @@ def decode_transport_envelope_json(body: bytes) -> tuple[Any, ...]:
         _fail("INVALID_JSON_ENVELOPE", "transport JSON top level MUST be an object")
     try:
         envelope = TransportEnvelopeV1.from_json(document)
-        abstract = envelope.to_abstract()
+        payload = materialize_map(envelope.payload, allowed_key_types=(str,))
+        abstract = ("OLP-TRANSPORT", 1, envelope.message_type, payload)
     except Exception as exc:
         _fail("INVALID_OLP_ENVELOPE", f"pinned OLP rejected transport JSON: {type(exc).__name__}")
-    if not isinstance(abstract, tuple) or len(abstract) != 4:
-        _fail("INVALID_OLP_ENVELOPE", "pinned OLP returned an invalid abstract envelope")
     return abstract
