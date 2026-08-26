@@ -5,7 +5,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from conformance_gate import GateConfig, GateError, run_checked, run_diff_check, verify_olp_pin
+from conformance_gate import (
+    GateConfig,
+    GateError,
+    run_checked,
+    run_diff_check,
+    run_package_smoke,
+    verify_olp_pin,
+)
 from conformance_manifest import EXPECTED_TOTAL, SUITES
 
 PIN = "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c"
@@ -101,6 +108,35 @@ class ConformanceGateTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "COMMAND_TIMEOUT")
         self.assertIn("1.5s", str(caught.exception))
 
+    def test_package_smoke_disables_index_dependencies_and_repo_import_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = self._config(Path(temp_dir))
+            executor = FakeExecutor([
+                completed(stdout="installed\n"),
+                completed(stdout="isolated runtime import PASS\n"),
+            ])
+            run_package_smoke(config, executor)
+            self.assertEqual(len(executor.calls), 2)
+            install_argv, install_cwd, install_env, _ = executor.calls[0]
+            self.assertEqual(install_argv[:4], (
+                subprocess.sys.executable,
+                "-m",
+                "pip",
+                "install",
+            ))
+            self.assertIn("--no-deps", install_argv)
+            self.assertIn("--no-build-isolation", install_argv)
+            self.assertEqual(install_env["PIP_NO_INDEX"], "1")
+            self.assertEqual(install_env["PIP_NO_INPUT"], "1")
+            self.assertNotIn("PYTHONPATH", install_env)
+            self.assertNotEqual(install_cwd, config.repo_root.resolve())
+
+            import_argv, import_cwd, import_env, _ = executor.calls[1]
+            self.assertEqual(import_argv[0:2], (subprocess.sys.executable, "-I"))
+            self.assertIn("MarketplaceRuntime", import_argv[3])
+            self.assertNotIn("PYTHONPATH", import_env)
+            self.assertEqual(import_cwd, install_cwd)
+
     def test_git_whitespace_gate_checks_worktree_index_and_committed_head(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config = self._config(Path(temp_dir))
@@ -112,6 +148,7 @@ class ConformanceGateTests(unittest.TestCase):
                 ("git", "diff", "--cached", "--check"),
                 ("git", "diff", "--check", "HEAD^", "HEAD"),
             ])
+
     def test_run_checked_rejects_nonpositive_timeout(self):
         executor = FakeExecutor([])
         with self.assertRaises(GateError) as caught:
