@@ -34,6 +34,11 @@ from .record_v1 import (
     MarketplaceConformanceError,
     validate_market_record,
 )
+from .transport_json_v1 import (
+    MarketplaceTransportJsonError,
+    decode_transport_envelope_json,
+    encode_transport_envelope_json,
+)
 
 __all__ = [
     "BASE",
@@ -43,6 +48,7 @@ __all__ = [
     "MAX_DISCOVERY_RECORDS",
     "MarketplaceConformanceError",
     "MarketplaceDiscoveryError",
+    "MarketplaceTransportJsonError",
     "PROPOSAL_PROFILE",
     "RECORD_TYPES",
     "STRUCTURE_VALIDATORS",
@@ -50,6 +56,8 @@ __all__ = [
     "TYPE_EVENT",
     "TYPE_INTENT",
     "bind_cursor",
+    "decode_transport_envelope_json",
+    "encode_transport_envelope_json",
     "evaluate_discovery",
     "evaluate_match",
     "federation_v1",
