@@ -1,4 +1,5 @@
 """Public runtime surface for the non-normative Marketplace reference core."""
+from .composition import MarketplaceRuntime, compose_runtime, create_in_memory_runtime
 from .contracts import (
     BoundedRecordSource,
     DiscoveryEvaluator,
@@ -47,6 +48,7 @@ __all__ = [
     "LocalMatchService",
     "LocalRecordNotFoundError",
     "MAX_CONFIGURED_ENTRIES",
+    "MarketplaceRuntime",
     "MatchEvaluator",
     "RETENTION_CLASS_EPHEMERAL",
     "InMemoryEphemeralRecordRepository",
@@ -63,4 +65,6 @@ __all__ = [
     "RuntimeRepositoryError",
     "StoreDisposition",
     "ThreadingExpiryScheduler",
+    "compose_runtime",
+    "create_in_memory_runtime",
 ]
