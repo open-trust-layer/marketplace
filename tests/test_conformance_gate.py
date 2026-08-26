@@ -9,6 +9,7 @@ from pathlib import Path
 from conformance_gate import (
     GateConfig,
     GateError,
+    REVIEWED_BUILD_BACKEND_VERSION,
     run_checked,
     run_diff_check,
     run_package_smoke,
@@ -109,16 +110,25 @@ class ConformanceGateTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "COMMAND_TIMEOUT")
         self.assertIn("1.5s", str(caught.exception))
 
-    def test_package_smoke_disables_index_dependencies_and_repo_import_path(self):
+    def test_package_smoke_checks_backend_and_disables_index_import_leakage(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config = self._config(Path(temp_dir))
             executor = FakeExecutor([
+                completed(),
                 completed(stdout="installed\n"),
                 completed(stdout="isolated runtime import PASS\n"),
             ])
             run_package_smoke(config, executor)
-            self.assertEqual(len(executor.calls), 2)
-            install_argv, install_cwd, install_env, _ = executor.calls[0]
+            self.assertEqual(len(executor.calls), 3)
+
+            backend_argv, backend_cwd, backend_env, _ = executor.calls[0]
+            self.assertEqual(backend_argv[0:2], (sys.executable, "-I"))
+            self.assertIn(REVIEWED_BUILD_BACKEND_VERSION, backend_argv[3])
+            self.assertEqual(backend_env["PIP_NO_INDEX"], "1")
+            self.assertNotIn("PYTHONPATH", backend_env)
+            self.assertNotEqual(backend_cwd, config.repo_root.resolve())
+
+            install_argv, install_cwd, install_env, _ = executor.calls[1]
             self.assertEqual(install_argv[:4], (
                 sys.executable,
                 "-m",
@@ -130,9 +140,9 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertEqual(install_env["PIP_NO_INDEX"], "1")
             self.assertEqual(install_env["PIP_NO_INPUT"], "1")
             self.assertNotIn("PYTHONPATH", install_env)
-            self.assertNotEqual(install_cwd, config.repo_root.resolve())
+            self.assertEqual(install_cwd, backend_cwd)
 
-            import_argv, import_cwd, import_env, _ = executor.calls[1]
+            import_argv, import_cwd, import_env, _ = executor.calls[2]
             self.assertEqual(import_argv[0:2], (sys.executable, "-I"))
             self.assertIn("MarketplaceRuntime", import_argv[3])
             self.assertNotIn("PYTHONPATH", import_env)
