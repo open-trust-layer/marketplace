@@ -1,7 +1,7 @@
 """Transport-neutral contracts for the Marketplace reference runtime."""
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from enum import Enum
 from typing import Any, Protocol
 
@@ -40,6 +40,12 @@ class RecordRepository(Protocol):
     def close(self) -> None: ...
 
 
+class ExactRecordSource(Protocol):
+    """Resolve one exact locally available record identity, with no fallback."""
+
+    def get(self, record_id: str) -> Any | None: ...
+
+
 class BoundedRecordSource(Protocol):
     """Read a finite local evidence snapshot without implying global completeness."""
 
@@ -58,4 +64,20 @@ class DiscoveryEvaluator(Protocol):
         completeness: str,
         freshness: str,
         max_records: int,
+    ) -> Mapping[str, Any]: ...
+
+
+class MatchEvaluator(Protocol):
+    """Evaluate an existing Marketplace matching method over two supplied records."""
+
+    def __call__(
+        self,
+        left: Any,
+        right: Any,
+        *,
+        method: str,
+        base_status: str,
+        observations: Sequence[Mapping[str, Any]],
+        evidence_completeness: str,
+        understood_critical: Iterable[str],
     ) -> Mapping[str, Any]: ...
