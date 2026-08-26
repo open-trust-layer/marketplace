@@ -231,6 +231,28 @@ def run_unit_tests(config: GateConfig, executor: CommandExecutor) -> None:
     _print_command_output(result)
 
 
+def run_artifact_gate(config: GateConfig, executor: CommandExecutor) -> None:
+    """Run the M23 reproducible wheel/content/provenance gate as one isolated subprocess."""
+    print("=== Reproducible distribution artifact gate ===")
+    env = _isolated_install_environment()
+    result = run_checked(
+        executor,
+        (
+            sys.executable,
+            str(config.repo_root / "tools" / "package_artifact_gate.py"),
+            "--repo-root",
+            str(config.repo_root.resolve()),
+            "--timeout",
+            f"{config.timeout_seconds:g}",
+        ),
+        cwd=config.repo_root.resolve(),
+        env=env,
+        timeout=config.timeout_seconds * 3,
+        label="reproducible distribution artifact gate",
+    )
+    _print_command_output(result)
+
+
 def run_package_smoke(config: GateConfig, executor: CommandExecutor) -> None:
     """Install/import the base runtime without repository import-path leakage."""
     print("=== Isolated runtime package smoke ===")
@@ -499,6 +521,7 @@ def run_gate(config: GateConfig, executor: CommandExecutor | None = None) -> Non
     )
 
     run_unit_tests(config, executor)
+    run_artifact_gate(config, executor)
     run_package_smoke(config, executor)
     run_reference_package_smoke(config, executor)
     run_validators(config, executor)
