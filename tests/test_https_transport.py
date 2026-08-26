@@ -15,14 +15,20 @@ from marketplace.runtime.https_transport import (
 )
 from marketplace.runtime.network_policy import FederationEgressPolicy, authorize_federation_endpoint
 
-
 OPERATION = "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/operation/snapshot-v1"
 MESSAGE_TYPE = "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/message/snapshot-request-v1"
+RESULT_TYPE = "https://open-trust-layer.github.io/marketplace/semantics/v1/federation/message/snapshot-result-v1"
 ENDPOINT = "https://federation.example.com/federation/v1"
 
 
 class FakeConnection:
-    def __init__(self, response: bytes, *, block_recv: threading.Event | None = None, entered_recv: threading.Event | None = None):
+    def __init__(
+        self,
+        response: bytes,
+        *,
+        block_recv: threading.Event | None = None,
+        entered_recv: threading.Event | None = None,
+    ):
         self.response = bytearray(response)
         self.sent = bytearray()
         self.timeouts: list[float] = []
@@ -65,7 +71,12 @@ class FakeConnector:
         return self.connection
 
 
-def response(body: bytes = b'{"ok":true}', *, status: int = 200, headers: tuple[tuple[str, str], ...] = ()) -> bytes:
+def response(
+    body: bytes = b'{"ok":true}',
+    *,
+    status: int = 200,
+    headers: tuple[tuple[str, str], ...] = (),
+) -> bytes:
     base = [
         f"HTTP/1.1 {status} {'OK' if status == 200 else 'Other'}",
         "Content-Type: application/json",
@@ -73,6 +84,10 @@ def response(body: bytes = b'{"ok":true}', *, status: int = 200, headers: tuple[
     ]
     base.extend(f"{name}: {value}" for name, value in headers)
     return ("\r\n".join(base) + "\r\n\r\n").encode("ascii") + body
+
+
+def decoded_envelope(body: bytes) -> tuple[object, ...]:
+    return ("OLP-TRANSPORT", 1, RESULT_TYPE, {"response_body_bytes": len(body)})
 
 
 class HttpsFederationTransportTests(unittest.TestCase):
@@ -102,17 +117,25 @@ class HttpsFederationTransportTests(unittest.TestCase):
                 scope_fingerprint="scope",
                 required_capabilities=("https://example.com/capability",),
                 page_size=10,
-                expected_result_message_type="https://example.com/result",
+                expected_result_message_type=RESULT_TYPE,
             ),
             envelope=("OLP-TRANSPORT", 1, MESSAGE_TYPE, {"version": 1}),
             transmitted=transmitted,
         )
 
-    def transport(self, connector: FakeConnector, *, resolver=None, limits=None, wall_clock=None, monotonic_clock=None):
+    def transport(
+        self,
+        connector: FakeConnector,
+        *,
+        resolver=None,
+        limits=None,
+        wall_clock=None,
+        monotonic_clock=None,
+    ) -> AuthorizedHttpsFederationTransport:
         return AuthorizedHttpsFederationTransport(
             policy=self.policy(),
             encode_envelope_json=lambda envelope: b'{"olp":1,"payload":{"$olp":"map","v":[]},"type":"x"}',
-            decode_envelope_json=lambda body: ("decoded", body),
+            decode_envelope_json=decoded_envelope,
             limits=limits,
             resolver=resolver or (lambda host, port: ("1.1.1.1", "2606:4700:4700::1111")),
             connector=connector,
@@ -132,7 +155,7 @@ class HttpsFederationTransportTests(unittest.TestCase):
         transport = AuthorizedHttpsFederationTransport(
             policy=self.policy(),
             encode_envelope_json=lambda envelope: b'{"olp":1}',
-            decode_envelope_json=lambda raw: ("decoded", raw),
+            decode_envelope_json=decoded_envelope,
             resolver=lambda host, port: ("2606:4700:4700::1111", "1.1.1.1"),
             connector=connector,
             wall_clock=lambda: 1_050.0,
@@ -142,7 +165,7 @@ class HttpsFederationTransportTests(unittest.TestCase):
         self.assertEqual(result.http_status, 200)
         self.assertEqual(result.selected_address, "1.1.1.1")
         self.assertEqual(result.tls_server_hostname, "federation.example.com")
-        self.assertEqual(result.response_envelope, ("decoded", body))
+        self.assertEqual(result.response_envelope, decoded_envelope(body))
         self.assertEqual(result.connection_attempts, 1)
         self.assertEqual(result.redirects_followed, 0)
         self.assertEqual(result.retries_performed, 0)
@@ -247,8 +270,7 @@ class HttpsFederationTransportTests(unittest.TestCase):
         )
         for code, raw in cases:
             with self.subTest(code=code):
-                connector = FakeConnector(FakeConnection(raw))
-                transport = self.transport(connector)
+                transport = self.transport(FakeConnector(FakeConnection(raw)))
                 self.assert_transport_error(
                     code,
                     transport.exchange,
@@ -285,7 +307,7 @@ class HttpsFederationTransportTests(unittest.TestCase):
         transport = AuthorizedHttpsFederationTransport(
             policy=self.policy(),
             encode_envelope_json=lambda envelope: b"x" * 9,
-            decode_envelope_json=lambda body: body,
+            decode_envelope_json=decoded_envelope,
             limits=HttpsFederationTransportLimits(max_request_bytes=8),
             resolver=lambda host, port: calls.append("resolver") or ("1.1.1.1",),
             connector=connector,
@@ -354,7 +376,9 @@ class HttpsFederationTransportTests(unittest.TestCase):
 
     @patch("marketplace.runtime.https_transport.ssl.create_default_context")
     @patch("marketplace.runtime.https_transport.socket.socket")
-    def test_default_connector_pins_numeric_address_and_verifies_authorized_hostname(self, socket_factory, context_factory):
+    def test_default_connector_pins_numeric_address_and_verifies_authorized_hostname(
+        self, socket_factory, context_factory
+    ):
         class RawSocket:
             def __init__(self):
                 self.timeouts = []
@@ -412,7 +436,9 @@ class HttpsFederationTransportTests(unittest.TestCase):
         self.assertEqual(context.alpn, ["http/1.1"])
 
     def test_module_avoids_environment_aware_http_proxy_credential_and_process_clients(self):
-        source = (Path(__file__).resolve().parents[1] / "src/marketplace/runtime/https_transport.py").read_text(encoding="utf-8-sig")
+        source = (
+            Path(__file__).resolve().parents[1] / "src/marketplace/runtime/https_transport.py"
+        ).read_text(encoding="utf-8-sig")
         for forbidden in (
             "urllib.request",
             "http.client",
