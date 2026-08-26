@@ -4,15 +4,19 @@ import base64
 import csv
 import hashlib
 import io
+import subprocess
 import tempfile
 import unittest
+import warnings
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 from package_artifact_gate import (
     ArtifactGateError,
     SOURCE_DATE_EPOCH,
     _build_environment,
+    _verify_clean_source,
     audit_wheel,
     canonical_report_json,
     provenance_report,
@@ -20,6 +24,7 @@ from package_artifact_gate import (
 
 PACKAGE = "open-layer-marketplace"
 VERSION = "0.0.1.dev0"
+WHEEL_FILENAME = "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
 DIST_INFO = "open_layer_marketplace-0.0.1.dev0.dist-info"
 REQUIRED = {
     "marketplace/__init__.py": b"",
@@ -89,9 +94,12 @@ def write_wheel(
 
 
 class PackageArtifactGateTests(unittest.TestCase):
+    def wheel_path(self, temp_dir: str) -> Path:
+        return Path(temp_dir) / WHEEL_FILENAME
+
     def test_valid_wheel_passes_content_metadata_and_record_audit(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path)
             audit = audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(audit.package_name, PACKAGE)
@@ -100,9 +108,17 @@ class PackageArtifactGateTests(unittest.TestCase):
             self.assertEqual(len(audit.sha256), 64)
             self.assertEqual(len(audit.payload_sha256), 64)
 
-    def test_parent_traversal_member_is_rejected(self):
+    def test_wrong_wheel_filename_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bad.whl"
+            write_wheel(path)
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_FILENAME")
+
+    def test_parent_traversal_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
             write_wheel(path, extra_members={"../escape.txt": b"bad"})
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
@@ -110,15 +126,27 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_symlink_member_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bad.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path, symlink_member="marketplace/link.py")
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_SYMLINK")
 
+    def test_duplicate_archive_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            write_wheel(path)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                with zipfile.ZipFile(path, "a") as archive:
+                    archive.writestr("marketplace/__init__.py", b"duplicate")
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_DUPLICATE_MEMBER")
+
     def test_runtime_dependency_metadata_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bad.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path, metadata_extra="Requires-Dist: requests>=2\n")
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
@@ -126,7 +154,7 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_unexpected_repository_payload_root_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bad.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path, extra_members={"tools/leak.py": b"secret = False\n"})
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
@@ -134,7 +162,7 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_tampered_record_hash_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bad.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path, tamper_record_for="marketplace/reference/record_v1.py")
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
@@ -142,7 +170,7 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_entry_points_are_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bad.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(
                 path,
                 extra_members={f"{DIST_INFO}/entry_points.txt": b"[console_scripts]\nmarketplace=x:y\n"},
@@ -150,6 +178,14 @@ class PackageArtifactGateTests(unittest.TestCase):
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_ENTRY_POINTS")
+
+    def test_platform_specific_wheel_tag_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            write_wheel(path, wheel_extra="Tag: cp312-cp312-manylinux_x86_64\n")
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_PLATFORM")
 
     def test_build_environment_fixes_reproducibility_controls_and_removes_pythonpath(self):
         env = _build_environment()
@@ -159,9 +195,18 @@ class PackageArtifactGateTests(unittest.TestCase):
         self.assertEqual(env["PIP_NO_INDEX"], "1")
         self.assertNotIn("PYTHONPATH", env)
 
+    @patch("package_artifact_gate._run")
+    def test_dirty_source_checkout_is_rejected_before_provenance(self, mocked_run):
+        mocked_run.return_value = subprocess.CompletedProcess(
+            ["git", "status"], 0, stdout=" M README.md\n?? local.txt\n", stderr=""
+        )
+        with self.assertRaises(ArtifactGateError) as caught:
+            _verify_clean_source(Path("/example/repository"), 3.0)
+        self.assertEqual(caught.exception.code, "SOURCE_NOT_CLEAN")
+
     def test_provenance_is_canonical_unsigned_unpublished_and_commit_bound(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
+            path = self.wheel_path(temp_dir)
             write_wheel(path)
             audit = audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             report = provenance_report(
@@ -174,9 +219,24 @@ class PackageArtifactGateTests(unittest.TestCase):
             self.assertFalse(report["published"])
             self.assertEqual(report["marketplace_source_commit"], "1" * 40)
             self.assertEqual(report["olp_source_commit"], "2" * 40)
+            self.assertEqual(report["provenance_version"], 1)
             encoded = canonical_report_json(report)
             self.assertEqual(encoded, canonical_report_json(report))
             self.assertNotIn(" ", encoded)
+
+    def test_provenance_rejects_invalid_source_commit(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            write_wheel(path)
+            audit = audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            with self.assertRaises(ArtifactGateError) as caught:
+                provenance_report(
+                    audit,
+                    source_commit="not-a-commit",
+                    olp_source_commit="2" * 40,
+                    runtime_dependency_count=0,
+                )
+            self.assertEqual(caught.exception.code, "SOURCE_COMMIT_FORMAT")
 
 
 if __name__ == "__main__":
