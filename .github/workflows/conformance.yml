@@ -32,8 +32,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install reviewed build backend
+        run: python -m pip install --disable-pip-version-check "setuptools==80.9.0"
+
       - name: Install OLP reference dependency
-        run: python -m pip install --disable-pip-version-check -e ./olp
+        run: python -m pip install --disable-pip-version-check --no-build-isolation -e ./olp
 
       - name: Run Marketplace acceptance gate
         working-directory: marketplace
