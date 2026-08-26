@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from itertools import islice
 from typing import Any
 
 from .contracts import (
@@ -20,6 +21,9 @@ from .contracts import (
     StoreDisposition,
 )
 from .node import MarketplaceNode
+
+MAX_OFFLINE_FEDERATION_PAGE_RECORDS = 10_000
+MAX_OFFLINE_FEDERATION_CURSOR_BYTES = 4_096
 
 
 class OfflineFederationError(RuntimeError):
@@ -64,7 +68,7 @@ class FederationRequestBinding:
 
 @dataclass(frozen=True)
 class PreparedFederationExchange:
-    """Abstract request bytes/value plus local binding; never a transmission."""
+    """Abstract request value plus local binding; never a transmission."""
 
     binding: FederationRequestBinding
     envelope: tuple[Any, ...]
@@ -132,11 +136,18 @@ class OfflineFederationService:
         if profile is None:
             _fail("UNCONFIGURED_FEDERATION_OPERATION", f"no runtime message profile for {operation!r}")
         required = normalized.get("required_capabilities")
-        if not isinstance(required, (tuple, list)) or not all(isinstance(item, str) for item in required):
+        if not isinstance(required, (tuple, list)) or not all(isinstance(item, str) and item for item in required):
             _fail("INVALID_REQUEST_VALIDATOR_RESULT", "normalized required_capabilities MUST be text values")
+        required_tuple = tuple(required)
+        if len(required_tuple) != len(set(required_tuple)) or required_tuple != tuple(sorted(required_tuple, key=lambda item: item.encode("utf-8"))):
+            _fail("INVALID_REQUEST_VALIDATOR_RESULT", "normalized required_capabilities MUST be sorted and unique")
         page_size = normalized.get("page_size")
-        if isinstance(page_size, bool) or not isinstance(page_size, int) or page_size < 1:
-            _fail("INVALID_REQUEST_VALIDATOR_RESULT", "normalized page_size MUST be a positive integer")
+        if (
+            isinstance(page_size, bool)
+            or not isinstance(page_size, int)
+            or not 1 <= page_size <= MAX_OFFLINE_FEDERATION_PAGE_RECORDS
+        ):
+            _fail("INVALID_REQUEST_VALIDATOR_RESULT", "normalized page_size is outside the offline runtime bound")
         source = normalized.get("source")
         fingerprint = normalized.get("scope_fingerprint")
         if not isinstance(source, str) or not source or not isinstance(fingerprint, str) or not fingerprint:
@@ -151,7 +162,7 @@ class OfflineFederationService:
                 source=source,
                 operation=operation,
                 scope_fingerprint=fingerprint,
-                required_capabilities=tuple(required),
+                required_capabilities=required_tuple,
                 page_size=page_size,
                 expected_result_message_type=profile.result_message_type,
             ),
@@ -176,6 +187,8 @@ class OfflineFederationService:
         if not isinstance(envelope_result, Mapping) or "payload" not in envelope_result:
             _fail("INVALID_ENVELOPE_VALIDATOR_RESULT", "transport envelope validator MUST return payload")
         payload = envelope_result["payload"]
+        if not isinstance(payload, Mapping):
+            _fail("INVALID_FEDERATION_RESULT_PAYLOAD", "federation result payload MUST be a mapping")
         normalized_result = self._validate_exchange_result(payload)
         if not isinstance(normalized_result, Mapping):
             _fail("INVALID_RESULT_VALIDATOR_RESULT", "federation result validator MUST return a mapping")
@@ -186,21 +199,44 @@ class OfflineFederationService:
             _fail("FEDERATION_OPERATION_MISMATCH", "response operation does not match prepared request")
         if normalized_result.get("scope_fingerprint") != binding.scope_fingerprint:
             _fail("FEDERATION_SCOPE_MISMATCH", "response scope fingerprint does not match prepared request")
+        if normalized_result.get("global_completeness") != "UNKNOWN":
+            _fail("FEDERATION_GLOBAL_COMPLETENESS_FORBIDDEN", "response validator MUST preserve global completeness UNKNOWN")
+        if normalized_result.get("absence_is_deletion_evidence") is not False:
+            _fail("FEDERATION_DELETION_INFERENCE_FORBIDDEN", "response absence MUST NOT become deletion evidence")
 
         result_ids_value = normalized_result.get("record_ids")
         if not isinstance(result_ids_value, (tuple, list)) or not all(
             isinstance(item, str) and item for item in result_ids_value
         ):
-            _fail("INVALID_RESULT_VALIDATOR_RESULT", "normalized result record_ids MUST be non-empty text values")
+            _fail("INVALID_RESULT_VALIDATOR_RESULT", "normalized result record_ids MUST contain text values")
         result_ids = tuple(result_ids_value)
+        if len(result_ids) != len(set(result_ids)) or result_ids != tuple(sorted(result_ids)):
+            _fail("INVALID_RESULT_VALIDATOR_RESULT", "normalized result record_ids MUST be sorted and unique")
         if len(result_ids) > binding.page_size:
             _fail(
                 "FEDERATION_PAGE_SIZE_EXCEEDED",
                 "response contains more records than the prepared request page_size",
             )
 
+        page_truncated = normalized_result.get("page_truncated")
+        source_completeness = normalized_result.get("source_completeness")
+        if not isinstance(page_truncated, bool) or not isinstance(source_completeness, str) or not source_completeness:
+            _fail("INVALID_RESULT_VALIDATOR_RESULT", "normalized page controls are invalid")
+
+        next_cursor: bytes | None = None
+        cursor = payload.get("next_cursor")
+        if page_truncated:
+            if (
+                not isinstance(cursor, bytes)
+                or not 1 <= len(cursor) <= MAX_OFFLINE_FEDERATION_CURSOR_BYTES
+            ):
+                _fail("INVALID_FEDERATION_CURSOR", "truncated page cursor is outside the offline runtime bound")
+            next_cursor = cursor
+        elif cursor is not None:
+            _fail("INVALID_FEDERATION_CURSOR", "final page MUST NOT carry a next cursor")
+
         supplied: dict[str, Any] = {}
-        supplied_values = tuple(records)
+        supplied_values = tuple(islice(records, binding.page_size + 1))
         if len(supplied_values) > binding.page_size:
             _fail(
                 "FEDERATION_SUPPLIED_RECORD_LIMIT_EXCEEDED",
@@ -228,9 +264,9 @@ class OfflineFederationService:
                 f"response record IDs and supplied records differ; missing={missing}, unexpected={unexpected}",
             )
 
-        # All semantic, binding, resource, and identity checks above complete
-        # before the first local mutation. Repository/storage failures are local
-        # runtime failures, not federation-page validation failures.
+        # All semantic, binding, resource, page-control, cursor, and identity
+        # checks complete before the first local mutation. Repository/storage
+        # failures are local runtime failures, not federation validation failures.
         stored: list[str] = []
         duplicates: list[str] = []
         for record_id in sorted(supplied):
@@ -243,20 +279,6 @@ class OfflineFederationService:
                 duplicates.append(record_id)
             else:
                 _fail("UNSUPPORTED_STORE_DISPOSITION", f"unsupported local store disposition {outcome.disposition!r}")
-
-        page_truncated = normalized_result.get("page_truncated")
-        source_completeness = normalized_result.get("source_completeness")
-        if not isinstance(page_truncated, bool) or not isinstance(source_completeness, str):
-            _fail("INVALID_RESULT_VALIDATOR_RESULT", "normalized page controls are invalid")
-
-        next_cursor: bytes | None = None
-        if page_truncated:
-            if not isinstance(payload, Mapping):
-                _fail("INVALID_FEDERATION_RESULT_PAYLOAD", "truncated result payload MUST be a mapping")
-            cursor = payload.get("next_cursor")
-            if not isinstance(cursor, bytes) or not cursor:
-                _fail("INVALID_FEDERATION_CURSOR", "truncated page MUST preserve a non-empty opaque cursor")
-            next_cursor = cursor
 
         return FederationPageOutcome(
             record_ids=tuple(sorted(result_ids)),
