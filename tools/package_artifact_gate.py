@@ -38,9 +38,11 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/__init__.py",
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",
+    "marketplace/runtime/federation.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",
+    "marketplace/reference/federation_v1.py",
 }
 
 
@@ -386,7 +388,7 @@ def audit_wheel(path: Path, *, expected_name: str, expected_version: str) -> Whe
         if metadata.get_all("Requires-Dist"):
             _fail("WHEEL_METADATA_DEPENDENCY", "wheel MUST NOT declare Requires-Dist")
         if metadata.get_all("Provides-Extra"):
-            _fail("WHEEL_METADATA_EXTRA", "wheel MUST NOT declare package extras in M23")
+            _fail("WHEEL_METADATA_EXTRA", "wheel MUST NOT declare package extras")
 
         wheel_metadata = _metadata_message(archive.read(wheel_name), "WHEEL")
         if wheel_metadata.get("Root-Is-Purelib", "").lower() != "true":

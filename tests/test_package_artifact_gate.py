@@ -30,9 +30,11 @@ REQUIRED = {
     "marketplace/__init__.py": b"",
     "marketplace/runtime/__init__.py": b"",
     "marketplace/runtime/composition.py": b"# runtime\n",
+    "marketplace/runtime/federation.py": b"# offline federation runtime\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
+    "marketplace/reference/federation_v1.py": b"# federation\n",
 }
 
 
@@ -107,6 +109,30 @@ class PackageArtifactGateTests(unittest.TestCase):
             self.assertEqual(audit.dist_info, DIST_INFO)
             self.assertEqual(len(audit.sha256), 64)
             self.assertEqual(len(audit.payload_sha256), 64)
+
+    def test_missing_federation_runtime_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            missing = REQUIRED.pop("marketplace/runtime/federation.py")
+            try:
+                write_wheel(path)
+            finally:
+                REQUIRED["marketplace/runtime/federation.py"] = missing
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+
+    def test_missing_federation_reference_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            missing = REQUIRED.pop("marketplace/reference/federation_v1.py")
+            try:
+                write_wheel(path)
+            finally:
+                REQUIRED["marketplace/reference/federation_v1.py"] = missing
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
 
     def test_wrong_wheel_filename_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:

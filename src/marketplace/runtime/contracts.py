@@ -81,3 +81,27 @@ class MatchEvaluator(Protocol):
         evidence_completeness: str,
         understood_critical: Iterable[str],
     ) -> Mapping[str, Any]: ...
+
+
+class FederationRequestValidator(Protocol):
+    """Validate/normalize an offline federation exchange request."""
+
+    def __call__(self, value: Any) -> Mapping[str, Any]: ...
+
+
+class FederationEnvelopeMaker(Protocol):
+    """Create an abstract transport envelope without transmitting it."""
+
+    def __call__(self, message_type: Any, payload: Any) -> Sequence[Any]: ...
+
+
+class FederationEnvelopeValidator(Protocol):
+    """Validate one supplied transport envelope against an expected message type."""
+
+    def __call__(self, value: Any, expected_message_type: Any) -> Mapping[str, Any]: ...
+
+
+class FederationResultValidator(Protocol):
+    """Validate/normalize an M8 snapshot or sync result payload."""
+
+    def __call__(self, value: Any) -> Mapping[str, Any]: ...

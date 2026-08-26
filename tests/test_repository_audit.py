@@ -7,6 +7,7 @@ from pathlib import Path
 from repository_audit import (
     _REQUIRED_GOVERNANCE_FILES,
     _REQUIRED_REFERENCE_FILES,
+    _REFERENCE_WRAPPERS,
     _audit_packaging,
     _audit_python,
     _audit_reference_adapter_layout,
@@ -65,6 +66,11 @@ class RepositoryAuditTests(unittest.TestCase):
             findings: list[str] = []
             _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
+
+    def test_reference_layout_includes_packaged_m8_and_historical_wrapper(self):
+        self.assertIn(Path("src/marketplace/reference/federation_v1.py"), _REQUIRED_REFERENCE_FILES)
+        self.assertIn(Path("tools/marketplace_federation_v1.py"), _REQUIRED_REFERENCE_FILES)
+        self.assertIn(Path("tools/marketplace_federation_v1.py"), _REFERENCE_WRAPPERS)
 
     def test_reference_layout_requires_packaged_sources_and_tool_wrappers(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -133,7 +139,7 @@ class RepositoryAuditTests(unittest.TestCase):
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertIn(
-                "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted in M22",
+                "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted",
                 findings,
             )
 
