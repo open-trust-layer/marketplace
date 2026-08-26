@@ -31,6 +31,7 @@ REQUIRED = {
     "marketplace/runtime/__init__.py": b"",
     "marketplace/runtime/composition.py": b"# runtime\n",
     "marketplace/runtime/federation.py": b"# offline federation runtime\n",
+    "marketplace/runtime/network_policy.py": b"# federation egress security policy\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
@@ -118,6 +119,18 @@ class PackageArtifactGateTests(unittest.TestCase):
                 write_wheel(path)
             finally:
                 REQUIRED["marketplace/runtime/federation.py"] = missing
+            with self.assertRaises(ArtifactGateError) as caught:
+                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
+            self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+
+    def test_missing_network_policy_runtime_member_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = self.wheel_path(temp_dir)
+            missing = REQUIRED.pop("marketplace/runtime/network_policy.py")
+            try:
+                write_wheel(path)
+            finally:
+                REQUIRED["marketplace/runtime/network_policy.py"] = missing
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
