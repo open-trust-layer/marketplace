@@ -1,9 +1,18 @@
 """Public runtime surface for the non-normative Marketplace reference core."""
-from .composition import MarketplaceRuntime, compose_runtime, create_in_memory_runtime
+from .composition import (
+    MarketplaceRuntime,
+    compose_offline_federation_service,
+    compose_runtime,
+    create_in_memory_runtime,
+)
 from .contracts import (
     BoundedRecordSource,
     DiscoveryEvaluator,
     ExactRecordSource,
+    FederationEnvelopeMaker,
+    FederationEnvelopeValidator,
+    FederationRequestValidator,
+    FederationResultValidator,
     MatchEvaluator,
     StoreDisposition,
 )
@@ -12,6 +21,14 @@ from .discovery import (
     InvalidDiscoveryLimitError,
     LocalDiscoveryService,
     RuntimeDiscoveryError,
+)
+from .federation import (
+    FederationOperationProfile,
+    FederationPageOutcome,
+    FederationRequestBinding,
+    OfflineFederationError,
+    OfflineFederationService,
+    PreparedFederationExchange,
 )
 from .matching import (
     InvalidLocalRecordIdentityError,
@@ -40,6 +57,13 @@ __all__ = [
     "DEFAULT_MAX_ENTRIES",
     "DiscoveryEvaluator",
     "ExactRecordSource",
+    "FederationEnvelopeMaker",
+    "FederationEnvelopeValidator",
+    "FederationOperationProfile",
+    "FederationPageOutcome",
+    "FederationRequestBinding",
+    "FederationRequestValidator",
+    "FederationResultValidator",
     "InvalidDiscoveryEvaluatorResult",
     "InvalidDiscoveryLimitError",
     "InvalidLocalRecordIdentityError",
@@ -50,6 +74,9 @@ __all__ = [
     "MAX_CONFIGURED_ENTRIES",
     "MarketplaceRuntime",
     "MatchEvaluator",
+    "OfflineFederationError",
+    "OfflineFederationService",
+    "PreparedFederationExchange",
     "RETENTION_CLASS_EPHEMERAL",
     "InMemoryEphemeralRecordRepository",
     "IngestOutcome",
@@ -65,6 +92,7 @@ __all__ = [
     "RuntimeRepositoryError",
     "StoreDisposition",
     "ThreadingExpiryScheduler",
+    "compose_offline_federation_service",
     "compose_runtime",
     "create_in_memory_runtime",
 ]
