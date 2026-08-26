@@ -16,6 +16,7 @@ from conformance_manifest import EXPECTED_TOTAL, SUITES, read_olp_pin
 from repository_audit import RepositoryAuditError, audit_repository
 
 DEFAULT_TIMEOUT_SECONDS = 90.0
+REVIEWED_BUILD_BACKEND_VERSION = "80.9.0"
 
 
 class GateError(RuntimeError):
@@ -179,6 +180,24 @@ def run_package_smoke(config: GateConfig, executor: CommandExecutor) -> None:
         install_env["PIP_NO_INPUT"] = "1"
         install_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         install_env["PYTHONNOUSERSITE"] = "1"
+
+        backend_probe = (
+            "import importlib.metadata as m; "
+            f"expected={REVIEWED_BUILD_BACKEND_VERSION!r}; "
+            "actual=m.version('setuptools'); "
+            "raise SystemExit(0 if actual == expected else "
+            "f'reviewed setuptools mismatch: expected {expected}, got {actual}')"
+        )
+        result = run_checked(
+            executor,
+            (sys.executable, "-I", "-c", backend_probe),
+            cwd=temp_root,
+            env=install_env,
+            timeout=config.timeout_seconds,
+            label="reviewed build backend check",
+        )
+        _print_command_output(result)
+
         result = run_checked(
             executor,
             (
