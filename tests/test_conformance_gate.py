@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -119,7 +120,7 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertEqual(len(executor.calls), 2)
             install_argv, install_cwd, install_env, _ = executor.calls[0]
             self.assertEqual(install_argv[:4], (
-                subprocess.sys.executable,
+                sys.executable,
                 "-m",
                 "pip",
                 "install",
@@ -132,7 +133,7 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertNotEqual(install_cwd, config.repo_root.resolve())
 
             import_argv, import_cwd, import_env, _ = executor.calls[1]
-            self.assertEqual(import_argv[0:2], (subprocess.sys.executable, "-I"))
+            self.assertEqual(import_argv[0:2], (sys.executable, "-I"))
             self.assertIn("MarketplaceRuntime", import_argv[3])
             self.assertNotIn("PYTHONPATH", import_env)
             self.assertEqual(import_cwd, install_cwd)
