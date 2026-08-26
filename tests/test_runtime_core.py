@@ -4,6 +4,8 @@ import unittest
 from dataclasses import dataclass
 from typing import Callable
 
+from olp import RecordV1, record_identity_text
+
 from marketplace.runtime import (
     DEFAULT_EPHEMERAL_RETENTION_SECONDS,
     InMemoryEphemeralRecordRepository,
@@ -14,6 +16,7 @@ from marketplace.runtime import (
     RepositoryClosedError,
     StoreDisposition,
 )
+from marketplace_record_v1 import CORE_PROFILE, TYPE_INTENT, validate_market_record
 
 
 class FakeExpiryHandle:
@@ -173,6 +176,33 @@ class RuntimeCoreTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, "INVALID_IDENTITY_PROVIDER_RESULT")
         self.assertEqual(len(repository), 0)
         self.assertEqual(scheduler.events, [])
+
+    def test_real_marketplace_validator_and_olp_identity_compose_with_node(self):
+        repository, _ = self.repository()
+        record = RecordV1.from_mapping(
+            {
+                "envelope_version": 1,
+                "type": TYPE_INTENT,
+                "content": {
+                    "version": 1,
+                    "issuer": {"principal": "did:example:alice"},
+                    "subjects": [{"uri": "urn:example:runtime-subject:1"}],
+                    "action": {"id": "https://example.test/actions/request"},
+                    "terms": {},
+                },
+                "profiles": [CORE_PROFILE],
+            }
+        )
+        node = MarketplaceNode(
+            validate_record=validate_market_record,
+            record_identity_text=record_identity_text,
+            repository=repository,
+        )
+
+        outcome = node.ingest(record)
+        self.assertEqual(outcome.disposition, StoreDisposition.STORED)
+        self.assertEqual(outcome.record_id, record_identity_text(record))
+        self.assertEqual(node.get(outcome.record_id), record)
 
 
 if __name__ == "__main__":
