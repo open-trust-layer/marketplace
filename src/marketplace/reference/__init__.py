@@ -6,6 +6,7 @@ remains independent and does not import this package implicitly.
 """
 from olp.encoding.record_identity import record_identity_text
 
+from . import federation_v1
 from .matching_v1 import (
     DEFAULT_MATCH_METHOD,
     DISCOVERY_SERVICE_TYPE,
@@ -51,6 +52,7 @@ __all__ = [
     "bind_cursor",
     "evaluate_discovery",
     "evaluate_match",
+    "federation_v1",
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
