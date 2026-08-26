@@ -27,6 +27,10 @@ MAX_RESOLVED_ADDRESSES: Final = 32
 
 _DNS_LABEL_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 _PATH_RE = re.compile(r"^/[A-Za-z0-9._~/-]*$")
+_IPV6_TRANSLATION_NETWORKS = (
+    ipaddress.ip_network("64:ff9b::/96"),
+    ipaddress.ip_network("64:ff9b:1::/48"),
+)
 
 
 class FederationNetworkPolicyError(RuntimeError):
@@ -282,6 +286,35 @@ def authorize_federation_endpoint(
     )
 
 
+def _validate_authorization_shape(authorization: FederationEndpointAuthorization) -> None:
+    _ascii_text(
+        authorization.authorization_id,
+        name="authorization_id",
+        max_bytes=MAX_AUTHORIZATION_ID_BYTES,
+    )
+    _ascii_text(authorization.policy_id, name="policy_id", max_bytes=MAX_POLICY_ID_BYTES)
+    if (
+        isinstance(authorization.policy_version, bool)
+        or not isinstance(authorization.policy_version, int)
+        or authorization.policy_version < 1
+    ):
+        _fail("INVALID_AUTHORIZATION", "authorization policy_version MUST be a positive integer")
+    if not isinstance(authorization.allowed_operations, tuple):
+        _fail("INVALID_AUTHORIZATION", "authorization allowed_operations MUST be a canonical tuple")
+    for name, value in (
+        ("issued_at_epoch", authorization.issued_at_epoch),
+        ("expires_at_epoch", authorization.expires_at_epoch),
+    ):
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            _fail("INVALID_AUTHORIZATION_TIME", f"authorization {name} MUST be a non-negative integer epoch second")
+    if (
+        authorization.establishes_marketplace_authorization is not False
+        or authorization.establishes_agreement is not False
+        or authorization.establishes_trust is not False
+    ):
+        _fail("AUTHORIZATION_AUTHORITY_ESCALATION", "endpoint authorization MUST NOT claim Marketplace authority")
+
+
 def validate_endpoint_authorization(
     authorization: FederationEndpointAuthorization,
     *,
@@ -293,14 +326,13 @@ def validate_endpoint_authorization(
     """Re-validate an authorization against exact current caller intent."""
     if not isinstance(authorization, FederationEndpointAuthorization):
         _fail("INVALID_AUTHORIZATION", "authorization has the wrong type")
+    _validate_authorization_shape(authorization)
     if isinstance(now_epoch, bool) or not isinstance(now_epoch, int) or now_epoch < 0:
         _fail("INVALID_CURRENT_TIME", "now_epoch MUST be a non-negative integer epoch second")
     operation_text = _ascii_text(operation, name="operation", max_bytes=MAX_OPERATION_BYTES)
     canonical = canonicalize_federation_endpoint(endpoint, policy)
     if authorization.policy_id != policy.policy_id or authorization.policy_version != policy.policy_version:
         _fail("AUTHORIZATION_POLICY_MISMATCH", "authorization was issued under a different egress policy")
-    if authorization.establishes_marketplace_authorization or authorization.establishes_agreement or authorization.establishes_trust:
-        _fail("AUTHORIZATION_AUTHORITY_ESCALATION", "endpoint authorization MUST NOT claim Marketplace authority")
     expected_binding = (
         canonical.url,
         canonical.hostname,
@@ -339,8 +371,13 @@ def _validate_global_unicast_address(value: object) -> ipaddress.IPv4Address | i
         address = ipaddress.ip_address(text)
     except ValueError:
         _fail("INVALID_RESOLVED_ADDRESS", f"resolver result {text!r} is not an IP address")
-    if isinstance(address, ipaddress.IPv6Address) and address.ipv4_mapped is not None:
-        _fail("IPV4_MAPPED_IPV6_FORBIDDEN", "IPv4-mapped IPv6 results are rejected by the reference policy")
+    if isinstance(address, ipaddress.IPv6Address):
+        if address.ipv4_mapped is not None:
+            _fail("IPV4_MAPPED_IPV6_FORBIDDEN", "IPv4-mapped IPv6 results are rejected by the reference policy")
+        if address.sixtofour is not None or address.teredo is not None:
+            _fail("IPV6_TRANSITION_FORBIDDEN", "IPv6 transition/tunnel addresses are rejected by the reference policy")
+        if any(address in network for network in _IPV6_TRANSLATION_NETWORKS):
+            _fail("IPV6_TRANSITION_FORBIDDEN", "IPv6 translation addresses are rejected by the reference policy")
     if (
         not address.is_global
         or address.is_private
