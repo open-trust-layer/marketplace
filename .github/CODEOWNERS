@@ -1,0 +1,13 @@
+# Marketplace policy/security-sensitive ownership.
+# Enforcement requires provider-side branch/ruleset configuration; this file alone does not require review.
+
+/PRINCIPLES.md @tehki
+/DEVELOPMENT_POLICY.md @tehki
+/docs/RETENTION_POLICY.md @tehki
+/docs/REPOSITORY_GOVERNANCE.md @tehki
+/.github/ @tehki
+/specification/ @tehki
+/conformance/olp-source-pin.txt @tehki
+/tools/conformance_gate.py @tehki
+/tools/conformance_manifest.py @tehki
+/tools/repository_audit.py @tehki
