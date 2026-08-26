@@ -10,6 +10,7 @@ from conformance_gate import (
     GateConfig,
     GateError,
     REVIEWED_BUILD_BACKEND_VERSION,
+    run_artifact_gate,
     run_checked,
     run_diff_check,
     run_package_smoke,
@@ -110,6 +111,23 @@ class ConformanceGateTests(unittest.TestCase):
             )
         self.assertEqual(caught.exception.code, "COMMAND_TIMEOUT")
         self.assertIn("1.5s", str(caught.exception))
+
+    def test_artifact_gate_runs_without_index_or_repository_pythonpath(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = self._config(Path(temp_dir), timeout=4.0)
+            executor = FakeExecutor([completed(stdout="artifact PASS\n")])
+            run_artifact_gate(config, executor)
+            self.assertEqual(len(executor.calls), 1)
+            argv, cwd, env, timeout = executor.calls[0]
+            self.assertEqual(argv[0], sys.executable)
+            self.assertTrue(argv[1].endswith("tools/package_artifact_gate.py"))
+            self.assertEqual(argv[2:4], ("--repo-root", str(config.repo_root.resolve())))
+            self.assertEqual(argv[4:6], ("--timeout", "4"))
+            self.assertEqual(cwd, config.repo_root.resolve())
+            self.assertEqual(env["PIP_NO_INDEX"], "1")
+            self.assertEqual(env["PIP_NO_INPUT"], "1")
+            self.assertNotIn("PYTHONPATH", env)
+            self.assertEqual(timeout, 12.0)
 
     def test_package_smoke_checks_backend_and_disables_index_import_leakage(self):
         with tempfile.TemporaryDirectory() as temp_dir:
