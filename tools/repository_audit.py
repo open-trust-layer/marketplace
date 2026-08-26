@@ -22,6 +22,17 @@ _REQUIRED_GOVERNANCE_FILES = (
     Path(".github/CODEOWNERS"),
     Path(".github/pull_request_template.md"),
 )
+_REQUIRED_REFERENCE_FILES = (
+    Path("src/marketplace/reference/__init__.py"),
+    Path("src/marketplace/reference/record_v1.py"),
+    Path("src/marketplace/reference/matching_v1.py"),
+    Path("tools/marketplace_record_v1.py"),
+    Path("tools/marketplace_matching_v1.py"),
+)
+_REFERENCE_WRAPPERS = (
+    Path("tools/marketplace_record_v1.py"),
+    Path("tools/marketplace_matching_v1.py"),
+)
 _EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
 _EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
 _EXPECTED_LICENSE = "Apache-2.0"
@@ -105,6 +116,29 @@ def _audit_required_governance_files(repo_root: Path, findings: list[str]) -> No
             findings.append(f"MISSING_GOVERNANCE_FILE {relative_path.as_posix()}")
 
 
+def _audit_reference_adapter_layout(repo_root: Path, findings: list[str]) -> None:
+    for relative_path in _REQUIRED_REFERENCE_FILES:
+        if not (repo_root / relative_path).is_file():
+            findings.append(f"MISSING_REFERENCE_ADAPTER_FILE {relative_path.as_posix()}")
+    for relative_path in _REFERENCE_WRAPPERS:
+        path = repo_root / relative_path
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8-sig")
+        except (OSError, UnicodeDecodeError) as exc:
+            findings.append(f"REFERENCE_WRAPPER_READ {relative_path.as_posix()}: {exc}")
+            continue
+        if "marketplace.reference" not in text:
+            findings.append(
+                f"REFERENCE_WRAPPER_SOURCE {relative_path.as_posix()} MUST delegate to marketplace.reference"
+            )
+        if len(text.encode("utf-8")) > 4096:
+            findings.append(
+                f"REFERENCE_WRAPPER_SIZE {relative_path.as_posix()} MUST remain a thin compatibility wrapper"
+            )
+
+
 def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
     path = repo_root / "pyproject.toml"
     if not path.is_file():
@@ -139,11 +173,15 @@ def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
     if project.get("license") != _EXPECTED_LICENSE:
         findings.append(f"PYPROJECT_LICENSE MUST equal {_EXPECTED_LICENSE!r}")
     if project.get("dependencies") != []:
-        findings.append("PYPROJECT_RUNTIME_DEPENDENCIES MUST remain an empty array in M21")
+        findings.append("PYPROJECT_RUNTIME_DEPENDENCIES base runtime dependencies MUST remain an empty array")
+    if project.get("optional-dependencies") not in (None, {}):
+        findings.append(
+            "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted in M22"
+        )
     if project.get("scripts") not in (None, {}):
-        findings.append("PYPROJECT_SCRIPTS runtime console scripts are not permitted in M21")
+        findings.append("PYPROJECT_SCRIPTS runtime console scripts are not permitted")
     if project.get("entry-points") not in (None, {}):
-        findings.append("PYPROJECT_ENTRY_POINTS plugin/entry-point discovery is not permitted in M21")
+        findings.append("PYPROJECT_ENTRY_POINTS plugin/entry-point discovery is not permitted")
 
     tool = document.get("tool")
     setuptools = tool.get("setuptools", {}) if isinstance(tool, dict) else {}
@@ -217,6 +255,7 @@ def audit_repository(repo_root: Path) -> AuditReport:
 
     _audit_required_governance_files(repo_root, findings)
     _audit_packaging(repo_root, findings)
+    _audit_reference_adapter_layout(repo_root, findings)
 
     markdown_files = sorted(
         path for path in repo_root.rglob("*.md")
