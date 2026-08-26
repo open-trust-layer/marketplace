@@ -13,6 +13,7 @@ from conformance_gate import (
     run_checked,
     run_diff_check,
     run_package_smoke,
+    run_reference_package_smoke,
     verify_olp_pin,
 )
 from conformance_manifest import EXPECTED_TOTAL, SUITES
@@ -129,12 +130,7 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertNotEqual(backend_cwd, config.repo_root.resolve())
 
             install_argv, install_cwd, install_env, _ = executor.calls[1]
-            self.assertEqual(install_argv[:4], (
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-            ))
+            self.assertEqual(install_argv[:4], (sys.executable, "-m", "pip", "install"))
             self.assertIn("--no-deps", install_argv)
             self.assertIn("--no-build-isolation", install_argv)
             self.assertEqual(install_env["PIP_NO_INDEX"], "1")
@@ -147,6 +143,45 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertIn("MarketplaceRuntime", import_argv[3])
             self.assertNotIn("PYTHONPATH", import_env)
             self.assertEqual(import_cwd, install_cwd)
+
+    def test_reference_package_smoke_installs_local_olp_without_index(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config = self._config(Path(temp_dir))
+            executor = FakeExecutor([
+                completed(),
+                completed(stdout="olp installed\n"),
+                completed(stdout="marketplace installed\n"),
+                completed(stdout="isolated reference adapter composition PASS\n"),
+            ])
+            run_reference_package_smoke(config, executor)
+            self.assertEqual(len(executor.calls), 4)
+
+            backend_argv, smoke_cwd, backend_env, _ = executor.calls[0]
+            self.assertEqual(backend_argv[0:2], (sys.executable, "-I"))
+            self.assertIn(REVIEWED_BUILD_BACKEND_VERSION, backend_argv[3])
+            self.assertEqual(backend_env["PIP_NO_INDEX"], "1")
+            self.assertNotIn("PYTHONPATH", backend_env)
+
+            olp_argv, olp_cwd, olp_env, _ = executor.calls[1]
+            self.assertEqual(olp_argv[:4], (sys.executable, "-m", "pip", "install"))
+            self.assertIn("--no-deps", olp_argv)
+            self.assertIn("--no-build-isolation", olp_argv)
+            self.assertEqual(olp_env["PIP_NO_INDEX"], "1")
+            self.assertEqual(Path(olp_argv[-1]), config.olp_root.resolve())
+            self.assertEqual(olp_cwd, smoke_cwd)
+
+            marketplace_argv, marketplace_cwd, marketplace_env, _ = executor.calls[2]
+            self.assertEqual(marketplace_argv[:4], (sys.executable, "-m", "pip", "install"))
+            self.assertEqual(Path(marketplace_argv[-1]), config.repo_root.resolve())
+            self.assertEqual(marketplace_env["PIP_NO_INDEX"], "1")
+            self.assertEqual(marketplace_cwd, smoke_cwd)
+
+            import_argv, import_cwd, import_env, _ = executor.calls[3]
+            self.assertEqual(import_argv[0:2], (sys.executable, "-I"))
+            self.assertIn("marketplace.reference", import_argv[3])
+            self.assertIn("COMPATIBLE_UNDER_METHOD", import_argv[3])
+            self.assertNotIn("PYTHONPATH", import_env)
+            self.assertEqual(import_cwd, smoke_cwd)
 
     def test_git_whitespace_gate_checks_worktree_index_and_committed_head(self):
         with tempfile.TemporaryDirectory() as temp_dir:
