@@ -7,6 +7,7 @@ steps live behind a separate injected/reference verification boundary.
 """
 from __future__ import annotations
 
+import base64
 import re
 import threading
 import time
@@ -54,10 +55,33 @@ def _fail(code: str, message: str) -> None:
 
 
 def _expected_record_identity(value: object) -> str:
+    """Require canonical bounded OLP Record Identity transport text before DNS.
+
+    This duplicates only the transport presentation rule needed to keep an
+    untrusted/noncanonical path from reaching the network.  It does not compute
+    or validate the Record Identity of any received Record; that remains the
+    pinned-OLP reference verifier's responsibility.
+    """
     if not isinstance(value, str) or not _RECORD_ID_SHAPE_RE.fullmatch(value):
         _fail(
             "INVALID_EXPECTED_RECORD_IDENTITY_SHAPE",
             "expected Record Identity MUST have bounded r1_ base64url transport shape",
+        )
+    body = value[3:]
+    try:
+        decoded = base64.b64decode(body + "=", altchars=b"-_", validate=True)
+    except (ValueError, base64.binascii.Error):
+        _fail(
+            "INVALID_EXPECTED_RECORD_IDENTITY",
+            "expected Record Identity MUST use canonical base64url transport encoding",
+        )
+    if len(decoded) != 32:
+        _fail("INVALID_EXPECTED_RECORD_IDENTITY", "expected Record Identity MUST encode 32 octets")
+    canonical = base64.urlsafe_b64encode(decoded).rstrip(b"=").decode("ascii")
+    if canonical != body:
+        _fail(
+            "INVALID_EXPECTED_RECORD_IDENTITY",
+            "expected Record Identity contains non-canonical base64url pad bits",
         )
     return value
 
