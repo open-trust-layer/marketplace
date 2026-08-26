@@ -30,6 +30,12 @@ from .federation import (
     OfflineFederationService,
     PreparedFederationExchange,
 )
+from .https_transport import (
+    AuthorizedHttpsFederationTransport,
+    FederationHttpsTransportError,
+    HttpsFederationExchangeResult,
+    HttpsFederationTransportLimits,
+)
 from .matching import (
     InvalidLocalRecordIdentityError,
     InvalidMatchEvaluatorResult,
@@ -63,6 +69,7 @@ from .repository import (
 from .retention import DEFAULT_EPHEMERAL_RETENTION_SECONDS, ThreadingExpiryScheduler
 
 __all__ = [
+    "AuthorizedHttpsFederationTransport",
     "BoundedRecordSource",
     "CanonicalFederationEndpoint",
     "DEFAULT_EPHEMERAL_RETENTION_SECONDS",
@@ -73,12 +80,15 @@ __all__ = [
     "FederationEndpointAuthorization",
     "FederationEnvelopeMaker",
     "FederationEnvelopeValidator",
+    "FederationHttpsTransportError",
     "FederationNetworkPolicyError",
     "FederationOperationProfile",
     "FederationPageOutcome",
     "FederationRequestBinding",
     "FederationRequestValidator",
     "FederationResultValidator",
+    "HttpsFederationExchangeResult",
+    "HttpsFederationTransportLimits",
     "InvalidDiscoveryEvaluatorResult",
     "InvalidDiscoveryLimitError",
     "InvalidLocalRecordIdentityError",

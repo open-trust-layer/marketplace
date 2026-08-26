@@ -32,10 +32,12 @@ REQUIRED = {
     "marketplace/runtime/composition.py": b"# runtime\n",
     "marketplace/runtime/federation.py": b"# offline federation runtime\n",
     "marketplace/runtime/network_policy.py": b"# federation egress security policy\n",
+    "marketplace/runtime/https_transport.py": b"# authorized HTTPS transport\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
     "marketplace/reference/federation_v1.py": b"# federation\n",
+    "marketplace/reference/transport_json_v1.py": b"# strict OLP JSON transport codec\n",
 }
 
 
@@ -111,41 +113,32 @@ class PackageArtifactGateTests(unittest.TestCase):
             self.assertEqual(len(audit.sha256), 64)
             self.assertEqual(len(audit.payload_sha256), 64)
 
-    def test_missing_federation_runtime_member_is_rejected(self):
+    def _assert_required_member_rejected_when_missing(self, member: str) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             path = self.wheel_path(temp_dir)
-            missing = REQUIRED.pop("marketplace/runtime/federation.py")
+            missing = REQUIRED.pop(member)
             try:
                 write_wheel(path)
             finally:
-                REQUIRED["marketplace/runtime/federation.py"] = missing
+                REQUIRED[member] = missing
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+
+    def test_missing_federation_runtime_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/federation.py")
 
     def test_missing_network_policy_runtime_member_is_rejected(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            path = self.wheel_path(temp_dir)
-            missing = REQUIRED.pop("marketplace/runtime/network_policy.py")
-            try:
-                write_wheel(path)
-            finally:
-                REQUIRED["marketplace/runtime/network_policy.py"] = missing
-            with self.assertRaises(ArtifactGateError) as caught:
-                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
-            self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/network_policy.py")
+
+    def test_missing_https_transport_runtime_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/https_transport.py")
 
     def test_missing_federation_reference_member_is_rejected(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            path = self.wheel_path(temp_dir)
-            missing = REQUIRED.pop("marketplace/reference/federation_v1.py")
-            try:
-                write_wheel(path)
-            finally:
-                REQUIRED["marketplace/reference/federation_v1.py"] = missing
-            with self.assertRaises(ArtifactGateError) as caught:
-                audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
-            self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+        self._assert_required_member_rejected_when_missing("marketplace/reference/federation_v1.py")
+
+    def test_missing_transport_json_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/reference/transport_json_v1.py")
 
     def test_wrong_wheel_filename_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:

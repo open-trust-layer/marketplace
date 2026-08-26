@@ -7,11 +7,13 @@ from pathlib import Path
 from repository_audit import (
     _REQUIRED_GOVERNANCE_FILES,
     _REQUIRED_REFERENCE_FILES,
+    _REQUIRED_SECURITY_FILES,
     _REFERENCE_WRAPPERS,
     _audit_packaging,
     _audit_python,
     _audit_reference_adapter_layout,
     _audit_required_governance_files,
+    _audit_required_security_files,
     _read_utf8,
 )
 
@@ -67,8 +69,39 @@ class RepositoryAuditTests(unittest.TestCase):
             _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
 
-    def test_reference_layout_includes_packaged_m8_and_historical_wrapper(self):
+    def test_security_audit_requires_m25_and_m26_runtime_codec_and_docs(self):
+        expected = {
+            Path("src/marketplace/runtime/network_policy.py"),
+            Path("docs/federation-egress-security.md"),
+            Path("src/marketplace/runtime/https_transport.py"),
+            Path("src/marketplace/reference/transport_json_v1.py"),
+            Path("docs/authorized-https-federation-transport.md"),
+        }
+        self.assertTrue(expected.issubset(set(_REQUIRED_SECURITY_FILES)))
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            findings: list[str] = []
+            _audit_required_security_files(Path(temp_dir), findings)
+            expected_findings = {
+                f"MISSING_SECURITY_FILE {path.as_posix()}"
+                for path in _REQUIRED_SECURITY_FILES
+            }
+            self.assertEqual(set(findings), expected_findings)
+
+    def test_security_audit_accepts_complete_required_file_set(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for relative_path in _REQUIRED_SECURITY_FILES:
+                path = root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("security boundary\n", encoding="utf-8")
+            findings: list[str] = []
+            _audit_required_security_files(root, findings)
+            self.assertEqual(findings, [])
+
+    def test_reference_layout_includes_packaged_m8_m26_and_historical_wrapper(self):
         self.assertIn(Path("src/marketplace/reference/federation_v1.py"), _REQUIRED_REFERENCE_FILES)
+        self.assertIn(Path("src/marketplace/reference/transport_json_v1.py"), _REQUIRED_REFERENCE_FILES)
         self.assertIn(Path("tools/marketplace_federation_v1.py"), _REQUIRED_REFERENCE_FILES)
         self.assertIn(Path("tools/marketplace_federation_v1.py"), _REFERENCE_WRAPPERS)
 

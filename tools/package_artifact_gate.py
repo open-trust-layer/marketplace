@@ -40,10 +40,12 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/composition.py",
     "marketplace/runtime/federation.py",
     "marketplace/runtime/network_policy.py",
+    "marketplace/runtime/https_transport.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",
     "marketplace/reference/federation_v1.py",
+    "marketplace/reference/transport_json_v1.py",
 }
 
 
