@@ -22,6 +22,10 @@ _REQUIRED_GOVERNANCE_FILES = (
     Path(".github/CODEOWNERS"),
     Path(".github/pull_request_template.md"),
 )
+_REQUIRED_SECURITY_FILES = (
+    Path("src/marketplace/runtime/network_policy.py"),
+    Path("docs/federation-egress-security.md"),
+)
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
     Path("src/marketplace/reference/record_v1.py"),
@@ -117,6 +121,13 @@ def _audit_required_governance_files(repo_root: Path, findings: list[str]) -> No
         path = repo_root / relative_path
         if not path.is_file():
             findings.append(f"MISSING_GOVERNANCE_FILE {relative_path.as_posix()}")
+
+
+def _audit_required_security_files(repo_root: Path, findings: list[str]) -> None:
+    for relative_path in _REQUIRED_SECURITY_FILES:
+        path = repo_root / relative_path
+        if not path.is_file():
+            findings.append(f"MISSING_SECURITY_FILE {relative_path.as_posix()}")
 
 
 def _audit_reference_adapter_layout(repo_root: Path, findings: list[str]) -> None:
@@ -257,6 +268,7 @@ def audit_repository(repo_root: Path) -> AuditReport:
         raise RepositoryAuditError([f"OLP_PIN_CONFIG {exc}"]) from exc
 
     _audit_required_governance_files(repo_root, findings)
+    _audit_required_security_files(repo_root, findings)
     _audit_packaging(repo_root, findings)
     _audit_reference_adapter_layout(repo_root, findings)
 

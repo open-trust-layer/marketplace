@@ -37,6 +37,17 @@ from .matching import (
     LocalRecordNotFoundError,
     RuntimeMatchError,
 )
+from .network_policy import (
+    CanonicalFederationEndpoint,
+    FederationEgressPolicy,
+    FederationEndpointAuthorization,
+    FederationNetworkPolicyError,
+    ResolvedEndpointAddresses,
+    authorize_federation_endpoint,
+    canonicalize_federation_endpoint,
+    validate_endpoint_authorization,
+    validate_resolved_addresses,
+)
 from .node import IngestOutcome, InvalidIdentityProviderResult, MarketplaceNode, RuntimeNodeError
 from .repository import (
     DEFAULT_MAX_ENTRIES,
@@ -53,12 +64,16 @@ from .retention import DEFAULT_EPHEMERAL_RETENTION_SECONDS, ThreadingExpirySched
 
 __all__ = [
     "BoundedRecordSource",
+    "CanonicalFederationEndpoint",
     "DEFAULT_EPHEMERAL_RETENTION_SECONDS",
     "DEFAULT_MAX_ENTRIES",
     "DiscoveryEvaluator",
     "ExactRecordSource",
+    "FederationEgressPolicy",
+    "FederationEndpointAuthorization",
     "FederationEnvelopeMaker",
     "FederationEnvelopeValidator",
+    "FederationNetworkPolicyError",
     "FederationOperationProfile",
     "FederationPageOutcome",
     "FederationRequestBinding",
@@ -78,6 +93,7 @@ __all__ = [
     "OfflineFederationService",
     "PreparedFederationExchange",
     "RETENTION_CLASS_EPHEMERAL",
+    "ResolvedEndpointAddresses",
     "InMemoryEphemeralRecordRepository",
     "IngestOutcome",
     "InvalidIdentityProviderResult",
@@ -92,7 +108,11 @@ __all__ = [
     "RuntimeRepositoryError",
     "StoreDisposition",
     "ThreadingExpiryScheduler",
+    "authorize_federation_endpoint",
+    "canonicalize_federation_endpoint",
     "compose_offline_federation_service",
     "compose_runtime",
     "create_in_memory_runtime",
+    "validate_endpoint_authorization",
+    "validate_resolved_addresses",
 ]
