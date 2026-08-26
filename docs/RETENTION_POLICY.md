@@ -1,6 +1,6 @@
 # Marketplace Retention Policy
 
-**Status:** Project engineering policy  
+**Status:** Project engineering policy
 **Applies to:** development tooling, coding-agent workflows, CI diagnostics, future runtime/reference-node implementations, adapters, caches, logs, temporary artifacts, and retained project context
 
 This policy governs retention of project-scoped data. It does not change Marketplace protocol record identity or lifecycle semantics.
