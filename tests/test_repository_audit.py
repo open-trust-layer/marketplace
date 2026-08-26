@@ -6,8 +6,10 @@ from pathlib import Path
 
 from repository_audit import (
     _REQUIRED_GOVERNANCE_FILES,
+    _REQUIRED_REFERENCE_FILES,
     _audit_packaging,
     _audit_python,
+    _audit_reference_adapter_layout,
     _audit_required_governance_files,
     _read_utf8,
 )
@@ -64,7 +66,31 @@ class RepositoryAuditTests(unittest.TestCase):
             _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
 
-    def test_packaging_audit_accepts_m21_distribution_boundary(self):
+    def test_reference_layout_requires_packaged_sources_and_tool_wrappers(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            findings: list[str] = []
+            _audit_reference_adapter_layout(Path(temp_dir), findings)
+            expected = {
+                f"MISSING_REFERENCE_ADAPTER_FILE {path.as_posix()}"
+                for path in _REQUIRED_REFERENCE_FILES
+            }
+            self.assertEqual(set(findings), expected)
+
+    def test_reference_layout_accepts_thin_delegating_wrappers(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for relative_path in _REQUIRED_REFERENCE_FILES:
+                path = root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if relative_path.parts[0] == "tools":
+                    path.write_text("from marketplace.reference import record_v1\n", encoding="utf-8")
+                else:
+                    path.write_text("pass\n", encoding="utf-8")
+            findings: list[str] = []
+            _audit_reference_adapter_layout(root, findings)
+            self.assertEqual(findings, [])
+
+    def test_packaging_audit_accepts_distribution_boundary(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             (root / "pyproject.toml").write_text(_VALID_PYPROJECT, encoding="utf-8")
@@ -92,7 +118,22 @@ class RepositoryAuditTests(unittest.TestCase):
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertIn(
-                "PYPROJECT_RUNTIME_DEPENDENCIES MUST remain an empty array in M21",
+                "PYPROJECT_RUNTIME_DEPENDENCIES base runtime dependencies MUST remain an empty array",
+                findings,
+            )
+
+    def test_packaging_audit_rejects_public_index_optional_dependency(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            text = _VALID_PYPROJECT.replace(
+                "dependencies = []\n",
+                "dependencies = []\n\n[project.optional-dependencies]\nreference = [\"open-layer-protocol==0.0.6.dev0\"]\n",
+            )
+            (root / "pyproject.toml").write_text(text, encoding="utf-8")
+            findings: list[str] = []
+            _audit_packaging(root, findings)
+            self.assertIn(
+                "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted in M22",
                 findings,
             )
 
@@ -107,7 +148,7 @@ class RepositoryAuditTests(unittest.TestCase):
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertIn(
-                "PYPROJECT_SCRIPTS runtime console scripts are not permitted in M21",
+                "PYPROJECT_SCRIPTS runtime console scripts are not permitted",
                 findings,
             )
 
