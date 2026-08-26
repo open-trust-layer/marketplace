@@ -25,12 +25,16 @@ _REQUIRED_GOVERNANCE_FILES = (
 _REQUIRED_SECURITY_FILES = (
     Path("src/marketplace/runtime/network_policy.py"),
     Path("docs/federation-egress-security.md"),
+    Path("src/marketplace/runtime/https_transport.py"),
+    Path("src/marketplace/reference/transport_json_v1.py"),
+    Path("docs/authorized-https-federation-transport.md"),
 )
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
     Path("src/marketplace/reference/record_v1.py"),
     Path("src/marketplace/reference/matching_v1.py"),
     Path("src/marketplace/reference/federation_v1.py"),
+    Path("src/marketplace/reference/transport_json_v1.py"),
     Path("tools/marketplace_record_v1.py"),
     Path("tools/marketplace_matching_v1.py"),
     Path("tools/marketplace_federation_v1.py"),
