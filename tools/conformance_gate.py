@@ -105,6 +105,7 @@ def _build_environment(config: GateConfig, repo_root: Path | None = None) -> dic
     env = dict(os.environ)
     python_paths = [
         str((config.olp_root / "src").resolve()),
+        str((effective_repo / "src").resolve()),
         str((effective_repo / "tools").resolve()),
     ]
     existing = env.get("PYTHONPATH")

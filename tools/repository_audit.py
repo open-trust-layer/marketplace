@@ -174,7 +174,11 @@ def audit_repository(repo_root: Path) -> AuditReport:
         _audit_links(repo_root, path, text, findings)
 
     python_files = sorted(
-        [*repo_root.glob("tools/*.py"), *repo_root.glob("tests/*.py")]
+        [
+            *repo_root.glob("tools/*.py"),
+            *repo_root.glob("tests/*.py"),
+            *repo_root.glob("src/**/*.py"),
+        ]
     )
     for path in python_files:
         text = _read_utf8(path, findings)
