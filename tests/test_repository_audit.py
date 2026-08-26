@@ -4,7 +4,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from repository_audit import _audit_python, _read_utf8
+from repository_audit import (
+    _REQUIRED_GOVERNANCE_FILES,
+    _audit_python,
+    _audit_required_governance_files,
+    _read_utf8,
+)
 
 
 class RepositoryAuditTests(unittest.TestCase):
@@ -18,6 +23,27 @@ class RepositoryAuditTests(unittest.TestCase):
             self.assertEqual(findings, [])
             assert text is not None
             _audit_python(path, text, findings)
+            self.assertEqual(findings, [])
+
+    def test_governance_audit_reports_missing_required_files(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            findings: list[str] = []
+            _audit_required_governance_files(Path(temp_dir), findings)
+            expected = {
+                f"MISSING_GOVERNANCE_FILE {path.as_posix()}"
+                for path in _REQUIRED_GOVERNANCE_FILES
+            }
+            self.assertEqual(set(findings), expected)
+
+    def test_governance_audit_accepts_complete_required_file_set(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for relative_path in _REQUIRED_GOVERNANCE_FILES:
+                path = root / relative_path
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("policy\n", encoding="utf-8")
+            findings: list[str] = []
+            _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
 
 
