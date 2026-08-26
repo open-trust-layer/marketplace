@@ -90,6 +90,8 @@ Every returned address is passed through the M25 `validate_resolved_addresses(..
 
 The validated addresses are canonicalized; the first deterministic address is selected.
 
+**DNS resolution does not freeze authorization validity.** After fresh resolution and address classification, the adapter revalidates the same immutable endpoint authorization again using a fresh wall-clock value **immediately before opening the socket**. If the authorization expired or became invalid during DNS processing, the exchange fails without a connection attempt.
+
 The default connector then:
 
 - creates an IPv4 or IPv6 socket for that **numeric selected address**;
@@ -162,6 +164,7 @@ M26 rejects:
 - `Content-Encoding` / compressed bodies;
 - missing/duplicate/noncanonical `Content-Length`;
 - malformed/folded headers;
+- ASCII control bytes in the status line or header values;
 - header overflow;
 - body overflow;
 - truncated bodies;
@@ -180,6 +183,8 @@ The connection is closed after one response; there is no pooling or persistent H
 - delegates OJVE/envelope validation to pinned OLP `TransportEnvelopeV1`;
 - materializes decoded M8 payloads only with string map keys for the M8 schema boundary;
 - uses deterministic compact JSON output for the reference sender.
+
+After the injected/reference decoder returns, the runtime independently requires exactly one four-element abstract OLP transport envelope with marker `OLP-TRANSPORT`, exact integer version `1`, and a non-empty text message type. A hostile or incorrectly wired decoder cannot promote an arbitrary object into a successful transport result.
 
 The codec does not change OLP Record/Proof identity.
 
