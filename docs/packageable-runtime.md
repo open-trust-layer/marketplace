@@ -30,9 +30,12 @@ package root: src/
 runtime dependencies: none
 console scripts: none
 plugin entry points: none
+reviewed build backend: setuptools==80.9.0
 ```
 
 The development version is distribution metadata only. It does not establish a Marketplace protocol version, specification maturity claim, conformance level, or stable API guarantee.
+
+The exact setuptools version is part of the reviewed M21 build boundary. CI provisions that version explicitly, and the acceptance gate independently verifies the installed build backend version before attempting the package smoke. This prevents `--no-build-isolation` from silently using an arbitrary ambient setuptools release.
 
 ## Explicit semantic dependencies
 
@@ -62,7 +65,9 @@ No fallback imports from repository `tools/` are permitted or required by the in
 
 The unified acceptance gate performs a deterministic installation/import smoke test in a temporary directory outside the repository worktree.
 
-Installation is invoked with all of the following controls:
+Before installation, the gate verifies that the active build environment contains exactly `setuptools==80.9.0`. A missing or different build backend fails acceptance before pip is invoked.
+
+Installation is then invoked with all of the following controls:
 
 ```text
 --no-deps
@@ -72,7 +77,7 @@ PIP_NO_INPUT=1
 PIP_DISABLE_PIP_VERSION_CHECK=1
 ```
 
-These controls prevent the smoke test from silently resolving runtime dependencies or package build requirements from a registry. The build backend must already be available in the controlled CI/local environment.
+These controls prevent the smoke test from silently resolving runtime dependencies or package build requirements from a registry. The reviewed build backend must already be present in the controlled CI/local environment.
 
 The import probe then launches Python in isolated mode (`-I`), removes repository `PYTHONPATH` influence, manually adds only the temporary installation target, and verifies that:
 
@@ -91,7 +96,7 @@ The temporary installation target is destroyed automatically when the smoke chec
 
 The audit currently requires:
 
-- setuptools build backend matching the reviewed build-tool boundary;
+- build backend `setuptools.build_meta` with exactly `setuptools==80.9.0`;
 - package name `open-layer-marketplace`;
 - experimental `0.0.N.devN` version form;
 - Apache-2.0 license metadata;
