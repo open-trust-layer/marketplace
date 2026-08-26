@@ -117,6 +117,17 @@ def _build_environment(config: GateConfig, repo_root: Path | None = None) -> dic
     return env
 
 
+def _isolated_install_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PIP_NO_INDEX"] = "1"
+    env["PIP_NO_INPUT"] = "1"
+    env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
+    env["PYTHONNOUSERSITE"] = "1"
+    return env
+
+
 def verify_olp_pin(config: GateConfig, executor: CommandExecutor) -> str:
     olp_root = config.olp_root.resolve()
     if not olp_root.is_dir():
@@ -151,6 +162,62 @@ def _print_command_output(result: subprocess.CompletedProcess[str]) -> None:
         print(result.stderr.rstrip(), file=sys.stderr)
 
 
+def _verify_reviewed_build_backend(
+    config: GateConfig,
+    executor: CommandExecutor,
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+) -> None:
+    backend_probe = (
+        "import importlib.metadata as m; "
+        f"expected={REVIEWED_BUILD_BACKEND_VERSION!r}; "
+        "actual=m.version('setuptools'); "
+        "raise SystemExit(0 if actual == expected else "
+        "f'reviewed setuptools mismatch: expected {expected}, got {actual}')"
+    )
+    result = run_checked(
+        executor,
+        (sys.executable, "-I", "-c", backend_probe),
+        cwd=cwd,
+        env=env,
+        timeout=config.timeout_seconds,
+        label="reviewed build backend check",
+    )
+    _print_command_output(result)
+
+
+def _pip_install_to_target(
+    config: GateConfig,
+    executor: CommandExecutor,
+    *,
+    source: Path,
+    target: Path,
+    cwd: Path,
+    env: Mapping[str, str],
+    label: str,
+) -> None:
+    result = run_checked(
+        executor,
+        (
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "--no-build-isolation",
+            "--target",
+            str(target),
+            str(source),
+        ),
+        cwd=cwd,
+        env=env,
+        timeout=config.timeout_seconds,
+        label=label,
+    )
+    _print_command_output(result)
+
+
 def run_unit_tests(config: GateConfig, executor: CommandExecutor) -> None:
     print("=== Unit tests ===")
     result = run_checked(
@@ -165,58 +232,25 @@ def run_unit_tests(config: GateConfig, executor: CommandExecutor) -> None:
 
 
 def run_package_smoke(config: GateConfig, executor: CommandExecutor) -> None:
-    """Install/import the runtime without repository import-path leakage or index access."""
+    """Install/import the base runtime without repository import-path leakage."""
     print("=== Isolated runtime package smoke ===")
     repo_root = config.repo_root.resolve()
     with tempfile.TemporaryDirectory(prefix="marketplace-package-smoke-") as temp_dir:
         temp_root = Path(temp_dir).resolve()
         install_target = temp_root / "installed"
         install_target.mkdir()
+        install_env = _isolated_install_environment()
 
-        install_env = dict(os.environ)
-        install_env.pop("PYTHONPATH", None)
-        install_env["PYTHONDONTWRITEBYTECODE"] = "1"
-        install_env["PIP_NO_INDEX"] = "1"
-        install_env["PIP_NO_INPUT"] = "1"
-        install_env["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
-        install_env["PYTHONNOUSERSITE"] = "1"
-
-        backend_probe = (
-            "import importlib.metadata as m; "
-            f"expected={REVIEWED_BUILD_BACKEND_VERSION!r}; "
-            "actual=m.version('setuptools'); "
-            "raise SystemExit(0 if actual == expected else "
-            "f'reviewed setuptools mismatch: expected {expected}, got {actual}')"
-        )
-        result = run_checked(
+        _verify_reviewed_build_backend(config, executor, cwd=temp_root, env=install_env)
+        _pip_install_to_target(
+            config,
             executor,
-            (sys.executable, "-I", "-c", backend_probe),
+            source=repo_root,
+            target=install_target,
             cwd=temp_root,
             env=install_env,
-            timeout=config.timeout_seconds,
-            label="reviewed build backend check",
-        )
-        _print_command_output(result)
-
-        result = run_checked(
-            executor,
-            (
-                sys.executable,
-                "-m",
-                "pip",
-                "install",
-                "--no-deps",
-                "--no-build-isolation",
-                "--target",
-                str(install_target),
-                str(repo_root),
-            ),
-            cwd=temp_root,
-            env=install_env,
-            timeout=config.timeout_seconds,
             label="isolated runtime package install",
         )
-        _print_command_output(result)
 
         smoke = """import pathlib, sys
 root = pathlib.Path(sys.argv[1]).resolve()
@@ -248,6 +282,115 @@ print(\"isolated runtime import PASS\")
         )
         _print_command_output(result)
     print("isolated runtime package smoke PASS")
+
+
+def run_reference_package_smoke(config: GateConfig, executor: CommandExecutor) -> None:
+    """Prove installed reference semantics compose with the exact local OLP source."""
+    print("=== Isolated reference-adapter package smoke ===")
+    repo_root = config.repo_root.resolve()
+    olp_root = config.olp_root.resolve()
+    with tempfile.TemporaryDirectory(prefix="marketplace-reference-smoke-") as temp_dir:
+        temp_root = Path(temp_dir).resolve()
+        install_target = temp_root / "installed"
+        install_target.mkdir()
+        install_env = _isolated_install_environment()
+
+        _verify_reviewed_build_backend(config, executor, cwd=temp_root, env=install_env)
+        _pip_install_to_target(
+            config,
+            executor,
+            source=olp_root,
+            target=install_target,
+            cwd=temp_root,
+            env=install_env,
+            label="isolated pinned OLP package install",
+        )
+        _pip_install_to_target(
+            config,
+            executor,
+            source=repo_root,
+            target=install_target,
+            cwd=temp_root,
+            env=install_env,
+            label="isolated Marketplace reference package install",
+        )
+
+        smoke = """import pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(root))
+import olp
+import marketplace.reference as reference
+import marketplace.runtime as runtime
+for module in (olp, reference, runtime):
+    origin = pathlib.Path(module.__file__).resolve()
+    try:
+        origin.relative_to(root)
+    except ValueError as exc:
+        raise SystemExit(f\"module escaped install target: {module.__name__} -> {origin}\") from exc
+from olp import RecordV1
+
+def intent(principal, action):
+    return RecordV1.from_mapping({
+        \"envelope_version\": 1,
+        \"type\": reference.TYPE_INTENT,
+        \"content\": {
+            \"version\": 1,
+            \"issuer\": {\"principal\": principal},
+            \"subjects\": [{\"uri\": \"urn:example:item:installed-reference\"}],
+            \"action\": {\"id\": action},
+            \"terms\": {},
+        },
+        \"profiles\": [reference.CORE_PROFILE],
+    })
+
+with runtime.create_in_memory_runtime(
+    validate_record=reference.validate_market_record,
+    record_identity_text=reference.record_identity_text,
+    evaluate_discovery=reference.evaluate_discovery,
+    evaluate_match=reference.evaluate_match,
+    max_entries=8,
+) as app:
+    buy = intent(\"did:example:alice\", \"https://example.test/actions/buy\")
+    sell = intent(\"did:example:bob\", \"https://example.test/actions/sell\")
+    buy_id = app.node.ingest(buy).record_id
+    sell_id = app.node.ingest(sell).record_id
+    discovery = app.discovery.discover(
+        {\"version\": 1, \"action_ids_any\": [\"https://example.test/actions/sell\"]},
+        source=\"urn:example:source:installed-reference\",
+        completeness=\"COMPLETE_FOR_DECLARED_SOURCE\",
+        freshness=\"FRESH\",
+        max_records=8,
+    )
+    if discovery[\"result_refs\"] != [sell_id]:
+        raise SystemExit(\"installed reference discovery result mismatch\")
+    match = app.matching.evaluate(
+        buy_id,
+        sell_id,
+        method=\"https://example.test/method/exact-v1\",
+        base_status=\"SATISFIED\",
+        observations=(),
+        evidence_completeness=\"COMPLETE_FOR_METHOD_INPUTS\",
+    )
+    if match[\"conclusion\"] != \"COMPATIBLE_UNDER_METHOD\":
+        raise SystemExit(\"installed reference match conclusion mismatch\")
+    if match[\"protocol_truth\"] is not False or match[\"creates_agreement\"] is not False:
+        raise SystemExit(\"installed reference match exceeded semantic authority\")
+print(\"isolated reference adapter composition PASS\")
+"""
+        import_env = dict(os.environ)
+        import_env.pop("PYTHONPATH", None)
+        import_env["PYTHONDONTWRITEBYTECODE"] = "1"
+        import_env["PYTHONNOUSERSITE"] = "1"
+        result = run_checked(
+            executor,
+            (sys.executable, "-I", "-c", smoke, str(install_target)),
+            cwd=temp_root,
+            env=import_env,
+            timeout=config.timeout_seconds,
+            label="isolated reference-adapter composition",
+        )
+        _print_command_output(result)
+    print("isolated reference-adapter package smoke PASS")
 
 
 def run_validators(config: GateConfig, executor: CommandExecutor) -> None:
@@ -357,6 +500,7 @@ def run_gate(config: GateConfig, executor: CommandExecutor | None = None) -> Non
 
     run_unit_tests(config, executor)
     run_package_smoke(config, executor)
+    run_reference_package_smoke(config, executor)
     run_validators(config, executor)
     if config.replay_generators:
         replay_generators(config, executor)
