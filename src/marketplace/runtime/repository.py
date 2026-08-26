@@ -37,6 +37,14 @@ class RepositoryCapacityExceededError(RuntimeRepositoryError):
         )
 
 
+class RepositoryReadLimitExceededError(RuntimeRepositoryError):
+    def __init__(self, limit: int, available: int) -> None:
+        super().__init__(
+            "REPOSITORY_READ_LIMIT_EXCEEDED",
+            f"runtime repository contains {available} records, exceeding read limit {limit}",
+        )
+
+
 class RecordIdentityCollisionError(RuntimeRepositoryError):
     def __init__(self, record_id: str) -> None:
         super().__init__(
@@ -56,8 +64,9 @@ class InMemoryEphemeralRecordRepository:
     """Process-local evidence storage that expires content after last use.
 
     Retention cannot be configured above the project-wide 10-second EPHEMERAL
-    maximum. Each successful put/get refreshes expiry. Generation checks make a
-    stale timer callback harmless after a later refresh.
+    maximum. Each successful put/get/snapshot refreshes expiry for records that
+    were actually returned. Generation checks make a stale timer callback
+    harmless after a later refresh.
     """
 
     retention_class = RETENTION_CLASS_EPHEMERAL
@@ -101,6 +110,14 @@ class InMemoryEphemeralRecordRepository:
     def _require_open(self) -> None:
         if self._closed:
             raise RepositoryClosedError()
+
+    def _validate_snapshot_limit(self, limit: int) -> None:
+        if isinstance(limit, bool) or not isinstance(limit, int):
+            raise TypeError("snapshot limit MUST be an integer")
+        if not 1 <= limit <= self._max_entries:
+            raise ValueError(
+                f"snapshot limit MUST be between 1 and configured max_entries {self._max_entries}"
+            )
 
     def _schedule(self, record_id: str, generation: int) -> ExpiryHandle:
         return self._scheduler.schedule(
@@ -155,6 +172,28 @@ class InMemoryEphemeralRecordRepository:
                 return None
             self._refresh_locked(record_id, entry)
             return entry.record
+
+    def snapshot(self, limit: int) -> tuple[Any, ...]:
+        """Return all current local records if they fit inside ``limit``.
+
+        The method fails closed instead of truncating. Truncation could make a
+        caller misinterpret a partial local source as complete for the declared
+        source. Accepted snapshots are ordered by exact Record Identity text and
+        refresh retention only for the returned records.
+        """
+        self._validate_snapshot_limit(limit)
+        with self._lock:
+            self._require_open()
+            available = len(self._entries)
+            if available > limit:
+                raise RepositoryReadLimitExceededError(limit, available)
+            ordered_ids = tuple(sorted(self._entries))
+            records: list[Any] = []
+            for record_id in ordered_ids:
+                entry = self._entries[record_id]
+                self._refresh_locked(record_id, entry)
+                records.append(entry.record)
+            return tuple(records)
 
     def close(self) -> None:
         with self._lock:
