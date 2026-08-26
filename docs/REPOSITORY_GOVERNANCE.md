@@ -1,6 +1,6 @@
 # Marketplace Repository Governance
 
-**Status:** Desired and repository-enforced governance policy where technically available  
+**Status:** Desired and repository-enforced governance policy where technically available
 **Provider:** GitHub is the current repository host but is not part of Marketplace semantic authority
 
 Repository governance is a security control. Repository files can define desired policy and review workflow, but they do not by themselves prove provider-side branch protection or rulesets are active.
