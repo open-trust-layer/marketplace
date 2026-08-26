@@ -13,6 +13,13 @@ _LINK_RE = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
 _FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})")
 _URI_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 _ALLOWED_CONTROLS = {"\n", "\r", "\t"}
+_REQUIRED_GOVERNANCE_FILES = (
+    Path("DEVELOPMENT_POLICY.md"),
+    Path("docs/RETENTION_POLICY.md"),
+    Path("docs/REPOSITORY_GOVERNANCE.md"),
+    Path(".github/CODEOWNERS"),
+    Path(".github/pull_request_template.md"),
+)
 
 
 @dataclass(frozen=True)
@@ -86,6 +93,13 @@ def _audit_links(repo_root: Path, path: Path, text: str, findings: list[str]) ->
             findings.append(f"BROKEN_LINK {path}: {raw_target}")
 
 
+def _audit_required_governance_files(repo_root: Path, findings: list[str]) -> None:
+    for relative_path in _REQUIRED_GOVERNANCE_FILES:
+        path = repo_root / relative_path
+        if not path.is_file():
+            findings.append(f"MISSING_GOVERNANCE_FILE {relative_path.as_posix()}")
+
+
 def _collect_top_level_case_ids(document: object, path: Path, findings: list[str]) -> list[str]:
     if not isinstance(document, dict):
         findings.append(f"VECTOR_ROOT {path}: top-level JSON value MUST be an object")
@@ -145,6 +159,8 @@ def audit_repository(repo_root: Path) -> AuditReport:
         expected_pin = read_olp_pin(repo_root)
     except ValueError as exc:
         raise RepositoryAuditError([f"OLP_PIN_CONFIG {exc}"]) from exc
+
+    _audit_required_governance_files(repo_root, findings)
 
     markdown_files = sorted(
         path for path in repo_root.rglob("*.md")
