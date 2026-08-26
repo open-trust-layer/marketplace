@@ -22,6 +22,11 @@ from .matching_v1 import (
     validate_ranked_view,
     verify_index_entry,
 )
+from .record_retrieval_v1 import (
+    RetrievedRecordVerificationError,
+    VerifiedRetrievedRecord,
+    verify_retrieved_market_record,
+)
 from .record_v1 import (
     BASE,
     CORE_PROFILE,
@@ -51,10 +56,12 @@ __all__ = [
     "MarketplaceTransportJsonError",
     "PROPOSAL_PROFILE",
     "RECORD_TYPES",
+    "RetrievedRecordVerificationError",
     "STRUCTURE_VALIDATORS",
     "TYPE_AGREEMENT",
     "TYPE_EVENT",
     "TYPE_INTENT",
+    "VerifiedRetrievedRecord",
     "bind_cursor",
     "decode_transport_envelope_json",
     "encode_transport_envelope_json",
@@ -69,4 +76,5 @@ __all__ = [
     "validate_market_record",
     "validate_ranked_view",
     "verify_index_entry",
+    "verify_retrieved_market_record",
 ]
