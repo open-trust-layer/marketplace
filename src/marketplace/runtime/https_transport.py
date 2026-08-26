@@ -143,9 +143,10 @@ def _default_resolver(hostname: str, port: int) -> Iterable[str]:
             type=socket.SOCK_STREAM,
             proto=socket.IPPROTO_TCP,
         )
-    except OSError as exc:
+        addresses = tuple(result[4][0] for result in results)
+    except (OSError, IndexError, TypeError) as exc:
         _fail("DNS_RESOLUTION_FAILED", f"fresh federation DNS resolution failed: {type(exc).__name__}")
-    return tuple(result[4][0] for result in results)
+    return addresses
 
 
 def _default_secure_connector(
@@ -156,10 +157,11 @@ def _default_secure_connector(
     connect_timeout_seconds: float,
 ) -> SecureConnection:
     """Connect directly to an already-classified numeric address, then verify TLS hostname."""
-    parsed = ipaddress.ip_address(address)
-    family = socket.AF_INET if parsed.version == 4 else socket.AF_INET6
-    raw = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
+    raw: Any | None = None
     try:
+        parsed = ipaddress.ip_address(address)
+        family = socket.AF_INET if parsed.version == 4 else socket.AF_INET6
+        raw = socket.socket(family, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         raw.settimeout(connect_timeout_seconds)
         destination: tuple[Any, ...]
         if parsed.version == 4:
@@ -180,10 +182,12 @@ def _default_secure_connector(
             _fail("TLS_ALPN_MISMATCH", "server selected an unsupported application protocol")
         return tls
     except FederationHttpsTransportError:
-        raw.close()
+        if raw is not None:
+            raw.close()
         raise
-    except (OSError, ssl.SSLError) as exc:
-        raw.close()
+    except (OSError, ssl.SSLError, ValueError) as exc:
+        if raw is not None:
+            raw.close()
         _fail("TLS_CONNECTION_FAILED", f"HTTPS connection failed: {type(exc).__name__}")
 
 
@@ -274,6 +278,8 @@ def _read_response(
     lines = header_text.split("\r\n")
     if not lines or not lines[0].startswith("HTTP/1.1 "):
         _fail("UNSUPPORTED_HTTP_VERSION", "M26 accepts HTTP/1.1 responses only")
+    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in lines[0]):
+        _fail("INVALID_HTTP_STATUS", "HTTPS response status line contains a control character")
     status_parts = lines[0].split(" ", 2)
     if len(status_parts) < 2 or len(status_parts[1]) != 3 or not status_parts[1].isdigit():
         _fail("INVALID_HTTP_STATUS", "HTTPS response status line is malformed")
@@ -287,8 +293,8 @@ def _read_response(
         if not name or any(ch not in "!#$%&'*+-.^_`|~0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" for ch in name):
             _fail("INVALID_HTTP_HEADERS", "HTTPS response contains invalid header name")
         clean = value.strip(" \t")
-        if "\r" in clean or "\n" in clean:
-            _fail("INVALID_HTTP_HEADERS", "HTTPS response contains unsafe header value")
+        if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in clean):
+            _fail("INVALID_HTTP_HEADERS", "HTTPS response contains an unsafe header control character")
         headers.setdefault(name.lower(), []).append(clean)
 
     if status != 200:
@@ -323,6 +329,19 @@ def _read_response(
     if len(body) != body_length:
         _fail("TRUNCATED_HTTP_RESPONSE", "response body length does not match Content-Length")
     return status, bytes(body)
+
+
+def _validated_response_envelope(value: Any) -> tuple[Any, ...]:
+    if not isinstance(value, (tuple, list)) or len(value) != 4:
+        _fail("INVALID_RESPONSE_ENVELOPE", "decoded response MUST be one OLP transport envelope")
+    marker, version, message_type, payload = value
+    if marker != "OLP-TRANSPORT":
+        _fail("INVALID_RESPONSE_ENVELOPE", "decoded response has the wrong transport marker")
+    if isinstance(version, bool) or not isinstance(version, int) or version != 1:
+        _fail("INVALID_RESPONSE_ENVELOPE", "decoded response has an unsupported transport version")
+    if not isinstance(message_type, str) or not message_type:
+        _fail("INVALID_RESPONSE_ENVELOPE", "decoded response message type MUST be non-empty text")
+    return (marker, version, message_type, payload)
 
 
 class AuthorizedHttpsFederationTransport:
@@ -405,6 +424,16 @@ class AuthorizedHttpsFederationTransport:
                 if isinstance(code, str):
                     _fail("UNSAFE_RESOLUTION", f"fresh resolver result rejected by M25 policy: {code}")
                 _fail("DNS_RESOLUTION_FAILED", f"fresh resolver failed: {type(exc).__name__}")
+
+            # DNS itself can consume time. Revalidate the same immutable authorization
+            # again after fresh resolution and immediately before opening a socket.
+            canonical = validate_endpoint_authorization(
+                authorization,
+                endpoint=endpoint,
+                operation=prepared.binding.operation,
+                now_epoch=int(self._wall_clock()),
+                policy=self._policy,
+            )
             selected_address = resolved.addresses[0]
 
             connect_timeout = _remaining_timeout(
@@ -448,9 +477,10 @@ class AuthorizedHttpsFederationTransport:
                 monotonic=self._monotonic,
             )
             try:
-                response_envelope = self._decode(response_body)
+                decoded = self._decode(response_body)
             except Exception as exc:
                 _fail("RESPONSE_ENVELOPE_DECODING_FAILED", f"OLP JSON envelope decoding failed: {type(exc).__name__}")
+            response_envelope = _validated_response_envelope(decoded)
             return HttpsFederationExchangeResult(
                 response_envelope=response_envelope,
                 http_status=status,
