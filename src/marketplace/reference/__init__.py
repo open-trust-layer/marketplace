@@ -7,6 +7,10 @@ remains independent and does not import this package implicitly.
 from olp.encoding.record_identity import record_identity_text
 
 from . import federation_v1
+from .inbound_http_v1 import (
+    decode_inbound_control_envelope_json,
+    encode_prepared_inbound_response_json,
+)
 from .matching_v1 import (
     DEFAULT_MATCH_METHOD,
     DISCOVERY_SERVICE_TYPE,
@@ -71,7 +75,9 @@ __all__ = [
     "TYPE_INTENT",
     "VerifiedRetrievedRecord",
     "bind_cursor",
+    "decode_inbound_control_envelope_json",
     "decode_transport_envelope_json",
+    "encode_prepared_inbound_response_json",
     "encode_transport_envelope_json",
     "evaluate_discovery",
     "evaluate_match",
