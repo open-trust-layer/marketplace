@@ -21,6 +21,11 @@ from .contracts import (
     StoreDisposition,
 )
 from .node import MarketplaceNode
+from .prepared_integrity import (
+    PreparedExchangeIntegrityError,
+    detach_prepared_exchange,
+    host_value_integrity_snapshot,
+)
 
 MAX_OFFLINE_FEDERATION_PAGE_RECORDS = 10_000
 MAX_OFFLINE_FEDERATION_CURSOR_BYTES = 4_096
@@ -68,11 +73,23 @@ class FederationRequestBinding:
 
 @dataclass(frozen=True)
 class PreparedFederationExchange:
-    """Abstract request value plus local binding; never a transmission."""
+    """Deeply detached request value plus immutable local integrity witness."""
 
     binding: FederationRequestBinding
     envelope: tuple[Any, ...]
     transmitted: bool = False
+    integrity_snapshot: tuple[Any, ...] | None = None
+
+    def __post_init__(self) -> None:
+        detached_envelope, current = detach_prepared_exchange(self.binding, self.envelope)
+        if self.integrity_snapshot is not None and self.integrity_snapshot != current:
+            raise PreparedExchangeIntegrityError(
+                "INTEGRITY_SNAPSHOT_MISMATCH",
+                "prepared exchange binding/envelope differs from its immutable integrity snapshot",
+            )
+        object.__setattr__(self, "envelope", detached_envelope)
+        if self.integrity_snapshot is None:
+            object.__setattr__(self, "integrity_snapshot", current)
 
 
 @dataclass(frozen=True)
@@ -151,7 +168,7 @@ class OfflineFederationService:
         self._profiles = profiles
 
     def prepare(self, request: Mapping[str, Any]) -> PreparedFederationExchange:
-        """Validate and envelope a request without resolving or contacting its source."""
+        """Validate, cross-bind, and detach a request without contacting its source."""
         normalized = self._validate_exchange_request(request)
         if not isinstance(normalized, Mapping):
             _fail("INVALID_REQUEST_VALIDATOR_RESULT", "federation request validator MUST return a mapping")
@@ -177,10 +194,25 @@ class OfflineFederationService:
         if not isinstance(source, str) or not source or not isinstance(fingerprint, str) or not fingerprint:
             _fail("INVALID_REQUEST_VALIDATOR_RESULT", "normalized source/scope_fingerprint MUST be non-empty text")
 
+        # The injected envelope maker is not allowed to mutate or reinterpret the
+        # already validated request. Type-tagged snapshots avoid Python's True==1
+        # scalar equality from hiding host-representation drift.
+        request_snapshot = host_value_integrity_snapshot(request)
         envelope_value = self._make_transport_envelope(profile.request_message_type, request)
+        if host_value_integrity_snapshot(request) != request_snapshot:
+            _fail("ENVELOPE_MAKER_MUTATED_REQUEST", "transport envelope maker mutated the validated request")
         if not isinstance(envelope_value, (tuple, list)):
             _fail("INVALID_ENVELOPE_MAKER_RESULT", "transport envelope maker MUST return a sequence")
         envelope = tuple(envelope_value)
+        if len(envelope) != 4:
+            _fail("INVALID_ENVELOPE_MAKER_RESULT", "transport envelope maker MUST return exactly four elements")
+        if envelope[0] != "OLP-TRANSPORT" or type(envelope[1]) is not int or envelope[1] != 1:
+            _fail("INVALID_ENVELOPE_MAKER_RESULT", "transport envelope marker/version is invalid")
+        if envelope[2] != profile.request_message_type:
+            _fail("ENVELOPE_MESSAGE_PROFILE_DRIFT", "transport envelope maker changed the configured request message type")
+        if host_value_integrity_snapshot(envelope[3]) != request_snapshot:
+            _fail("ENVELOPE_REQUEST_PAYLOAD_DRIFT", "transport envelope payload differs from the validated request")
+
         return PreparedFederationExchange(
             binding=FederationRequestBinding(
                 source=source,

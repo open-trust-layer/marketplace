@@ -301,7 +301,9 @@ class FederationContinuationTests(unittest.TestCase):
             with patch.object(service, "prepare", side_effect=hostile_prepare):
                 with self.assertRaises(FederationContinuationError) as caught:
                     planner.plan(prior_request, prior_prepared, page)
-            self.assertEqual(caught.exception.code, "CONTINUATION_MESSAGE_PROFILE_DRIFT")
+            # M30 rejects the stale integrity witness during forged exchange
+            # construction, before M29 can inspect the returned message profile.
+            self.assertEqual(caught.exception.code, "CONTINUATION_PREPARE_FAILED")
         finally:
             runtime.close()
 
