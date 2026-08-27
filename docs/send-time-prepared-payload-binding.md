@@ -1,0 +1,126 @@
+# Send-Time Prepared Payload Binding Hardening
+
+Milestone 30 resolves the prepared-payload alias/TOCTOU finding discovered during the M29 security review.
+
+The finding was specific: M24 previously placed the caller-supplied request mapping into the OLP transport envelope by reference. Although `PreparedFederationExchange` and its outer tuple are frozen/immutable shells, nested request mappings and lists could still be changed after preparation and before M26 serialization.
+
+M30 closes that boundary **without adding any new network capability**.
+
+## Safety boundary
+
+```text
+frozen dataclass shell              != deeply immutable request
+original caller request             != prepared send payload
+prepared binding                    != permission for later payload drift
+successful M24 validation           != mutable alias safe forever
+M30 immutable prepared payload      != network authorization
+M30 immutable prepared payload      != peer identity / truth / trust
+```
+
+## Chosen resolution
+
+Issue #65 allowed either send-time semantic revalidation or an immutable/deeply detached prepared representation. M30 chooses the latter.
+
+Every `PreparedFederationExchange` now:
+
+1. receives the abstract OLP request envelope produced by the existing M24 path;
+2. recursively detaches the supported bounded M8 host representation from caller-owned mappings/lists;
+3. replaces mappings with `FrozenDict` and lists with `FrozenList` values that preserve normal `dict`/`list` comparison and OLP encoder compatibility while rejecting ordinary mutation APIs;
+4. retains tuples, exact scalar types, and bytes as immutable values;
+5. records an immutable type-tagged integrity snapshot covering both the `FederationRequestBinding` and the complete prepared envelope.
+
+The detached payload is what the existing M26 transport later serializes. Mutating the original request after `prepare(...)` cannot change the prepared envelope.
+
+## Integrity snapshot
+
+The snapshot is local integrity metadata, not protocol evidence and not cryptographic proof. It is type-tagged so Python scalar equality does not collapse semantically distinct host values such as `True` and `1`.
+
+The snapshot binds:
+
+- binding source;
+- binding operation;
+- binding scope fingerprint;
+- binding required capabilities;
+- binding page size;
+- expected result message type;
+- OLP transport marker/version;
+- request message type;
+- the complete detached request payload, including any opaque cursor bytes.
+
+`dataclasses.replace(...)` cannot silently change the binding or envelope while retaining an old snapshot: construction fails closed on mismatch.
+
+## Bounded host representation
+
+The M30 detacher accepts only the host-value forms needed by the M8 request boundary:
+
+- `None`;
+- exact booleans;
+- exact integers;
+- exact text;
+- exact bytes;
+- tuples;
+- ordinary/frozen lists;
+- ordinary/frozen string-key mappings.
+
+It rejects unsupported/custom container types, duplicate/invalid mapping keys, more than 512 items in one collection, or nesting deeper than 8 levels.
+
+These limits are local implementation bounds below the broader OLP OJVE limits. They prevent an integrity operation from becoming an unbounded traversal surface.
+
+## M26 behavior remains unchanged
+
+M30 does not add or alter:
+
+- endpoint discovery;
+- DNS behavior;
+- TLS policy;
+- HTTP method/profile;
+- redirects;
+- retries;
+- proxies;
+- credentials;
+- background work;
+- concurrency limits;
+- authorization lifetime;
+- response parsing.
+
+M26 still performs one explicitly authorized HTTPS exchange only. The difference is that the request object reaching M26 is no longer aliased to mutable caller state.
+
+No live federation peer is contacted by M30 development or CI.
+
+## Privacy and retention
+
+The immutable prepared representation does not create durable storage. Cursor bytes remain opaque and are not logged, interpreted, persisted, or copied into a new durable checkpoint. Prepared request content remains `EPHEMERAL` and subject to the project's maximum 10-second post-use retention rule when retained by a runtime component.
+
+The integrity snapshot may contain opaque bytes already present in the prepared request, so it is part of the same EPHEMERAL prepared-exchange object and must not be logged or persisted independently.
+
+## Adversarial acceptance
+
+M30 tests require at least:
+
+- mutation of the original request after `prepare(...)` cannot change the prepared payload;
+- top-level prepared payload mutation is rejected;
+- nested scope/capability list mutation is rejected;
+- changed binding/envelope through dataclass replacement is rejected against the old snapshot;
+- manual construction also detaches mutable aliases;
+- boolean/integer snapshot values remain distinct;
+- collection/depth bounds fail closed;
+- the frozen prepared envelope remains encodable by the pinned OLP reference transport JSON adapter;
+- the M30 integrity module contains no network, filesystem, process, concurrency, or logging imports;
+- all pre-existing M25/M26/M27/M28/M29 tests remain green;
+- 816/816 semantic vectors and 13/13 deterministic replays remain unchanged and passing;
+- reproducible artifact/package/whitespace gates remain green;
+- exact-head PR CI and merged-main CI are required before M30 is complete.
+
+## Residual boundary
+
+M30 protects normal runtime aliasing and mutation APIs inside the supported Python host representation. It is not a sandbox against arbitrary in-process code that deliberately bypasses Python object protections using reflection/base-class mutation primitives. Such code already has authority to subvert the process and is outside the Marketplace transport-object integrity boundary.
+
+Most importantly:
+
+```text
+prepared payload immutability != authorization to send
+prepared payload immutability != permission to auto-follow cursors
+prepared payload immutability != unbounded synchronization permission
+```
+
+A future multi-page federation orchestrator remains a separate HIGH-risk milestone with explicit page/record/time budgets and independent authorization rules.
