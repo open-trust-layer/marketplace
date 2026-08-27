@@ -423,12 +423,14 @@ class BoundedInboundHttpResponsePreparer:
         "_application_adapter",
         "_run_function",
         "_close_function",
+        "_session_close_function",
         "_plan_function",
         "_parse_function",
         "_prepare_function",
         "_response_validate_function",
         "_run",
         "_close",
+        "_session_close",
         "_plan",
         "_parse",
         "_prepare",
@@ -470,6 +472,7 @@ class BoundedInboundHttpResponsePreparer:
         self._application_adapter = application_adapter
         self._run_function = BoundedInboundHttpReadDriver.run_to_completion
         self._close_function = BoundedInboundHttpReadDriver.close
+        self._session_close_function = BoundedInboundHttpReadSession.close
         self._plan_function = BoundedInboundHttpReadPlanner.plan
         self._parse_function = BoundedInboundHttpWireAdapter._parse_request
         self._prepare_function = BoundedInboundHttpWireAdapter.prepare
@@ -481,6 +484,9 @@ class BoundedInboundHttpResponsePreparer:
         )
         self._close = self._close_function.__get__(
             read_driver, BoundedInboundHttpReadDriver
+        )
+        self._session_close = self._session_close_function.__get__(
+            session, BoundedInboundHttpReadSession
         )
         self._plan = self._plan_function.__get__(
             planner, BoundedInboundHttpReadPlanner
@@ -521,6 +527,7 @@ class BoundedInboundHttpResponsePreparer:
             self._application_adapter,
             self._run_function,
             self._close_function,
+            self._session_close_function,
             self._plan_function,
             self._parse_function,
             self._prepare_function,
@@ -651,6 +658,12 @@ class BoundedInboundHttpResponsePreparer:
             self._close, self._close_function, self._driver, "M42 close"
         )
         self._require_bound(
+            self._session_close,
+            self._session_close_function,
+            self._session,
+            "M39 cleanup",
+        )
+        self._require_bound(
             self._plan, self._plan_function, self._planner, "M37 plan"
         )
         self._require_bound(
@@ -665,6 +678,33 @@ class BoundedInboundHttpResponsePreparer:
             self._wire,
             "M35 response validator",
         )
+
+    def _terminal_cleanup(self) -> None:
+        """Clear M39 request bytes through construction-captured exact cleanup."""
+        if (
+            getattr(self._session_close, "__self__", None) is not self._session
+            or getattr(self._session_close, "__func__", None)
+            is not self._session_close_function
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
+                "captured M39 cleanup authority changed",
+            )
+        try:
+            self._session_close()
+        except Exception:
+            _fail(
+                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
+                "captured M39 cleanup failed",
+            )
+        if (
+            getattr(self._session, "_closed", None) is not True
+            or getattr(self._session, "_prefix", None) != b""
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
+                "M39 cleanup did not verify cleared closed state",
+            )
 
     @property
     def used(self) -> bool:
@@ -738,7 +778,12 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARER_USED",
                 "M43 response preparer is one-shot",
             )
-        self._validate_bindings()
+        try:
+            self._validate_bindings()
+        except InboundHttpResponsePreparationError:
+            self._used = True
+            self._terminal_cleanup()
+            raise
         self._used = True
 
         try:
@@ -891,16 +936,7 @@ class BoundedInboundHttpResponsePreparer:
         )
 
     def close(self) -> None:
-        """Idempotently prevent use and delegate cleanup to captured M42 authority."""
+        """Idempotently prevent use and clear the construction-bound M39 request state."""
         if not self._used:
             self._used = True
-        self._validate_bindings()
-        try:
-            self._close()
-        except InboundHttpReadDriverError as exc:
-            _fail_from_driver(exc)
-        except Exception:
-            _fail(
-                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
-                "M42 cleanup could not be verified",
-            )
+        self._terminal_cleanup()
