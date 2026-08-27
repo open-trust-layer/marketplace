@@ -6,6 +6,7 @@ parallelism, retry, cursor following, endpoint discovery, or durable cache.
 """
 from __future__ import annotations
 
+import math
 import time
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
@@ -42,6 +43,19 @@ def _fail(code: str, message: str) -> None:
 def _nested_code(exc: BaseException) -> str:
     code = getattr(exc, "code", None)
     return code if isinstance(code, str) and code else type(exc).__name__
+
+
+def _finite_clock_value(value: object) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        _fail("INVALID_MONOTONIC_CLOCK", "page hydration monotonic clock MUST return a finite number")
+    normalized = float(value)
+    if not math.isfinite(normalized):
+        _fail("INVALID_MONOTONIC_CLOCK", "page hydration monotonic clock MUST return a finite number")
+    return normalized
+
+
+def _exact_int(value: object, expected: int) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value == expected
 
 
 class RecordTargetRetriever(Protocol):
@@ -90,10 +104,11 @@ class PageHydrationLimits:
         if (
             isinstance(self.total_timeout_seconds, bool)
             or not isinstance(self.total_timeout_seconds, (int, float))
+            or not math.isfinite(float(self.total_timeout_seconds))
             or not 0 < float(self.total_timeout_seconds) <= MAX_PAGE_HYDRATION_TIMEOUT_SECONDS
         ):
             raise ValueError(
-                "total_timeout_seconds MUST be within "
+                "total_timeout_seconds MUST be finite and within "
                 f"(0, {MAX_PAGE_HYDRATION_TIMEOUT_SECONDS}]"
             )
 
@@ -164,8 +179,15 @@ class BoundedFederationPageHydrator:
     def limits(self) -> PageHydrationLimits:
         return self._limits
 
+    def _clock(self) -> float:
+        try:
+            value = self._monotonic()
+        except Exception as exc:
+            _fail("MONOTONIC_CLOCK_FAILED", f"page hydration monotonic clock failed: {type(exc).__name__}")
+        return _finite_clock_value(value)
+
     def _check_budget(self, start: float) -> None:
-        now = self._monotonic()
+        now = self._clock()
         if now < start:
             _fail("MONOTONIC_CLOCK_ROLLBACK", "page hydration monotonic clock moved backwards")
         if now - start >= self._limits.total_timeout_seconds:
@@ -228,8 +250,8 @@ class BoundedFederationPageHydrator:
             _fail("INVALID_RETRIEVAL_RESULT", "M27 retriever MUST return RetrievedRecordTransportResult")
         if result.expected_record_identity != expected_record_identity:
             _fail("RETRIEVAL_IDENTITY_BINDING_MISMATCH", "retrieval result is bound to the wrong Record identity")
-        if isinstance(result.http_status, bool) or result.http_status != 200:
-            _fail("INVALID_RETRIEVAL_RESULT", "retrieval result MUST report HTTP 200")
+        if not _exact_int(result.http_status, 200):
+            _fail("INVALID_RETRIEVAL_RESULT", "retrieval result MUST report exact integer HTTP status 200")
         if (
             isinstance(result.response_body_bytes, bool)
             or not isinstance(result.response_body_bytes, int)
@@ -240,9 +262,9 @@ class BoundedFederationPageHydrator:
             _fail("INVALID_RETRIEVAL_RESULT", "retrieval result selected address is invalid")
         if not isinstance(result.tls_server_hostname, str) or not result.tls_server_hostname:
             _fail("INVALID_RETRIEVAL_RESULT", "retrieval result TLS hostname is invalid")
-        if result.connection_attempts != 1:
+        if not _exact_int(result.connection_attempts, 1):
             _fail("RETRIEVAL_ATTEMPT_INVARIANT", "each hydrated Record MUST have exactly one connection attempt")
-        if result.redirects_followed != 0 or result.retries_performed != 0:
+        if not _exact_int(result.redirects_followed, 0) or not _exact_int(result.retries_performed, 0):
             _fail("RETRIEVAL_REPLAY_INVARIANT", "M28 forbids redirects and retries")
         if result.proxy_used is not False or result.credentials_used is not False:
             _fail("RETRIEVAL_AMBIENT_AUTHORITY_INVARIANT", "M28 forbids proxy or credential use")
@@ -264,7 +286,7 @@ class BoundedFederationPageHydrator:
             not isinstance(envelope, tuple)
             or len(envelope) != 4
             or envelope[0] != "OLP-TRANSPORT"
-            or envelope[1] != 1
+            or not _exact_int(envelope[1], 1)
             or envelope[2] != "record"
         ):
             _fail("INVALID_RETRIEVAL_RESULT", "M27 retrieval result contains invalid Record envelope shape")
@@ -277,7 +299,7 @@ class BoundedFederationPageHydrator:
         targets: Iterable[RecordHydrationTarget],
     ) -> FederationPageHydrationOutcome:
         """Hydrate one validated finite page and invoke M24 only after all Records verify."""
-        start = self._monotonic()
+        start = self._clock()
         validated = self._federation.validate_page(prepared, response_envelope)
         self._check_budget(start)
         by_id = self._target_map(validated, targets)
@@ -339,7 +361,9 @@ class BoundedFederationPageHydrator:
 
         # Re-run the same M24 page binding at the point of storage. Any response
         # mutation or verifier identity drift therefore fails before M24's first
-        # repository mutation. No partial page ingest occurs in this orchestrator.
+        # repository mutation. No partial page ingest occurs before this call.
+        # Local repository failures during this final existing M24 ingest are not
+        # claimed transactional or reversible by M28.
         try:
             page_outcome = self._federation.accept_page(
                 prepared,
