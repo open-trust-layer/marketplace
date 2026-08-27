@@ -134,6 +134,7 @@ def _context_snapshot(context: InboundFederationRequestContext) -> tuple[Any, ..
         "inbound-federation-request-context-v1",
         context.source,
         context.operation,
+        host_value_integrity_snapshot(context.scope),
         context.scope_fingerprint,
         context.required_capabilities,
         context.page_size,
@@ -249,6 +250,23 @@ class BoundedInboundFederationResponder:
             raise ValueError("capability_advertisement MUST be a mapping")
         if detached_advertisement.get("source") != local_source:
             raise ValueError("capability_advertisement source MUST equal local_source")
+        limits = detached_advertisement.get("limits")
+        if not isinstance(limits, Mapping):
+            raise ValueError("capability_advertisement limits MUST be a mapping")
+        advertised_page_limit = limits.get("max_page_records")
+        advertised_cursor_limit = limits.get("max_cursor_bytes")
+        if (
+            type(advertised_page_limit) is not int
+            or not 1 <= advertised_page_limit <= MAX_INBOUND_PAGE_RECORDS
+        ):
+            raise ValueError("capability_advertisement max_page_records is outside the M8 bound")
+        if (
+            type(advertised_cursor_limit) is not int
+            or not 1 <= advertised_cursor_limit <= MAX_INBOUND_CURSOR_BYTES
+        ):
+            raise ValueError("capability_advertisement max_cursor_bytes is outside the M8 bound")
+        if max_page_records > advertised_page_limit:
+            raise ValueError("max_page_records MUST NOT exceed the local advertised page limit")
 
         self._local_source = local_source
         self._validate_transport_envelope = validate_transport_envelope
@@ -256,6 +274,7 @@ class BoundedInboundFederationResponder:
         self._scope_fingerprint = scope_fingerprint
         self._negotiate_capabilities = negotiate_capabilities
         self._capability_advertisement = detached_advertisement
+        self._advertised_cursor_limit = advertised_cursor_limit
         self._evaluate_exchange_page = evaluate_exchange_page
         self._validate_exchange_result = validate_exchange_result
         self._make_transport_envelope = make_transport_envelope
@@ -392,6 +411,8 @@ class BoundedInboundFederationResponder:
             type(cursor) is not bytes or not 1 <= len(cursor) <= MAX_INBOUND_CURSOR_BYTES
         ):
             _fail("INVALID_REQUEST_CURSOR", "request cursor is outside the inbound runtime bound")
+        if cursor is not None and len(cursor) > self._advertised_cursor_limit:
+            _fail("LOCAL_CURSOR_LIMIT_EXCEEDED", "request cursor exceeds the local advertised cursor limit")
         if cursor_present is not (cursor is not None):
             _fail("REQUEST_CURSOR_NORMALIZATION_DRIFT", "normalized cursor presence differs from request payload")
 
@@ -635,6 +656,8 @@ class BoundedInboundFederationResponder:
                 or not 1 <= len(material.next_cursor) <= MAX_INBOUND_CURSOR_BYTES
             ):
                 _fail("INVALID_PAGE_CURSOR", "truncated response requires one bounded opaque next cursor")
+            if len(material.next_cursor) > self._advertised_cursor_limit:
+                _fail("LOCAL_CURSOR_LIMIT_EXCEEDED", "next cursor exceeds the local advertised cursor limit")
         elif material.next_cursor is not None:
             _fail("INVALID_PAGE_CURSOR", "final response MUST NOT contain a next cursor")
 
