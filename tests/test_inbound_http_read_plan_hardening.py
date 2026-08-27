@@ -24,10 +24,7 @@ from marketplace.runtime.inbound_http_stream import (
     BoundedInboundHttpStreamAssembler,
     InboundHttpStreamLimits,
 )
-from marketplace.runtime.inbound_http_wire import (
-    BoundedInboundHttpWireAdapter,
-    InboundHttpWireLimits,
-)
+from marketplace.runtime.inbound_http_wire import BoundedInboundHttpWireAdapter
 from marketplace.runtime.inbound_record import INBOUND_RECORD_RETRIEVAL_OPERATION
 from marketplace.runtime.record_retrieval import _get_request_bytes
 
@@ -121,6 +118,20 @@ class InboundHttpReadPlanHardeningTests(unittest.TestCase):
             self.planner.plan(self.raw, reads_completed=1)
         self.assertEqual(caught.exception.code, "STREAM_PROFILE_REJECTED")
         self.assertEqual(caught.exception.stream_code, "WIRE_CONFIGURATION_DRIFT")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_m36_stream_limit_mutation_during_probe_is_detected(self):
+        original_parse = self.wire.parse_request
+
+        def hostile_parse(raw):
+            result = original_parse(raw)
+            object.__setattr__(self.stream, "_max_chunk_bytes", 32 * 1024)
+            return result
+
+        object.__setattr__(self.wire, "parse_request", hostile_parse)
+        with self.assertRaises(InboundHttpReadPlanError) as caught:
+            self.planner.plan(self.raw, reads_completed=1)
+        self.assertEqual(caught.exception.code, "STREAM_CONFIGURATION_DRIFT")
         self.assertEqual(self.harness.calls, [])
 
     def test_replacing_public_m36_probe_after_construction_cannot_substitute_authority(self):
