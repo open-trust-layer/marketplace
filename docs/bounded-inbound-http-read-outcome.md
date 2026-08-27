@@ -13,6 +13,7 @@ future external read
 already-returned M40 outcome: DATA / EOF / FAILURE
         |
         +-- DATA(non-empty bytes) --> captured M39 accept_chunk --> progress
+        |                              \-> rejection/drift -> close/clear -> terminal rejection
         |
         +-- EOF while READ --------> close/clear M39 --> terminal rejection
         |
@@ -47,7 +48,7 @@ At construction it captures the original M39:
 - `close`;
 - `closed` getter.
 
-Later replacement of public M39 methods cannot substitute a different authority path. Private captured-helper rebinding is detected fail-closed.
+A construction-time binding witness also records the exact session and captured helper functions. Later replacement of public M39 methods cannot substitute a different authority path. Private helper/function rebinding that changes the captured binding set is detected fail-closed.
 
 M40 owns no request prefix and no read counter. Those remain exclusively M39 state.
 
@@ -62,7 +63,10 @@ After return, M40 independently requires:
 - exact M39 progress type and valid integrity replay;
 - `reads_completed == prior + 1`;
 - `buffered_bytes == prior + len(DATA)`;
-- `last_accepted_chunk_bytes == len(DATA)`.
+- `last_accepted_chunk_bytes == len(DATA)`;
+- a fresh current M39 progress view whose byte count, read count, and exact M37 plan witness match the returned progress.
+
+Because a DATA outcome represents bytes that have already been returned by a future reader, **any M39 rejection of that DATA is terminal at M40**. M40 closes/clears the M39 session before raising the preserved rejection. The same terminal close occurs for any post-delegation M40 consistency failure. A consumed malformed, oversized, exhausted-budget, or otherwise rejected chunk is therefore never treated as safely retryable from the old partial state.
 
 M39 remains authoritative for raw prefix continuity, M38 transition integrity, M37 next-plan derivation, and inherited M36/M35 framing limits.
 
@@ -119,7 +123,7 @@ M40 uses `InboundHttpReadOutcomeError` with stable fields:
 - `stream_code`;
 - `wire_code`.
 
-DATA-path M39 rejection is wrapped as `READ_SESSION_REJECTED` while preserving nested M39/M38/M37/M36/M35 reason codes.
+DATA-path M39 rejection is wrapped as `READ_SESSION_REJECTED` while preserving nested M39/M38/M37/M36/M35 reason codes, and the consumed-DATA session is closed first.
 
 Terminal M40 EOF/failure/after-complete errors intentionally have local semantic codes and no arbitrary external error string.
 
@@ -150,7 +154,7 @@ The following are **EPHEMERAL** with maximum retention **10 seconds post-use**:
 
 M40 adds no filesystem persistence, durable buffer, log, journal, cache, session store, checkpoint, credential store, background retention, retry queue, or transport state.
 
-Terminal EOF/failure/after-complete handling explicitly closes M39 so its owned raw prefix is cleared.
+Terminal EOF/failure/after-complete handling and consumed-DATA rejection explicitly close M39 so its owned raw prefix is cleared.
 
 ## Explicitly out of scope
 
