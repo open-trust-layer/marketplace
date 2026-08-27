@@ -202,7 +202,9 @@ class FederationContinuationHardeningTests(unittest.TestCase):
         with patch.object(self.service, "prepare", side_effect=drifting_prepare):
             with self.assertRaises(FederationContinuationError) as caught:
                 self.planner().plan(self.prior_request, self.prior_prepared, self.page)
-        self.assertEqual(caught.exception.code, "CONTINUATION_BINDING_DRIFT")
+        # M30 rejects the stale integrity witness during forged exchange
+        # construction, before M29 can inspect the returned binding.
+        self.assertEqual(caught.exception.code, "CONTINUATION_PREPARE_FAILED")
 
 
 if __name__ == "__main__":
