@@ -145,10 +145,10 @@ class FederationControlTarget:
     authorization: FederationEndpointAuthorization
 
     def __post_init__(self) -> None:
-        if not isinstance(self.endpoint, str) or not self.endpoint:
-            raise ValueError("endpoint MUST be non-empty text")
-        if not isinstance(self.authorization, FederationEndpointAuthorization):
-            raise TypeError("authorization MUST be FederationEndpointAuthorization")
+        if type(self.endpoint) is not str or not self.endpoint:
+            raise ValueError("endpoint MUST be non-empty exact text")
+        if type(self.authorization) is not FederationEndpointAuthorization:
+            raise TypeError("authorization MUST be an exact FederationEndpointAuthorization")
 
 
 @dataclass(frozen=True)
@@ -193,14 +193,18 @@ class BoundedFederationSynchronizationOrchestrator:
         limits: FederationSynchronizationLimits | None = None,
         monotonic_clock: Callable[[], float] = time.monotonic,
     ) -> None:
-        if not isinstance(federation_service, OfflineFederationService):
-            raise TypeError("federation_service MUST be OfflineFederationService")
+        if type(federation_service) is not OfflineFederationService:
+            raise TypeError("federation_service MUST be an exact OfflineFederationService")
         if not callable(getattr(control_transport, "exchange", None)):
             raise TypeError("control_transport MUST provide callable exchange")
-        if not isinstance(page_hydrator, BoundedFederationPageHydrator):
-            raise TypeError("page_hydrator MUST be BoundedFederationPageHydrator")
-        if not isinstance(continuation_planner, FederationContinuationPlanner):
-            raise TypeError("continuation_planner MUST be FederationContinuationPlanner")
+        if type(page_hydrator) is not BoundedFederationPageHydrator:
+            raise TypeError("page_hydrator MUST be an exact BoundedFederationPageHydrator")
+        if type(continuation_planner) is not FederationContinuationPlanner:
+            raise TypeError("continuation_planner MUST be an exact FederationContinuationPlanner")
+        if getattr(page_hydrator, "_federation", None) is not federation_service:
+            raise ValueError("page_hydrator MUST share the exact federation_service instance")
+        if getattr(continuation_planner, "_federation", None) is not federation_service:
+            raise ValueError("continuation_planner MUST share the exact federation_service instance")
         if not callable(record_target_provider):
             raise TypeError("record_target_provider MUST be callable")
         if not callable(monotonic_clock):
@@ -244,25 +248,24 @@ class BoundedFederationSynchronizationOrchestrator:
 
     def _control_targets(
         self,
-        values: Iterable[FederationControlTarget],
+        values: tuple[FederationControlTarget, ...],
     ) -> tuple[FederationControlTarget, ...]:
-        try:
-            items = tuple(islice(values, self._limits.max_pages + 1))
-        except TypeError:
-            _fail("INVALID_CONTROL_TARGETS", "control targets MUST be iterable")
-        except Exception as exc:
-            _fail("INVALID_CONTROL_TARGETS", f"control target iteration failed: {type(exc).__name__}")
-        if not items:
+        if type(values) is not tuple:
+            _fail(
+                "CONTROL_TARGET_LIMIT_EXCEEDED",
+                "control targets MUST be a pre-supplied exact tuple so the finite bound is proven without iteration",
+            )
+        if not values:
             _fail("EMPTY_CONTROL_TARGETS", "at least one explicit control target is required")
-        if len(items) > self._limits.max_pages:
+        if len(values) > self._limits.max_pages:
             _fail(
                 "CONTROL_TARGET_LIMIT_EXCEEDED",
                 "control target count exceeds configured synchronization page bound",
             )
-        for item in items:
-            if not isinstance(item, FederationControlTarget):
-                _fail("INVALID_CONTROL_TARGET", "control targets MUST be FederationControlTarget values")
-        return items
+        for item in values:
+            if type(item) is not FederationControlTarget:
+                _fail("INVALID_CONTROL_TARGET", "control targets MUST be exact FederationControlTarget values")
+        return values
 
     @staticmethod
     def _initial_request_payload(
@@ -271,17 +274,17 @@ class BoundedFederationSynchronizationOrchestrator:
     ) -> Mapping[str, Any]:
         if not isinstance(request, Mapping):
             _fail("INVALID_INITIAL_REQUEST", "initial federation request MUST be a mapping")
-        if not isinstance(prepared, PreparedFederationExchange):
+        if type(prepared) is not PreparedFederationExchange:
             _fail("INVALID_INITIAL_PREPARED_EXCHANGE", "initial prepared exchange has the wrong type")
         if prepared.transmitted is not False:
             _fail("INITIAL_PREPARED_EXCHANGE_STATE", "initial prepared exchange MUST be unsent")
         envelope = prepared.envelope
         if (
-            not isinstance(envelope, tuple)
+            type(envelope) is not tuple
             or len(envelope) != 4
             or envelope[0] != "OLP-TRANSPORT"
             or not _exact_int(envelope[1], 1)
-            or not isinstance(envelope[2], str)
+            or type(envelope[2]) is not str
             or not envelope[2]
             or not isinstance(envelope[3], Mapping)
         ):
@@ -303,8 +306,8 @@ class BoundedFederationSynchronizationOrchestrator:
 
     @staticmethod
     def _validate_control_result(value: Any) -> HttpsFederationExchangeResult:
-        if not isinstance(value, HttpsFederationExchangeResult):
-            _fail("INVALID_CONTROL_RESULT", "control transport MUST return HttpsFederationExchangeResult")
+        if type(value) is not HttpsFederationExchangeResult:
+            _fail("INVALID_CONTROL_RESULT", "control transport MUST return exact HttpsFederationExchangeResult")
         if not _exact_int(value.http_status, 200):
             _fail("INVALID_CONTROL_RESULT", "control result MUST report exact integer HTTP status 200")
         if (
@@ -313,9 +316,9 @@ class BoundedFederationSynchronizationOrchestrator:
             or value.response_body_bytes < 1
         ):
             _fail("INVALID_CONTROL_RESULT", "control response byte count is invalid")
-        if not isinstance(value.selected_address, str) or not value.selected_address:
+        if type(value.selected_address) is not str or not value.selected_address:
             _fail("INVALID_CONTROL_RESULT", "control result selected address is invalid")
-        if not isinstance(value.tls_server_hostname, str) or not value.tls_server_hostname:
+        if type(value.tls_server_hostname) is not str or not value.tls_server_hostname:
             _fail("INVALID_CONTROL_RESULT", "control result TLS hostname is invalid")
         if not _exact_int(value.connection_attempts, 1):
             _fail("CONTROL_ATTEMPT_INVARIANT", "each control page MUST use exactly one connection attempt")
@@ -336,11 +339,11 @@ class BoundedFederationSynchronizationOrchestrator:
                 )
         envelope = value.response_envelope
         if (
-            not isinstance(envelope, tuple)
+            type(envelope) is not tuple
             or len(envelope) != 4
             or envelope[0] != "OLP-TRANSPORT"
             or not _exact_int(envelope[1], 1)
-            or not isinstance(envelope[2], str)
+            or type(envelope[2]) is not str
             or not envelope[2]
         ):
             _fail("INVALID_CONTROL_RESULT", "control response envelope shape is invalid")
@@ -358,6 +361,42 @@ class BoundedFederationSynchronizationOrchestrator:
         if type(detached) is not tuple or len(detached) != 4:
             _fail("CONTROL_RESPONSE_DETACH_FAILED", "detached control response envelope is invalid")
         return detached
+
+    @staticmethod
+    def _validate_validated_page(
+        value: Any,
+        *,
+        prepared: PreparedFederationExchange,
+    ) -> ValidatedFederationPage:
+        if type(value) is not ValidatedFederationPage:
+            _fail("INVALID_VALIDATED_PAGE", "M24 validate_page MUST return exact ValidatedFederationPage")
+        binding = prepared.binding
+        if value.source != binding.source:
+            _fail("VALIDATED_PAGE_BINDING_MISMATCH", "validated page source differs from prepared binding")
+        if value.operation != binding.operation:
+            _fail("VALIDATED_PAGE_BINDING_MISMATCH", "validated page operation differs from prepared binding")
+        if value.scope_fingerprint != binding.scope_fingerprint:
+            _fail("VALIDATED_PAGE_BINDING_MISMATCH", "validated page scope differs from prepared binding")
+        if not _exact_int(value.page_size, binding.page_size):
+            _fail("VALIDATED_PAGE_BINDING_MISMATCH", "validated page size differs from prepared binding")
+        if type(value.record_ids) is not tuple or not all(type(item) is str and item for item in value.record_ids):
+            _fail("INVALID_VALIDATED_PAGE", "validated page record_ids MUST be an exact tuple of text identities")
+        if type(value.source_completeness) is not str or not value.source_completeness:
+            _fail("INVALID_VALIDATED_PAGE", "validated page source completeness MUST be non-empty exact text")
+        if type(value.page_truncated) is not bool:
+            _fail("INVALID_VALIDATED_PAGE", "validated page truncation state MUST be exact boolean")
+        if value.global_completeness != "UNKNOWN":
+            _fail("VALIDATED_PAGE_AUTHORITY_ESCALATION", "validated page global completeness MUST remain UNKNOWN")
+        if value.absence_is_deletion_evidence is not False:
+            _fail("VALIDATED_PAGE_AUTHORITY_ESCALATION", "validated page absence MUST NOT become deletion evidence")
+        if value.creates_agreement is not False or value.authorizes_side_effects is not False:
+            _fail("VALIDATED_PAGE_AUTHORITY_ESCALATION", "validated page MUST NOT create agreement or side-effect authority")
+        if value.page_truncated:
+            if type(value.next_cursor) is not bytes or not value.next_cursor:
+                _fail("INVALID_VALIDATED_PAGE", "truncated validated page requires non-empty opaque cursor bytes")
+        elif value.next_cursor is not None:
+            _fail("INVALID_VALIDATED_PAGE", "final validated page MUST NOT carry a continuation cursor")
+        return value
 
     @staticmethod
     def _bounded_page_targets(
@@ -380,8 +419,8 @@ class BoundedFederationSynchronizationOrchestrator:
                 "page Record target provider MUST return exactly one target per Record identity",
             )
         for item in items:
-            if not isinstance(item, RecordHydrationTarget):
-                _fail("INVALID_PAGE_RECORD_TARGET", "page Record targets MUST be RecordHydrationTarget values")
+            if type(item) is not RecordHydrationTarget:
+                _fail("INVALID_PAGE_RECORD_TARGET", "page Record targets MUST be exact RecordHydrationTarget values")
         return items
 
     @staticmethod
@@ -390,10 +429,10 @@ class BoundedFederationSynchronizationOrchestrator:
         *,
         validated: ValidatedFederationPage,
     ) -> FederationPageHydrationOutcome:
-        if not isinstance(value, FederationPageHydrationOutcome):
+        if type(value) is not FederationPageHydrationOutcome:
             _fail("INVALID_HYDRATION_OUTCOME", "M28 hydrator returned the wrong outcome type")
         page = value.page_outcome
-        if not isinstance(page, FederationPageOutcome):
+        if type(page) is not FederationPageOutcome:
             _fail("INVALID_HYDRATION_OUTCOME", "M28 page outcome has the wrong type")
         if value.hydrated_record_ids != validated.record_ids or page.record_ids != validated.record_ids:
             _fail("HYDRATION_PAGE_BINDING_MISMATCH", "M28 outcome Record identities differ from validated page")
@@ -440,7 +479,7 @@ class BoundedFederationSynchronizationOrchestrator:
         current_request: Mapping[str, Any],
         expected_cursor: bytes,
     ) -> PreparedFederationExchange:
-        if not isinstance(value, ContinuationPlanOutcome):
+        if type(value) is not ContinuationPlanOutcome:
             _fail("INVALID_CONTINUATION_OUTCOME", "M29 planner returned the wrong outcome type")
         if value.disposition != CONTINUATION_PREPARED or value.prior_page_truncated is not True:
             _fail("CONTINUATION_INCONSISTENCY", "truncated accepted page requires one prepared continuation")
@@ -453,8 +492,8 @@ class BoundedFederationSynchronizationOrchestrator:
         if value.creates_agreement is not False or value.authorizes_side_effects is not False:
             _fail("CONTINUATION_AUTHORITY_INVARIANT", "M29 MUST NOT create agreement or protected authority")
         prepared = value.prepared_exchange
-        if not isinstance(prepared, PreparedFederationExchange) or prepared.transmitted is not False:
-            _fail("INVALID_CONTINUATION_OUTCOME", "M29 MUST return one unsent PreparedFederationExchange")
+        if type(prepared) is not PreparedFederationExchange or prepared.transmitted is not False:
+            _fail("INVALID_CONTINUATION_OUTCOME", "M29 MUST return one unsent exact PreparedFederationExchange")
         if prepared.binding != current_prepared.binding:
             _fail("CONTINUATION_BINDING_DRIFT", "M29 continuation changed immutable request binding")
         if prepared.envelope[:3] != current_prepared.envelope[:3]:
@@ -509,16 +548,16 @@ class BoundedFederationSynchronizationOrchestrator:
         self,
         initial_request: Mapping[str, Any],
         initial_prepared: PreparedFederationExchange,
-        control_targets: Iterable[FederationControlTarget],
+        control_targets: tuple[FederationControlTarget, ...],
     ) -> FederationSynchronizationOutcome:
         """Execute at most the explicitly bounded and pre-targeted page sequence."""
-        targets = self._control_targets(control_targets)
         current_request = self._initial_request_payload(initial_request, initial_prepared)
+        targets = self._control_targets(control_targets)
         current_prepared = initial_prepared
         seen_cursors: set[bytes] = set()
         initial_cursor = current_request.get("cursor")
         if initial_cursor is not None:
-            if not isinstance(initial_cursor, bytes):
+            if type(initial_cursor) is not bytes:
                 _fail("INVALID_INITIAL_CURSOR", "prepared initial cursor MUST be opaque bytes")
             seen_cursors.add(initial_cursor)
 
@@ -550,14 +589,13 @@ class BoundedFederationSynchronizationOrchestrator:
             response_envelope = self._detach_control_response(control_result)
 
             try:
-                validated = self._federation.validate_page(
+                raw_validated = self._federation.validate_page(
                     current_prepared,
                     response_envelope,
                 )
             except Exception as exc:
                 _fail("PAGE_VALIDATION_FAILED", f"M24 page validation failed: {_nested_code(exc)}")
-            if not isinstance(validated, ValidatedFederationPage):
-                _fail("INVALID_VALIDATED_PAGE", "M24 validate_page returned the wrong type")
+            validated = self._validate_validated_page(raw_validated, prepared=current_prepared)
             last = self._require_budget(start, last)
 
             next_total = hydrated_records + len(validated.record_ids)
@@ -653,7 +691,7 @@ class BoundedFederationSynchronizationOrchestrator:
                 )
 
             cursor = validated.next_cursor
-            if not isinstance(cursor, bytes):
+            if type(cursor) is not bytes:
                 _fail("INVALID_VALIDATED_CURSOR", "truncated validated page MUST carry opaque cursor bytes")
             if cursor in seen_cursors:
                 _fail("CURSOR_REPLAY_DETECTED", "opaque continuation cursor repeated within one bounded synchronization call")
