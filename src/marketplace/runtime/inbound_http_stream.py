@@ -296,13 +296,19 @@ class BoundedInboundHttpStreamAssembler:
             raise ValueError("wire_adapter authority MUST be a non-empty canonical string")
 
         self._wire_adapter = wire_adapter
-        self._limits = detached_limits
+        self._max_chunks = detached_limits.max_chunks
+        self._max_chunk_bytes = detached_limits.max_chunk_bytes
         self._wire_authority = wire_authority
-        self._wire_limits = detached_wire_limits
+        self._wire_max_header_bytes = detached_wire_limits.max_header_bytes
+        self._wire_max_body_bytes = detached_wire_limits.max_body_bytes
+        self._wire_max_response_body_bytes = detached_wire_limits.max_response_body_bytes
 
     @property
     def limits(self) -> InboundHttpStreamLimits:
-        return self._limits
+        return InboundHttpStreamLimits(
+            max_chunks=self._max_chunks,
+            max_chunk_bytes=self._max_chunk_bytes,
+        )
 
     @property
     def wire_adapter(self) -> BoundedInboundHttpWireAdapter:
@@ -314,14 +320,23 @@ class BoundedInboundHttpStreamAssembler:
 
     @property
     def wire_limits(self) -> InboundHttpWireLimits:
-        return self._wire_limits
+        return InboundHttpWireLimits(
+            max_header_bytes=self._wire_max_header_bytes,
+            max_body_bytes=self._wire_max_body_bytes,
+            max_response_body_bytes=self._wire_max_response_body_bytes,
+        )
+
+    def _expected_wire_limits(self) -> tuple[int, int, int]:
+        return (
+            self._wire_max_header_bytes,
+            self._wire_max_body_bytes,
+            self._wire_max_response_body_bytes,
+        )
 
     def _validate_wire_configuration(self) -> None:
         if self._wire_adapter.authority != self._wire_authority:
             _fail("WIRE_CONFIGURATION_DRIFT", "M35 authority changed after M36 construction")
-        current_limits = _limits_snapshot(self._wire_adapter.limits)
-        expected_limits = _limits_snapshot(self._wire_limits)
-        if current_limits != expected_limits:
+        if _limits_snapshot(self._wire_adapter.limits) != self._expected_wire_limits():
             _fail("WIRE_CONFIGURATION_DRIFT", "M35 limits changed after M36 construction")
 
     def _parse_with_configuration_guard(self, raw: bytes) -> InboundHttpRequest:
@@ -358,7 +373,7 @@ class BoundedInboundHttpStreamAssembler:
             or (len(declared) > 1 and declared.startswith("0"))
         ):
             _fail("CONTENT_LENGTH_BINDING_DRIFT", "validated Content-Length is noncanonical")
-        body_limit = self._wire_limits.max_body_bytes
+        body_limit = self._wire_max_body_bytes
         if _decimal_exceeds_bound(declared, body_limit):
             _fail(
                 "DECLARED_BODY_LIMIT_EXCEEDED",
@@ -373,14 +388,13 @@ class BoundedInboundHttpStreamAssembler:
             _fail("INVALID_STREAM_PREFIX", "stream prefix MUST be exact immutable bytes")
         self._validate_wire_configuration()
 
-        wire_limits = self._wire_limits
-        total_limit = wire_limits.max_header_bytes + wire_limits.max_body_bytes
+        total_limit = self._wire_max_header_bytes + self._wire_max_body_bytes
         if len(prefix) > total_limit:
             _fail("STREAM_TOTAL_LIMIT_EXCEEDED", "stream prefix exceeds the configured M35 total limit")
 
         marker_at = prefix.find(_HEADER_TERMINATOR)
         if marker_at < 0:
-            if len(prefix) >= wire_limits.max_header_bytes:
+            if len(prefix) >= self._wire_max_header_bytes:
                 _fail("STREAM_HEADER_LIMIT_EXCEEDED", "request head cannot complete within the M35 header limit")
             return InboundHttpStreamProgress(
                 state=PROGRESS_NEED_MORE,
@@ -393,10 +407,10 @@ class BoundedInboundHttpStreamAssembler:
             )
 
         head_end = marker_at + len(_HEADER_TERMINATOR)
-        if head_end > wire_limits.max_header_bytes:
+        if head_end > self._wire_max_header_bytes:
             _fail("STREAM_HEADER_LIMIT_EXCEEDED", "request head exceeds the configured M35 header limit")
         body_bytes = len(prefix) - head_end
-        if body_bytes > wire_limits.max_body_bytes:
+        if body_bytes > self._wire_max_body_bytes:
             _fail("STREAM_BODY_LIMIT_EXCEEDED", "request body exceeds the configured M35 body limit")
 
         head_only = prefix[:head_end]
@@ -457,16 +471,16 @@ class BoundedInboundHttpStreamAssembler:
             _fail("INVALID_CHUNK_COLLECTION", "chunks MUST be an exact tuple")
         if not chunks:
             _fail("INCOMPLETE_REQUEST", "no request bytes were supplied")
-        if len(chunks) > self._limits.max_chunks:
+        if len(chunks) > self._max_chunks:
             _fail("CHUNK_COUNT_LIMIT_EXCEEDED", "chunk tuple exceeds the configured M36 count limit")
         self._validate_wire_configuration()
 
-        total_limit = self._wire_limits.max_header_bytes + self._wire_limits.max_body_bytes
+        total_limit = self._wire_max_header_bytes + self._wire_max_body_bytes
         aggregate_bytes = 0
         for chunk in chunks:
             if type(chunk) is not bytes or not chunk:
                 _fail("INVALID_CHUNK", "every M36 chunk MUST be non-empty exact immutable bytes")
-            if len(chunk) > self._limits.max_chunk_bytes:
+            if len(chunk) > self._max_chunk_bytes:
                 _fail("CHUNK_SIZE_LIMIT_EXCEEDED", "chunk exceeds the configured M36 size limit")
             if aggregate_bytes + len(chunk) > total_limit:
                 _fail("STREAM_TOTAL_LIMIT_EXCEEDED", "assembled request would exceed the M35 total limit")
