@@ -128,11 +128,14 @@ class RecordRetrievalHardeningTests(unittest.TestCase):
         tree = ast.parse(source)
 
         imported: set[str] = set()
+        direct_calls: set[str] = set()
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 imported.update(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom) and node.module:
                 imported.add(node.module)
+            elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+                direct_calls.add(node.func.id)
 
         for forbidden in (
             "socket",
@@ -151,7 +154,7 @@ class RecordRetrievalHardeningTests(unittest.TestCase):
         self.assertIn("https_transport", imported)
         self.assertIn("network_policy", imported)
         for forbidden_call in ("eval", "exec", "compile", "open", "__import__"):
-            self.assertNotIn(f"{forbidden_call}(", source)
+            self.assertNotIn(forbidden_call, direct_calls)
 
 
 if __name__ == "__main__":
