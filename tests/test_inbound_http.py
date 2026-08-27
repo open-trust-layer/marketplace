@@ -440,7 +440,7 @@ class InboundHttpApplicationTests(unittest.TestCase):
 
     def test_response_serializer_drift_is_detected(self):
         def hostile_encoder(envelope):
-            changed = (envelope[0], envelope[1], "wrong-message-type", envelope[3])
+            changed = (envelope[0], envelope[1], federation_v1.MSG_SYNC_RESULT, envelope[3])
             return encode_transport_envelope_json(changed)
 
         service = adapter(encoder=hostile_encoder)
