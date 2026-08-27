@@ -258,6 +258,8 @@ class BoundedInboundHttpReadSession:
     __slots__ = (
         "_transitioner",
         "_read_planner",
+        "_transition_function",
+        "_plan_function",
         "_transition",
         "_plan",
         "_max_read_calls",
@@ -285,11 +287,13 @@ class BoundedInboundHttpReadSession:
 
         self._transitioner = read_transitioner
         self._read_planner = read_planner
-        self._transition = BoundedInboundHttpReadTransitioner.transition.__get__(
+        self._transition_function = BoundedInboundHttpReadTransitioner.transition
+        self._plan_function = BoundedInboundHttpReadPlanner.plan
+        self._transition = self._transition_function.__get__(
             read_transitioner,
             BoundedInboundHttpReadTransitioner,
         )
-        self._plan = BoundedInboundHttpReadPlanner.plan.__get__(
+        self._plan = self._plan_function.__get__(
             read_planner,
             BoundedInboundHttpReadPlanner,
         )
@@ -319,6 +323,7 @@ class BoundedInboundHttpReadSession:
 
     @property
     def closed(self) -> bool:
+        self._validate_state()
         return self._closed
 
     def _validate_configuration(self) -> None:
@@ -328,6 +333,16 @@ class BoundedInboundHttpReadSession:
             _fail("READ_CONFIGURATION_DRIFT", "M37 helper changed type after M39 construction")
         if getattr(self._transitioner, "_read_planner", None) is not self._read_planner:
             _fail("READ_CONFIGURATION_DRIFT", "M38 changed its bound M37 planner")
+        if (
+            getattr(self._transition, "__self__", None) is not self._transitioner
+            or getattr(self._transition, "__func__", None) is not self._transition_function
+        ):
+            _fail("READ_CONFIGURATION_DRIFT", "M39 captured M38 transition binding changed")
+        if (
+            getattr(self._plan, "__self__", None) is not self._read_planner
+            or getattr(self._plan, "__func__", None) is not self._plan_function
+        ):
+            _fail("READ_CONFIGURATION_DRIFT", "M39 captured M37 plan binding changed")
         if _read_limits_snapshot(self._transitioner.read_limits) != (
             self._max_read_calls,
             self._max_read_bytes,
@@ -401,6 +416,8 @@ class BoundedInboundHttpReadSession:
             len(self._prefix),
             self._reads_completed,
             plan.integrity_snapshot,
+            self._transition_function,
+            self._plan_function,
             False,
         )
 
@@ -489,12 +506,20 @@ class BoundedInboundHttpReadSession:
 
         if witnessed.prior_plan.integrity_snapshot != prior_plan.integrity_snapshot:
             _fail("READ_PRIOR_PLAN_DRIFT", "M38 transition is not bound to M39 current plan")
+        if witnessed.accepted_chunk_bytes != len(chunk):
+            _fail("READ_TRANSITION_DRIFT", "M38 changed the accepted M39 chunk byte count")
         if witnessed.reads_completed != reads_completed + 1:
             _fail("READ_TRANSITION_DRIFT", "M38 did not advance M39 read accounting exactly once")
         if witnessed.next_plan.reads_completed != witnessed.reads_completed:
             _fail("READ_TRANSITION_DRIFT", "M38 next plan changed read accounting")
         if witnessed.next_plan.buffered_bytes != len(witnessed.prefix):
             _fail("READ_TRANSITION_DRIFT", "M38 next plan changed buffered byte accounting")
+
+        expected_prefix_digest = sha256()
+        expected_prefix_digest.update(prefix)
+        expected_prefix_digest.update(chunk)
+        if expected_prefix_digest.digest() != sha256(witnessed.prefix).digest():
+            _fail("READ_TRANSITION_DRIFT", "M38 returned bytes outside the M39 prefix/chunk transition")
 
         self._prefix = witnessed.prefix
         self._reads_completed = witnessed.reads_completed
