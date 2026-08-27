@@ -277,6 +277,8 @@ def _request_snapshot(request: InboundHttpRequest) -> tuple[Any, ...]:
         request.path,
         request.headers,
         request.body,
+        request.request_authenticated,
+        request.peer_identity_proven,
     )
 
 
@@ -303,6 +305,8 @@ class PreparedInboundHttpResponse:
     def __post_init__(self) -> None:
         if type(self.request) is not InboundHttpRequest:
             raise ValueError("request has the wrong type")
+        if self.request.request_authenticated is not False or self.request.peer_identity_proven is not False:
+            raise ValueError("prepared response request MUST remain authentication/peer-identity negative")
         if self.route_kind not in {ROUTE_FEDERATION_CONTROL, ROUTE_IMMUTABLE_RECORD}:
             raise ValueError("route_kind is invalid")
         _canonical_operation(self.route_operation)
@@ -361,24 +365,35 @@ class BoundedInboundHttpApplicationAdapter:
         if type(limits) is not InboundHttpApplicationLimits:
             raise TypeError("limits MUST be exact InboundHttpApplicationLimits")
 
-        by_path: dict[str, InboundFederationHttpRoute] = {}
+        detached_limits = InboundHttpApplicationLimits(
+            max_request_body_bytes=limits.max_request_body_bytes,
+            max_response_body_bytes=limits.max_response_body_bytes,
+            max_header_bytes=limits.max_header_bytes,
+        )
+        by_path: dict[str, str] = {}
         operations: set[str] = set()
         for route in control_routes:
             if type(route) is not InboundFederationHttpRoute:
                 raise ValueError("control_routes MUST contain exact InboundFederationHttpRoute values")
-            if route.path in by_path:
+            path = _canonical_path(route.path)
+            operation = _canonical_operation(route.operation)
+            if path == "/" or path.endswith("/"):
+                raise ValueError("control route path MUST be non-root and have no trailing slash")
+            if path == "/v1/records" or path.startswith(RECORD_ROUTE_PREFIX):
+                raise ValueError("control route MUST NOT overlap the immutable Record route namespace")
+            if path in by_path:
                 raise ValueError("control route paths MUST be unique")
-            if route.operation in operations:
+            if operation in operations:
                 raise ValueError("one M32 operation MUST NOT be exposed through multiple M34 route aliases")
-            by_path[route.path] = route
-            operations.add(route.operation)
+            by_path[path] = operation
+            operations.add(operation)
 
         self._federation_responder = federation_responder
         self._record_responder = record_responder
         self._routes = by_path
         self._decode_json = decode_transport_envelope_json
         self._encode_json = encode_transport_envelope_json
-        self._limits = limits
+        self._limits = detached_limits
 
     @property
     def limits(self) -> InboundHttpApplicationLimits:
@@ -554,40 +569,48 @@ class BoundedInboundHttpApplicationAdapter:
         """Handle exactly one canonical request and stop before transmission."""
         if type(request) is not InboundHttpRequest:
             _fail("INVALID_REQUEST_TYPE", "request MUST be exact InboundHttpRequest")
-        if len(request.body) > self._limits.max_request_body_bytes:
-            _fail("REQUEST_BODY_LIMIT_EXCEEDED", "request body exceeds the configured M34 bound")
+        if request.request_authenticated is not False or request.peer_identity_proven is not False:
+            _fail("REQUEST_AUTHORITY_PROMOTION", "M34 input request cannot claim authentication or peer identity")
         try:
-            _canonical_headers(request.headers, max_header_bytes=self._limits.max_header_bytes)
+            canonical_request = InboundHttpRequest(
+                method=request.method,
+                path=request.path,
+                headers=request.headers,
+                body=request.body,
+                max_header_bytes=self._limits.max_header_bytes,
+            )
         except ValueError:
-            _fail("INVALID_REQUEST_HEADERS", "request headers are outside the configured M34 profile")
+            _fail("INVALID_REQUEST", "request is outside the configured M34 application profile")
+        if len(canonical_request.body) > self._limits.max_request_body_bytes:
+            _fail("REQUEST_BODY_LIMIT_EXCEEDED", "request body exceeds the configured M34 bound")
 
-        route = self._routes.get(request.path)
-        if route is not None:
-            if request.method != "POST":
+        operation = self._routes.get(canonical_request.path)
+        if operation is not None:
+            if canonical_request.method != "POST":
                 _fail("METHOD_NOT_ALLOWED", "configured federation control route requires exact POST")
-            envelope = self._decode_control_request(request)
+            envelope = self._decode_control_request(canonical_request)
             request_snapshot = host_value_integrity_snapshot(envelope)
             try:
                 result = self._federation_responder.prepare_response(
                     envelope,
-                    operation=route.operation,
+                    operation=operation,
                 )
             except Exception:
                 _fail("FEDERATION_REQUEST_REJECTED", "M32 rejected the inbound federation request")
             if host_value_integrity_snapshot(envelope) != request_snapshot:
                 _fail("FEDERATION_RESPONDER_MUTATED_REQUEST", "M32 mutated the detached control request envelope")
-            response_envelope = self._validate_federation_result(result, operation=route.operation)
+            response_envelope = self._validate_federation_result(result, operation=operation)
             return self._serialize_response(
-                request=request,
+                request=canonical_request,
                 route_kind=ROUTE_FEDERATION_CONTROL,
-                route_operation=route.operation,
+                route_operation=operation,
                 envelope=response_envelope,
             )
 
-        if request.path.startswith(RECORD_ROUTE_PREFIX):
-            if request.method != "GET":
+        if canonical_request.path.startswith(RECORD_ROUTE_PREFIX):
+            if canonical_request.method != "GET":
                 _fail("METHOD_NOT_ALLOWED", "immutable Record route requires exact GET")
-            identity = self._validate_get_request(request)
+            identity = self._validate_get_request(canonical_request)
             try:
                 result = self._record_responder.prepare(
                     requested_record_identity=identity,
@@ -596,7 +619,7 @@ class BoundedInboundHttpApplicationAdapter:
                 _fail("RECORD_REQUEST_REJECTED", "M33 rejected the immutable Record request")
             response_envelope = self._validate_record_result(result, expected_identity=identity)
             return self._serialize_response(
-                request=request,
+                request=canonical_request,
                 route_kind=ROUTE_IMMUTABLE_RECORD,
                 route_operation=result.request_context.operation,
                 envelope=response_envelope,
