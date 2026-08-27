@@ -187,12 +187,12 @@ class InboundHttpWireTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "CONTENT_LENGTH_MISMATCH")
         self.assertEqual(self.harness.calls, [])
 
-    def test_response_authority_promotion_is_rejected_by_m34_witness(self):
+    def test_response_authority_promotion_is_rejected_before_witness_replay(self):
         self.harness.promote_transmitted = True
         raw = _get_request_bytes(f"/v1/records/{RECORD_ID}", AUTHORITY, 443)
         with self.assertRaises(InboundHttpWireError) as caught:
             self.adapter.prepare(raw)
-        self.assertEqual(caught.exception.code, "APPLICATION_RESPONSE_INTEGRITY_DRIFT")
+        self.assertEqual(caught.exception.code, "APPLICATION_AUTHORITY_ESCALATION")
 
     def test_response_frame_is_exact_and_content_length_matches_body(self):
         raw = _get_request_bytes(f"/v1/records/{RECORD_ID}", AUTHORITY, 443)
