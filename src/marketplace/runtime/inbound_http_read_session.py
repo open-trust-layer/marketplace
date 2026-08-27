@@ -521,9 +521,16 @@ class BoundedInboundHttpReadSession:
         if expected_prefix_digest.digest() != sha256(witnessed.prefix).digest():
             _fail("READ_TRANSITION_DRIFT", "M38 returned bytes outside the M39 prefix/chunk transition")
 
+        authoritative_next_plan = self._authoritative_plan(
+            witnessed.prefix,
+            reads_completed=witnessed.reads_completed,
+        )
+        if witnessed.next_plan.integrity_snapshot != authoritative_next_plan.integrity_snapshot:
+            _fail("READ_NEXT_PLAN_DRIFT", "M38 next plan does not match M39's captured M37 authority")
+
         self._prefix = witnessed.prefix
         self._reads_completed = witnessed.reads_completed
-        self._current_plan = replace(witnessed.next_plan)
+        self._current_plan = authoritative_next_plan
         self._state_witness = self._open_state_witness()
 
         return InboundHttpReadSessionProgress(
