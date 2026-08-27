@@ -74,6 +74,28 @@ class RecordRetrievalHardeningTests(unittest.TestCase):
             policy=self.policy(),
         )
 
+    def test_preflight_validates_target_without_dns_or_connector(self):
+        record_id = sample_record_id()
+        resolver = CountingResolver()
+        connector = FailingConnector()
+        retriever = AuthorizedHttpsRecordRetriever(
+            policy=self.policy(),
+            decode_envelope_json=lambda body: body,
+            resolver=resolver,
+            connector=connector,
+            wall_clock=lambda: 1_050.0,
+            monotonic_clock=lambda: 10.0,
+        )
+        self.assertIsNone(
+            retriever.preflight(
+                endpoint=self.endpoint(record_id),
+                authorization=self.authorization(record_id),
+                expected_record_identity=record_id,
+            )
+        )
+        self.assertEqual(resolver.calls, 0)
+        self.assertEqual(connector.calls, 0)
+
     def test_noncanonical_base64url_record_identity_fails_before_dns(self):
         # Shape-valid text with non-canonical pad bits. Pinned OLP rejects the
         # same presentation; M27 now rejects it before any external lookup.
