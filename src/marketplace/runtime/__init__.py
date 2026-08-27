@@ -132,6 +132,11 @@ from .inbound_http_read_transition import (
     InboundHttpReadTransition,
     InboundHttpReadTransitionError,
 )
+from .inbound_http_transaction import (
+    BoundedInboundHttpRequestResponseTransaction,
+    CompletedInboundHttpRequestResponseTransaction,
+    InboundHttpRequestResponseTransactionError,
+)
 from .inbound_http_response_prepare import (
     BoundedInboundHttpResponsePreparer,
     InboundHttpResponsePreparationError,
@@ -299,6 +304,7 @@ __all__ = [
     "BoundedInboundHttpReadPlanner",
     "BoundedInboundHttpReadSession",
     "BoundedInboundHttpReadTransitioner",
+    "BoundedInboundHttpRequestResponseTransaction",
     "BoundedInboundHttpResponsePreparer",
     "BoundedInboundHttpResponseWriteDriver",
     "BoundedInboundHttpResponseWriteInvoker",
@@ -313,6 +319,7 @@ __all__ = [
     "CONTINUATION_PREPARED",
     "CanonicalFederationEndpoint",
     "CompletedInboundHttpReadDriverResult",
+    "CompletedInboundHttpRequestResponseTransaction",
     "CompletedInboundHttpResponseWriteDriverResult",
     "CompletedInboundHttpReadSession",
     "CompletedInboundHttpResponseWriteSession",
@@ -390,6 +397,7 @@ __all__ = [
     "InboundHttpReadTransition",
     "InboundHttpReadTransitionError",
     "InboundHttpRequest",
+    "InboundHttpRequestResponseTransactionError",
     "InboundHttpResponsePreparationError",
     "InboundHttpResponseWriteDriverError",
     "InboundHttpResponseWriteDriverLimits",
