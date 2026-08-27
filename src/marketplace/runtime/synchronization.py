@@ -1,11 +1,11 @@
 """Strictly bounded sequential composition of existing federation runtime gates.
 
 Milestone 31 composes M26 control exchange, M28 page hydration, M29 one-step
-continuation planning, and M30 immutable prepared requests.  This module adds no
+continuation planning, and M30 immutable prepared requests. This module adds no
 socket/TLS/HTTP/DNS implementation, retry loop, endpoint discovery, background
 work, or durable cursor/checkpoint state.
 
-A cursor never grants transmission authority.  Each possible control request
+A cursor never grants transmission authority. Each possible control request
 requires one caller-supplied finite ``FederationControlTarget`` slot, and every
 actual exchange still revalidates its M25 authorization inside the M26 adapter.
 """
@@ -36,7 +36,7 @@ from .page_hydration import (
     FederationPageHydrationOutcome,
     RecordHydrationTarget,
 )
-from .prepared_integrity import host_value_integrity_snapshot
+from .prepared_integrity import detach_host_value, host_value_integrity_snapshot
 
 DEFAULT_MAX_SYNCHRONIZATION_PAGES: Final = 4
 MAX_SYNCHRONIZATION_PAGES: Final = 16
@@ -94,7 +94,7 @@ class FederationControlTransport(Protocol):
 
 
 class PageRecordTargetProvider(Protocol):
-    """Resolve only exact per-Record M28 targets for one already validated page."""
+    """Resolve exact M28 targets for one validated page without granting authority."""
 
     def __call__(
         self,
@@ -347,6 +347,19 @@ class BoundedFederationSynchronizationOrchestrator:
         return value
 
     @staticmethod
+    def _detach_control_response(value: HttpsFederationExchangeResult) -> tuple[Any, ...]:
+        try:
+            detached = detach_host_value(value.response_envelope)
+        except Exception as exc:
+            _fail(
+                "CONTROL_RESPONSE_DETACH_FAILED",
+                f"control response immutable detachment failed: {_nested_code(exc)}",
+            )
+        if type(detached) is not tuple or len(detached) != 4:
+            _fail("CONTROL_RESPONSE_DETACH_FAILED", "detached control response envelope is invalid")
+        return detached
+
+    @staticmethod
     def _bounded_page_targets(
         value: Iterable[RecordHydrationTarget],
         *,
@@ -534,11 +547,12 @@ class BoundedFederationSynchronizationOrchestrator:
             control_exchanges += 1
             last = self._require_budget(start, last)
             control_result = self._validate_control_result(raw_control_result)
+            response_envelope = self._detach_control_response(control_result)
 
             try:
                 validated = self._federation.validate_page(
                     current_prepared,
-                    control_result.response_envelope,
+                    response_envelope,
                 )
             except Exception as exc:
                 _fail("PAGE_VALIDATION_FAILED", f"M24 page validation failed: {_nested_code(exc)}")
@@ -572,7 +586,7 @@ class BoundedFederationSynchronizationOrchestrator:
             try:
                 raw_hydration = self._hydrator.hydrate_and_accept(
                     current_prepared,
-                    control_result.response_envelope,
+                    response_envelope,
                     page_targets,
                 )
             except Exception as exc:
@@ -600,13 +614,6 @@ class BoundedFederationSynchronizationOrchestrator:
                     last_source_completeness=last_source_completeness,
                     record_transport_was_invoked=record_transport_was_invoked,
                 )
-
-            cursor = validated.next_cursor
-            if not isinstance(cursor, bytes):
-                _fail("INVALID_VALIDATED_CURSOR", "truncated validated page MUST carry opaque cursor bytes")
-            if cursor in seen_cursors:
-                _fail("CURSOR_REPLAY_DETECTED", "opaque continuation cursor repeated within one bounded synchronization call")
-            seen_cursors.add(cursor)
 
             if pages_accepted >= self._limits.max_pages:
                 return self._outcome(
@@ -644,6 +651,13 @@ class BoundedFederationSynchronizationOrchestrator:
                     last_source_completeness=last_source_completeness,
                     record_transport_was_invoked=record_transport_was_invoked,
                 )
+
+            cursor = validated.next_cursor
+            if not isinstance(cursor, bytes):
+                _fail("INVALID_VALIDATED_CURSOR", "truncated validated page MUST carry opaque cursor bytes")
+            if cursor in seen_cursors:
+                _fail("CURSOR_REPLAY_DETECTED", "opaque continuation cursor repeated within one bounded synchronization call")
+            seen_cursors.add(cursor)
 
             try:
                 raw_plan = self._planner.plan(
