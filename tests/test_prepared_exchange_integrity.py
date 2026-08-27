@@ -8,7 +8,11 @@ from pathlib import Path
 from marketplace.reference import TYPE_INTENT, federation_v1
 from marketplace.reference.transport_json_v1 import encode_transport_envelope_json
 from marketplace.runtime import FederationOperationProfile, compose_offline_federation_service, create_in_memory_runtime
-from marketplace.runtime.federation import FederationRequestBinding, PreparedFederationExchange
+from marketplace.runtime.federation import (
+    FederationRequestBinding,
+    OfflineFederationError,
+    PreparedFederationExchange,
+)
 from marketplace.runtime.prepared_integrity import (
     MAX_PREPARED_SNAPSHOT_DEPTH,
     MAX_PREPARED_SNAPSHOT_ITEMS,
@@ -20,7 +24,7 @@ from marketplace.runtime.prepared_integrity import (
 SOURCE = "https://peer.example/federation"
 
 
-def _runtime_and_service():
+def _runtime_and_service(*, make_transport_envelope=federation_v1.make_transport_envelope):
     runtime = create_in_memory_runtime(
         validate_record=lambda value: value,
         record_identity_text=lambda value: "r1_" + "A" * 43,
@@ -33,7 +37,7 @@ def _runtime_and_service():
         validate_record=lambda value: value,
         record_identity_text=lambda value: "r1_" + "A" * 43,
         validate_exchange_request=federation_v1.validate_exchange_request,
-        make_transport_envelope=federation_v1.make_transport_envelope,
+        make_transport_envelope=make_transport_envelope,
         validate_transport_envelope=federation_v1.validate_transport_envelope,
         validate_exchange_result=federation_v1.validate_exchange_result,
         operation_profiles=(
@@ -98,6 +102,47 @@ class PreparedExchangeIntegrityTests(unittest.TestCase):
                 payload["required_capabilities"].clear()
             with self.assertRaises(TypeError):
                 payload["scope"]["version"] = 2
+        finally:
+            runtime.close()
+
+    def test_envelope_maker_cannot_change_message_profile(self):
+        def hostile_maker(message_type, payload):
+            return ("OLP-TRANSPORT", 1, "https://example.test/other-request", payload)
+
+        runtime, service = _runtime_and_service(make_transport_envelope=hostile_maker)
+        try:
+            with self.assertRaises(OfflineFederationError) as caught:
+                service.prepare(_request())
+            self.assertEqual(caught.exception.code, "ENVELOPE_MESSAGE_PROFILE_DRIFT")
+        finally:
+            runtime.close()
+
+    def test_envelope_maker_cannot_change_request_payload(self):
+        def hostile_maker(message_type, payload):
+            changed = dict(payload)
+            changed["page_size"] = 1
+            return ("OLP-TRANSPORT", 1, message_type, changed)
+
+        runtime, service = _runtime_and_service(make_transport_envelope=hostile_maker)
+        try:
+            with self.assertRaises(OfflineFederationError) as caught:
+                service.prepare(_request())
+            self.assertEqual(caught.exception.code, "ENVELOPE_REQUEST_PAYLOAD_DRIFT")
+        finally:
+            runtime.close()
+
+    def test_envelope_maker_cannot_mutate_validated_request(self):
+        def hostile_maker(message_type, payload):
+            envelope = federation_v1.make_transport_envelope(message_type, payload)
+            payload["page_size"] = 1
+            return envelope
+
+        runtime, service = _runtime_and_service(make_transport_envelope=hostile_maker)
+        request = _request()
+        try:
+            with self.assertRaises(OfflineFederationError) as caught:
+                service.prepare(request)
+            self.assertEqual(caught.exception.code, "ENVELOPE_MAKER_MUTATED_REQUEST")
         finally:
             runtime.close()
 
@@ -182,6 +227,11 @@ class PreparedExchangeIntegrityTests(unittest.TestCase):
             envelope=("OLP-TRANSPORT", 1, federation_v1.MSG_SYNC_REQUEST, {"value": True}),
         )
         self.assertNotEqual(prepared_int.integrity_snapshot, prepared_bool.integrity_snapshot)
+
+    def test_m30_required_repository_artifacts_are_present(self):
+        root = Path(__file__).resolve().parents[1]
+        self.assertTrue((root / "src" / "marketplace" / "runtime" / "prepared_integrity.py").is_file())
+        self.assertTrue((root / "docs" / "send-time-prepared-payload-binding.md").is_file())
 
     def test_m30_integrity_module_has_no_network_filesystem_process_concurrency_or_logging_surface(self):
         source_path = Path(__file__).resolve().parents[1] / "src" / "marketplace" / "runtime" / "prepared_integrity.py"
