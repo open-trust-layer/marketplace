@@ -179,7 +179,7 @@ class InboundHttpReadOutcomeTests(unittest.TestCase):
         self.assertFalse(self.handler.closed)
         self.assertEqual(self.handler.progress().reads_completed, 1)
 
-    def test_data_path_preserves_nested_m39_through_m35_reason_codes(self):
+    def test_rejected_consumed_data_preserves_nested_codes_and_closes_session(self):
         malformed = (
             f"GET /v1/records/{RECORD_ID} HTTP/1.1\r\n"
             f"host: {AUTHORITY}\r\n"
@@ -193,8 +193,11 @@ class InboundHttpReadOutcomeTests(unittest.TestCase):
         self.assertEqual(caught.exception.plan_code, "STREAM_PROFILE_REJECTED")
         self.assertEqual(caught.exception.stream_code, "WIRE_PROFILE_REJECTED")
         self.assertEqual(caught.exception.wire_code, "NONCANONICAL_HEADER_NAME")
-        self.assertFalse(self.handler.closed)
-        self.assertEqual(self.handler.progress().reads_completed, 0)
+        self.assertTrue(self.handler.closed)
+        self.assertEqual(self.session._prefix, b"")
+        with self.assertRaises(InboundHttpReadOutcomeError) as after:
+            self.handler.progress()
+        self.assertEqual(after.exception.code, "READ_OUTCOME_SESSION_CLOSED")
 
     def test_close_is_idempotent_and_blocks_further_outcomes(self):
         self.handler.accept_outcome(InboundHttpReadOutcome.data(b"GET "))
