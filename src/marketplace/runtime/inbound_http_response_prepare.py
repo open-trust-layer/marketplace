@@ -10,7 +10,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Any, Final
 
-from .inbound_http import BoundedInboundHttpApplicationAdapter, InboundHttpRequest
+from .inbound_http import (
+    BoundedInboundHttpApplicationAdapter,
+    InboundHttpApplicationLimits,
+    InboundHttpRequest,
+    PreparedInboundHttpResponse,
+)
 from .inbound_http_read_driver import (
     BoundedInboundHttpReadDriver,
     CompletedInboundHttpReadDriverResult,
@@ -19,6 +24,7 @@ from .inbound_http_read_driver import (
 from .inbound_http_read_plan import (
     READ_ACTION_COMPLETE,
     BoundedInboundHttpReadPlanner,
+    InboundHttpReadLimits,
     InboundHttpReadPlan,
     InboundHttpReadPlanError,
 )
@@ -26,10 +32,14 @@ from .inbound_http_read_session import (
     BoundedInboundHttpReadSession,
     CompletedInboundHttpReadSession,
 )
-from .inbound_http_stream import BoundedInboundHttpStreamAssembler
+from .inbound_http_stream import (
+    BoundedInboundHttpStreamAssembler,
+    InboundHttpStreamLimits,
+)
 from .inbound_http_wire import (
     BoundedInboundHttpWireAdapter,
     InboundHttpWireError,
+    InboundHttpWireLimits,
     PreparedInboundHttpWireExchange,
 )
 
@@ -149,19 +159,48 @@ def _fail_from_plan(exc: InboundHttpReadPlanError) -> None:
     )
 
 
-def _wire_limits_snapshot(adapter: BoundedInboundHttpWireAdapter) -> tuple[int, int, int]:
+def _wire_limits_snapshot(
+    adapter: BoundedInboundHttpWireAdapter,
+) -> tuple[int, int, int]:
     limits = adapter.limits
-    return (limits.max_header_bytes, limits.max_body_bytes, limits.max_response_body_bytes)
+    if type(limits) is not InboundHttpWireLimits:
+        _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M35 limits changed type")
+    return (
+        limits.max_header_bytes,
+        limits.max_body_bytes,
+        limits.max_response_body_bytes,
+    )
 
 
-def _stream_limits_snapshot(assembler: BoundedInboundHttpStreamAssembler) -> tuple[int, int]:
+def _stream_limits_snapshot(
+    assembler: BoundedInboundHttpStreamAssembler,
+) -> tuple[int, int]:
     limits = assembler.limits
+    if type(limits) is not InboundHttpStreamLimits:
+        _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M36 limits changed type")
     return (limits.max_chunks, limits.max_chunk_bytes)
 
 
-def _read_limits_snapshot(planner: BoundedInboundHttpReadPlanner) -> tuple[int, int]:
+def _read_limits_snapshot(
+    planner: BoundedInboundHttpReadPlanner,
+) -> tuple[int, int]:
     limits = planner.limits
+    if type(limits) is not InboundHttpReadLimits:
+        _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M37 limits changed type")
     return (limits.max_read_calls, limits.max_read_bytes)
+
+
+def _application_limits_snapshot(
+    adapter: BoundedInboundHttpApplicationAdapter,
+) -> tuple[int, int, int]:
+    limits = adapter.limits
+    if type(limits) is not InboundHttpApplicationLimits:
+        _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M34 limits changed type")
+    return (
+        limits.max_request_body_bytes,
+        limits.max_response_body_bytes,
+        limits.max_header_bytes,
+    )
 
 
 def _callable_binding(value: Any) -> tuple[Any, ...]:
@@ -185,33 +224,78 @@ def _request_snapshot(request: InboundHttpRequest) -> tuple[Any, ...]:
     )
 
 
+def _response_snapshot(response: PreparedInboundHttpResponse) -> tuple[Any, ...]:
+    if type(response) is not PreparedInboundHttpResponse:
+        _fail("RESPONSE_PREPARATION_WIRE_DRIFT", "M35 application response changed type")
+    return (
+        _request_snapshot(response.request),
+        response.route_kind,
+        response.route_operation,
+        response.status_code,
+        response.headers,
+        response.body,
+        response.olp_message_type,
+        response.transmitted,
+        response.request_authenticated,
+        response.peer_identity_proven,
+        response.establishes_marketplace_truth,
+        response.establishes_trust,
+        response.establishes_authorization,
+        response.authorizes_protected_side_effects,
+    )
+
+
 def _validate_m39_authority(value: CompletedInboundHttpReadSession) -> None:
     if type(value) is not CompletedInboundHttpReadSession:
-        _fail("RESPONSE_PREPARATION_COMPLETION_DRIFT", "M42 completion payload changed type")
+        _fail(
+            "RESPONSE_PREPARATION_COMPLETION_DRIFT",
+            "M42 completion payload changed type",
+        )
     for name in _M39_AUTHORITY_NEGATIVE_FIELDS:
         if getattr(value, name, None) is not False:
-            _fail("RESPONSE_PREPARATION_AUTHORITY_ESCALATION", "M39 completion promoted authority")
+            _fail(
+                "RESPONSE_PREPARATION_AUTHORITY_ESCALATION",
+                "M39 completion promoted authority",
+            )
 
 
 def _validate_m42_authority(value: CompletedInboundHttpReadDriverResult) -> None:
     if type(value) is not CompletedInboundHttpReadDriverResult:
-        _fail("RESPONSE_PREPARATION_COMPLETION_DRIFT", "M42 returned unexpected completion type")
+        _fail(
+            "RESPONSE_PREPARATION_COMPLETION_DRIFT",
+            "M42 returned unexpected completion type",
+        )
     for name in _M42_AUTHORITY_NEGATIVE_FIELDS:
         if getattr(value, name, None) is not False:
-            _fail("RESPONSE_PREPARATION_AUTHORITY_ESCALATION", "M42 completion promoted authority")
+            _fail(
+                "RESPONSE_PREPARATION_AUTHORITY_ESCALATION",
+                "M42 completion promoted authority",
+            )
     _validate_m39_authority(value.completed)
 
 
 def _validate_wire_authority(value: PreparedInboundHttpWireExchange) -> None:
     if type(value) is not PreparedInboundHttpWireExchange:
-        _fail("RESPONSE_PREPARATION_WIRE_DRIFT", "M35 returned unexpected prepared type")
+        _fail(
+            "RESPONSE_PREPARATION_WIRE_DRIFT",
+            "M35 returned unexpected prepared type",
+        )
     if getattr(value, "host_authority_validated", None) is not True:
-        _fail("RESPONSE_PREPARATION_WIRE_DRIFT", "M35 did not retain validated Host authority")
+        _fail(
+            "RESPONSE_PREPARATION_WIRE_DRIFT",
+            "M35 did not retain validated Host authority",
+        )
     if getattr(value, "tls_sni_bound", None) is not False:
-        _fail("RESPONSE_PREPARATION_AUTHORITY_ESCALATION", "M35 promoted TLS binding")
+        _fail(
+            "RESPONSE_PREPARATION_AUTHORITY_ESCALATION",
+            "M35 promoted TLS binding",
+        )
     for name in _AUTHORITY_NEGATIVE_FIELDS:
         if getattr(value, name, None) is not False:
-            _fail("RESPONSE_PREPARATION_AUTHORITY_ESCALATION", "M35 prepared response promoted authority")
+            _fail(
+                "RESPONSE_PREPARATION_AUTHORITY_ESCALATION",
+                "M35 prepared response promoted authority",
+            )
 
 
 @dataclass(frozen=True)
@@ -219,6 +303,7 @@ class PreparedInboundHttpReadResponse:
     """Integrity-bound, unsent M35 response plus bounded M42 accounting."""
 
     wire_exchange: PreparedInboundHttpWireExchange
+    completion_plan: InboundHttpReadPlan
     driver_steps: int
     reader_invocations: int
     reads_completed: int
@@ -244,20 +329,44 @@ class PreparedInboundHttpReadResponse:
             raise ValueError("M43 nested M35 integrity replay failed") from exc
         object.__setattr__(self, "wire_exchange", witnessed_wire)
 
+        if type(self.completion_plan) is not InboundHttpReadPlan:
+            raise ValueError("completion_plan MUST be exact InboundHttpReadPlan")
+        try:
+            witnessed_plan = replace(self.completion_plan)
+        except ValueError as exc:
+            raise ValueError("M43 completion plan failed M37 integrity replay") from exc
+        if witnessed_plan.action != READ_ACTION_COMPLETE:
+            raise ValueError("M43 completion plan MUST be COMPLETE")
+        object.__setattr__(self, "completion_plan", witnessed_plan)
+
         for name in ("driver_steps", "reads_completed", "request_bytes", "response_bytes"):
             value = getattr(self, name)
             if type(value) is not int or value <= 0:
                 raise ValueError(f"{name} MUST be a positive exact integer")
         if type(self.reader_invocations) is not int or self.reader_invocations < 0:
-            raise ValueError("reader_invocations MUST be a non-negative exact integer")
+            raise ValueError(
+                "reader_invocations MUST be a non-negative exact integer"
+            )
         if self.reader_invocations > self.driver_steps:
-            raise ValueError("reader_invocations MUST NOT exceed M43-observed M42 steps")
+            raise ValueError(
+                "reader_invocations MUST NOT exceed M43-observed M42 steps"
+            )
         if self.reader_invocations > self.reads_completed:
-            raise ValueError("reader_invocations MUST NOT exceed cumulative M39 reads")
-        if self.request_bytes != len(witnessed_wire.request.body) + self.request_bytes - len(witnessed_wire.request.body):
-            raise ValueError("M43 request byte accounting is invalid")
+            raise ValueError(
+                "reader_invocations MUST NOT exceed cumulative M39 reads"
+            )
+        if witnessed_plan.reads_completed != self.reads_completed:
+            raise ValueError(
+                "reads_completed MUST equal the exact replayed M37 completion plan"
+            )
+        if witnessed_plan.buffered_bytes != self.request_bytes:
+            raise ValueError(
+                "request_bytes MUST equal the exact replayed M37 completed prefix length"
+            )
         if self.response_bytes != len(witnessed_wire.response_bytes):
-            raise ValueError("response_bytes MUST equal the exact M35 response wire length")
+            raise ValueError(
+                "response_bytes MUST equal the exact M35 response wire length"
+            )
 
         if self.response_prepared is not True or self.transmitted is not False:
             raise ValueError("M43 response preparation state is invalid")
@@ -272,11 +381,14 @@ class PreparedInboundHttpReadResponse:
             "authorizes_protected_side_effects",
         ):
             if getattr(self, name, None) is not False:
-                raise ValueError("M43 prepared result promoted a forbidden authority fact")
+                raise ValueError(
+                    "M43 prepared result promoted a forbidden authority fact"
+                )
 
         current = (
             _RESULT_MARKER,
             witnessed_wire.integrity_snapshot,
+            witnessed_plan.integrity_snapshot,
             self.driver_steps,
             self.reader_invocations,
             self.reads_completed,
@@ -314,15 +426,18 @@ class BoundedInboundHttpResponsePreparer:
         "_plan_function",
         "_parse_function",
         "_prepare_function",
+        "_response_validate_function",
         "_run",
         "_close",
         "_plan",
         "_parse",
         "_prepare",
+        "_response_validate",
         "_application_handle_witness",
         "_read_limits",
         "_stream_limits",
         "_wire_limits",
+        "_application_limits",
         "_wire_authority",
         "_binding_witness",
         "_used",
@@ -358,16 +473,39 @@ class BoundedInboundHttpResponsePreparer:
         self._plan_function = BoundedInboundHttpReadPlanner.plan
         self._parse_function = BoundedInboundHttpWireAdapter._parse_request
         self._prepare_function = BoundedInboundHttpWireAdapter.prepare
-        self._run = self._run_function.__get__(read_driver, BoundedInboundHttpReadDriver)
-        self._close = self._close_function.__get__(read_driver, BoundedInboundHttpReadDriver)
-        self._plan = self._plan_function.__get__(planner, BoundedInboundHttpReadPlanner)
-        self._parse = self._parse_function.__get__(wire, BoundedInboundHttpWireAdapter)
-        self._prepare = self._prepare_function.__get__(wire, BoundedInboundHttpWireAdapter)
-        self._application_handle_witness = _callable_binding(application_adapter.handle)
+        self._response_validate_function = (
+            BoundedInboundHttpWireAdapter._validated_application_response
+        )
+        self._run = self._run_function.__get__(
+            read_driver, BoundedInboundHttpReadDriver
+        )
+        self._close = self._close_function.__get__(
+            read_driver, BoundedInboundHttpReadDriver
+        )
+        self._plan = self._plan_function.__get__(
+            planner, BoundedInboundHttpReadPlanner
+        )
+        self._parse = self._parse_function.__get__(
+            wire, BoundedInboundHttpWireAdapter
+        )
+        self._prepare = self._prepare_function.__get__(
+            wire, BoundedInboundHttpWireAdapter
+        )
+        self._response_validate = self._response_validate_function.__get__(
+            wire, BoundedInboundHttpWireAdapter
+        )
+        self._application_handle_witness = _callable_binding(
+            application_adapter.handle
+        )
         self._read_limits = _read_limits_snapshot(planner)
         self._stream_limits = _stream_limits_snapshot(assembler)
         self._wire_limits = _wire_limits_snapshot(wire)
+        self._application_limits = _application_limits_snapshot(
+            application_adapter
+        )
         self._wire_authority = wire.authority
+        if type(self._wire_authority) is not str or not self._wire_authority:
+            raise ValueError("M35 authority MUST remain non-empty exact text")
         self._used = False
         self._binding_witness = self._binding_snapshot()
         self._validate_bindings()
@@ -386,54 +524,220 @@ class BoundedInboundHttpResponsePreparer:
             self._plan_function,
             self._parse_function,
             self._prepare_function,
+            self._response_validate_function,
             self._read_limits,
             self._stream_limits,
             self._wire_limits,
+            self._application_limits,
             self._wire_authority,
             self._application_handle_witness,
         )
 
-    def _require_bound(self, bound: Any, function: Any, owner: Any, label: str) -> None:
-        if getattr(bound, "__self__", None) is not owner or getattr(bound, "__func__", None) is not function:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", f"captured {label} binding changed")
+    def _require_bound(
+        self,
+        bound: Any,
+        function: Any,
+        owner: Any,
+        label: str,
+    ) -> None:
+        if (
+            getattr(bound, "__self__", None) is not owner
+            or getattr(bound, "__func__", None) is not function
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                f"captured {label} binding changed",
+            )
 
     def _validate_bindings(self) -> None:
-        if type(self._driver) is not BoundedInboundHttpReadDriver or getattr(self._driver, "_session", None) is not self._session:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M42 to M39 binding changed")
-        if type(self._session) is not BoundedInboundHttpReadSession or getattr(self._session, "_read_planner", None) is not self._planner:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M39 to M37 binding changed")
-        if type(self._planner) is not BoundedInboundHttpReadPlanner or getattr(self._planner, "_stream_assembler", None) is not self._assembler:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M37 to M36 binding changed")
-        if type(self._assembler) is not BoundedInboundHttpStreamAssembler or getattr(self._assembler, "_wire_adapter", None) is not self._wire:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M36 to M35 binding changed")
-        if type(self._wire) is not BoundedInboundHttpWireAdapter or getattr(self._wire, "_application_adapter", None) is not self._application_adapter:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M35 to M34 binding changed")
+        if (
+            type(self._driver) is not BoundedInboundHttpReadDriver
+            or getattr(self._driver, "_session", None) is not self._session
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M42 to M39 binding changed",
+            )
+        if (
+            type(self._session) is not BoundedInboundHttpReadSession
+            or getattr(self._session, "_read_planner", None) is not self._planner
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M39 to M37 binding changed",
+            )
+        if (
+            type(self._planner) is not BoundedInboundHttpReadPlanner
+            or getattr(self._planner, "_stream_assembler", None)
+            is not self._assembler
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M37 to M36 binding changed",
+            )
+        if (
+            type(self._assembler) is not BoundedInboundHttpStreamAssembler
+            or getattr(self._assembler, "_wire_adapter", None) is not self._wire
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M36 to M35 binding changed",
+            )
+        if (
+            type(self._wire) is not BoundedInboundHttpWireAdapter
+            or getattr(self._wire, "_application_adapter", None)
+            is not self._application_adapter
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M35 to M34 binding changed",
+            )
         if _read_limits_snapshot(self._planner) != self._read_limits:
-            _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M37 limits changed")
+            _fail(
+                "RESPONSE_PREPARATION_CONFIGURATION_DRIFT",
+                "M37 limits changed",
+            )
         if _stream_limits_snapshot(self._assembler) != self._stream_limits:
-            _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M36 limits changed")
-        if _wire_limits_snapshot(self._wire) != self._wire_limits or self._wire.authority != self._wire_authority:
-            _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M35 wire configuration changed")
-        if _callable_binding(self._application_adapter.handle) != self._application_handle_witness:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M34 application handle binding changed")
+            _fail(
+                "RESPONSE_PREPARATION_CONFIGURATION_DRIFT",
+                "M36 limits changed",
+            )
+        if (
+            _wire_limits_snapshot(self._wire) != self._wire_limits
+            or self._wire.authority != self._wire_authority
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_CONFIGURATION_DRIFT",
+                "M35 wire configuration changed",
+            )
+        if (
+            _application_limits_snapshot(self._application_adapter)
+            != self._application_limits
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_CONFIGURATION_DRIFT",
+                "M34 application limits changed",
+            )
+        if (
+            _callable_binding(self._application_adapter.handle)
+            != self._application_handle_witness
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M34 application handle binding changed",
+            )
         if BoundedInboundHttpWireAdapter._parse_request is not self._parse_function:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M35 internal parser function changed")
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M35 internal parser function changed",
+            )
+        if (
+            BoundedInboundHttpWireAdapter._validated_application_response
+            is not self._response_validate_function
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M35 response validator function changed",
+            )
         if self._binding_snapshot() != self._binding_witness:
-            _fail("RESPONSE_PREPARATION_BINDING_DRIFT", "M43 construction witness changed")
-        self._require_bound(self._run, self._run_function, self._driver, "M42 run")
-        self._require_bound(self._close, self._close_function, self._driver, "M42 close")
-        self._require_bound(self._plan, self._plan_function, self._planner, "M37 plan")
-        self._require_bound(self._parse, self._parse_function, self._wire, "M35 parser")
-        self._require_bound(self._prepare, self._prepare_function, self._wire, "M35 prepare")
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M43 construction witness changed",
+            )
+        self._require_bound(
+            self._run, self._run_function, self._driver, "M42 run"
+        )
+        self._require_bound(
+            self._close, self._close_function, self._driver, "M42 close"
+        )
+        self._require_bound(
+            self._plan, self._plan_function, self._planner, "M37 plan"
+        )
+        self._require_bound(
+            self._parse, self._parse_function, self._wire, "M35 parser"
+        )
+        self._require_bound(
+            self._prepare, self._prepare_function, self._wire, "M35 prepare"
+        )
+        self._require_bound(
+            self._response_validate,
+            self._response_validate_function,
+            self._wire,
+            "M35 response validator",
+        )
 
     @property
     def used(self) -> bool:
         return self._used
 
+    def _independent_response_replay(
+        self,
+        value: PreparedInboundHttpWireExchange,
+        *,
+        request: InboundHttpRequest,
+    ) -> None:
+        body_bytes = value.response_body_bytes
+        if (
+            type(body_bytes) is not int
+            or body_bytes <= 0
+            or body_bytes > len(value.response_bytes)
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_WIRE_DRIFT",
+                "M35 response body accounting is invalid",
+            )
+        body = value.response_bytes[-body_bytes:]
+        headers = (
+            ("connection", "close"),
+            ("content-length", str(len(body))),
+            ("content-type", "application/json"),
+        )
+        try:
+            candidate = PreparedInboundHttpResponse(
+                request=request,
+                route_kind=value.route_kind,
+                route_operation=value.route_operation,
+                status_code=value.status_code,
+                headers=headers,
+                body=body,
+                olp_message_type=value.olp_message_type,
+            )
+        except ValueError:
+            _fail(
+                "RESPONSE_PREPARATION_WIRE_DRIFT",
+                "M35 wire result cannot reconstruct one canonical M34 response",
+            )
+
+        self._validate_bindings()
+        try:
+            replayed = self._response_validate(candidate, request=request)
+        except InboundHttpWireError as exc:
+            self._validate_bindings()
+            _fail(
+                "RESPONSE_PREPARATION_RESPONSE_REJECTED",
+                "captured M35 response validator rejected the prepared response",
+                wire_code=exc.code,
+            )
+        except Exception:
+            self._validate_bindings()
+            _fail(
+                "RESPONSE_PREPARATION_RESPONSE_FAILED",
+                "captured M35 response validation failed unexpectedly",
+            )
+        self._validate_bindings()
+        if _response_snapshot(replayed) != _response_snapshot(candidate):
+            _fail(
+                "RESPONSE_PREPARATION_RESPONSE_DRIFT",
+                "captured M35 response replay changed prepared semantics",
+            )
+
     def prepare(self) -> PreparedInboundHttpReadResponse:
         """Perform one bounded read-to-unsent-response preparation transaction."""
         if self._used:
-            _fail("RESPONSE_PREPARER_USED", "M43 response preparer is one-shot")
+            _fail(
+                "RESPONSE_PREPARER_USED",
+                "M43 response preparer is one-shot",
+            )
         self._validate_bindings()
         self._used = True
 
@@ -442,41 +746,74 @@ class BoundedInboundHttpResponsePreparer:
         except InboundHttpReadDriverError as exc:
             _fail_from_driver(exc)
         except Exception:
-            _fail("RESPONSE_PREPARATION_READ_FAILED", "M42 read completion failed unexpectedly")
+            _fail(
+                "RESPONSE_PREPARATION_READ_FAILED",
+                "M42 read completion failed unexpectedly",
+            )
 
         self._validate_bindings()
         _validate_m42_authority(completion)
         if completion.reads_completed != completion.completed.reads_completed:
-            _fail("RESPONSE_PREPARATION_COMPLETION_DRIFT", "M42 cumulative read accounting changed")
+            _fail(
+                "RESPONSE_PREPARATION_COMPLETION_DRIFT",
+                "M42 cumulative read accounting changed",
+            )
         try:
             witnessed_completion = replace(completion)
         except ValueError:
-            _fail("RESPONSE_PREPARATION_COMPLETION_DRIFT", "M42 completion failed integrity replay")
+            _fail(
+                "RESPONSE_PREPARATION_COMPLETION_DRIFT",
+                "M42 completion failed integrity replay",
+            )
 
         completed = witnessed_completion.completed
         prefix = completed.prefix
         if type(prefix) is not bytes or not prefix:
-            _fail("RESPONSE_PREPARATION_COMPLETION_DRIFT", "M39 completion prefix is not exact non-empty bytes")
+            _fail(
+                "RESPONSE_PREPARATION_COMPLETION_DRIFT",
+                "M39 completion prefix is not exact non-empty bytes",
+            )
 
         self._validate_bindings()
         try:
-            replay_plan = self._plan(prefix, reads_completed=completed.reads_completed)
+            replay_plan = self._plan(
+                prefix,
+                reads_completed=completed.reads_completed,
+            )
         except InboundHttpReadPlanError as exc:
             self._validate_bindings()
             _fail_from_plan(exc)
         self._validate_bindings()
         if type(replay_plan) is not InboundHttpReadPlan:
-            _fail("RESPONSE_PREPARATION_PLAN_DRIFT", "M37 returned unexpected plan type")
+            _fail(
+                "RESPONSE_PREPARATION_PLAN_DRIFT",
+                "M37 returned unexpected plan type",
+            )
         try:
             witnessed_plan = replace(replay_plan)
         except ValueError:
-            _fail("RESPONSE_PREPARATION_PLAN_DRIFT", "M37 replay plan failed integrity replay")
+            _fail(
+                "RESPONSE_PREPARATION_PLAN_DRIFT",
+                "M37 replay plan failed integrity replay",
+            )
         if witnessed_plan.action != READ_ACTION_COMPLETE:
-            _fail("RESPONSE_PREPARATION_PLAN_DRIFT", "M37 no longer classifies M42 bytes as complete")
+            _fail(
+                "RESPONSE_PREPARATION_PLAN_DRIFT",
+                "M37 no longer classifies M42 bytes as complete",
+            )
         if witnessed_plan.integrity_snapshot != completed.plan.integrity_snapshot:
-            _fail("RESPONSE_PREPARATION_PLAN_DRIFT", "M37 completion witness drifted from M39 handoff")
-        if witnessed_plan.buffered_bytes != len(prefix):
-            _fail("RESPONSE_PREPARATION_PLAN_DRIFT", "M37 completed byte count drifted")
+            _fail(
+                "RESPONSE_PREPARATION_PLAN_DRIFT",
+                "M37 completion witness drifted from M39 handoff",
+            )
+        if (
+            witnessed_plan.buffered_bytes != len(prefix)
+            or witnessed_plan.reads_completed != completed.reads_completed
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_PLAN_DRIFT",
+                "M37 completed request accounting drifted",
+            )
 
         self._validate_bindings()
         try:
@@ -487,6 +824,12 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARATION_PARSE_REJECTED",
                 "M35 rejected the completed bytes during independent parse",
                 wire_code=exc.code,
+            )
+        except Exception:
+            self._validate_bindings()
+            _fail(
+                "RESPONSE_PREPARATION_PARSE_FAILED",
+                "M35 independent parse failed unexpectedly",
             )
         self._validate_bindings()
         parsed_snapshot = _request_snapshot(parsed)
@@ -502,27 +845,48 @@ class BoundedInboundHttpResponsePreparer:
             )
         except Exception:
             self._validate_bindings()
-            _fail("RESPONSE_PREPARATION_WIRE_FAILED", "M35 response preparation failed unexpectedly")
+            _fail(
+                "RESPONSE_PREPARATION_WIRE_FAILED",
+                "M35 response preparation failed unexpectedly",
+            )
         self._validate_bindings()
 
         _validate_wire_authority(wire_result)
         if _request_snapshot(wire_result.request) != parsed_snapshot:
-            _fail("RESPONSE_PREPARATION_REQUEST_DRIFT", "M35 prepared response is not bound to the independently parsed request")
+            _fail(
+                "RESPONSE_PREPARATION_REQUEST_DRIFT",
+                "M35 prepared response is not bound to the independently parsed request",
+            )
         if wire_result.host_authority != self._wire_authority:
-            _fail("RESPONSE_PREPARATION_CONFIGURATION_DRIFT", "M35 prepared response changed Host authority")
+            _fail(
+                "RESPONSE_PREPARATION_CONFIGURATION_DRIFT",
+                "M35 prepared response changed Host authority",
+            )
         try:
             witnessed_wire = replace(wire_result)
         except ValueError:
-            _fail("RESPONSE_PREPARATION_WIRE_DRIFT", "M35 prepared response failed integrity replay")
+            _fail(
+                "RESPONSE_PREPARATION_WIRE_DRIFT",
+                "M35 prepared response failed integrity replay",
+            )
         if _request_snapshot(witnessed_wire.request) != parsed_snapshot:
-            _fail("RESPONSE_PREPARATION_REQUEST_DRIFT", "M35 replay changed the prepared request")
+            _fail(
+                "RESPONSE_PREPARATION_REQUEST_DRIFT",
+                "M35 replay changed the prepared request",
+            )
+
+        self._independent_response_replay(
+            witnessed_wire,
+            request=parsed,
+        )
 
         return PreparedInboundHttpReadResponse(
             wire_exchange=witnessed_wire,
+            completion_plan=witnessed_plan,
             driver_steps=witnessed_completion.driver_steps,
             reader_invocations=witnessed_completion.reader_invocations,
             reads_completed=witnessed_completion.reads_completed,
-            request_bytes=len(prefix),
+            request_bytes=witnessed_plan.buffered_bytes,
             response_bytes=len(witnessed_wire.response_bytes),
         )
 
@@ -536,4 +900,7 @@ class BoundedInboundHttpResponsePreparer:
         except InboundHttpReadDriverError as exc:
             _fail_from_driver(exc)
         except Exception:
-            _fail("RESPONSE_PREPARATION_CLEANUP_UNCERTAIN", "M42 cleanup could not be verified")
+            _fail(
+                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
+                "M42 cleanup could not be verified",
+            )
