@@ -12,11 +12,13 @@ from dataclasses import dataclass, field
 from typing import Any, Final
 
 from .contracts import (
+    FederationCapabilityNegotiator,
     FederationEnvelopeMaker,
     FederationEnvelopeValidator,
     FederationPageEvaluator,
     FederationRequestValidator,
     FederationResultValidator,
+    FederationScopeFingerprintProvider,
     InboundFederationDisclosureAuthorizer,
     InboundFederationPageSource,
     RecordIdentityProvider,
@@ -212,6 +214,9 @@ class BoundedInboundFederationResponder:
         local_source: str,
         validate_transport_envelope: FederationEnvelopeValidator,
         validate_exchange_request: FederationRequestValidator,
+        scope_fingerprint: FederationScopeFingerprintProvider,
+        negotiate_capabilities: FederationCapabilityNegotiator,
+        capability_advertisement: Mapping[str, Any],
         evaluate_exchange_page: FederationPageEvaluator,
         validate_exchange_result: FederationResultValidator,
         make_transport_envelope: FederationEnvelopeMaker,
@@ -236,9 +241,21 @@ class BoundedInboundFederationResponder:
                 raise ValueError(f"duplicate inbound federation operation profile {profile.operation!r}")
             profiles[profile.operation] = profile
 
+        try:
+            detached_advertisement = detach_host_value(capability_advertisement)
+        except PreparedExchangeIntegrityError as exc:
+            raise ValueError(f"capability_advertisement cannot be safely detached: {exc.code}") from exc
+        if not isinstance(detached_advertisement, Mapping):
+            raise ValueError("capability_advertisement MUST be a mapping")
+        if detached_advertisement.get("source") != local_source:
+            raise ValueError("capability_advertisement source MUST equal local_source")
+
         self._local_source = local_source
         self._validate_transport_envelope = validate_transport_envelope
         self._validate_exchange_request = validate_exchange_request
+        self._scope_fingerprint = scope_fingerprint
+        self._negotiate_capabilities = negotiate_capabilities
+        self._capability_advertisement = detached_advertisement
         self._evaluate_exchange_page = evaluate_exchange_page
         self._validate_exchange_result = validate_exchange_result
         self._make_transport_envelope = make_transport_envelope
@@ -289,12 +306,27 @@ class BoundedInboundFederationResponder:
                 _fail("ENVELOPE_VALIDATOR_PAYLOAD_UNSAFE", f"validated payload is unsafe: {exc.code}")
         return result
 
+    def _scope_fingerprint_value(self, scope: Any, *, code: str, label: str) -> str:
+        try:
+            fingerprint = self._scope_fingerprint(scope)
+        except Exception as exc:
+            _fail(code, f"{label} fingerprint failed: {type(exc).__name__}")
+        if type(fingerprint) is not str or not fingerprint:
+            _fail(code, f"{label} fingerprint provider MUST return non-empty exact text")
+        return fingerprint
+
     def _normalize_request(
         self,
         payload: Mapping[str, Any],
         *,
         profile: FederationOperationProfile,
     ) -> InboundFederationRequestContext:
+        raw_scope = payload.get("scope")
+        raw_scope_fingerprint = self._scope_fingerprint_value(
+            raw_scope,
+            code="RAW_SCOPE_FINGERPRINT_FAILED",
+            label="raw request scope",
+        )
         try:
             normalized = self._validate_exchange_request(payload)
         except Exception as exc:
@@ -322,6 +354,17 @@ class BoundedInboundFederationResponder:
             _fail("REQUEST_OPERATION_PROFILE_MISMATCH", "normalized request operation does not match configured profile")
         if source != self._local_source:
             _fail("REQUEST_SOURCE_MISMATCH", "inbound request source does not match the configured local source")
+
+        normalized_scope_fingerprint = self._scope_fingerprint_value(
+            normalized["scope"],
+            code="NORMALIZED_SCOPE_FINGERPRINT_FAILED",
+            label="normalized request scope",
+        )
+        if raw_scope_fingerprint != fingerprint or normalized_scope_fingerprint != fingerprint:
+            _fail(
+                "REQUEST_SCOPE_NORMALIZATION_DRIFT",
+                "raw scope, normalized scope, and normalized scope fingerprint are not the same M8 scope",
+            )
 
         capabilities_value = normalized["required_capabilities"]
         if not isinstance(capabilities_value, (tuple, list)):
@@ -380,6 +423,35 @@ class BoundedInboundFederationResponder:
             )
         except (ValueError, PreparedExchangeIntegrityError) as exc:
             _fail("INVALID_REQUEST_CONTEXT", f"cannot construct immutable request context: {type(exc).__name__}")
+
+    def _require_local_capabilities(self, context: InboundFederationRequestContext) -> None:
+        try:
+            result = self._negotiate_capabilities(
+                self._capability_advertisement,
+                context.required_capabilities,
+            )
+        except Exception as exc:
+            _fail("CAPABILITY_NEGOTIATION_FAILED", f"M8 capability negotiation failed: {type(exc).__name__}")
+        expected_keys = {
+            "status",
+            "required_capabilities",
+            "unsupported_capabilities",
+            "unavailable_capabilities",
+            "no_silent_downgrade",
+        }
+        if type(result) is not dict or set(result) != expected_keys:
+            _fail("INVALID_CAPABILITY_NEGOTIATOR_RESULT", "capability negotiator returned an unexpected shape")
+        required = result["required_capabilities"]
+        unsupported = result["unsupported_capabilities"]
+        unavailable = result["unavailable_capabilities"]
+        if not isinstance(required, (tuple, list)) or tuple(required) != context.required_capabilities:
+            _fail("CAPABILITY_NEGOTIATOR_BINDING_DRIFT", "capability negotiator changed required capabilities")
+        if not isinstance(unsupported, (tuple, list)) or not isinstance(unavailable, (tuple, list)):
+            _fail("INVALID_CAPABILITY_NEGOTIATOR_RESULT", "capability negotiation sets MUST be sequences")
+        if result["no_silent_downgrade"] is not True:
+            _fail("CAPABILITY_SILENT_DOWNGRADE_FORBIDDEN", "capability negotiation MUST preserve no-silent-downgrade")
+        if result["status"] != "SUPPORTED" or tuple(unsupported) or tuple(unavailable):
+            _fail("REQUIRED_CAPABILITY_UNAVAILABLE", "required inbound federation capabilities are not locally available")
 
     def _canonical_records(self, records: tuple[Any, ...]) -> tuple[tuple[Any, ...], tuple[str, ...]]:
         by_identity: dict[str, Any] = {}
@@ -532,6 +604,7 @@ class BoundedInboundFederationResponder:
         if not isinstance(payload, Mapping):
             _fail("INVALID_FEDERATION_REQUEST_PAYLOAD", "request payload MUST be a mapping")
         context = self._normalize_request(payload, profile=profile)
+        self._require_local_capabilities(context)
 
         try:
             disclosure_decision = self._authorize_disclosure(context)
