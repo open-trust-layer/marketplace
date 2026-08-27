@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import ast
 import inspect
+import textwrap
 import unittest
 from dataclasses import fields, replace
 from pathlib import Path
 
+import marketplace.runtime as runtime
 from marketplace.runtime.inbound_http import BoundedInboundHttpApplicationAdapter, InboundHttpApplicationLimits
 from marketplace.runtime.inbound_http_read_invoke import (
     READ_INVOCATION_COMPLETED,
     READ_INVOCATION_PROGRESS,
     BoundedInboundHttpReadInvoker,
     InboundHttpReadInvocationError,
+    InboundHttpReadInvocationResult,
 )
 from marketplace.runtime.inbound_http_read_outcome import BoundedInboundHttpReadOutcomeHandler, InboundHttpReadOutcome
 from marketplace.runtime.inbound_http_read_plan import BoundedInboundHttpReadPlanner
@@ -54,6 +57,13 @@ class _OutcomeSubclass(InboundHttpReadOutcome):
 
 
 class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
+    def test_public_runtime_exports_are_exact_m41_symbols(self):
+        self.assertIs(runtime.BoundedInboundHttpReadInvoker, BoundedInboundHttpReadInvoker)
+        self.assertIs(runtime.InboundHttpReadInvocationError, InboundHttpReadInvocationError)
+        self.assertIs(runtime.InboundHttpReadInvocationResult, InboundHttpReadInvocationResult)
+        self.assertEqual(runtime.READ_INVOCATION_PROGRESS, READ_INVOCATION_PROGRESS)
+        self.assertEqual(runtime.READ_INVOCATION_COMPLETED, READ_INVOCATION_COMPLETED)
+
     def test_public_api_has_one_explicit_reader_and_no_transport_parameters(self):
         constructor = tuple(inspect.signature(BoundedInboundHttpReadInvoker).parameters)
         invoke = tuple(inspect.signature(BoundedInboundHttpReadInvoker.invoke_once).parameters)
@@ -180,8 +190,8 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
                 elif isinstance(node.func, ast.Attribute):
                     self.assertNotIn(node.func.attr, {"recv", "recv_into", "read", "send", "sendall", "write", "listen", "connect", "bind", "accept", "sleep"})
 
-        invoke_source = inspect.getsource(BoundedInboundHttpReadInvoker.invoke_once)
-        invoke_tree = ast.parse(inspect.cleandoc(invoke_source))
+        invoke_source = textwrap.dedent(inspect.getsource(BoundedInboundHttpReadInvoker.invoke_once))
+        invoke_tree = ast.parse(invoke_source)
         self.assertEqual(invoke_source.count("self._reader("), 1)
         self.assertFalse(any(isinstance(node, (ast.For, ast.AsyncFor, ast.While)) for node in ast.walk(invoke_tree)))
 
