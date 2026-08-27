@@ -26,7 +26,7 @@ M49 limits are:
 - `max_elapsed_seconds`: explicit finite elapsed-time ceiling measured by the injected monotonic clock.
 The driver may use at most `M44 max_write_calls + 1` steps. The one additional step is only the zero-writer M48 completion transfer after the final accepted write. It does not permit an additional writer call.
 
-The default step ceiling is clamped to that same lower-layer bound plus the completion-transfer step. The absolute M49 hard maximum is 1025 steps, corresponding to M44's maximum 1024 write calls plus one transfer.
+The default step ceiling is 65 and is clamped to that same lower-layer bound plus the completion-transfer step. The absolute M49 hard maximum is 1025 steps, corresponding to M44's maximum 1024 write calls plus one transfer. Thus the default M44 allowance of 64 writer calls can always use a 65th zero-writer completion-transfer step without permitting a 65th writer call.
 
 ## Clock semantics
 

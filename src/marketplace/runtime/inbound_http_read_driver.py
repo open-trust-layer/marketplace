@@ -25,8 +25,8 @@ from .inbound_http_read_session import (
     CompletedInboundHttpReadSession,
 )
 
-DEFAULT_MAX_INBOUND_HTTP_READ_DRIVER_STEPS: Final = 64
-MAX_INBOUND_HTTP_READ_DRIVER_STEPS: Final = 1_024
+DEFAULT_MAX_INBOUND_HTTP_READ_DRIVER_STEPS: Final = 65
+MAX_INBOUND_HTTP_READ_DRIVER_STEPS: Final = 1_025
 DEFAULT_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS: Final = 30.0
 MAX_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS: Final = 120.0
 
@@ -245,13 +245,13 @@ class BoundedInboundHttpReadDriver:
         m37_max_read_calls = getattr(session, "_max_read_calls", None)
         if (
             type(m37_max_read_calls) is not int
-            or not 1 <= m37_max_read_calls <= MAX_INBOUND_HTTP_READ_DRIVER_STEPS
+            or not 1 <= m37_max_read_calls <= MAX_INBOUND_HTTP_READ_DRIVER_STEPS - 1
         ):
             raise ValueError("M39 retained M37 read-call ceiling is invalid")
 
         if limits is None:
             detached_limits = InboundHttpReadDriverLimits(
-                max_steps=min(DEFAULT_MAX_INBOUND_HTTP_READ_DRIVER_STEPS, m37_max_read_calls),
+                max_steps=min(DEFAULT_MAX_INBOUND_HTTP_READ_DRIVER_STEPS, m37_max_read_calls + 1),
                 max_elapsed_seconds=DEFAULT_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS,
             )
         else:
@@ -261,8 +261,8 @@ class BoundedInboundHttpReadDriver:
                 max_steps=limits.max_steps,
                 max_elapsed_seconds=limits.max_elapsed_seconds,
             )
-        if detached_limits.max_steps > m37_max_read_calls:
-            raise ValueError("M42 max_steps MUST NOT exceed the retained M37 read-call ceiling")
+        if detached_limits.max_steps > m37_max_read_calls + 1:
+            raise ValueError("M42 max_steps MUST NOT exceed retained M37 read-call ceiling plus one completion-transfer step")
 
         closed_function = BoundedInboundHttpReadInvoker.closed.fget
         if closed_function is None:

@@ -52,6 +52,27 @@ class InboundHttpResponseWriteDriverTests(unittest.TestCase):
         self.assertFalse(result.transmitted)
         self.assertFalse(result.tls_terminated)
 
+    def test_default_64_writes_reserve_step_65_for_zero_writer_completion(self):
+        calls = 0
+
+        def writer(data: bytes):
+            nonlocal calls
+            calls += 1
+            accepted = 1 if calls < 64 else len(data)
+            return InboundHttpResponseWriteOutcome.progress(accepted)
+
+        prepared, session, _, driver = _driver(writer=writer, max_write_calls=64)
+        self.assertGreater(prepared.response_bytes, 64)
+
+        result = driver.run_to_completion()
+
+        self.assertEqual(driver.limits.max_steps, 65)
+        self.assertEqual(result.driver_steps, 65)
+        self.assertEqual(result.writer_invocations, 64)
+        self.assertEqual(calls, 64)
+        self.assertEqual(result.completed.bytes_written, prepared.response_bytes)
+        self.assertTrue(session.closed)
+
     def test_default_step_limit_includes_completion_transfer(self):
         _, _, _, driver = _driver(
             writer=lambda data: InboundHttpResponseWriteOutcome.progress(len(data)),
