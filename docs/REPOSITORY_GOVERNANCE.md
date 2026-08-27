@@ -51,6 +51,9 @@ DEVELOPMENT_POLICY.md
 docs/RETENTION_POLICY.md
 docs/REPOSITORY_GOVERNANCE.md
 .github/**
+pyproject.toml
+src/marketplace/runtime/**
+src/marketplace/reference/**
 tools/conformance_gate.py
 tools/conformance_manifest.py
 tools/repository_audit.py
@@ -58,7 +61,7 @@ conformance/olp-source-pin.txt
 specification/**
 ```
 
-A future runtime should add authorization, secret-management, retention, deployment, and side-effect-execution paths to this list.
+Authorization, secret-management, retention, deployment, network, persistence, and protected-side-effect execution paths are security-sensitive even when not named individually above.
 
 ## 5. Pull-request evidence
 
@@ -103,7 +106,127 @@ After emergency use:
 4. document why ordinary PR controls were insufficient; and
 5. remove the exception when its condition ends.
 
-## 7. Branch and milestone method
+## 7. Solo-maintainer review procedure
+
+This section defines a **standing compensating-control procedure for periods when no eligible independent reviewer is practically available**. It is not an independent approval and does not erase the preference for independent human review.
+
+This procedure is available only while this section is present on `main`, only in a real solo-maintainer state for the affected change, and only when every applicable condition below is satisfied and recorded.
+
+### 7.1 Review provenance
+
+A PR using this procedure MUST record all of the following:
+
+- the PR author is also the only practically available maintainer/CODEOWNER for the affected change, or no eligible independent reviewer is available;
+- submitted independent approval count for the accepted head;
+- unresolved review-thread count;
+- that maintainer/security self-review and automated CI are **not independent human review**;
+- the exact accepted head SHA and exact base SHA or exact tested synthetic merge relation;
+- the applicable owner authorization path from section 7.2;
+- all risk-specific compensating controls from sections 7.3 and 7.4.
+
+### 7.2 Owner authorization paths
+
+A solo-maintainer PR may proceed through either of two explicit owner-authorization forms.
+
+#### A. Exact-head authorization
+
+The project owner explicitly authorizes the exact PR number and exact accepted head SHA after that SHA exists. Any head movement invalidates this authorization.
+
+#### B. Bounded standing owner mandate
+
+The project owner may explicitly issue a **time-bounded standing mandate** for repository source-control work when uninterrupted execution is desired. The mandate MUST be recorded in a durable repository discussion (for example the governance issue or each affected PR) and MUST state or be conservatively interpreted with all of these fields:
+
+```text
+owner
+repository scope
+authorized source-control actions
+risk ceiling
+issued_at
+expires_at
+excluded capabilities/actions
+removal condition
+```
+
+A standing mandate may authorize routine branch commits, file replacement/removal, PR creation/update, and SHA-guarded PR merges without requiring a fresh chat/message for each accepted head, **but only after that exact head independently satisfies the acceptance controls below**.
+
+A standing mandate MUST NOT authorize any of the following merely by being broad or by saying “all further actions”:
+
+- CRITICAL changes;
+- live external network execution against a real peer or public endpoint;
+- production deployment or service activation;
+- credential, secret, token, key, or certificate issuance/mutation;
+- provider/repository administration such as changing branch protection/rulesets or force-pushing `main`;
+- destructive user/content/database/infrastructure operations outside bounded source-branch cleanup;
+- irreversible infrastructure mutation;
+- settlement, payment, fulfillment, or other protected external side-effect execution;
+- bypass of an explicit safety stop in `DEVELOPMENT_POLICY.md`.
+
+Those actions require their own separately applicable authorization immediately before execution, and CRITICAL changes require independent human review.
+
+A standing mandate MUST have an explicit expiry no later than 24 hours after issuance unless renewed by a later explicit owner action. If the source authorization did not name an expiry, the implementation MUST conservatively apply a maximum 24-hour expiry. Owner withdrawal, repository-scope drift, or the availability of an eligible independent reviewer ends the mandate earlier where applicable.
+
+Head movement does **not** by itself require a new owner message while an in-scope standing mandate remains valid, but it always invalidates prior acceptance evidence. The new exact head MUST pass the full applicable acceptance gate and be recorded before merge.
+
+### 7.3 Eligible and ineligible risk
+
+LOW and MODERATE source changes may use this procedure when the conditions above hold.
+
+HIGH source changes may use it only when all of these additional conditions hold:
+
+- the PR itself does not perform a production deployment, destructive external data action, credential/secret mutation, provider-administration action, protected-branch force push, or irreversible infrastructure mutation;
+- any capability that could perform external I/O is implemented/tested only through deterministic doubles or explicitly non-live fixtures unless separately authorized immediately before real execution;
+- the PR includes an explicit security/threat-boundary review;
+- deterministic adversarial/security regression coverage exists for the newly introduced or expanded attack surface;
+- rollback/recovery is documented and does not depend on a false transactional guarantee;
+- exact-head acceptance is green after the final substantive or documentation change.
+
+CRITICAL changes are **never eligible** for the solo-maintainer procedure. They require independent human review and any additional controls required by `DEVELOPMENT_POLICY.md`.
+
+Risk MUST NOT be classified downward to make a change eligible.
+
+### 7.4 Mandatory compensating controls
+
+Before merge under this procedure:
+
+1. the PR MUST be open, review-ready, and mergeable;
+2. the exact accepted head SHA MUST be recorded;
+3. the complete applicable Marketplace acceptance/conformance gate MUST be green for that exact candidate, or for the exact GitHub synthetic merge candidate formed from that head and unchanged base with the relation recorded;
+4. all applicable deterministic unit, adversarial/security, repository-audit, reproducible-artifact, package-smoke, vector, generator-replay, and whitespace checks MUST be green;
+5. there MUST be no unresolved review threads;
+6. the PR MUST explicitly state that automated acceptance and maintainer self-review are not independent human review;
+7. known material security, privacy, retention, project-isolation, or governance defects MUST be absent or separately tracked with a fail-closed scope that does not invalidate the change;
+8. HIGH changes MUST include exact rollback/recovery notes and blast-radius/side-effect analysis;
+9. merge MUST use an exact-head guard (`expected_head_sha` or provider-equivalent) so a moving head cannot be substituted;
+10. the resulting merged `main` commit MUST independently pass the applicable push acceptance workflow before the milestone/change is declared complete;
+11. provider-side branch/ruleset enforcement claims MUST remain separate and independently verified.
+
+A green CI result does not convert this procedure into independent review.
+
+### 7.5 No self-approval fiction
+
+The PR author MUST NOT create or describe a self-review as an independent approval. If the provider allows the author to submit an `APPROVE` review, that action does not satisfy an independent-review requirement and SHOULD NOT be used to manufacture one.
+
+Statements such as “approved by review” or “code-owner approved” require an actually independent eligible reviewer when independence is claimed.
+
+### 7.6 Procedure lifecycle
+
+Standing procedure metadata:
+
+```text
+owner: tehki
+scope: open-trust-layer/marketplace solo-maintainer pull-request review procedure
+risk ceiling: HIGH subject to sections 7.2-7.4; CRITICAL excluded
+issued_at: 2026-08-27
+next_review: 2026-11-25
+expires_at: 2026-11-25 unless renewed by a later governance change
+removal_condition: an eligible independent reviewer path becomes available for the affected changes, or the project owner withdraws the procedure
+```
+
+Once an eligible independent reviewer becomes available, normal independent review is preferred and this procedure MUST NOT be used merely for convenience.
+
+This procedure does not retroactively convert earlier solo-maintainer merges into independently reviewed changes.
+
+## 8. Branch and milestone method
 
 The preferred Marketplace milestone/change flow remains:
 
@@ -115,14 +238,14 @@ issue/scope
 -> repository audit
 -> full conformance gate when applicable
 -> PR with objective evidence
--> review
--> merge
+-> independent review or eligible solo-maintainer procedure
+-> exact-head guarded merge
 -> verify merged-main CI
 ```
 
 Policy/security changes SHOULD use the same workflow even when they are documentation-heavy because they can alter future authority and operational behavior.
 
-## 8. No false enforcement claims
+## 9. No false enforcement claims
 
 The following statements require provider-side verification before use:
 
