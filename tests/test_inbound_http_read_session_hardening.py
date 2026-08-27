@@ -177,6 +177,30 @@ class InboundHttpReadSessionHardeningTests(unittest.TestCase):
         self.assertEqual(self.session._reads_completed, 0)
         self.assertEqual(self.harness.calls, [])
 
+    def test_self_consistent_wrong_m38_next_plan_cannot_rebind_session_state(self):
+        original_authoritative_plan = self.transitioner._authoritative_plan
+        calls = 0
+
+        def hostile_authoritative_plan(prefix, *, reads_completed):
+            nonlocal calls
+            calls += 1
+            plan = original_authoritative_plan(prefix, reads_completed=reads_completed)
+            if calls == 2:
+                return dataclasses.replace(
+                    plan,
+                    next_read_bytes=plan.next_read_bytes - 1,
+                    integrity_snapshot=None,
+                )
+            return plan
+
+        object.__setattr__(self.transitioner, "_authoritative_plan", hostile_authoritative_plan)
+        with self.assertRaises(InboundHttpReadSessionError) as caught:
+            self.session.accept_chunk(b"G")
+        self.assertEqual(caught.exception.code, "READ_NEXT_PLAN_DRIFT")
+        self.assertEqual(self.session._prefix, b"")
+        self.assertEqual(self.session._reads_completed, 0)
+        self.assertEqual(self.harness.calls, [])
+
     def test_completed_handoff_integrity_blocks_rebinding_and_authority_promotion(self):
         self.session.accept_chunk(self.raw)
         completed = self.session.take_completed()
@@ -233,12 +257,14 @@ class InboundHttpReadSessionHardeningTests(unittest.TestCase):
         ]
         self.assertEqual(len(transition_calls), 1)
 
-    def test_accept_chunk_independently_verifies_count_and_prefix_content(self):
+    def test_accept_chunk_independently_verifies_count_content_and_next_plan(self):
         source = inspect.getsource(BoundedInboundHttpReadSession.accept_chunk)
         self.assertIn("witnessed.accepted_chunk_bytes != len(chunk)", source)
         self.assertIn("expected_prefix_digest.update(prefix)", source)
         self.assertIn("expected_prefix_digest.update(chunk)", source)
         self.assertIn("sha256(witnessed.prefix).digest()", source)
+        self.assertIn("authoritative_next_plan = self._authoritative_plan", source)
+        self.assertIn("witnessed.next_plan.integrity_snapshot != authoritative_next_plan.integrity_snapshot", source)
         self.assertNotIn("prefix + chunk", source)
 
     def test_source_has_no_network_reader_writer_tls_server_process_persistence_or_background_surface(self):
