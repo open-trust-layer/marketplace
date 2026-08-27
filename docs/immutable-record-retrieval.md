@@ -52,7 +52,7 @@ The reference retriever requires:
 
 - an exact endpoint authorized through M25;
 - the local M27 egress-operation identifier;
-- one expected bounded `r1_...` transport identity;
+- one expected canonical bounded `r1_...` transport identity;
 - the M26 strict JSON decoder boundary;
 - the accepted M26 resolver/connector/HTTP response helpers.
 
@@ -74,15 +74,15 @@ The caller supplies one exact M25-authorized endpoint. Before DNS, the runtime r
 /v1/records/<expected-r1-identity>
 ```
 
-The expected identity must already have the bounded textual transport shape:
+Before endpoint authorization or DNS, the expected identity must have the bounded textual transport shape:
 
 ```text
 r1_<43 base64url characters>
 ```
 
-Canonical base64url/identity validity is checked later by pinned OLP; this early runtime check exists only to make path/request binding finite and unambiguous before network use.
+The runtime also decodes that base64url payload, requires exactly 32 octets, re-encodes it canonically without padding, and requires byte-for-byte textual equality. This is a pre-network transport-presentation guard only; it does not recompute the identity of any received Record. The pinned-OLP verifier remains responsible for authoritative Record reconstruction and Record Identity recomputation after retrieval.
 
-A path/identity mismatch fails before DNS.
+A non-canonical expected identity or path/identity mismatch fails before DNS.
 
 ## Reuse of the M26 network boundary
 
@@ -100,19 +100,20 @@ It imports and reuses the accepted M26:
 
 For each retrieval:
 
-1. validate M25 endpoint authorization under the current wall clock;
-2. bind the authorized exact path to the requested identity;
-3. build the complete bounded GET request before DNS;
-4. freshly resolve the authorized hostname;
-5. validate every supplied address through M25;
-6. revalidate the same endpoint authorization after DNS immediately before connect;
-7. recheck exact path/identity binding;
-8. connect to the selected numeric address;
-9. verify TLS using the authorized DNS hostname as SNI/certificate name;
-10. send exactly one HTTP/1.1 GET;
-11. accept only the existing bounded M26 response profile;
-12. decode exactly one OLP envelope;
-13. require message type `record`.
+1. validate the expected `r1_...` transport identity as canonical and bounded;
+2. validate M25 endpoint authorization under the current wall clock;
+3. bind the authorized exact path to the requested identity;
+4. build the complete bounded GET request before DNS;
+5. freshly resolve the authorized hostname;
+6. validate every supplied address through M25;
+7. revalidate the same endpoint authorization after DNS immediately before connect;
+8. recheck exact path/identity binding;
+9. connect to the selected numeric address;
+10. verify TLS using the authorized DNS hostname as SNI/certificate name;
+11. send exactly one HTTP/1.1 GET;
+12. accept only the existing bounded M26 response profile;
+13. decode exactly one OLP envelope;
+14. require message type `record`.
 
 No prior DNS classification authorizes a later call.
 
