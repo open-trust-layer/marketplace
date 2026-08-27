@@ -137,6 +137,14 @@ from .inbound_http_response_prepare import (
     InboundHttpResponsePreparationError,
     PreparedInboundHttpReadResponse,
 )
+from .inbound_http_response_write_outcome import (
+    WRITE_OUTCOME_FAILURE,
+    WRITE_OUTCOME_PROGRESS,
+    WRITE_OUTCOME_ZERO,
+    BoundedInboundHttpResponseWriteOutcomeHandler,
+    InboundHttpResponseWriteOutcome,
+    InboundHttpResponseWriteOutcomeError,
+)
 from .inbound_http_response_write_plan import (
     DEFAULT_MAX_INBOUND_HTTP_WRITE_BYTES,
     DEFAULT_MAX_INBOUND_HTTP_WRITE_CALLS,
@@ -275,6 +283,7 @@ __all__ = [
     "BoundedInboundHttpReadSession",
     "BoundedInboundHttpReadTransitioner",
     "BoundedInboundHttpResponsePreparer",
+    "BoundedInboundHttpResponseWriteOutcomeHandler",
     "BoundedInboundHttpResponseWritePlanner",
     "BoundedInboundHttpResponseWriteSession",
     "BoundedInboundHttpResponseWriteTransitioner",
@@ -363,6 +372,8 @@ __all__ = [
     "InboundHttpRequest",
     "InboundHttpResponsePreparationError",
     "InboundHttpResponseWriteLimits",
+    "InboundHttpResponseWriteOutcome",
+    "InboundHttpResponseWriteOutcomeError",
     "InboundHttpResponseWritePlan",
     "InboundHttpResponseWritePlanError",
     "InboundHttpResponseWriteSessionError",
@@ -451,6 +462,9 @@ __all__ = [
     "SYNC_STOPPED_TIME_LIMIT",
     "ValidatedFederationPage",
     "WRITE_ACTION_COMPLETE",
+    "WRITE_OUTCOME_FAILURE",
+    "WRITE_OUTCOME_PROGRESS",
+    "WRITE_OUTCOME_ZERO",
     "WRITE_ACTION_WRITE",
     "InMemoryEphemeralRecordRepository",
     "IngestOutcome",
