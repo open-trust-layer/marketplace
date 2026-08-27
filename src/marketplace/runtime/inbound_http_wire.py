@@ -16,11 +16,15 @@ from .inbound_http import (
     MAX_INBOUND_HTTP_BODY_BYTES,
     MAX_INBOUND_HTTP_HEADER_BYTES,
     MAX_INBOUND_HTTP_HEADERS,
+    RECORD_ROUTE_PREFIX,
+    ROUTE_FEDERATION_CONTROL,
+    ROUTE_IMMUTABLE_RECORD,
     BoundedInboundHttpApplicationAdapter,
     InboundHttpError,
     InboundHttpRequest,
     PreparedInboundHttpResponse,
 )
+from .inbound_record import INBOUND_RECORD_RETRIEVAL_OPERATION
 
 DEFAULT_MAX_INBOUND_HTTP_WIRE_HEADER_BYTES: Final = DEFAULT_MAX_INBOUND_HTTP_HEADER_BYTES
 DEFAULT_MAX_INBOUND_HTTP_WIRE_BODY_BYTES: Final = DEFAULT_MAX_INBOUND_HTTP_REQUEST_BYTES
@@ -32,6 +36,7 @@ MAX_INBOUND_HTTP_WIRE_HEADERS: Final = MAX_INBOUND_HTTP_HEADERS + 1
 MAX_INBOUND_HTTP_WIRE_HEADER_NAME_BYTES: Final = 64
 MAX_INBOUND_HTTP_WIRE_HEADER_VALUE_BYTES: Final = 4_096
 MAX_INBOUND_HTTP_AUTHORITY_BYTES: Final = 255
+_MAX_METADATA_TEXT_BYTES: Final = 512
 
 _HEADER_TERMINATOR = b"\r\n\r\n"
 _CANONICAL_WIRE_HEADER_NAMES = {
@@ -56,6 +61,20 @@ class InboundHttpWireError(RuntimeError):
 
 def _fail(code: str, message: str) -> None:
     raise InboundHttpWireError(code, message)
+
+
+def _bounded_metadata_text(value: object, *, label: str) -> str:
+    if type(value) is not str or not value:
+        raise ValueError(f"{label} MUST be non-empty exact text")
+    try:
+        encoded = value.encode("ascii")
+    except UnicodeEncodeError as exc:
+        raise ValueError(f"{label} MUST use exact ASCII") from exc
+    if len(encoded) > _MAX_METADATA_TEXT_BYTES:
+        raise ValueError(f"{label} exceeds the M35 metadata bound")
+    if any(byte < 0x21 or byte == 0x7F for byte in encoded):
+        raise ValueError(f"{label} MUST NOT contain whitespace/control bytes")
+    return value
 
 
 def _canonical_authority(value: object) -> str:
@@ -174,18 +193,19 @@ class PreparedInboundHttpWireExchange:
         if self.request.request_authenticated is not False or self.request.peer_identity_proven is not False:
             raise ValueError("request authority facts MUST remain false")
         authority = _canonical_authority(self.host_authority)
-        if type(self.route_kind) is not str or not self.route_kind:
-            raise ValueError("route_kind MUST be non-empty exact text")
-        if type(self.route_operation) is not str or not self.route_operation:
-            raise ValueError("route_operation MUST be non-empty exact text")
+        if self.route_kind not in {ROUTE_FEDERATION_CONTROL, ROUTE_IMMUTABLE_RECORD}:
+            raise ValueError("route_kind is outside the M35 route profile")
+        route_operation = _bounded_metadata_text(self.route_operation, label="route_operation")
+        message_type = _bounded_metadata_text(self.olp_message_type, label="olp_message_type")
         if type(self.status_code) is not int or self.status_code != 200:
             raise ValueError("M35 success status MUST be exact integer 200")
-        if type(self.response_body_bytes) is not int or self.response_body_bytes < 1:
-            raise ValueError("response_body_bytes MUST be a positive exact integer")
+        if (
+            type(self.response_body_bytes) is not int
+            or not 1 <= self.response_body_bytes <= MAX_INBOUND_HTTP_WIRE_RESPONSE_BODY_BYTES
+        ):
+            raise ValueError("response_body_bytes is outside the M35 hard bound")
         if type(self.response_bytes) is not bytes:
             raise ValueError("response_bytes MUST be exact immutable bytes")
-        if type(self.olp_message_type) is not str or not self.olp_message_type:
-            raise ValueError("olp_message_type MUST be non-empty exact text")
         for name, expected in (
             ("host_authority_validated", True),
             ("tls_sni_bound", False),
@@ -209,11 +229,11 @@ class PreparedInboundHttpWireExchange:
             _request_snapshot(self.request),
             authority,
             self.route_kind,
-            self.route_operation,
+            route_operation,
             self.status_code,
             self.response_body_bytes,
             self.response_bytes,
-            self.olp_message_type,
+            message_type,
             self.host_authority_validated,
             self.tls_sni_bound,
             self.transmitted,
@@ -229,6 +249,8 @@ class PreparedInboundHttpWireExchange:
         if self.integrity_snapshot is None:
             object.__setattr__(self, "integrity_snapshot", current)
         object.__setattr__(self, "host_authority", authority)
+        object.__setattr__(self, "route_operation", route_operation)
+        object.__setattr__(self, "olp_message_type", message_type)
 
 
 class BoundedInboundHttpWireAdapter:
@@ -342,6 +364,8 @@ class BoundedInboundHttpWireAdapter:
                 _fail("HEADER_VALUE_LIMIT_EXCEEDED", "request header value exceeds the M35 bound")
             if not value or any(byte < 0x20 or byte == 0x7F for byte in value_bytes):
                 _fail("UNSAFE_HEADER_VALUE", "request header value is empty or contains controls")
+            if value != value.strip(" "):
+                _fail("NONCANONICAL_HEADER_VALUE", "request header value has outer whitespace")
             headers[lower] = value
             if len(headers) > MAX_INBOUND_HTTP_WIRE_HEADERS:
                 _fail("HEADER_COUNT_LIMIT_EXCEEDED", "request exceeds the M35 header-count bound")
@@ -414,6 +438,24 @@ class BoundedInboundHttpWireAdapter:
             _fail("APPLICATION_RESPONSE_INTEGRITY_DRIFT", "M34 response no longer matches its integrity witness")
         if _request_snapshot(witnessed.request) != _request_snapshot(request):
             _fail("APPLICATION_REQUEST_BINDING_DRIFT", "M34 response is not bound to the parsed M35 request")
+
+        record_namespace = request.path == "/v1/records" or request.path.startswith(RECORD_ROUTE_PREFIX)
+        if request.path == "/v1/records":
+            _fail("APPLICATION_ROUTE_BINDING_DRIFT", "M34 returned success for the reserved Record collection path")
+        if record_namespace:
+            if (
+                request.method != "GET"
+                or witnessed.route_kind != ROUTE_IMMUTABLE_RECORD
+                or witnessed.route_operation != INBOUND_RECORD_RETRIEVAL_OPERATION
+                or witnessed.olp_message_type != "record"
+            ):
+                _fail("APPLICATION_ROUTE_BINDING_DRIFT", "M34 Record response does not match the parsed Record route")
+        else:
+            if request.method != "POST" or witnessed.route_kind != ROUTE_FEDERATION_CONTROL:
+                _fail("APPLICATION_ROUTE_BINDING_DRIFT", "M34 control response does not match the parsed control route")
+            if witnessed.route_operation == INBOUND_RECORD_RETRIEVAL_OPERATION:
+                _fail("APPLICATION_ROUTE_BINDING_DRIFT", "Record retrieval operation cannot be exposed as a control response")
+
         if type(witnessed.body) is not bytes or not 1 <= len(witnessed.body) <= self._limits.max_response_body_bytes:
             _fail("RESPONSE_BODY_LIMIT_EXCEEDED", "M34 response body is outside the configured M35 bound")
         try:
