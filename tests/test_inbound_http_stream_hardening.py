@@ -106,6 +106,13 @@ class InboundHttpStreamHardeningTests(unittest.TestCase):
         self.assertEqual(assembler.limits.max_chunks, 2)
         self.assertEqual(assembler.limits.max_chunk_bytes, 128)
 
+    def test_prepare_chunks_uses_single_join_and_single_progress_probe(self):
+        source = inspect.getsource(BoundedInboundHttpStreamAssembler.prepare_chunks)
+        self.assertNotIn("bytearray(", source)
+        self.assertIn('raw = b"".join(chunks)', source)
+        self.assertEqual(source.count("self.probe(raw)"), 1)
+        self.assertLess(source.index("for chunk in chunks:"), source.index('raw = b"".join(chunks)'))
+
     def test_attacker_sized_decimal_length_is_textually_rejected_before_bounded_conversion(self):
         raw = (
             "POST /v1/federation/snapshot HTTP/1.1\r\n"
