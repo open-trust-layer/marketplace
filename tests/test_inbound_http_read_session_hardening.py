@@ -250,9 +250,16 @@ class InboundHttpReadSessionHardeningTests(unittest.TestCase):
             ".listen(",
             ".accept(",
             ".connect(",
-            "open(",
         ):
             self.assertNotIn(token, source)
+        open_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "open"
+        ]
+        self.assertEqual(open_calls, [])
 
     def test_progress_and_completion_authority_flags_remain_false(self):
         progress = self.session.accept_chunk(self.raw)
