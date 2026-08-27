@@ -9,11 +9,16 @@ from olp import RecordV1
 
 from marketplace.reference import CORE_PROFILE, TYPE_INTENT, record_identity_text, validate_market_record
 from marketplace.reference.record_serving_v1 import (
+    RecordServingReferenceError,
     make_record_transport_envelope,
     market_record_transport_payload,
     verify_prepared_record_transport_envelope,
 )
 from marketplace.runtime.inbound_record import BoundedInboundRecordResponder, InboundRecordError
+from marketplace.runtime.prepared_integrity import (
+    MAX_PREPARED_SNAPSHOT_DEPTH,
+    MAX_PREPARED_SNAPSHOT_ITEMS,
+)
 
 SOURCE = "urn:example:source:m33-hardening"
 ACTION = "https://example.test/actions/sell"
@@ -108,6 +113,43 @@ class InboundRecordHardeningTests(unittest.TestCase):
         with self.assertRaises(InboundRecordError) as raised:
             responder.prepare(requested_record_identity=record_id)
         self.assertEqual(raised.exception.code, "UNSAFE_RECORD_PAYLOAD")
+
+    def test_reference_payload_conversion_rejects_excessive_depth_before_unbounded_copy(self):
+        nested: object = "leaf"
+        for index in range(MAX_PREPARED_SNAPSHOT_DEPTH + 2):
+            nested = {f"level-{index}": nested}
+        value = record()
+        value = RecordV1.from_mapping(
+            {
+                **record_mapping(),
+                "extensions": {"https://example.test/deep": nested},
+            }
+        )
+        value.validate()
+        validate_market_record(value)
+        record_id = record_identity_text(value)
+
+        with self.assertRaises(RecordServingReferenceError) as raised:
+            market_record_transport_payload(value, expected_record_identity=record_id)
+
+        self.assertEqual(raised.exception.code, "PAYLOAD_DEPTH_EXCEEDED")
+
+    def test_reference_payload_conversion_rejects_oversized_collection_before_copy(self):
+        oversized = {f"item-{index}": index for index in range(MAX_PREPARED_SNAPSHOT_ITEMS + 1)}
+        value = RecordV1.from_mapping(
+            {
+                **record_mapping(),
+                "extensions": {"https://example.test/wide": oversized},
+            }
+        )
+        value.validate()
+        validate_market_record(value)
+        record_id = record_identity_text(value)
+
+        with self.assertRaises(RecordServingReferenceError) as raised:
+            market_record_transport_payload(value, expected_record_identity=record_id)
+
+        self.assertEqual(raised.exception.code, "PAYLOAD_ITEM_LIMIT")
 
     def test_payload_helper_record_mutation_is_detected_before_envelope_creation(self):
         original_id = record_identity_text(record())
@@ -252,6 +294,18 @@ class InboundRecordHardeningTests(unittest.TestCase):
             "os",
             "pathlib",
         }
+        self.assertTrue(imported_roots.isdisjoint(forbidden), imported_roots & forbidden)
+
+    def test_m33_reference_adapter_has_no_network_or_process_surface(self):
+        source_path = Path(__file__).resolve().parents[1] / "src" / "marketplace" / "reference" / "record_serving_v1.py"
+        tree = ast.parse(source_path.read_text(encoding="utf-8"))
+        imported_roots: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                imported_roots.update(alias.name.split(".", 1)[0] for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                imported_roots.add(node.module.split(".", 1)[0])
+        forbidden = {"socket", "ssl", "http", "urllib", "asyncio", "threading", "subprocess", "logging", "os", "pathlib"}
         self.assertTrue(imported_roots.isdisjoint(forbidden), imported_roots & forbidden)
 
 
