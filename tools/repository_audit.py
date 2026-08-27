@@ -28,6 +28,9 @@ _REQUIRED_SECURITY_FILES = (
     Path("src/marketplace/runtime/https_transport.py"),
     Path("src/marketplace/reference/transport_json_v1.py"),
     Path("docs/authorized-https-federation-transport.md"),
+    Path("src/marketplace/runtime/record_retrieval.py"),
+    Path("src/marketplace/reference/record_retrieval_v1.py"),
+    Path("docs/authorized-immutable-record-retrieval.md"),
 )
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
@@ -35,6 +38,7 @@ _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/matching_v1.py"),
     Path("src/marketplace/reference/federation_v1.py"),
     Path("src/marketplace/reference/transport_json_v1.py"),
+    Path("src/marketplace/reference/record_retrieval_v1.py"),
     Path("tools/marketplace_record_v1.py"),
     Path("tools/marketplace_matching_v1.py"),
     Path("tools/marketplace_federation_v1.py"),
