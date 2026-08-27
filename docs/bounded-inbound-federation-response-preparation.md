@@ -52,6 +52,8 @@ Both derived fingerprints must be non-empty exact text and must equal the reques
 
 This preserves semantic normalization where raw list/tuple host representations may differ while preventing a miswired/hostile normalizer from silently changing the requested scope.
 
+The final prepared-response integrity witness binds both the canonical scope fingerprint **and the immutable scope host representation**. Replacing the request context with a different scope while reusing the old fingerprint therefore invalidates the witness.
+
 ## Local capability binding
 
 A request's `required_capabilities` field is a requirement, not proof that the local responder implements or enables those capabilities.
@@ -69,6 +71,8 @@ M32 requires:
 Any unsupported/unavailable requirement, silent-downgrade attempt, result-shape drift, or required-set drift fails before disclosure authorization or Record enumeration.
 
 The local capability advertisement is deeply detached at responder construction, so later caller mutation cannot silently change the responder's capability state for an in-progress value.
+
+The responder also honors the advertisement's local resource limits rather than treating only M8 hard maxima as operative. Its configured `max_page_records` cannot exceed the advertised `max_page_records`, and both supplied inbound cursors and prepared outbound `next_cursor` values must stay within the advertised `max_cursor_bytes` value. These checks are fail-closed and occur before any later phase that does not need to run.
 
 Successful capability negotiation remains only a local compatibility fact. It does not authenticate a peer and does not authorize disclosure.
 
@@ -99,7 +103,7 @@ The caller selects one configured operation profile locally, for example snapsho
 6. cross-binds the normalized operation to the configured operation profile;
 7. requires the normalized request `source` to equal the responder's configured local federation source;
 8. independently fingerprints the normalized scope and requires raw, normalized, and reported scope fingerprints to agree;
-9. enforces canonical required capabilities, page-size bounds, and exact cursor-presence consistency;
+9. enforces canonical required capabilities, configured/advertised page-size bounds, and exact cursor-presence/local cursor-limit consistency;
 10. creates one immutable `InboundFederationRequestContext`;
 11. requires the exact requested capabilities to be fully supported by the detached local capability advertisement;
 12. only then invokes the local disclosure authorizer.
@@ -114,7 +118,7 @@ M32 does not decode, generate, interpret, rank, log, persist, or authenticate cu
 
 An incoming cursor is exposed only inside the authorized immutable request context passed to the page source. The page source/policy component decides how, if at all, to interpret that cursor for local pagination.
 
-A truncated page must return one bounded nonempty opaque `next_cursor` no larger than the existing M8 4096-byte maximum. A final page must not return a cursor.
+A truncated page must return one bounded nonempty opaque `next_cursor` no larger than both the existing M8 4096-byte maximum and the responder's local advertised cursor limit. A final page must not return a cursor. An incoming cursor must satisfy the same local advertised limit before disclosure authorization.
 
 Cursor possession does not grant disclosure authorization and does not prove remote identity.
 
@@ -122,7 +126,7 @@ Cursor possession does not grant disclosure authorization and does not prove rem
 
 `BoundedInboundFederationResponder` defaults to a local maximum of **256 Records per prepared page**.
 
-The hard runtime maximum remains the existing M8 page maximum of **10,000 Records**. The local cap is explicit and fail-closed: M32 rejects a request whose requested `page_size` exceeds the configured local maximum rather than silently rewriting the request.
+The hard runtime maximum remains the existing M8 page maximum of **10,000 Records**. The local cap is explicit and fail-closed: M32 rejects a request whose requested `page_size` exceeds the configured local maximum rather than silently rewriting the request. The configured local maximum itself cannot exceed the local capability advertisement's `max_page_records` value.
 
 The page source must return an exact `InboundFederationPageMaterial` whose `records` field is an exact tuple. Arbitrary iterables/generators are rejected without enumeration.
 
@@ -164,7 +168,7 @@ establishes_trust = False
 authorizes_protected_side_effects = False
 ```
 
-Its integrity snapshot binds the immutable request context, canonical Record IDs, page controls, and response-envelope host representation. Dataclass replacement or other local rebinding cannot silently reuse an old snapshot for a changed prepared response.
+Its integrity snapshot binds the immutable request context including the actual frozen scope, canonical Record IDs, page controls, and response-envelope host representation. Dataclass replacement or other local rebinding cannot silently reuse an old snapshot for a changed prepared response.
 
 ## Alias and helper hardening
 
