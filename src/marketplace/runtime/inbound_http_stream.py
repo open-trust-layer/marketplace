@@ -407,29 +407,21 @@ class BoundedInboundHttpStreamAssembler:
 
         wire_limits = self._wire_adapter.limits
         total_limit = wire_limits.max_header_bytes + wire_limits.max_body_bytes
-        assembled = bytearray()
-        final_progress: InboundHttpStreamProgress | None = None
-
-        for index, chunk in enumerate(chunks):
+        aggregate_bytes = 0
+        for chunk in chunks:
             if type(chunk) is not bytes or not chunk:
                 _fail("INVALID_CHUNK", "every M36 chunk MUST be non-empty exact immutable bytes")
             if len(chunk) > self._limits.max_chunk_bytes:
                 _fail("CHUNK_SIZE_LIMIT_EXCEEDED", "chunk exceeds the configured M36 size limit")
-            if len(assembled) + len(chunk) > total_limit:
+            if aggregate_bytes + len(chunk) > total_limit:
                 _fail("STREAM_TOTAL_LIMIT_EXCEEDED", "assembled request would exceed the M35 total limit")
-            assembled.extend(chunk)
-            progress = self.probe(bytes(assembled))
-            final_progress = progress
-            if progress.state == PROGRESS_COMPLETE and index != len(chunks) - 1:
-                _fail(
-                    "TRAILING_CHUNKS",
-                    "request completed before the final supplied chunk",
-                )
+            aggregate_bytes += len(chunk)
 
-        if final_progress is None or final_progress.state != PROGRESS_COMPLETE:
+        raw = b"".join(chunks)
+        progress = self.probe(raw)
+        if progress.state != PROGRESS_COMPLETE:
             _fail("INCOMPLETE_REQUEST", "supplied chunks do not contain one complete M35 request")
 
-        raw = bytes(assembled)
         try:
             parsed = self._wire_adapter.parse_request(raw)
         except InboundHttpWireError as exc:
@@ -452,5 +444,5 @@ class BoundedInboundHttpStreamAssembler:
         return PreparedInboundHttpStreamExchange(
             wire_exchange=witnessed,
             chunk_count=len(chunks),
-            request_bytes=len(raw),
+            request_bytes=aggregate_bytes,
         )
