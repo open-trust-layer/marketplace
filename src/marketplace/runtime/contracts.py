@@ -168,3 +168,27 @@ class InboundFederationPageSource(Protocol):
     """Produce one already-bounded page material value after local authorization."""
 
     def __call__(self, context: Any) -> Any: ...
+
+
+class InboundRecordDisclosureAuthorizer(Protocol):
+    """Authorize disclosure of one exact immutable local Record body."""
+
+    def __call__(self, context: Any) -> bool: ...
+
+
+class RecordEnvelopePayloadProvider(Protocol):
+    """Produce one validated transport payload for an exact local Record."""
+
+    def __call__(self, record: Any, *, expected_record_identity: str) -> Mapping[str, Any]: ...
+
+
+class RecordTransportEnvelopeMaker(Protocol):
+    """Create one abstract OLP ``record`` envelope without transmitting it."""
+
+    def __call__(self, payload: Any) -> Sequence[Any]: ...
+
+
+class RecordTransportEnvelopeVerifier(Protocol):
+    """Verify one prepared OLP ``record`` envelope and return bounded scalar facts."""
+
+    def __call__(self, envelope: Any, *, expected_record_identity: str) -> Mapping[str, Any]: ...
