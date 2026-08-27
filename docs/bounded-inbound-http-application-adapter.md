@@ -67,7 +67,9 @@ request_authenticated = False
 peer_identity_proven   = False
 ```
 
-M34 therefore never treats transport syntax as authentication.
+M34 explicitly rejects either fact if it has been promoted before handling. It then reconstructs an adapter-owned canonical `InboundHttpRequest` under the adapter's own configured header bound and uses only that detached request for routing, responder calls, and response provenance. Mutating the caller's original request object after or during handling therefore cannot rewrite the prepared response's authoritative request context.
+
+M34 never treats transport syntax as authentication.
 
 ## Path policy
 
@@ -84,6 +86,8 @@ Paths use the same conservative shape as the reviewed M25 endpoint policy:
 Configured federation control routes are exact local paths. A route must be non-root, must not have a trailing slash, and must not overlap `/v1/records/...`.
 
 One M32 operation may appear at only one configured M34 path. This intentionally rejects route aliases that could make policy provenance ambiguous.
+
+At adapter construction, M34 revalidates each supplied route and copies only its exact path and operation strings into adapter-owned state. It does not retain caller-owned route objects as live authority. Low-level mutation of a supplied route object after construction therefore cannot redirect a later request.
 
 ## Header profile
 
@@ -122,6 +126,8 @@ Content-Length: <canonical exact body length>
 
 The body must be non-empty and within the configured request-body limit.
 
+`Content-Length` is validated as bounded canonical decimal text and compared directly with `str(len(body))`; M34 does not convert attacker-controlled decimal text into an arbitrary-size Python integer.
+
 M34 then:
 
 1. decodes exactly one strict OLP JSON transport envelope using the existing reference codec;
@@ -130,7 +136,8 @@ M34 then:
 4. calls `BoundedInboundFederationResponder.prepare_response(...)` once;
 5. requires the M32 result to preserve that exact operation and all negative authority facts;
 6. serializes the prepared response envelope through the strict reference codec;
-7. locally decodes the encoded response again and requires integrity-snapshot equality with the M32 prepared envelope.
+7. verifies exact M30 host integrity before and after the encoder to detect in-process mutation;
+8. locally decodes the encoded response and compares a separate bounded **wire-semantic snapshot** with the prepared envelope.
 
 A snapshot body sent to a sync route, or any other route/message-profile mismatch, fails through M32 before disclosure authorization.
 
@@ -174,11 +181,16 @@ transmitted = False
 
 The body is one deterministic strict OLP JSON transport envelope produced by the existing reference codec.
 
-Before return, M34 decodes the encoded body locally and requires its M30 type-tagged integrity snapshot to equal the responder's prepared envelope snapshot. An injected encoder or decoder therefore cannot silently change marker, version, message type, or payload.
+M34 uses **two different integrity views for two different purposes**:
+
+1. M30's exact type-tagged host snapshot is taken before encoding and checked again immediately afterward. This detects mutation of the responder's authoritative frozen host object, including distinctions such as tuple versus list.
+2. A bounded wire-semantic snapshot is used only across JSON encode/decode. JSON does not preserve Python tuple/list distinction, so this snapshot deliberately treats tuple and list as the same ordered sequence while preserving exact scalar types (`bool` remains distinct from `int`), map keys, sequence order, values, and M30 depth/item bounds.
+
+This distinction is necessary for valid M33 Record envelopes whose OLP/JSON round trip can legitimately materialize an array with a different Python container class while preserving the exact Record identity and wire meaning. A valid alternate message type, payload value, map key, scalar type, or sequence content still changes the wire-semantic snapshot and is rejected as serialization drift.
 
 The prepared HTTP response integrity witness binds:
 
-- the canonical immutable request;
+- the adapter-owned canonical immutable request, including its negative authentication/peer-identity facts;
 - route kind;
 - exact route operation;
 - status;
@@ -195,14 +207,14 @@ M34 does not trust the fact that an object came from the configured responder al
 For M32 it requires exact negative facts including:
 
 ```text
-transmitted                      = False
-request_authenticated            = False
-peer_identity_proven             = False
-global_completeness              = UNKNOWN
-absence_is_deletion_evidence     = False
-creates_agreement                = False
-establishes_truth                = False
-establishes_trust                = False
+transmitted                       = False
+request_authenticated             = False
+peer_identity_proven              = False
+global_completeness               = UNKNOWN
+absence_is_deletion_evidence      = False
+creates_agreement                 = False
+establishes_truth                 = False
+establishes_trust                 = False
 authorizes_protected_side_effects = False
 ```
 
@@ -226,7 +238,7 @@ establishes_authorization         = False
 authorizes_protected_side_effects = False
 ```
 
-Adversarial tests use low-level host mutation to prove M34 rejects promoted responder facts.
+Adversarial tests use low-level host mutation to prove M34 rejects promoted responder and request authority facts.
 
 ## Error and privacy behavior
 
@@ -265,7 +277,9 @@ control routes    = 64
 
 All limits are finite and non-disableable.
 
-M34 receives a complete already-parsed body; streaming/chunked parsing belongs to a future transport layer and remains out of scope.
+At adapter construction, M34 copies the supplied numeric limits into a fresh, revalidated `InboundHttpApplicationLimits` value. Mutation of a caller-retained limit object cannot relax a running adapter's bounds.
+
+M34 receives a complete already-parsed body; streaming/chunked parsing belongs to a future transport layer and remains out of scope. A future raw transport parser must itself enforce a pre-allocation wire bound; M34's object-level body check cannot retroactively prevent memory already allocated by an earlier layer.
 
 ## Alias / TOCTOU resistance
 
@@ -276,11 +290,16 @@ Consequences:
 - arbitrary header generators are rejected without enumeration;
 - arbitrary route generators are rejected without enumeration;
 - request bytes are immutable;
+- caller request objects are reconstructed into adapter-owned canonical requests;
+- caller route objects are copied into adapter-owned path→operation scalars;
+- caller limit objects are copied into adapter-owned revalidated limits;
+- promoted request authentication/peer identity is rejected before disclosure;
 - decoded control envelopes are deeply detached before M32;
 - M34 checks that M32 did not mutate its detached request envelope;
 - prepared responder envelopes use M30 tuple-backed frozen host values;
 - explicit `dict.__setitem__` writes against inherited `FrozenDict` backing storage remain non-authoritative;
-- response encoding is integrity-checked before and after serialization.
+- exact host integrity is checked around response encoding;
+- wire-semantic integrity is checked across the JSON round trip.
 
 These controls defend the application-object boundary, not arbitrary process memory corruption or hostile interpreter modification.
 
