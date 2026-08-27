@@ -28,6 +28,12 @@ from .record_retrieval_v1 import (
     verified_retrieved_market_record_value,
     verify_retrieved_market_record,
 )
+from .record_serving_v1 import (
+    RecordServingReferenceError,
+    make_record_transport_envelope,
+    market_record_transport_payload,
+    verify_prepared_record_transport_envelope,
+)
 from .record_v1 import (
     BASE,
     CORE_PROFILE,
@@ -57,6 +63,7 @@ __all__ = [
     "MarketplaceTransportJsonError",
     "PROPOSAL_PROFILE",
     "RECORD_TYPES",
+    "RecordServingReferenceError",
     "RetrievedRecordVerificationError",
     "STRUCTURE_VALIDATORS",
     "TYPE_AGREEMENT",
@@ -69,6 +76,8 @@ __all__ = [
     "evaluate_discovery",
     "evaluate_match",
     "federation_v1",
+    "make_record_transport_envelope",
+    "market_record_transport_payload",
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
@@ -78,5 +87,6 @@ __all__ = [
     "validate_ranked_view",
     "verified_retrieved_market_record_value",
     "verify_index_entry",
+    "verify_prepared_record_transport_envelope",
     "verify_retrieved_market_record",
 ]
