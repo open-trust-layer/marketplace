@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from dataclasses import replace
 import inspect
 import textwrap
 import unittest
@@ -182,7 +183,7 @@ class InboundHttpReadDriverHardeningTests(unittest.TestCase):
         self.assertEqual(session._prefix, b"GET ")
         session.close()
 
-    def test_completion_rebinding_and_authority_promotion_fail_integrity_replay(self):
+    def test_completion_rebinding_fails_and_authority_promotion_cannot_survive_replay(self):
         holder = {}
 
         def reader(max_bytes):
@@ -214,13 +215,10 @@ class InboundHttpReadDriverHardeningTests(unittest.TestCase):
         ).run_to_completion()
         object.__setattr__(result2, "establishes_authorization", True)
         with self.assertRaises(ValueError):
-            CompletedInboundHttpReadDriverResult(
-                completed=result2.completed,
-                driver_steps=result2.driver_steps,
-                reader_invocations=result2.reader_invocations,
-                elapsed_seconds=result2.elapsed_seconds,
-                integrity_snapshot=result2.integrity_snapshot,
-            )
+            result2.__post_init__()
+        replayed = replace(result2)
+        self.assertIs(replayed.establishes_authorization, False)
+        self.assertEqual(replayed.integrity_snapshot, result2.integrity_snapshot)
         self.assertEqual(raw2, raw)
 
     def test_result_witness_contains_no_second_raw_request_copy(self):
