@@ -22,6 +22,7 @@ from marketplace.runtime.inbound_http_stream import (
 )
 from marketplace.runtime.inbound_http_wire import (
     BoundedInboundHttpWireAdapter,
+    InboundHttpWireLimits,
     PreparedInboundHttpWireExchange,
 )
 from marketplace.runtime.inbound_record import INBOUND_RECORD_RETRIEVAL_OPERATION
@@ -106,12 +107,62 @@ class InboundHttpStreamHardeningTests(unittest.TestCase):
         self.assertEqual(assembler.limits.max_chunks, 2)
         self.assertEqual(assembler.limits.max_chunk_bytes, 128)
 
+    def test_m35_authority_is_snapshotted_and_later_alias_drift_fails_before_parse(self):
+        self.assertEqual(self.assembler.wire_authority, AUTHORITY)
+        object.__setattr__(self.wire, "_authority", "other.example")
+        with self.assertRaises(InboundHttpStreamError) as caught:
+            self.assembler.probe(self.raw)
+        self.assertEqual(caught.exception.code, "WIRE_CONFIGURATION_DRIFT")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_m35_limits_are_snapshotted_and_later_alias_drift_fails_before_parse(self):
+        snapshot = self.assembler.wire_limits
+        self.assertIsNot(snapshot, self.wire.limits)
+        object.__setattr__(self.wire.limits, "max_body_bytes", snapshot.max_body_bytes + 1)
+        with self.assertRaises(InboundHttpStreamError) as caught:
+            self.assembler.prepare_chunks((self.raw,))
+        self.assertEqual(caught.exception.code, "WIRE_CONFIGURATION_DRIFT")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_parse_helper_cannot_mutate_m35_configuration_mid_call(self):
+        original_parse = self.wire.parse_request
+
+        def hostile_parse(raw):
+            result = original_parse(raw)
+            object.__setattr__(self.wire, "_authority", "other.example")
+            return result
+
+        object.__setattr__(self.wire, "parse_request", hostile_parse)
+        with self.assertRaises(InboundHttpStreamError) as caught:
+            self.assembler.probe(self.raw)
+        self.assertEqual(caught.exception.code, "WIRE_CONFIGURATION_DRIFT")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_prepare_helper_cannot_mutate_m35_configuration_mid_call(self):
+        original_prepare = self.wire.prepare
+
+        def hostile_prepare(raw):
+            result = original_prepare(raw)
+            object.__setattr__(self.wire, "_limits", InboundHttpWireLimits(
+                max_header_bytes=self.assembler.wire_limits.max_header_bytes,
+                max_body_bytes=self.assembler.wire_limits.max_body_bytes - 1,
+                max_response_body_bytes=self.assembler.wire_limits.max_response_body_bytes,
+            ))
+            return result
+
+        object.__setattr__(self.wire, "prepare", hostile_prepare)
+        with self.assertRaises(InboundHttpStreamError) as caught:
+            self.assembler.prepare_chunks((self.raw,))
+        self.assertEqual(caught.exception.code, "WIRE_CONFIGURATION_DRIFT")
+        self.assertEqual(len(self.harness.calls), 1)
+
     def test_prepare_chunks_uses_single_join_and_single_progress_probe(self):
         source = inspect.getsource(BoundedInboundHttpStreamAssembler.prepare_chunks)
         self.assertNotIn("bytearray(", source)
         self.assertIn('raw = b"".join(chunks)', source)
         self.assertEqual(source.count("self.probe(raw)"), 1)
         self.assertLess(source.index("for chunk in chunks:"), source.index('raw = b"".join(chunks)'))
+        self.assertIn("if len(raw) != aggregate_bytes:", source)
 
     def test_attacker_sized_decimal_length_is_textually_rejected_before_bounded_conversion(self):
         raw = (
@@ -234,6 +285,12 @@ class InboundHttpStreamHardeningTests(unittest.TestCase):
     def test_prepared_stream_detects_nested_m35_integrity_drift(self):
         prepared = self.assembler.prepare_chunks((self.raw,))
         object.__setattr__(prepared.wire_exchange, "route_operation", "https://example.test/changed")
+        with self.assertRaises(ValueError):
+            prepared.__post_init__()
+
+    def test_prepared_stream_normalizes_nested_authority_drift_to_value_error(self):
+        prepared = self.assembler.prepare_chunks((self.raw,))
+        object.__setattr__(prepared.wire_exchange, "transmitted", True)
         with self.assertRaises(ValueError):
             prepared.__post_init__()
 
