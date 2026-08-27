@@ -1,8 +1,11 @@
 # Bounded Multi-Page Federation Synchronization
 
-**Milestone:** M31  
-**Status:** non-normative reference runtime architecture  
-**Risk:** HIGH  
+**Milestone:** M31
+
+**Status:** non-normative reference runtime architecture
+
+**Risk:** HIGH
+
 **Network posture:** concrete external I/O remains exclusively in existing M26/M27 adapters; development and CI use injected deterministic doubles
 
 ## Purpose
