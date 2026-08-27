@@ -134,7 +134,7 @@ class InboundHttpReadDriverHardeningTests(unittest.TestCase):
         self.assertEqual(result.completed.prefix, raw)
         self.assertEqual(calls, [])
 
-    def test_private_captured_invoke_rebind_fails_before_input_consumption(self):
+    def test_private_captured_invoke_rebind_fails_closed_before_input_consumption(self):
         calls = []
 
         def reader(max_bytes):
@@ -148,7 +148,8 @@ class InboundHttpReadDriverHardeningTests(unittest.TestCase):
             driver.run_to_completion()
         self.assertEqual(caught.exception.code, "READ_DRIVER_BINDING_DRIFT")
         self.assertEqual(calls, [])
-        self.assertFalse(session.closed)
+        self.assertTrue(session.closed)
+        self.assertEqual(session._prefix, b"")
 
     def test_retained_m37_limit_drift_after_consumption_closes_before_error(self):
         session, _, invoker, _ = _build(
