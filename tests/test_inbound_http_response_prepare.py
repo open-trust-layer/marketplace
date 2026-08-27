@@ -268,9 +268,9 @@ class InboundHttpResponsePreparationTests(unittest.TestCase):
             reader_calls.append(max_bytes)
             return InboundHttpReadOutcome.eof()
 
-        harness, wire, _, _, driver, _ = _build(reader)
+        harness, _, _, _, driver, _ = _build(reader)
         preparer = BoundedInboundHttpResponsePreparer(read_driver=driver)
-        preparer._prepare = wire.prepare
+        preparer._prepare = lambda _: None
 
         with self.assertRaises(InboundHttpResponsePreparationError) as caught:
             preparer.prepare()
@@ -327,7 +327,7 @@ class InboundHttpResponsePreparationTests(unittest.TestCase):
         self.assertEqual(caught.exception.wire_code, "APPLICATION_ROUTE_BINDING_DRIFT")
         self.assertEqual(len(harness.calls), 1)
 
-    def test_result_rebinding_cannot_change_request_accounting_or_authority(self):
+    def test_result_rebinding_cannot_change_request_accounting_or_nested_authority(self):
         holder = {}
 
         def reader(_):
@@ -339,8 +339,8 @@ class InboundHttpResponsePreparationTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             replace(result, request_bytes=result.request_bytes + 1)
-        object.__setattr__(result, "transmitted", True)
-        with self.assertRaises(ValueError):
+        object.__setattr__(result.wire_exchange, "transmitted", True)
+        with self.assertRaises(InboundHttpResponsePreparationError):
             replace(result)
 
     def test_result_has_no_completed_raw_prefix_field_and_authority_stays_negative(self):
