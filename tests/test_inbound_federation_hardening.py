@@ -22,21 +22,38 @@ def scope() -> dict[str, object]:
     return {"version": 1, "record_types": [TYPE_INTENT]}
 
 
-def request(*, page_size: int = 4) -> dict[str, object]:
+def capability_advertisement(*, source: str = SOURCE) -> dict[str, object]:
+    capabilities = [federation_v1.CAP_SNAPSHOT]
+    return {
+        "version": 1,
+        "source": source,
+        "implemented": capabilities,
+        "enabled": capabilities,
+        "configured": capabilities,
+        "limits": {
+            "max_page_records": federation_v1.MAX_PAGE_RECORDS,
+            "max_cursor_bytes": federation_v1.MAX_CURSOR_BYTES,
+            "max_submission_records": federation_v1.MAX_SUBMISSION_RECORDS,
+        },
+    }
+
+
+def request(*, page_size: int = 4, required_capabilities: list[str] | None = None) -> dict[str, object]:
+    capabilities = required_capabilities or [federation_v1.CAP_SNAPSHOT]
     return {
         "version": 1,
         "source": SOURCE,
         "operation": federation_v1.OP_SNAPSHOT,
         "scope": scope(),
-        "required_capabilities": [federation_v1.CAP_SNAPSHOT],
+        "required_capabilities": sorted(capabilities, key=lambda value: value.encode("utf-8")),
         "page_size": page_size,
     }
 
 
-def envelope():
+def envelope(**kwargs: object):
     return federation_v1.make_transport_envelope(
         federation_v1.MSG_SNAPSHOT_REQUEST,
-        request(),
+        request(**kwargs),
     )
 
 
@@ -54,6 +71,9 @@ def service(
     *,
     validate_transport_envelope=federation_v1.validate_transport_envelope,
     validate_exchange_request=federation_v1.validate_exchange_request,
+    scope_fingerprint=federation_v1.scope_fingerprint,
+    negotiate_capabilities=federation_v1.negotiate_capabilities,
+    advertisement=None,
     evaluate_exchange_page=federation_v1.evaluate_exchange_page,
     validate_exchange_result=federation_v1.validate_exchange_result,
     make_transport_envelope=federation_v1.make_transport_envelope,
@@ -73,6 +93,9 @@ def service(
         local_source=SOURCE,
         validate_transport_envelope=validate_transport_envelope,
         validate_exchange_request=validate_exchange_request,
+        scope_fingerprint=scope_fingerprint,
+        negotiate_capabilities=negotiate_capabilities,
+        capability_advertisement=advertisement or capability_advertisement(),
         evaluate_exchange_page=evaluate_exchange_page,
         validate_exchange_result=validate_exchange_result,
         make_transport_envelope=make_transport_envelope,
@@ -106,6 +129,76 @@ class InboundFederationHardeningTests(unittest.TestCase):
             responder.prepare_response(envelope(), operation=federation_v1.OP_SNAPSHOT)
         self.assertEqual(caught.exception.code, "TRANSPORT_OBJECT_PROOF_FORBIDDEN")
         authorizer.assert_not_called()
+
+    def test_request_scope_fingerprint_drift_fails_before_capability_or_disclosure(self):
+        authorizer = Mock(return_value=True)
+        negotiator = Mock(side_effect=federation_v1.negotiate_capabilities)
+
+        def hostile(value):
+            result = federation_v1.validate_exchange_request(value)
+            result["scope_fingerprint"] = "A" * 43
+            return result
+
+        responder = service(
+            validate_exchange_request=hostile,
+            negotiate_capabilities=negotiator,
+            authorize_disclosure=authorizer,
+        )
+        with self.assertRaises(InboundFederationError) as caught:
+            responder.prepare_response(envelope(), operation=federation_v1.OP_SNAPSHOT)
+        self.assertEqual(caught.exception.code, "REQUEST_SCOPE_NORMALIZATION_DRIFT")
+        negotiator.assert_not_called()
+        authorizer.assert_not_called()
+
+    def test_capability_negotiator_binding_drift_fails_before_disclosure(self):
+        authorizer = Mock(return_value=True)
+
+        def hostile(advertisement, required):
+            result = federation_v1.negotiate_capabilities(advertisement, required)
+            result["required_capabilities"] = ("urn:example:capability:other",)
+            return result
+
+        responder = service(
+            negotiate_capabilities=hostile,
+            authorize_disclosure=authorizer,
+        )
+        with self.assertRaises(InboundFederationError) as caught:
+            responder.prepare_response(envelope(), operation=federation_v1.OP_SNAPSHOT)
+        self.assertEqual(caught.exception.code, "CAPABILITY_NEGOTIATOR_BINDING_DRIFT")
+        authorizer.assert_not_called()
+
+    def test_capability_negotiator_cannot_hide_unavailable_requirement(self):
+        authorizer = Mock(return_value=True)
+
+        def hostile(advertisement, required):
+            return {
+                "status": "SUPPORTED",
+                "required_capabilities": tuple(required),
+                "unsupported_capabilities": (),
+                "unavailable_capabilities": ("urn:example:capability:hidden",),
+                "no_silent_downgrade": True,
+            }
+
+        responder = service(
+            negotiate_capabilities=hostile,
+            authorize_disclosure=authorizer,
+        )
+        with self.assertRaises(InboundFederationError) as caught:
+            responder.prepare_response(envelope(), operation=federation_v1.OP_SNAPSHOT)
+        self.assertEqual(caught.exception.code, "REQUIRED_CAPABILITY_UNAVAILABLE")
+        authorizer.assert_not_called()
+
+    def test_capability_advertisement_source_mismatch_is_constructor_error(self):
+        with self.assertRaises(ValueError):
+            service(advertisement=capability_advertisement(source="urn:example:source:other"))
+
+    def test_capability_advertisement_is_detached_from_caller_alias(self):
+        advertisement = capability_advertisement()
+        responder = service(advertisement=advertisement)
+        advertisement["source"] = "urn:example:source:attacker"
+        advertisement["enabled"] = []
+        prepared = responder.prepare_response(envelope(), operation=federation_v1.OP_SNAPSHOT)
+        self.assertFalse(prepared.transmitted)
 
     def test_hostile_page_evaluator_cannot_promote_global_completeness(self):
         def hostile(records, **kwargs):
