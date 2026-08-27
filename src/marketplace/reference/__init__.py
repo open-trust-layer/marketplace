@@ -25,6 +25,7 @@ from .matching_v1 import (
 from .record_retrieval_v1 import (
     RetrievedRecordVerificationError,
     VerifiedRetrievedRecord,
+    verified_retrieved_market_record_value,
     verify_retrieved_market_record,
 )
 from .record_v1 import (
@@ -75,6 +76,7 @@ __all__ = [
     "validate_discovery_query",
     "validate_market_record",
     "validate_ranked_view",
+    "verified_retrieved_market_record_value",
     "verify_index_entry",
     "verify_retrieved_market_record",
 ]
