@@ -31,29 +31,35 @@ The constructor accepts neither a prefix nor a read count. The public `accept_ch
 For each accepted chunk M39:
 
 1. validates its own state-integrity witness;
-2. validates retained M38/M37/M36/M35 configuration;
+2. validates retained M38/M37/M36/M35 configuration and captured helper bindings;
 3. replays the current M37 plan witness;
 4. invokes the construction-bound M38 transition exactly once using M39-owned prefix/count state;
 5. integrity-replays the returned M38 transition;
 6. requires the returned prior M37 plan to match M39's exact current plan;
-7. verifies one-step count/buffer accounting;
-8. only then replaces the owned prefix, count, and current plan.
+7. verifies one-step count/buffer accounting and exact accepted-chunk byte count;
+8. independently verifies byte continuity by incrementally hashing the prior prefix and supplied chunk and comparing that digest with the returned M38 prefix digest, without allocating a second `prefix + chunk` buffer;
+9. only then replaces the owned prefix, count, and current plan.
 
 A lower-layer rejection or hostile/inconsistent result therefore leaves the M39 state unchanged.
 
-M39 also keeps a local SHA-256-based state witness. Direct same-process mutation of the private prefix/count/plan is not an authorization boundary and is not supported; if it occurs, subsequent session operations fail closed with `READ_SESSION_STATE_DRIFT` rather than silently accepting a reset.
+M37's plan witness intentionally does **not** claim to bind raw prefix content; M37 retains no raw prefix. M39's own state witness binds the actual owned prefix by SHA-256 digest, and the independent continuity check above proves that an accepted M38 result is byte-for-byte the prior M39 prefix followed by the supplied chunk before M39 adopts it. This is a local integrity property only; it still does not prove that the supplied chunk came from a network peer.
+
+M39 also keeps a local SHA-256-based state witness. Direct same-process mutation of the private prefix/count/plan/helper bindings is not an authorization boundary and is not supported; if it occurs, subsequent session operations fail closed with `READ_SESSION_STATE_DRIFT` or `READ_CONFIGURATION_DRIFT` rather than silently accepting a reset or helper substitution.
 
 ## Construction-bound lower authority
 
 M39 is constructed from one exact `BoundedInboundHttpReadTransitioner`. It binds to that transitioner's retained exact M37 planner and captures the reviewed class implementations of M38 `transition` and M37 `plan` rather than trusting later public method replacement.
 
-It snapshots and guards:
+The captured bound-method identities are revalidated as part of the M39 configuration guard, while the captured function identities are also bound into the open-session state witness. Public method replacement after construction therefore cannot substitute authority, and direct private rebinding fails closed rather than becoming a new transition/planning authority.
+
+M39 snapshots and guards:
 
 - M37 read-call and per-read limits;
 - inherited M36 chunk-count and chunk-size limits;
 - inherited M35 wire authority;
 - inherited M35 header/body/response limits;
-- the M38-to-M37 helper binding.
+- the M38-to-M37 helper binding;
+- the captured M38 transition and M37 plan bindings.
 
 Configuration drift before or during initial planning/transition processing fails closed.
 
@@ -88,9 +94,9 @@ Completion handoff is one-shot. A second handoff, additional chunk acceptance, o
 
 ## Buffer and accounting bounds
 
-M39 performs no independent prefix append, join, `bytearray`, `memoryview`, or accumulation loop. The single raw-buffer append remains M38's bounded `prefix + chunk` operation.
+M39 performs no independent prefix append, join, `bytearray`, `memoryview`, or accumulation loop. The single raw-buffer append remains M38's bounded `prefix + chunk` operation. M39's extra continuity check uses two incremental hash updates over the already-existing prefix and supplied chunk and compares them with a digest of the already-returned prefix; it does not create a second assembled raw request buffer.
 
-M39 cannot widen M37/M36/M35 limits. Its owned read count advances only by adopting a fully validated M38 transition whose count is exactly prior count + 1.
+M39 cannot widen M37/M36/M35 limits. Its owned read count advances only by adopting a fully validated M38 transition whose count is exactly prior count + 1 and whose `accepted_chunk_bytes` equals the exact supplied chunk length.
 
 M39 does **not** prove that accepted bytes came from a real network read. A future concrete reader must own the external I/O operation and obey the M37 next-read budget. M39 only prevents the normal orchestration API from resetting local count/buffer state between transitions.
 
@@ -116,8 +122,10 @@ The M39 acceptance suite covers:
 - explicit close/clear behavior and post-close rejection;
 - private-state tamper detection by the M39 state witness;
 - public M37/M38 method replacement resistance;
+- private captured-helper rebinding detection;
 - M37 configuration mutation during initial planning and during a transition;
 - a self-consistent but M39-inconsistent M38 prior plan;
+- independent accepted-chunk count and prefix-content continuity checks;
 - nested M38/M37/M36/M35 reason preservation;
 - progress metadata with no raw prefix/chunk;
 - completed-handoff digest witness and rebinding resistance;
