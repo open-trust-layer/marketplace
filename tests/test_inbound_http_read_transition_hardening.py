@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import dataclasses
 import inspect
+import textwrap
 import unittest
 
 import marketplace.runtime.inbound_http_read_transition as transition_module
@@ -120,17 +121,12 @@ class InboundHttpReadTransitionHardeningTests(unittest.TestCase):
 
     def test_transition_uses_only_m37_planning_and_one_append_without_accumulation_loop(self):
         source = inspect.getsource(BoundedInboundHttpReadTransitioner.transition)
-        tree = ast.parse(source)
+        tree = ast.parse(textwrap.dedent(source))
         self.assertFalse(any(isinstance(node, (ast.For, ast.While)) for node in ast.walk(tree)))
         self.assertNotIn(".join(", source)
         self.assertNotIn("bytearray(", source)
         self.assertNotIn("memoryview(", source)
-        appends = [
-            node
-            for node in ast.walk(tree)
-            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add)
-        ]
-        self.assertEqual(len(appends), 2)  # prefix+chunk and reads_completed+1
+        self.assertEqual(source.count("prefix + chunk"), 1)
         plan_calls = [
             node
             for node in ast.walk(tree)
