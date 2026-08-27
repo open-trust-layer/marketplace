@@ -33,11 +33,13 @@ REQUIRED = {
     "marketplace/runtime/federation.py": b"# offline federation runtime\n",
     "marketplace/runtime/network_policy.py": b"# federation egress security policy\n",
     "marketplace/runtime/https_transport.py": b"# authorized HTTPS transport\n",
+    "marketplace/runtime/record_retrieval.py": b"# authorized immutable Record retrieval\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
     "marketplace/reference/federation_v1.py": b"# federation\n",
     "marketplace/reference/transport_json_v1.py": b"# strict OLP JSON transport codec\n",
+    "marketplace/reference/record_retrieval_v1.py": b"# pinned OLP Record retrieval verifier\n",
 }
 
 
@@ -134,11 +136,17 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_https_transport_runtime_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/runtime/https_transport.py")
 
+    def test_missing_record_retrieval_runtime_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/record_retrieval.py")
+
     def test_missing_federation_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/reference/federation_v1.py")
 
     def test_missing_transport_json_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/reference/transport_json_v1.py")
+
+    def test_missing_record_retrieval_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/reference/record_retrieval_v1.py")
 
     def test_wrong_wheel_filename_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:

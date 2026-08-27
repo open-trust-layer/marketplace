@@ -55,6 +55,12 @@ from .network_policy import (
     validate_resolved_addresses,
 )
 from .node import IngestOutcome, InvalidIdentityProviderResult, MarketplaceNode, RuntimeNodeError
+from .record_retrieval import (
+    RECORD_RETRIEVAL_OPERATION,
+    AuthorizedHttpsRecordRetriever,
+    RecordRetrievalTransportError,
+    RetrievedRecordTransportResult,
+)
 from .repository import (
     DEFAULT_MAX_ENTRIES,
     MAX_CONFIGURED_ENTRIES,
@@ -70,6 +76,7 @@ from .retention import DEFAULT_EPHEMERAL_RETENTION_SECONDS, ThreadingExpirySched
 
 __all__ = [
     "AuthorizedHttpsFederationTransport",
+    "AuthorizedHttpsRecordRetriever",
     "BoundedRecordSource",
     "CanonicalFederationEndpoint",
     "DEFAULT_EPHEMERAL_RETENTION_SECONDS",
@@ -102,8 +109,11 @@ __all__ = [
     "OfflineFederationError",
     "OfflineFederationService",
     "PreparedFederationExchange",
+    "RECORD_RETRIEVAL_OPERATION",
     "RETENTION_CLASS_EPHEMERAL",
+    "RecordRetrievalTransportError",
     "ResolvedEndpointAddresses",
+    "RetrievedRecordTransportResult",
     "InMemoryEphemeralRecordRepository",
     "IngestOutcome",
     "InvalidIdentityProviderResult",
