@@ -16,6 +16,7 @@ next_read_bytes              != socket authority
 already-buffered bytes       != authenticated requester
 M36 COMPLETE                 != transmitted response
 read-call count              != peer identity
+reported read-call count     != proof an external read occurred
 bounded planner              != listener / TLS / deployment
 ```
 
@@ -35,6 +36,14 @@ authorizes_protected_side_effects = False
 ```
 
 A plan is local resource-control metadata. It is not an authorization token and does not establish that any read occurred.
+
+## Read-count accounting boundary
+
+`reads_completed` is caller-supplied **local accounting**, not externally verifiable evidence. M37 validates its exact type and finite range and binds the reported value into the returned plan integrity witness, but because M37 performs no I/O it cannot prove that the count corresponds to actual transport calls or that a caller advanced it monotonically across separate invocations.
+
+A future concrete reader MUST therefore own the count, increment it consistently for its governed read attempts, and obey the returned `next_read_bytes` bound. It MUST NOT treat a caller-controlled count as authority to reset or extend the budget. EOF/zero-byte transport semantics remain outside M37 and require explicit handling in that future reader.
+
+Accordingly, M37's finite call limit is a planning constraint for a conforming future reader; it is not a claim that this transport-free module can police external calls it never performs.
 
 ## Placement
 
@@ -185,7 +194,7 @@ If the request remains incomplete and `reads_completed` has reached the configur
 READ_CALL_LIMIT_EXHAUSTED
 ```
 
-It does not silently widen the call budget.
+It does not silently widen the reported call budget.
 
 ## M36 error preservation
 
@@ -269,6 +278,7 @@ M37 adds no durable buffer, journal, access log, response cache, session store, 
 - remote requester authentication / mTLS;
 - remote error-response policy;
 - keep-alive / multiple requests per connection;
+- EOF/zero-byte read handling and read-count ownership in a concrete transport loop;
 - deployment/systemd/container service;
 - live Marketplace federation peer execution.
 
