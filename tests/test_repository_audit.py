@@ -69,7 +69,7 @@ class RepositoryAuditTests(unittest.TestCase):
             _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
 
-    def test_security_audit_requires_m25_through_m28_runtime_reference_and_docs(self):
+    def test_security_audit_requires_m25_through_m29_runtime_reference_and_docs(self):
         expected = {
             Path("src/marketplace/runtime/network_policy.py"),
             Path("docs/federation-egress-security.md"),
@@ -81,6 +81,8 @@ class RepositoryAuditTests(unittest.TestCase):
             Path("docs/immutable-record-retrieval.md"),
             Path("src/marketplace/runtime/page_hydration.py"),
             Path("docs/bounded-federation-page-hydration.md"),
+            Path("src/marketplace/runtime/continuation.py"),
+            Path("docs/cursor-bound-federation-continuation.md"),
         }
         self.assertTrue(expected.issubset(set(_REQUIRED_SECURITY_FILES)))
 
