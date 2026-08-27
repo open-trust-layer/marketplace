@@ -76,6 +76,30 @@ class PreparedFederationExchange:
 
 
 @dataclass(frozen=True)
+class ValidatedFederationPage:
+    """Side-effect-free validation result for one M8 page response.
+
+    This object describes only a page whose response envelope and M8 binding
+    have been validated against one prepared exchange. It contains no supplied
+    Record bodies and grants no storage, network, cursor-follow, agreement, or
+    protected-action authority.
+    """
+
+    source: str
+    operation: str
+    scope_fingerprint: str
+    page_size: int
+    record_ids: tuple[str, ...]
+    source_completeness: str
+    page_truncated: bool
+    next_cursor: bytes | None
+    global_completeness: str = "UNKNOWN"
+    absence_is_deletion_evidence: bool = False
+    creates_agreement: bool = False
+    authorizes_side_effects: bool = False
+
+
+@dataclass(frozen=True)
 class FederationPageOutcome:
     """Local result after complete response validation and EPHEMERAL ingest."""
 
@@ -169,13 +193,18 @@ class OfflineFederationService:
             envelope=envelope,
         )
 
-    def accept_page(
+    def validate_page(
         self,
         prepared: PreparedFederationExchange,
         response_envelope: Sequence[Any],
-        records: Iterable[Any],
-    ) -> FederationPageOutcome:
-        """Validate one supplied page completely before any local repository mutation."""
+    ) -> ValidatedFederationPage:
+        """Validate page control/binding semantics without Record bodies or storage.
+
+        The result is intentionally insufficient for local ingest. ``accept_page``
+        re-runs this same validation before validating supplied Records and before
+        the first repository mutation. This makes M28 pre-network page inspection
+        possible without creating a second M8 interpretation path.
+        """
         if not isinstance(prepared, PreparedFederationExchange):
             _fail("INVALID_PREPARED_EXCHANGE", "prepared exchange has the wrong type")
         binding = prepared.binding
@@ -235,9 +264,29 @@ class OfflineFederationService:
         elif cursor is not None:
             _fail("INVALID_FEDERATION_CURSOR", "final page MUST NOT carry a next cursor")
 
+        return ValidatedFederationPage(
+            source=binding.source,
+            operation=binding.operation,
+            scope_fingerprint=binding.scope_fingerprint,
+            page_size=binding.page_size,
+            record_ids=tuple(sorted(result_ids)),
+            source_completeness=source_completeness,
+            page_truncated=page_truncated,
+            next_cursor=next_cursor,
+        )
+
+    def accept_page(
+        self,
+        prepared: PreparedFederationExchange,
+        response_envelope: Sequence[Any],
+        records: Iterable[Any],
+    ) -> FederationPageOutcome:
+        """Validate one supplied page completely before any local repository mutation."""
+        validated = self.validate_page(prepared, response_envelope)
+
         supplied: dict[str, Any] = {}
-        supplied_values = tuple(islice(records, binding.page_size + 1))
-        if len(supplied_values) > binding.page_size:
+        supplied_values = tuple(islice(records, validated.page_size + 1))
+        if len(supplied_values) > validated.page_size:
             _fail(
                 "FEDERATION_SUPPLIED_RECORD_LIMIT_EXCEEDED",
                 "supplied response records exceed the prepared request page_size",
@@ -256,6 +305,7 @@ class OfflineFederationService:
                 _fail("FEDERATION_DUPLICATE_SUPPLIED_RECORD", "response records repeat a Record Identity")
             supplied[record_id] = record
 
+        result_ids = validated.record_ids
         if set(supplied) != set(result_ids) or len(supplied) != len(result_ids):
             missing = tuple(sorted(set(result_ids) - set(supplied)))
             unexpected = tuple(sorted(set(supplied) - set(result_ids)))
@@ -281,10 +331,10 @@ class OfflineFederationService:
                 _fail("UNSUPPORTED_STORE_DISPOSITION", f"unsupported local store disposition {outcome.disposition!r}")
 
         return FederationPageOutcome(
-            record_ids=tuple(sorted(result_ids)),
+            record_ids=result_ids,
             stored_record_ids=tuple(stored),
             duplicate_record_ids=tuple(duplicates),
-            source_completeness=source_completeness,
-            page_truncated=page_truncated,
-            next_cursor=next_cursor,
+            source_completeness=validated.source_completeness,
+            page_truncated=validated.page_truncated,
+            next_cursor=validated.next_cursor,
         )
