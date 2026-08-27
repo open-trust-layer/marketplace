@@ -1,9 +1,8 @@
 """One-step bounded inbound reader invocation above M37-M40.
 
-M41 is the first layer that intentionally invokes an injected read capability.  It
-never discovers or implements a socket/reader itself, never retries, and never
-loops.  Development and conformance tests use deterministic in-memory readers;
-a future concrete external reader remains a separately authorized capability.
+M41 intentionally invokes one injected read capability, but never discovers or
+implements a concrete socket/reader itself. One public invocation performs zero
+or one reader calls, never retries, and never loops.
 """
 from __future__ import annotations
 
@@ -27,6 +26,7 @@ READ_INVOCATION_COMPLETED: Final = "COMPLETED"
 _READ_INVOCATION_STATES: Final = frozenset(
     (READ_INVOCATION_PROGRESS, READ_INVOCATION_COMPLETED)
 )
+_BINDING_MARKER: Final = "inbound-http-read-invoker-binding-v1"
 
 
 class InboundHttpReadInvocationError(RuntimeError):
@@ -96,13 +96,7 @@ def _fail_from_outcome(
 
 @dataclass(frozen=True)
 class InboundHttpReadInvocationResult:
-    """Integrity-bound one-step result.
-
-    M41 itself retains no raw chunk/prefix field.  A COMPLETED result may carry
-    the existing explicit M39 one-shot completion handoff; the M41 witness binds
-    that handoff only through its pre-existing integrity snapshot and never
-    duplicates its raw request prefix.
-    """
+    """Integrity-bound result containing no M41-owned raw request field."""
 
     state: str
     reader_invoked: bool
@@ -132,7 +126,6 @@ class InboundHttpReadInvocationResult:
 
         progress_snapshot: tuple[Any, ...] | None = None
         completed_snapshot: tuple[Any, ...] | None = None
-
         if self.state == READ_INVOCATION_PROGRESS:
             if self.reader_invoked is not True or self.requested_bytes <= 0:
                 raise ValueError("PROGRESS MUST represent one positive reader invocation")
@@ -156,18 +149,18 @@ class InboundHttpReadInvocationResult:
             object.__setattr__(self, "completed", witnessed_completed)
             completed_snapshot = witnessed_completed.integrity_snapshot
 
-        for name in (
-            "socket_access_proven",
-            "network_origin_proven",
-            "request_authenticated",
-            "peer_identity_proven",
-            "establishes_marketplace_truth",
-            "establishes_trust",
-            "establishes_authorization",
-            "authorizes_protected_side_effects",
-        ):
-            if getattr(self, name, None) is not False:
-                raise ValueError("M41 result promoted a forbidden authority fact")
+        authority_facts = (
+            self.socket_access_proven,
+            self.network_origin_proven,
+            self.request_authenticated,
+            self.peer_identity_proven,
+            self.establishes_marketplace_truth,
+            self.establishes_trust,
+            self.establishes_authorization,
+            self.authorizes_protected_side_effects,
+        )
+        if any(value is not False for value in authority_facts):
+            raise ValueError("M41 result promoted a forbidden authority fact")
 
         current = (
             "inbound-http-read-invocation-result-v1",
@@ -177,14 +170,7 @@ class InboundHttpReadInvocationResult:
             self.outcome_kind,
             progress_snapshot,
             completed_snapshot,
-            self.socket_access_proven,
-            self.network_origin_proven,
-            self.request_authenticated,
-            self.peer_identity_proven,
-            self.establishes_marketplace_truth,
-            self.establishes_trust,
-            self.establishes_authorization,
-            self.authorizes_protected_side_effects,
+            *authority_facts,
         )
         if self.integrity_snapshot is not None and self.integrity_snapshot != current:
             raise ValueError("M41 invocation-result integrity snapshot mismatch")
@@ -224,8 +210,7 @@ class BoundedInboundHttpReadInvoker:
         if not callable(reader):
             raise TypeError("reader MUST be callable")
 
-        closed_property = BoundedInboundHttpReadOutcomeHandler.closed
-        closed_function = closed_property.fget
+        closed_function = BoundedInboundHttpReadOutcomeHandler.closed.fget
         if closed_function is None:
             raise ValueError("M40 closed property MUST retain an exact getter")
 
@@ -237,24 +222,19 @@ class BoundedInboundHttpReadInvoker:
         self._close_function = BoundedInboundHttpReadOutcomeHandler.close
         self._closed_function = closed_function
         self._progress = self._progress_function.__get__(
-            read_outcome_handler,
-            BoundedInboundHttpReadOutcomeHandler,
+            read_outcome_handler, BoundedInboundHttpReadOutcomeHandler
         )
         self._accept = self._accept_function.__get__(
-            read_outcome_handler,
-            BoundedInboundHttpReadOutcomeHandler,
+            read_outcome_handler, BoundedInboundHttpReadOutcomeHandler
         )
         self._take = self._take_function.__get__(
-            read_outcome_handler,
-            BoundedInboundHttpReadOutcomeHandler,
+            read_outcome_handler, BoundedInboundHttpReadOutcomeHandler
         )
         self._close = self._close_function.__get__(
-            read_outcome_handler,
-            BoundedInboundHttpReadOutcomeHandler,
+            read_outcome_handler, BoundedInboundHttpReadOutcomeHandler
         )
         self._closed_getter = self._closed_function.__get__(
-            read_outcome_handler,
-            BoundedInboundHttpReadOutcomeHandler,
+            read_outcome_handler, BoundedInboundHttpReadOutcomeHandler
         )
         self._binding_witness = self._binding_snapshot()
         self._validate_bindings()
@@ -262,7 +242,7 @@ class BoundedInboundHttpReadInvoker:
 
     def _binding_snapshot(self) -> tuple[Any, ...]:
         return (
-            "inbound-http-read-invoker-binding-v1",
+            _BINDING_MARKER,
             self._handler,
             self._reader,
             self._progress_function,
@@ -308,8 +288,7 @@ class BoundedInboundHttpReadInvoker:
         return value
 
     def _replay_progress(
-        self,
-        progress: InboundHttpReadSessionProgress,
+        self, progress: InboundHttpReadSessionProgress
     ) -> InboundHttpReadSessionProgress:
         if type(progress) is not InboundHttpReadSessionProgress:
             _fail("READ_INVOCATION_PROGRESS_DRIFT", "M40 returned unexpected progress type")
@@ -338,6 +317,7 @@ class BoundedInboundHttpReadInvoker:
         return self._replay_progress(progress)
 
     def _terminal_close(self) -> None:
+        """Close on a pre-reader path where the complete M41 binding is intact."""
         self._validate_bindings()
         try:
             self._close()
@@ -352,17 +332,75 @@ class BoundedInboundHttpReadInvoker:
         if not self._closed_value():
             _fail("READ_INVOCATION_CLOSE_FAILED", "M40 did not close after terminal M41 path")
 
+    def _best_effort_close_after_reader(self) -> None:
+        """Clear M40/M39 without trusting reader-sensitive M41 bindings.
+
+        Once the reader has been invoked, an M41 binding drift must not strand
+        consumed external input in a reusable partial session. This cleanup uses
+        only the construction-witnessed M40 close/closed bound methods. It cannot
+        sandbox arbitrary same-process memory corruption; if even those captured
+        cleanup bindings drift, cleanup is reported as uncertain and fails closed.
+        """
+        witness = self._binding_witness
+        if (
+            type(witness) is not tuple
+            or len(witness) != 8
+            or witness[0] != _BINDING_MARKER
+            or witness[1] is not self._handler
+            or type(self._handler) is not BoundedInboundHttpReadOutcomeHandler
+        ):
+            _fail(
+                "READ_INVOCATION_CLEANUP_UNCERTAIN",
+                "post-reader cleanup binding witness is unavailable",
+            )
+        expected_close = witness[6]
+        expected_closed = witness[7]
+        if (
+            getattr(self._close, "__self__", None) is not self._handler
+            or getattr(self._close, "__func__", None) is not expected_close
+            or getattr(self._closed_getter, "__self__", None) is not self._handler
+            or getattr(self._closed_getter, "__func__", None) is not expected_closed
+        ):
+            _fail(
+                "READ_INVOCATION_CLEANUP_UNCERTAIN",
+                "captured post-reader cleanup authority changed",
+            )
+        try:
+            self._close()
+            closed = self._closed_getter()
+        except Exception:
+            _fail(
+                "READ_INVOCATION_CLEANUP_UNCERTAIN",
+                "post-reader cleanup could not be verified",
+            )
+        if closed is not True:
+            _fail(
+                "READ_INVOCATION_CLEANUP_UNCERTAIN",
+                "post-reader cleanup did not verify a closed session",
+            )
+
+    def _post_reader_validate_bindings(self) -> None:
+        try:
+            self._validate_bindings()
+        except InboundHttpReadInvocationError:
+            self._best_effort_close_after_reader()
+            raise
+
+    def _post_reader_replay_progress(
+        self, progress: InboundHttpReadSessionProgress
+    ) -> InboundHttpReadSessionProgress:
+        try:
+            return self._replay_progress(progress)
+        except InboundHttpReadInvocationError:
+            self._best_effort_close_after_reader()
+            raise
+
     @property
     def closed(self) -> bool:
         return self._closed_value()
 
     def invoke_once(self) -> InboundHttpReadInvocationResult:
-        """Perform zero or one construction-bound reader invocation.
-
-        COMPLETE-at-entry consumes the existing M40/M39 one-shot completion
-        handoff without invoking the reader.  READ invokes the reader exactly
-        once with the exact current M37 budget.  There is no retry or loop.
-        """
+        """Perform zero or one construction-bound reader invocation."""
         prior = self._current_progress()
 
         if prior.plan.action == READ_ACTION_COMPLETE:
@@ -403,24 +441,22 @@ class BoundedInboundHttpReadInvoker:
         try:
             outcome = self._reader(budget)
         except Exception:
-            self._validate_bindings()
+            self._post_reader_validate_bindings()
             try:
                 self._accept(InboundHttpReadOutcome.failure())
             except InboundHttpReadOutcomeError as exc:
-                self._validate_bindings()
-                if not self._closed_value():
-                    self._terminal_close()
+                self._best_effort_close_after_reader()
                 _fail_from_outcome(
                     "READ_INVOCATION_READER_FAILURE",
                     "injected reader failed; M40 closed the session",
                     exc,
                 )
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_READER_FAILURE", "injected reader failed")
-        self._validate_bindings()
 
+        self._post_reader_validate_bindings()
         if type(outcome) is not InboundHttpReadOutcome:
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail(
                 "INVALID_READER_RESULT",
                 "reader MUST return exact InboundHttpReadOutcome; session was closed",
@@ -428,33 +464,32 @@ class BoundedInboundHttpReadInvoker:
         try:
             witnessed_outcome = replace(outcome)
         except ValueError:
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_OUTCOME_DRIFT", "reader outcome failed integrity replay")
 
-        self._validate_bindings()
         try:
             progress = self._accept(witnessed_outcome)
         except InboundHttpReadOutcomeError as exc:
-            self._validate_bindings()
+            self._best_effort_close_after_reader()
             _fail_from_outcome(
                 "READ_INVOCATION_OUTCOME_REJECTED",
                 "M40 rejected the already-returned reader outcome",
                 exc,
             )
-        self._validate_bindings()
-        witnessed_progress = self._replay_progress(progress)
+        self._post_reader_validate_bindings()
+        witnessed_progress = self._post_reader_replay_progress(progress)
 
         if witnessed_outcome.kind != READ_OUTCOME_DATA:
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_OUTCOME_DRIFT", "non-DATA outcome unexpectedly returned progress")
         if witnessed_progress.reads_completed != prior.reads_completed + 1:
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_PROGRESS_DRIFT", "read accounting did not advance exactly once")
         if witnessed_progress.buffered_bytes != prior.buffered_bytes + len(witnessed_outcome.chunk):
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_PROGRESS_DRIFT", "buffer accounting does not match DATA outcome")
         if witnessed_progress.last_accepted_chunk_bytes != len(witnessed_outcome.chunk):
-            self._terminal_close()
+            self._best_effort_close_after_reader()
             _fail("READ_INVOCATION_PROGRESS_DRIFT", "accepted chunk count does not match DATA outcome")
 
         return InboundHttpReadInvocationResult(
