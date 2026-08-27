@@ -30,7 +30,7 @@ _REQUIRED_SECURITY_FILES = (
     Path("docs/authorized-https-federation-transport.md"),
     Path("src/marketplace/runtime/record_retrieval.py"),
     Path("src/marketplace/reference/record_retrieval_v1.py"),
-    Path("docs/authorized-immutable-record-retrieval.md"),
+    Path("docs/immutable-record-retrieval.md"),
 )
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
