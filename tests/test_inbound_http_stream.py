@@ -149,7 +149,7 @@ class InboundHttpStreamTests(unittest.TestCase):
         raw = _get_request_bytes(f"/v1/records/{RECORD_ID}", AUTHORITY, 443)
         with self.assertRaises(InboundHttpStreamError) as caught:
             self.assembler.prepare_chunks((raw, b"x"))
-        self.assertEqual(caught.exception.code, "TRAILING_CHUNKS")
+        self.assertEqual(caught.exception.code, "TRAILING_OR_PIPELINED_BYTES")
         self.assertEqual(self.harness.calls, [])
 
     def test_incomplete_final_chunks_fail_without_application(self):
