@@ -173,7 +173,7 @@ class InboundHttpWireTests(unittest.TestCase):
             self.assertEqual(caught.exception.code, "CONNECTION_CLOSE_REQUIRED")
         self.assertEqual(self.harness.calls, [])
 
-    def test_declared_length_mismatch_or_pipelined_bytes_never_prepare_response(self):
+    def test_declared_length_mismatch_or_pipelined_bytes_fail_before_application(self):
         raw = (
             f"POST {CONTROL_PATH} HTTP/1.1\r\n"
             f"Host: {AUTHORITY}\r\n"
@@ -184,8 +184,8 @@ class InboundHttpWireTests(unittest.TestCase):
         ).encode("ascii") + b"{}GET / HTTP/1.1\r\n\r\n"
         with self.assertRaises(InboundHttpWireError) as caught:
             self.adapter.prepare(raw)
-        self.assertEqual(caught.exception.code, "APPLICATION_REQUEST_REJECTED")
-        self.assertEqual(len(self.harness.calls), 1)
+        self.assertEqual(caught.exception.code, "CONTENT_LENGTH_MISMATCH")
+        self.assertEqual(self.harness.calls, [])
 
     def test_response_authority_promotion_is_rejected(self):
         self.harness.promote_transmitted = True
