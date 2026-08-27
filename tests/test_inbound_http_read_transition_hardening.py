@@ -6,6 +6,7 @@ import inspect
 import textwrap
 import unittest
 
+import marketplace.runtime as runtime_package
 import marketplace.runtime.inbound_http_read_transition as transition_module
 from marketplace.runtime.inbound_http import (
     BoundedInboundHttpApplicationAdapter,
@@ -17,6 +18,7 @@ from marketplace.runtime.inbound_http_read_plan import (
 )
 from marketplace.runtime.inbound_http_read_transition import (
     BoundedInboundHttpReadTransitioner,
+    InboundHttpReadTransition,
     InboundHttpReadTransitionError,
 )
 from marketplace.runtime.inbound_http_stream import BoundedInboundHttpStreamAssembler
@@ -49,6 +51,14 @@ class InboundHttpReadTransitionHardeningTests(unittest.TestCase):
         self.planner = BoundedInboundHttpReadPlanner(stream_assembler=self.stream)
         self.transitioner = BoundedInboundHttpReadTransitioner(read_planner=self.planner)
 
+    def test_public_runtime_exports_are_exact_m38_types(self):
+        self.assertIs(
+            runtime_package.BoundedInboundHttpReadTransitioner,
+            BoundedInboundHttpReadTransitioner,
+        )
+        self.assertIs(runtime_package.InboundHttpReadTransition, InboundHttpReadTransition)
+        self.assertIs(runtime_package.InboundHttpReadTransitionError, InboundHttpReadTransitionError)
+
     def test_public_configuration_views_are_detached(self):
         read_view = self.transitioner.read_limits
         stream_view = self.transitioner.stream_limits
@@ -67,7 +77,7 @@ class InboundHttpReadTransitionHardeningTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "READ_CONFIGURATION_DRIFT")
         self.assertEqual(self.harness.calls, [])
 
-    def test_m37_configuration_mutation_during_planning_is_detected(self):
+    def test_m37_configuration_mutation_during_first_planning_is_detected(self):
         original_probe = self.planner._probe
 
         def hostile_probe(prefix):
@@ -78,6 +88,25 @@ class InboundHttpReadTransitionHardeningTests(unittest.TestCase):
         object.__setattr__(self.planner, "_probe", hostile_probe)
         with self.assertRaises(InboundHttpReadTransitionError) as caught:
             self.transitioner.transition(b"", reads_completed=0, chunk=b"x")
+        self.assertEqual(caught.exception.code, "READ_CONFIGURATION_DRIFT")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_m37_configuration_mutation_during_second_planning_is_detected(self):
+        original_probe = self.planner._probe
+        calls = 0
+
+        def hostile_probe(prefix):
+            nonlocal calls
+            calls += 1
+            progress = original_probe(prefix)
+            if calls == 2:
+                object.__setattr__(self.planner, "_max_read_bytes", 1)
+            return progress
+
+        object.__setattr__(self.planner, "_probe", hostile_probe)
+        with self.assertRaises(InboundHttpReadTransitionError) as caught:
+            self.transitioner.transition(b"", reads_completed=0, chunk=b"G")
+        self.assertEqual(calls, 2)
         self.assertEqual(caught.exception.code, "READ_CONFIGURATION_DRIFT")
         self.assertEqual(self.harness.calls, [])
 
