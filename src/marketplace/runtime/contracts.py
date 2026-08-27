@@ -89,6 +89,22 @@ class FederationRequestValidator(Protocol):
     def __call__(self, value: Any) -> Mapping[str, Any]: ...
 
 
+class FederationScopeFingerprintProvider(Protocol):
+    """Derive the canonical M8 scope fingerprint without performing I/O."""
+
+    def __call__(self, scope: Any) -> str: ...
+
+
+class FederationCapabilityNegotiator(Protocol):
+    """Evaluate required capabilities against one local M8 advertisement."""
+
+    def __call__(
+        self,
+        advertisement: Any,
+        required_capabilities: Iterable[Any],
+    ) -> Mapping[str, Any]: ...
+
+
 class FederationEnvelopeMaker(Protocol):
     """Create an abstract transport envelope without transmitting it."""
 
@@ -123,3 +139,32 @@ class FederationCursorBindingValidator(Protocol):
         operation: Any,
         scope: Any,
     ) -> Mapping[str, Any]: ...
+
+
+class FederationPageEvaluator(Protocol):
+    """Evaluate one bounded M8 snapshot/sync page without transport I/O."""
+
+    def __call__(
+        self,
+        records: Iterable[Any],
+        *,
+        source: Any,
+        operation: Any,
+        scope: Any,
+        completeness: Any,
+        has_more: Any,
+        next_cursor: Any = None,
+        max_records: int,
+    ) -> Mapping[str, Any]: ...
+
+
+class InboundFederationDisclosureAuthorizer(Protocol):
+    """Make one local disclosure decision for an immutable inbound request context."""
+
+    def __call__(self, context: Any) -> bool: ...
+
+
+class InboundFederationPageSource(Protocol):
+    """Produce one already-bounded page material value after local authorization."""
+
+    def __call__(self, context: Any) -> Any: ...
