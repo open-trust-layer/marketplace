@@ -26,10 +26,13 @@ Every `PreparedFederationExchange` now:
 1. receives the abstract OLP request envelope produced by the existing M24 path;
 2. recursively detaches the supported bounded M8 host representation from caller-owned mappings/lists;
 3. replaces mappings with `FrozenDict` and lists with `FrozenList` values that preserve normal `dict`/`list` comparison and OLP encoder compatibility while rejecting ordinary mutation APIs;
-4. retains tuples, exact scalar types, and bytes as immutable values;
-5. records an immutable type-tagged integrity snapshot covering both the `FederationRequestBinding` and the complete prepared envelope.
+4. stores each frozen container's authoritative state in private immutable tuples rather than in inherited mutable `dict`/`list` storage;
+5. retains tuples, exact scalar types, and bytes as immutable values;
+6. records an immutable type-tagged integrity snapshot covering both the `FederationRequestBinding` and the complete prepared envelope.
 
 The detached payload is what the existing M26 transport later serializes. Mutating the original request after `prepare(...)` cannot change the prepared envelope.
+
+The inherited `dict`/`list` storage of `FrozenDict`/`FrozenList` is intentionally left empty and ignored. Even explicit calls such as `dict.__setitem__(frozen, ...)` or `list.append(frozen, ...)` can only change ignored base storage; iteration, indexing, length, equality, copying, integrity snapshots, and OLP encoding all read the private immutable tuple state.
 
 ## Prepare-time envelope cross-binding
 
@@ -115,6 +118,8 @@ The M30 test suite reproduces the original vulnerability shape across the actual
 
 Acceptance requires that the transmitted body equal the original request exactly and differ from the mutated request. This proves the former caller-alias path is closed at the real M26 serialization boundary without making a live network request.
 
+A separate adversarial regression explicitly invokes base `dict`/`list` mutation primitives against the frozen payload and requires both the encoded bytes and integrity snapshot to remain unchanged.
+
 ## Privacy and retention
 
 The immutable prepared representation does not create durable storage. Cursor bytes remain opaque and are not logged, interpreted, persisted, or copied into a new durable checkpoint. Prepared request content remains `EPHEMERAL` and subject to the project's maximum 10-second post-use retention rule when retained by a runtime component.
@@ -129,6 +134,7 @@ M30 tests require at least:
 - the exact former M24 -> M26 alias exploit shape cannot change transmitted bytes;
 - top-level prepared payload mutation is rejected;
 - nested scope/capability list mutation is rejected;
+- explicit base `dict`/`list` mutation cannot change authoritative prepared values, encoded bytes, or the integrity snapshot;
 - an envelope maker cannot mutate the validated request;
 - an envelope maker cannot change the M8 request message profile;
 - an envelope maker cannot return a payload different from the validated request;
@@ -145,7 +151,9 @@ M30 tests require at least:
 
 ## Residual boundary
 
-M30 protects normal runtime aliasing and mutation APIs inside the supported Python host representation. It is not a sandbox against arbitrary in-process code that deliberately bypasses Python object protections using reflection/base-class mutation primitives. Such code already has authority to subvert the process and is outside the Marketplace transport-object integrity boundary.
+M30 protects the supported runtime host representation from caller-owned alias mutation, ordinary container mutation APIs, and direct base `dict`/`list` mutation calls while preserving OLP encoder compatibility.
+
+It is not a sandbox against arbitrary code that already has power to subvert Python object internals, replace trusted runtime functions, mutate supposedly private slots through low-level reflection, or alter process memory. Such capabilities are process-compromise boundaries rather than federation transport-object behavior.
 
 Most importantly:
 
