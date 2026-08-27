@@ -79,13 +79,45 @@ The only HTTP field M36 inspects itself is canonical `Content-Length`, and only 
 
 This means M36 does not independently normalize or reinterpret request methods, target paths, HTTP versions, header names, duplicate headers, Host authority, Connection semantics, content type, or authentication/identity facts. Those remain M35/M34 responsibilities.
 
+## M35 configuration snapshot and TOCTOU binding
+
+M36 keeps the configured M35 adapter as an executable helper, but **does not treat that retained object as immutable authority**.
+
+At M36 construction time it snapshots into fresh immutable M36-owned values:
+
+```text
+M35 canonical Host authority
+M35 max_header_bytes
+M35 max_body_bytes
+M35 max_response_body_bytes
+```
+
+The M35 limits snapshot is reconstructed through a fresh exact `InboundHttpWireLimits` value. M36 resource calculations use the snapshot, not later live reads from the caller-owned adapter.
+
+Before and after every M35 `parse_request()` / `prepare()` boundary, M36 compares the live M35 authority and all three limit fields against the construction-time snapshot. Any drift fails closed as:
+
+```text
+WIRE_CONFIGURATION_DRIFT
+```
+
+This includes low-level mutation performed **during** a hostile helper call. Therefore:
+
+```text
+frozen M35 shell              != immutable M36 authority
+retained M35 helper           != permission to redefine Host binding
+retained M35 helper           != permission to widen/narrow M36 resource limits
+same helper object identity   != same configuration state
+```
+
+M36's final Host cross-binding also compares the witnessed M35 result against the snapshotted authority, never a potentially mutated live property.
+
 ## Progress probe
 
 `probe(prefix)` accepts exact immutable `bytes` and performs no disclosure action.
 
 ### Incomplete head
 
-If `\r\n\r\n` has not arrived and the configured M35 header bound is still satisfiable, M36 returns:
+If `\r\n\r\n` has not arrived and the snapshotted M35 header bound is still satisfiable, M36 returns:
 
 ```text
 state                = NEED_MORE
@@ -100,11 +132,11 @@ If the header cannot complete within the M35 header limit, M36 fails closed.
 
 ### Complete head without declared body
 
-M36 calls M35 `parse_request()` on head-only bytes. If M35 accepts that input as a complete request, the exact request boundary is the end of the header terminator. Any byte already present after that boundary is rejected as trailing/pipelined material.
+M36 calls M35 `parse_request()` on head-only bytes under the configuration-drift guard. If M35 accepts that input as a complete request, the exact request boundary is the end of the header terminator. Any byte already present after that boundary is rejected as trailing/pipelined material.
 
 ### Complete head with a positive canonical Content-Length
 
-If and only if M35 rejects head-only bytes with exact reason `CONTENT_LENGTH_MISMATCH`, M36 extracts the one canonical:
+If and only if M35 rejects head-only bytes with exact reason `CONTENT_LENGTH_MISMATCH`, and its configuration remains identical after that call, M36 extracts the one canonical:
 
 ```text
 Content-Length: <decimal>
@@ -112,15 +144,15 @@ Content-Length: <decimal>
 
 from the already M35-validated header block.
 
-M36 compares the decimal **as text** against `str(configured_m35_body_limit)` before any integer conversion. Length comparison and lexicographic comparison are sufficient because both values are canonical non-negative decimal text.
+M36 compares the decimal **as text** against `str(snapshotted_m35_body_limit)` before any integer conversion. Length comparison and lexicographic comparison are sufficient because both values are canonical non-negative decimal text.
 
-Only after the value is proven less than or equal to the finite M35 body limit does M36 execute the bounded conversion to an integer. Therefore attacker-sized decimal text is never converted into an arbitrary-size Python integer.
+Only after the value is proven less than or equal to the finite snapshotted M35 body limit does M36 execute the bounded conversion to an integer. Therefore attacker-sized decimal text is never converted into an arbitrary-size Python integer.
 
 M36 then reports exact missing bytes until the body reaches the declared size.
 
 ### Exact completion
 
-When the exact total byte count is present, M36 re-runs M35 `parse_request()` on the full bytes. Only an accepted exact request yields:
+When the exact total byte count is present, M36 re-runs M35 `parse_request()` on the full bytes under the same pre/post configuration guard. Only an accepted exact request yields:
 
 ```text
 state                = COMPLETE
@@ -151,25 +183,27 @@ max chunks      = 1024
 max chunk bytes = 1 MiB
 ```
 
-The aggregate byte ceiling is not a separate widening control; it remains exactly the configured M35 header limit plus configured M35 body limit.
+The aggregate byte ceiling is not a separate widening control; it remains exactly the snapshotted configured M35 header limit plus snapshotted configured M35 body limit.
 
 The order is deliberate:
 
 1. require exact tuple representation;
 2. reject tuple count before enumerating elements;
-3. reject every element unless it is non-empty exact immutable `bytes`;
-4. reject each chunk above the configured chunk-size bound before any aggregate allocation;
-5. accumulate only integer byte counts and reject aggregate overflow before joining;
-6. join the validated tuple **exactly once** into one temporary immutable request byte image;
-7. invoke the pure M36 progress probe **exactly once** on that image;
-8. require exact `COMPLETE`, which also rejects any request that completed before later supplied bytes/chunks;
-9. parse the exact bytes through M35 once more for canonical request binding;
-10. invoke M35 `prepare()` exactly once;
-11. revalidate the returned M35 negative authority facts directly;
-12. replay M35's original integrity witness;
-13. cross-bind the witnessed M35 request and Host authority to the bytes/configuration M36 used;
-14. return one M36 integrity-bound prepared exchange;
-15. stop.
+3. verify M35 configuration still equals the construction snapshot;
+4. reject every element unless it is non-empty exact immutable `bytes`;
+5. reject each chunk above the configured chunk-size bound before any aggregate allocation;
+6. accumulate only integer byte counts and reject aggregate overflow before joining;
+7. join the validated tuple **exactly once** into one temporary immutable request byte image;
+8. independently require `len(joined_bytes) == accumulated_byte_count`;
+9. invoke the pure M36 progress probe **exactly once** on that image;
+10. require exact `COMPLETE`, which also rejects any request that completed before later supplied bytes/chunks;
+11. parse the exact bytes through M35 once more for canonical request binding under pre/post configuration guards;
+12. invoke M35 `prepare()` exactly once under pre/post configuration guards;
+13. revalidate the returned M35 negative authority facts directly;
+14. replay M35's original integrity witness;
+15. cross-bind the witnessed M35 request and snapshotted Host authority to the bytes/configuration M36 used;
+16. return one M36 integrity-bound prepared exchange;
+17. stop.
 
 This single-join design is intentional resource hardening. An earlier draft copied and re-probed the entire accumulated prefix after each chunk, which was functionally bounded but could create avoidable quadratic copying work. The accepted M36 design validates metadata first, performs one bounded join, and performs one assembly-time probe.
 
@@ -179,9 +213,9 @@ No M34/M32/M33 disclosure helper can run during probing or while the request rem
 
 ## M35 result revalidation
 
-M36 does not trust a returned object merely because it came from the configured M35 adapter.
+M36 does not trust an object merely because it was returned by the configured M35 adapter.
 
-Before wrapping the result it requires exact M35 result type and directly checks:
+After verifying the M35 configuration is still unchanged, M36 requires exact M35 result type and directly checks:
 
 ```text
 host_authority_validated                = True
@@ -199,9 +233,9 @@ Direct checks occur before integrity replay for the same reason established in M
 
 M36 then replays M35's original integrity snapshot through `dataclasses.replace()`. A changed request, route, Host authority, response bytes, body count, status, or message type therefore fails before M36 wrapping.
 
-Finally M36 independently requires the witnessed M35 canonical request to equal a fresh M35 parse of the exact assembled bytes and the witnessed Host authority to equal the configured M35 authority.
+Finally M36 independently requires the witnessed M35 canonical request to equal a fresh guarded M35 parse of the exact assembled bytes and the witnessed Host authority to equal the **construction-time M35 authority snapshot**.
 
-Adversarial tests cover both post-construction mutation and fully self-consistent but wrong M35 request/authority objects.
+Adversarial tests cover post-construction result mutation, fully self-consistent but wrong M35 request/authority objects, caller mutation of the M35 configuration after M36 construction, and configuration mutation performed from inside hostile M35 helper calls.
 
 ## Prepared stream exchange integrity
 
@@ -217,6 +251,8 @@ It does **not** retain the original chunk tuple, a duplicate raw assembled reque
 
 The M36 witness binds the full current M35 wire snapshot, chunk count, request byte count, completion fact, and every authority-negative fact. Dataclass replacement cannot reuse an old witness for changed values.
 
+Prepared-dataclass invariant failures are normalized to `ValueError`, including nested M35 authority corruption; runtime/helper failures remain stable `InboundHttpStreamError` instances.
+
 ## Resource and smuggling properties
 
 M36 provides an additional finite layer before any future network reader:
@@ -226,7 +262,10 @@ M36 provides an additional finite layer before any future network reader:
 - chunk size is checked before copying;
 - aggregate size is checked using integer counts before the single join;
 - the full request is allocated only once by M36 assembly;
+- joined length is rechecked against the accumulated count;
 - the assembly path performs one progress probe rather than repeated whole-prefix copying;
+- all resource calculations use immutable construction-time M35 limit snapshots;
+- M35 configuration drift fails before or immediately after helper boundaries;
 - partial bodies cannot reach M35 `prepare()`;
 - requests that finish before later supplied chunks fail before disclosure;
 - bytes beyond declared content length fail before disclosure;
