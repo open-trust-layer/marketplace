@@ -19,7 +19,7 @@ from .inbound_federation import (
 from .inbound_record import (
     BoundedInboundRecordResponder,
     PreparedInboundRecordResponse,
-    canonical_record_identity_transport_text,
+    _canonical_record_identity as canonical_record_identity_transport_text,
 )
 from .prepared_integrity import (
     PreparedExchangeIntegrityError,
@@ -210,7 +210,7 @@ class InboundHttpRequest:
     peer_identity_proven: bool = field(default=False, init=False)
 
     def __post_init__(self) -> None:
-        if self.method not in {"GET", "POST"} or type(self.method) is not str:
+        if type(self.method) is not str or self.method not in {"GET", "POST"}:
             raise ValueError("method MUST be exact GET or POST")
         path = _canonical_path(self.path)
         if type(self.max_header_bytes) is not int or not 1 <= self.max_header_bytes <= MAX_INBOUND_HTTP_HEADER_BYTES:
@@ -502,7 +502,6 @@ class BoundedInboundHttpApplicationAdapter:
             _fail("INVALID_REQUEST_TYPE", "request MUST be exact InboundHttpRequest")
         if len(request.body) > self._limits.max_request_body_bytes:
             _fail("REQUEST_BODY_LIMIT_EXCEEDED", "request body exceeds the configured M34 bound")
-        # Re-run the canonical header bound under this adapter's configured limit.
         try:
             _canonical_headers(request.headers, max_header_bytes=self._limits.max_header_bytes)
         except ValueError:
