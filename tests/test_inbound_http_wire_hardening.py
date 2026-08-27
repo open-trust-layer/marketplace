@@ -7,6 +7,7 @@ import unittest
 
 import marketplace.runtime.inbound_http_wire as wire_module
 from marketplace.runtime.inbound_http import (
+    ROUTE_FEDERATION_CONTROL,
     ROUTE_IMMUTABLE_RECORD,
     BoundedInboundHttpApplicationAdapter,
     InboundHttpApplicationLimits,
@@ -17,6 +18,7 @@ from marketplace.runtime.inbound_http_wire import (
     InboundHttpWireError,
     InboundHttpWireLimits,
 )
+from marketplace.runtime.inbound_record import INBOUND_RECORD_RETRIEVAL_OPERATION
 
 AUTHORITY = "market.example"
 RECORD_ID = "r1_qcU6rT-ADJiC75Bg9w7qLSvauhY6zcEmy1dk-LrRlZc"
@@ -27,6 +29,9 @@ class _Harness:
         self.calls = []
         self.mutate_route = False
         self.mutate_body_same_length = False
+        self.self_consistent_wrong_route_kind = False
+        self.self_consistent_wrong_record_operation = False
+        self.self_consistent_wrong_record_message_type = False
         adapter = object.__new__(BoundedInboundHttpApplicationAdapter)
         object.__setattr__(adapter, "_limits", InboundHttpApplicationLimits())
         object.__setattr__(adapter, "handle", self._handle)
@@ -35,10 +40,21 @@ class _Harness:
     def _handle(self, request):
         self.calls.append(request)
         body = b'{"olp":"prepared"}'
+        route_kind = ROUTE_IMMUTABLE_RECORD
+        route_operation = INBOUND_RECORD_RETRIEVAL_OPERATION
+        message_type = "record"
+        if self.self_consistent_wrong_route_kind:
+            route_kind = ROUTE_FEDERATION_CONTROL
+            route_operation = "https://example.test/runtime/operation/snapshot"
+            message_type = "marketplace.snapshot.result.v1"
+        elif self.self_consistent_wrong_record_operation:
+            route_operation = "https://example.test/runtime/operation/not-record-retrieval"
+        elif self.self_consistent_wrong_record_message_type:
+            message_type = "marketplace.snapshot.result.v1"
         result = PreparedInboundHttpResponse(
             request=request,
-            route_kind=ROUTE_IMMUTABLE_RECORD,
-            route_operation="https://open-trust-layer.github.io/marketplace/runtime/v1/operation/olp-record-retrieval",
+            route_kind=route_kind,
+            route_operation=route_operation,
             status_code=200,
             headers=(
                 ("connection", "close"),
@@ -46,7 +62,7 @@ class _Harness:
                 ("content-type", "application/json"),
             ),
             body=body,
-            olp_message_type="record",
+            olp_message_type=message_type,
         )
         if self.mutate_route:
             object.__setattr__(result, "route_operation", "https://example.test/other")
@@ -141,11 +157,12 @@ class InboundHttpWireHardeningTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, "UNSUPPORTED_HEADER")
                 self.assertEqual(self.harness.calls, [])
 
-    def test_header_colon_spacing_and_canonical_name_spelling_are_exact(self):
+    def test_header_colon_spacing_canonical_names_and_outer_value_whitespace_are_exact(self):
         variants = (
             f"GET /v1/records/{RECORD_ID} HTTP/1.1\r\nHost:{AUTHORITY}\r\nConnection: close\r\n\r\n",
             f"GET /v1/records/{RECORD_ID} HTTP/1.1\r\nhost: {AUTHORITY}\r\nConnection: close\r\n\r\n",
             f"GET /v1/records/{RECORD_ID} HTTP/1.1\r\nHost:  {AUTHORITY}\r\nConnection: close\r\n\r\n",
+            f"GET /v1/records/{RECORD_ID} HTTP/1.1\r\nHost: {AUTHORITY} \r\nConnection: close\r\n\r\n",
         )
         for text in variants:
             with self.subTest(text=text.split("\r\n")[1]):
@@ -225,6 +242,24 @@ class InboundHttpWireHardeningTests(unittest.TestCase):
         with self.assertRaises(InboundHttpWireError) as caught:
             self.adapter.prepare(_get())
         self.assertEqual(caught.exception.code, "APPLICATION_RESPONSE_INTEGRITY_DRIFT")
+
+    def test_self_consistent_wrong_route_kind_is_rejected_after_upstream_witness_passes(self):
+        self.harness.self_consistent_wrong_route_kind = True
+        with self.assertRaises(InboundHttpWireError) as caught:
+            self.adapter.prepare(_get())
+        self.assertEqual(caught.exception.code, "APPLICATION_ROUTE_BINDING_DRIFT")
+
+    def test_self_consistent_wrong_record_operation_is_rejected_after_upstream_witness_passes(self):
+        self.harness.self_consistent_wrong_record_operation = True
+        with self.assertRaises(InboundHttpWireError) as caught:
+            self.adapter.prepare(_get())
+        self.assertEqual(caught.exception.code, "APPLICATION_ROUTE_BINDING_DRIFT")
+
+    def test_self_consistent_wrong_record_message_type_is_rejected_after_upstream_witness_passes(self):
+        self.harness.self_consistent_wrong_record_message_type = True
+        with self.assertRaises(InboundHttpWireError) as caught:
+            self.adapter.prepare(_get())
+        self.assertEqual(caught.exception.code, "APPLICATION_ROUTE_BINDING_DRIFT")
 
     def test_prepared_witness_blocks_dataclass_rebinding(self):
         prepared = self.adapter.prepare(_get())
