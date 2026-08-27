@@ -35,6 +35,7 @@ REQUIRED = {
     "marketplace/runtime/https_transport.py": b"# authorized HTTPS transport\n",
     "marketplace/runtime/record_retrieval.py": b"# authorized immutable Record retrieval\n",
     "marketplace/runtime/page_hydration.py": b"# bounded federation page hydration\n",
+    "marketplace/runtime/continuation.py": b"# cursor-bound federation continuation planning\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
@@ -142,6 +143,9 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_missing_page_hydration_runtime_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/runtime/page_hydration.py")
+
+    def test_missing_continuation_runtime_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/continuation.py")
 
     def test_missing_federation_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/reference/federation_v1.py")
