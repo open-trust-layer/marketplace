@@ -31,6 +31,8 @@ _REQUIRED_SECURITY_FILES = (
     Path("src/marketplace/runtime/record_retrieval.py"),
     Path("src/marketplace/reference/record_retrieval_v1.py"),
     Path("docs/immutable-record-retrieval.md"),
+    Path("src/marketplace/runtime/page_hydration.py"),
+    Path("docs/bounded-federation-page-hydration.md"),
 )
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),
