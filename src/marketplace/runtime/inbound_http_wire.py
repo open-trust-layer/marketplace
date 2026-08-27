@@ -340,6 +340,20 @@ class BoundedInboundHttpWireAdapter:
         if headers.get("connection") != "close":
             _fail("CONNECTION_CLOSE_REQUIRED", "M35 requires exact Connection: close")
 
+        declared = headers.get("content-length")
+        if declared is None:
+            if body:
+                _fail("UNDECLARED_BODY_BYTES", "request contains body bytes without Content-Length")
+        else:
+            if (
+                not declared.isascii()
+                or not declared.isdecimal()
+                or (len(declared) > 1 and declared.startswith("0"))
+            ):
+                _fail("NONCANONICAL_CONTENT_LENGTH", "Content-Length MUST use canonical decimal text")
+            if declared != str(len(body)):
+                _fail("CONTENT_LENGTH_MISMATCH", "Content-Length does not delimit exactly the supplied request body")
+
         app_headers = tuple(
             sorted(
                 ((name, value) for name, value in headers.items() if name in _APPLICATION_HEADER_NAMES),
