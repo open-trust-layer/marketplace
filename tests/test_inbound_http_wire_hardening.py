@@ -25,6 +25,8 @@ RECORD_ID = "r1_qcU6rT-ADJiC75Bg9w7qLSvauhY6zcEmy1dk-LrRlZc"
 class _Harness:
     def __init__(self):
         self.calls = []
+        self.mutate_route = False
+        self.mutate_body_same_length = False
         adapter = object.__new__(BoundedInboundHttpApplicationAdapter)
         object.__setattr__(adapter, "_limits", InboundHttpApplicationLimits())
         object.__setattr__(adapter, "handle", self._handle)
@@ -33,7 +35,7 @@ class _Harness:
     def _handle(self, request):
         self.calls.append(request)
         body = b'{"olp":"prepared"}'
-        return PreparedInboundHttpResponse(
+        result = PreparedInboundHttpResponse(
             request=request,
             route_kind=ROUTE_IMMUTABLE_RECORD,
             route_operation="https://open-trust-layer.github.io/marketplace/runtime/v1/operation/olp-record-retrieval",
@@ -46,6 +48,11 @@ class _Harness:
             body=body,
             olp_message_type="record",
         )
+        if self.mutate_route:
+            object.__setattr__(result, "route_operation", "https://example.test/other")
+        if self.mutate_body_same_length:
+            object.__setattr__(result, "body", b'{"olp":"changed!"}')
+        return result
 
 
 def _get(*extra_headers: str, suffix: bytes = b"") -> bytes:
@@ -202,13 +209,33 @@ class InboundHttpWireHardeningTests(unittest.TestCase):
             "Connection: close\r\n"
             f"Content-Length: {'9' * 1024}\r\n\r\n"
         ).encode("ascii") + body
-        with self.assertRaises(InboundHttpWireError):
+        with self.assertRaises(InboundHttpWireError) as caught:
             self.adapter.prepare(raw)
+        self.assertEqual(caught.exception.code, "CONTENT_LENGTH_MISMATCH")
+        self.assertEqual(self.harness.calls, [])
+
+    def test_m34_same_length_body_mutation_is_rejected_by_original_witness(self):
+        self.harness.mutate_body_same_length = True
+        with self.assertRaises(InboundHttpWireError) as caught:
+            self.adapter.prepare(_get())
+        self.assertEqual(caught.exception.code, "APPLICATION_RESPONSE_INTEGRITY_DRIFT")
+
+    def test_m34_route_mutation_is_rejected_by_original_witness(self):
+        self.harness.mutate_route = True
+        with self.assertRaises(InboundHttpWireError) as caught:
+            self.adapter.prepare(_get())
+        self.assertEqual(caught.exception.code, "APPLICATION_RESPONSE_INTEGRITY_DRIFT")
 
     def test_prepared_witness_blocks_dataclass_rebinding(self):
         prepared = self.adapter.prepare(_get())
         with self.assertRaises(ValueError):
             dataclasses.replace(prepared, route_operation="https://example.test/other")
+
+    def test_prepared_invariants_detect_low_level_authority_rebinding(self):
+        prepared = self.adapter.prepare(_get())
+        object.__setattr__(prepared, "transmitted", True)
+        with self.assertRaises(ValueError):
+            prepared.__post_init__()
 
     def test_raw_request_bytes_are_not_retained_by_prepared_result(self):
         raw = _get()
