@@ -107,6 +107,23 @@ class InboundHttpStreamHardeningTests(unittest.TestCase):
         self.assertEqual(assembler.limits.max_chunks, 2)
         self.assertEqual(assembler.limits.max_chunk_bytes, 128)
 
+    def test_public_limit_views_are_fresh_and_cannot_mutate_authoritative_state(self):
+        stream_view = self.assembler.limits
+        wire_view = self.assembler.wire_limits
+        object.__setattr__(stream_view, "max_chunks", 1)
+        object.__setattr__(stream_view, "max_chunk_bytes", 1)
+        object.__setattr__(wire_view, "max_header_bytes", 1)
+        object.__setattr__(wire_view, "max_body_bytes", 1)
+        self.assertEqual(
+            self.assembler.limits,
+            InboundHttpStreamLimits(),
+        )
+        self.assertNotEqual(self.assembler.wire_limits.max_header_bytes, 1)
+        self.assertNotEqual(self.assembler.wire_limits.max_body_bytes, 1)
+        prepared = self.assembler.prepare_chunks((self.raw,))
+        self.assertEqual(prepared.request_bytes, len(self.raw))
+        self.assertEqual(len(self.harness.calls), 1)
+
     def test_m35_authority_is_snapshotted_and_later_alias_drift_fails_before_parse(self):
         self.assertEqual(self.assembler.wire_authority, AUTHORITY)
         object.__setattr__(self.wire, "_authority", "other.example")
@@ -143,11 +160,15 @@ class InboundHttpStreamHardeningTests(unittest.TestCase):
 
         def hostile_prepare(raw):
             result = original_prepare(raw)
-            object.__setattr__(self.wire, "_limits", InboundHttpWireLimits(
-                max_header_bytes=self.assembler.wire_limits.max_header_bytes,
-                max_body_bytes=self.assembler.wire_limits.max_body_bytes - 1,
-                max_response_body_bytes=self.assembler.wire_limits.max_response_body_bytes,
-            ))
+            object.__setattr__(
+                self.wire,
+                "_limits",
+                InboundHttpWireLimits(
+                    max_header_bytes=self.assembler.wire_limits.max_header_bytes,
+                    max_body_bytes=self.assembler.wire_limits.max_body_bytes - 1,
+                    max_response_body_bytes=self.assembler.wire_limits.max_response_body_bytes,
+                ),
+            )
             return result
 
         object.__setattr__(self.wire, "prepare", hostile_prepare)
