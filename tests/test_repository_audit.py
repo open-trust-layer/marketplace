@@ -78,7 +78,7 @@ class RepositoryAuditTests(unittest.TestCase):
             Path("docs/authorized-https-federation-transport.md"),
             Path("src/marketplace/runtime/record_retrieval.py"),
             Path("src/marketplace/reference/record_retrieval_v1.py"),
-            Path("docs/authorized-immutable-record-retrieval.md"),
+            Path("docs/immutable-record-retrieval.md"),
         }
         self.assertTrue(expected.issubset(set(_REQUIRED_SECURITY_FILES)))
 
