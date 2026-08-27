@@ -96,6 +96,11 @@ from .inbound_http_read_plan import (
     InboundHttpReadPlan,
     InboundHttpReadPlanError,
 )
+from .inbound_http_read_transition import (
+    BoundedInboundHttpReadTransitioner,
+    InboundHttpReadTransition,
+    InboundHttpReadTransitionError,
+)
 from .inbound_http_stream import (
     DEFAULT_MAX_INBOUND_HTTP_STREAM_CHUNK_BYTES,
     DEFAULT_MAX_INBOUND_HTTP_STREAM_CHUNKS,
@@ -205,6 +210,7 @@ __all__ = [
     "BoundedInboundFederationResponder",
     "BoundedInboundHttpApplicationAdapter",
     "BoundedInboundHttpReadPlanner",
+    "BoundedInboundHttpReadTransitioner",
     "BoundedInboundHttpStreamAssembler",
     "BoundedInboundHttpWireAdapter",
     "BoundedInboundRecordResponder",
@@ -270,6 +276,8 @@ __all__ = [
     "InboundHttpReadLimits",
     "InboundHttpReadPlan",
     "InboundHttpReadPlanError",
+    "InboundHttpReadTransition",
+    "InboundHttpReadTransitionError",
     "InboundHttpRequest",
     "InboundHttpStreamError",
     "InboundHttpStreamLimits",
