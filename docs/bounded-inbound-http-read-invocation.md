@@ -1,7 +1,7 @@
 # Bounded Inbound HTTP Read Invocation
 
-**Milestone:** 41  
-**Risk:** HIGH  
+**Milestone:** 41
+**Risk:** HIGH
 **Runtime external-I/O capability:** possible only through an explicitly injected reader; development/CI uses deterministic in-memory doubles only.
 
 ## Purpose
@@ -44,6 +44,8 @@ A DATA result that itself reaches COMPLETE does not cause an implicit second ope
 Reader exceptions are not reflected to callers. Arbitrary exception text may contain remote or sensitive content, so M41 converts an exception into the generic M40 FAILURE outcome. M40 then clears/closes the underlying M39 raw-prefix owner. M41 reports only stable local/nested reason codes.
 
 A reader that returns anything other than an **exact** `InboundHttpReadOutcome` is treated as a hostile/miswired capability. M41 closes the session and fails `INVALID_READER_RESULT` before adopting the value.
+
+After the reader has been invoked, any detected M41 binding drift is terminal. M41 makes a best-effort cleanup through the construction-captured exact M40 `close`/`closed` boundary before reporting drift, so already-consumed external input cannot intentionally leave a reusable partial request session when the original cleanup authority is still intact.
 
 EOF, explicit FAILURE, malformed DATA, oversized DATA, and lower-layer framing failures retain the terminal/fail-closed semantics already established by M40.
 
