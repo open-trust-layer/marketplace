@@ -2,7 +2,7 @@
 
 Milestone 29 adds a **transport-free, one-step continuation planner** above the accepted M8/M24/M28 federation runtime.
 
-Its purpose is deliberately narrow: given one prior M8 request, the exact `PreparedFederationExchange` produced for that request, and one already validated M28 page, determine whether there is no continuation or prepare exactly one next **unsent** M8 request carrying the page's opaque cursor.
+Its purpose is deliberately narrow: given one prior M8 request, the exact `PreparedFederationExchange` presented for that request, and one already validated M28 page, determine whether there is no continuation or prepare exactly one next **unsent** M8 request carrying the page's opaque cursor.
 
 M29 does not transmit that request and does not introduce a synchronization loop.
 
@@ -36,11 +36,11 @@ A successful M29 result therefore keeps all of these facts negative:
 
 The planner requires all three values:
 
-1. the original prior request mapping;
+1. the prior request mapping;
 2. the prior `PreparedFederationExchange`;
 3. the `ValidatedFederationPage` produced for that exchange.
 
-The original request is required because M8 cursor binding operates on the **scope object**, not only the page's stored scope fingerprint. M29 re-runs the existing injected M8 request validator so the normalized scope and its fingerprint are recovered through the same semantic authority used by M24.
+The prior request is required because M8 cursor binding operates on the **scope object**, not only the page's stored scope fingerprint. M29 re-runs the existing injected M8 request validator so the normalized scope and its fingerprint are recovered through the same semantic authority used by M24.
 
 M29 then requires exact agreement across the normalized request, prepared binding, prepared envelope, and validated page for:
 
@@ -53,6 +53,22 @@ M29 then requires exact agreement across the normalized request, prepared bindin
 - prior request payload.
 
 A final page is not allowed to bypass these checks. Context is validated first; only then may `page_truncated == false` and `next_cursor is None` produce `NO_CONTINUATION`.
+
+## Mutable host-value hardening during planning
+
+The pinned OLP transport envelope keeps its payload as an abstract host value; a frozen envelope shell is therefore not treated as a deep immutability guarantee.
+
+M29 protects its **own planning phase** by detaching the supported M8 request host representation into bounded built-in values before injected semantic helpers run. The snapshot boundary:
+
+- supports only scalar values, bytes, lists, tuples, and string-key mappings used by the M8 request representation;
+- bounds nesting depth and collection size;
+- rejects unsupported/custom host values;
+- prevents injected helpers from mutating the caller's original request through the planner's copy;
+- detects mutation of the detached prior request by the request validator;
+- detects mutation of the detached normalized scope by cursor helpers;
+- detects mutation of the detached next request by the existing `prepare(...)` path.
+
+This is a runtime alias/TOCTOU defense, **not** a second M8 semantic validator. URI, scope, capability, cursor, and fingerprint semantics remain delegated to the existing M8 helpers.
 
 ## Cursor semantics remain M8 semantics
 
@@ -80,7 +96,7 @@ If the prior request had no cursor, the field is added. If it already had a curs
 
 The next request is passed through the existing `OfflineFederationService.prepare(...)`; M29 never constructs a `PreparedFederationExchange` directly.
 
-The returned continuation must:
+At the point M29 returns, the continuation must:
 
 - remain `transmitted == false`;
 - preserve the exact prior `FederationRequestBinding`;
@@ -88,7 +104,21 @@ The returned continuation must:
 - carry exactly the constructed next request as payload;
 - preserve the exact cursor bytes.
 
-Any drift fails closed.
+Any drift detected during planning fails closed.
+
+### Post-return / send-time boundary
+
+M29 does **not** claim that an M24 `PreparedFederationExchange` payload is deeply immutable after return, and it does not claim that earlier planning validation remains sufficient indefinitely before a later network send.
+
+The pre-existing M26 send-time mutable-payload binding concern discovered during this review is tracked separately in **Issue #65**. That HIGH-risk network-boundary hardening must be resolved before any future milestone automatically composes M29 continuation output with M26 transmission or multi-page synchronization.
+
+Therefore:
+
+```text
+M29 planning success          != payload immutable forever
+M29 planning success          != M26 send authorization
+M29 prepared continuation     != safe automatic network composition
+```
 
 ## One-step only
 
@@ -106,7 +136,7 @@ PREPARED -> one PreparedFederationExchange
 
 There is no loop, recursion, retry, backoff, concurrency, scheduler, cursor auto-follow, endpoint discovery, DNS, TLS, HTTP, socket, process, filesystem, or background worker in the M29 module.
 
-A later multi-page network orchestrator is a separate HIGH-risk milestone.
+A later multi-page network orchestrator is a separate HIGH-risk milestone and is blocked on the send-time binding hardening tracked by Issue #65.
 
 ## Privacy and retention
 
@@ -125,14 +155,15 @@ Cursor-bearing values exist only in the caller-supplied page/request and the new
 Planning is local and side-effect-free. Failures may include:
 
 - malformed or mismatched prior request;
+- unsupported or oversized mutable host representation;
 - prior prepared-envelope mismatch;
 - validated-page binding mismatch;
 - invalid page authority flags;
 - missing/empty/oversized truncated-page cursor;
-- request-validator failure or hostile result;
-- cursor bind/validation failure;
+- request-validator failure, hostile result, or input mutation;
+- cursor bind/validation failure or normalized-scope mutation;
 - cursor authority/completeness promotion;
-- continuation prepare failure;
+- continuation prepare failure or next-request mutation;
 - binding/message-profile/request/cursor drift;
 - a prepared continuation falsely reporting prior transmission.
 
@@ -171,4 +202,5 @@ M29 intentionally excludes:
 - authentication/API keys/mTLS/signatures;
 - proof verification;
 - transactional repository semantics;
+- M26 send-time prepared-payload immutability/revalidation (tracked by Issue #65);
 - inbound federation service.
