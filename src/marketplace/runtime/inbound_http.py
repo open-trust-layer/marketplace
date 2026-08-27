@@ -2,13 +2,14 @@
 
 M34 accepts one already-received canonical HTTP-shaped request value, routes it
 into the existing M32 or M33 disclosure responder, serializes one strict OLP JSON
-response, and stops before transmission.  It contains no socket, listener, TLS
+response, and stops before transmission. It contains no socket, listener, TLS
 termination, HTTP byte-stream parser, retry loop, background worker, persistence,
 or network write primitive.
 """
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, Final, Protocol
 
@@ -22,6 +23,8 @@ from .inbound_record import (
     _canonical_record_identity as canonical_record_identity_transport_text,
 )
 from .prepared_integrity import (
+    MAX_PREPARED_SNAPSHOT_DEPTH,
+    MAX_PREPARED_SNAPSHOT_ITEMS,
     PreparedExchangeIntegrityError,
     detach_host_value,
     host_value_integrity_snapshot,
@@ -157,6 +160,51 @@ def _canonical_headers(
 
 def _header_map(headers: tuple[tuple[str, str], ...]) -> dict[str, str]:
     return dict(headers)
+
+
+def _wire_value_snapshot(value: Any, *, depth: int = 0) -> tuple[Any, ...]:
+    """Snapshot JSON/OLP wire meaning while ignoring list-vs-tuple host shape.
+
+    M30's exact host snapshot remains authoritative for in-process mutation
+    detection. JSON cannot preserve Python tuple/list distinction, so M34 uses
+    this second bounded snapshot only when comparing a prepared envelope with
+    its strict encode/decode round trip. Exact scalar types, map keys, sequence
+    order, values, and resource limits remain bound.
+    """
+    if depth > MAX_PREPARED_SNAPSHOT_DEPTH:
+        raise ValueError("wire value exceeds the M30 depth bound")
+    if value is None:
+        return ("none",)
+    if type(value) is bool:
+        return ("bool", value)
+    if type(value) is int:
+        return ("int", value)
+    if type(value) is str:
+        return ("str", value)
+    if type(value) is bytes:
+        return ("bytes", value)
+    if isinstance(value, Mapping):
+        if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
+            raise ValueError("wire map exceeds the M30 item bound")
+        keys = tuple(value.keys())
+        if any(type(key) is not str for key in keys):
+            raise ValueError("wire maps require exact string keys")
+        ordered = tuple(sorted(keys, key=lambda key: key.encode("utf-8")))
+        return (
+            "map",
+            tuple(
+                (key, _wire_value_snapshot(value[key], depth=depth + 1))
+                for key in ordered
+            ),
+        )
+    if isinstance(value, (tuple, list)):
+        if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
+            raise ValueError("wire sequence exceeds the M30 item bound")
+        return (
+            "sequence",
+            tuple(_wire_value_snapshot(item, depth=depth + 1) for item in value),
+        )
+    raise ValueError(f"unsupported wire host type: {type(value).__name__}")
 
 
 @dataclass(frozen=True)
@@ -351,13 +399,18 @@ class BoundedInboundHttpApplicationAdapter:
         if headers.get("content-type") != "application/json":
             _fail("CONTENT_TYPE_REQUIRED", "control POST requires exact application/json content type")
         declared = headers.get("content-length")
-        if declared is None or not declared.isascii() or not declared.isdecimal() or str(int(declared)) != declared:
+        if (
+            declared is None
+            or not declared.isascii()
+            or not declared.isdecimal()
+            or (len(declared) > 1 and declared.startswith("0"))
+        ):
             _fail("CANONICAL_CONTENT_LENGTH_REQUIRED", "control POST requires one canonical decimal content length")
         if not request.body:
             _fail("EMPTY_CONTROL_BODY", "control POST requires a non-empty body")
         if len(request.body) > self._limits.max_request_body_bytes:
             _fail("REQUEST_BODY_LIMIT_EXCEEDED", "control POST body exceeds the configured M34 bound")
-        if int(declared) != len(request.body):
+        if declared != str(len(request.body)):
             _fail("CONTENT_LENGTH_MISMATCH", "declared content length does not equal the supplied body")
         try:
             decoded = self._decode_json(request.body)
@@ -455,7 +508,8 @@ class BoundedInboundHttpApplicationAdapter:
     ) -> PreparedInboundHttpResponse:
         try:
             envelope_snapshot = host_value_integrity_snapshot(envelope)
-        except PreparedExchangeIntegrityError:
+            wire_snapshot = _wire_value_snapshot(envelope)
+        except (PreparedExchangeIntegrityError, ValueError):
             _fail("RESPONSE_ENVELOPE_UNSAFE", "prepared responder envelope is outside the M34 integrity profile")
         try:
             body = self._encode_json(envelope)
@@ -470,10 +524,10 @@ class BoundedInboundHttpApplicationAdapter:
         try:
             round_trip = self._decode_json(body)
             detached_round_trip = detach_host_value(round_trip)
-            round_trip_snapshot = host_value_integrity_snapshot(detached_round_trip)
+            round_trip_snapshot = _wire_value_snapshot(detached_round_trip)
         except Exception:
             _fail("RESPONSE_ROUND_TRIP_FAILED", "encoded response failed strict local round-trip verification")
-        if round_trip_snapshot != envelope_snapshot:
+        if round_trip_snapshot != wire_snapshot:
             _fail("RESPONSE_SERIALIZATION_DRIFT", "encoded response no longer represents the prepared responder envelope")
         headers = (
             ("connection", "close"),
