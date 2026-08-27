@@ -32,6 +32,16 @@ MAX_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS: Final = 120.0
 
 _BINDING_MARKER: Final = "inbound-http-read-driver-binding-v1"
 _RESULT_MARKER: Final = "completed-inbound-http-read-driver-result-v1"
+_AUTHORITY_NEGATIVE_FIELDS: Final = (
+    "socket_access_proven",
+    "network_origin_proven",
+    "request_authenticated",
+    "peer_identity_proven",
+    "establishes_marketplace_truth",
+    "establishes_trust",
+    "establishes_authorization",
+    "authorizes_protected_side_effects",
+)
 
 
 class InboundHttpReadDriverError(RuntimeError):
@@ -166,16 +176,7 @@ class CompletedInboundHttpReadDriverResult:
         if self.elapsed_seconds < 0.0:
             raise ValueError("elapsed_seconds MUST NOT be negative")
 
-        for name in (
-            "socket_access_proven",
-            "network_origin_proven",
-            "request_authenticated",
-            "peer_identity_proven",
-            "establishes_marketplace_truth",
-            "establishes_trust",
-            "establishes_authorization",
-            "authorizes_protected_side_effects",
-        ):
+        for name in _AUTHORITY_NEGATIVE_FIELDS:
             if getattr(self, name, None) is not False:
                 raise ValueError("M42 result promoted a forbidden authority fact")
 
@@ -392,38 +393,21 @@ class BoundedInboundHttpReadDriver:
             _fail("READ_DRIVER_CLOCK_DRIFT", "M42 clock MUST return one finite non-boolean number")
         return float(value)
 
-    def _guarded_clock_value(self, *, consumed: bool) -> float:
+    def _guarded_clock_value(self) -> float:
         try:
             return self._clock_value()
         except InboundHttpReadDriverError:
-            if consumed:
-                self._best_effort_close()
+            self._best_effort_close()
             raise
 
-    def _require_monotonic(
-        self,
-        *,
-        prior: float,
-        current: float,
-        consumed: bool,
-    ) -> None:
+    def _require_monotonic(self, *, prior: float, current: float) -> None:
         if current < prior:
-            if consumed:
-                self._best_effort_close()
+            self._best_effort_close()
             _fail("READ_DRIVER_CLOCK_REGRESSION", "M42 monotonic clock moved backwards")
 
-    def _require_within_time_budget(
-        self,
-        *,
-        start: float,
-        current: float,
-        consumed: bool,
-    ) -> None:
+    def _require_within_time_budget(self, *, start: float, current: float) -> None:
         if current - start > self._max_elapsed_seconds:
-            if consumed:
-                self._best_effort_close()
-            else:
-                self._best_effort_close()
+            self._best_effort_close()
             _fail("READ_DRIVER_TIME_LIMIT_EXHAUSTED", "M42 aggregate elapsed-time budget exhausted")
 
     def _replay_result(
@@ -433,6 +417,10 @@ class BoundedInboundHttpReadDriver:
         if type(result) is not InboundHttpReadInvocationResult:
             self._best_effort_close()
             _fail("READ_DRIVER_RESULT_DRIFT", "M41 returned unexpected invocation-result type")
+        for name in _AUTHORITY_NEGATIVE_FIELDS:
+            if getattr(result, name, None) is not False:
+                self._best_effort_close()
+                _fail("READ_DRIVER_RESULT_DRIFT", "M41 result promoted a forbidden authority fact")
         try:
             witnessed = replace(result)
         except ValueError:
@@ -449,33 +437,32 @@ class BoundedInboundHttpReadDriver:
 
     def run_to_completion(self) -> CompletedInboundHttpReadDriverResult:
         """Drive M41 through one finite loop and return one M39 completion handoff."""
-        self._validate_bindings()
-        if self._closed_value():
+        try:
+            self._validate_bindings()
+            source_closed = self._closed_value()
+        except InboundHttpReadDriverError:
+            self._best_effort_close()
+            raise
+        if source_closed:
             _fail("READ_DRIVER_SESSION_CLOSED", "M42 source M41 session is already closed")
 
-        start = self._guarded_clock_value(consumed=False)
+        start = self._guarded_clock_value()
         prior_clock = start
         completed_steps = 0
 
         for _ in range(self._max_steps):
-            consumed = completed_steps > 0
-            before = self._guarded_clock_value(consumed=consumed)
-            self._require_monotonic(
-                prior=prior_clock,
-                current=before,
-                consumed=consumed,
-            )
-            self._require_within_time_budget(
-                start=start,
-                current=before,
-                consumed=consumed,
-            )
+            before = self._guarded_clock_value()
+            self._require_monotonic(prior=prior_clock, current=before)
+            self._require_within_time_budget(start=start, current=before)
 
             try:
                 result = self._invoke()
             except InboundHttpReadInvocationError as exc:
                 self._best_effort_close()
                 _fail_from_invocation(exc)
+            except Exception:
+                self._best_effort_close()
+                _fail("READ_DRIVER_INVOCATION_FAILURE", "M41 invocation failed unexpectedly")
 
             completed_steps += 1
             try:
@@ -484,17 +471,9 @@ class BoundedInboundHttpReadDriver:
                 self._best_effort_close()
                 raise
 
-            after = self._guarded_clock_value(consumed=True)
-            self._require_monotonic(
-                prior=before,
-                current=after,
-                consumed=True,
-            )
-            self._require_within_time_budget(
-                start=start,
-                current=after,
-                consumed=True,
-            )
+            after = self._guarded_clock_value()
+            self._require_monotonic(prior=before, current=after)
+            self._require_within_time_budget(start=start, current=after)
             prior_clock = after
 
             witnessed = self._replay_result(result)
