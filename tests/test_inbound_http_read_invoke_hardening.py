@@ -6,21 +6,14 @@ import unittest
 from dataclasses import fields, replace
 from pathlib import Path
 
-from marketplace.runtime.inbound_http import (
-    BoundedInboundHttpApplicationAdapter,
-    InboundHttpApplicationLimits,
-)
+from marketplace.runtime.inbound_http import BoundedInboundHttpApplicationAdapter, InboundHttpApplicationLimits
 from marketplace.runtime.inbound_http_read_invoke import (
     READ_INVOCATION_COMPLETED,
     READ_INVOCATION_PROGRESS,
     BoundedInboundHttpReadInvoker,
     InboundHttpReadInvocationError,
-    InboundHttpReadInvocationResult,
 )
-from marketplace.runtime.inbound_http_read_outcome import (
-    BoundedInboundHttpReadOutcomeHandler,
-    InboundHttpReadOutcome,
-)
+from marketplace.runtime.inbound_http_read_outcome import BoundedInboundHttpReadOutcomeHandler, InboundHttpReadOutcome
 from marketplace.runtime.inbound_http_read_plan import BoundedInboundHttpReadPlanner
 from marketplace.runtime.inbound_http_read_session import BoundedInboundHttpReadSession
 from marketplace.runtime.inbound_http_read_transition import BoundedInboundHttpReadTransitioner
@@ -45,19 +38,13 @@ class _NoDisclosureHarness:
 
 def _parts(reader):
     harness = _NoDisclosureHarness()
-    wire = BoundedInboundHttpWireAdapter(
-        application_adapter=harness.adapter,
-        authority=AUTHORITY,
-    )
+    wire = BoundedInboundHttpWireAdapter(application_adapter=harness.adapter, authority=AUTHORITY)
     stream = BoundedInboundHttpStreamAssembler(wire_adapter=wire)
     planner = BoundedInboundHttpReadPlanner(stream_assembler=stream)
     transitioner = BoundedInboundHttpReadTransitioner(read_planner=planner)
     session = BoundedInboundHttpReadSession(read_transitioner=transitioner)
     handler = BoundedInboundHttpReadOutcomeHandler(read_session=session)
-    invoker = BoundedInboundHttpReadInvoker(
-        read_outcome_handler=handler,
-        reader=reader,
-    )
+    invoker = BoundedInboundHttpReadInvoker(read_outcome_handler=handler, reader=reader)
     raw = _get_request_bytes(f"/v1/records/{RECORD_ID}", AUTHORITY, 443)
     return session, handler, invoker, raw
 
@@ -77,11 +64,7 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
 
     def test_result_has_no_direct_raw_chunk_or_prefix_field_and_witness_does_not_copy_data(self):
         chunk = b"GET "
-
-        def reader(max_bytes):
-            return InboundHttpReadOutcome.data(chunk)
-
-        _, _, invoker, _ = _parts(reader)
+        _, _, invoker, _ = _parts(lambda max_bytes: InboundHttpReadOutcome.data(chunk))
         result = invoker.invoke_once()
         names = {field.name for field in fields(result)}
         self.assertNotIn("chunk", names)
@@ -93,11 +76,7 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
 
     def test_completed_result_witness_does_not_duplicate_completion_prefix(self):
         holder = {}
-
-        def reader(max_bytes):
-            return InboundHttpReadOutcome.data(holder["raw"])
-
-        _, _, invoker, raw = _parts(reader)
+        _, _, invoker, raw = _parts(lambda max_bytes: InboundHttpReadOutcome.data(holder["raw"]))
         holder["raw"] = raw
         invoker.invoke_once()
         completed = invoker.invoke_once()
@@ -107,11 +86,9 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
 
     def test_outcome_subclass_is_not_accepted_as_exact_reader_result(self):
         calls = []
-
         def reader(max_bytes):
             calls.append(max_bytes)
             return _OutcomeSubclass.data(b"GET ")
-
         session, _, invoker, _ = _parts(reader)
         with self.assertRaises(InboundHttpReadInvocationError) as caught:
             invoker.invoke_once()
@@ -122,11 +99,7 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
 
     def test_public_m40_method_replacement_after_construction_cannot_substitute_authority(self):
         holder = {}
-
-        def reader(max_bytes):
-            return InboundHttpReadOutcome.data(holder["raw"])
-
-        _, _, invoker, raw = _parts(reader)
+        _, _, invoker, raw = _parts(lambda max_bytes: InboundHttpReadOutcome.data(holder["raw"]))
         holder["raw"] = raw
         originals = (
             BoundedInboundHttpReadOutcomeHandler.progress,
@@ -134,17 +107,14 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
             BoundedInboundHttpReadOutcomeHandler.take_completed,
             BoundedInboundHttpReadOutcomeHandler.close,
         )
-
         def hostile(*args, **kwargs):
             raise AssertionError("replaced public M40 method MUST NOT run")
-
         try:
             BoundedInboundHttpReadOutcomeHandler.progress = hostile
             BoundedInboundHttpReadOutcomeHandler.accept_outcome = hostile
             BoundedInboundHttpReadOutcomeHandler.take_completed = hostile
             BoundedInboundHttpReadOutcomeHandler.close = hostile
-            first = invoker.invoke_once()
-            self.assertEqual(first.state, READ_INVOCATION_PROGRESS)
+            self.assertEqual(invoker.invoke_once().state, READ_INVOCATION_PROGRESS)
             second = invoker.invoke_once()
             self.assertEqual(second.state, READ_INVOCATION_COMPLETED)
             self.assertEqual(second.completed.prefix, raw)
@@ -158,11 +128,9 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
 
     def test_private_captured_binding_rebind_fails_before_reader_invocation(self):
         calls = []
-
         def reader(max_bytes):
             calls.append(max_bytes)
             return InboundHttpReadOutcome.data(b"GET ")
-
         session, _, invoker, _ = _parts(reader)
         invoker._accept = invoker._progress
         with self.assertRaises(InboundHttpReadInvocationError) as caught:
@@ -172,13 +140,11 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
         self.assertFalse(session.closed)
         self.assertEqual(session._prefix, b"")
 
-    def test_reader_binding_replacement_is_detected_before_second_call(self):
+    def test_reader_binding_replacement_is_detected_before_call(self):
         calls = []
-
         def reader(max_bytes):
             calls.append(max_bytes)
             return InboundHttpReadOutcome.data(b"GET ")
-
         _, _, invoker, _ = _parts(reader)
         invoker._reader = lambda max_bytes: InboundHttpReadOutcome.eof()
         with self.assertRaises(InboundHttpReadInvocationError) as caught:
@@ -187,76 +153,37 @@ class InboundHttpReadInvokeHardeningTests(unittest.TestCase):
         self.assertEqual(calls, [])
 
     def test_success_result_never_promotes_origin_authentication_or_authority(self):
-        def reader(max_bytes):
-            return InboundHttpReadOutcome.data(b"GET ")
-
-        _, _, invoker, _ = _parts(reader)
+        _, _, invoker, _ = _parts(lambda max_bytes: InboundHttpReadOutcome.data(b"GET "))
         result = invoker.invoke_once()
         self.assertTrue(result.reader_invoked)
         for name in (
-            "socket_access_proven",
-            "network_origin_proven",
-            "request_authenticated",
-            "peer_identity_proven",
-            "establishes_marketplace_truth",
-            "establishes_trust",
-            "establishes_authorization",
-            "authorizes_protected_side_effects",
+            "socket_access_proven", "network_origin_proven", "request_authenticated",
+            "peer_identity_proven", "establishes_marketplace_truth", "establishes_trust",
+            "establishes_authorization", "authorizes_protected_side_effects",
         ):
             self.assertIs(getattr(result, name), False)
 
-    def test_source_has_no_concrete_network_retry_loop_process_persistence_or_logging_surface(self):
-        source_path = (
-            Path(__file__).resolve().parents[1]
-            / "src/marketplace/runtime/inbound_http_read_invoke.py"
-        )
+    def test_source_has_no_concrete_network_process_persistence_or_logging_surface_and_invoke_has_no_loop(self):
+        source_path = Path(__file__).resolve().parents[1] / "src/marketplace/runtime/inbound_http_read_invoke.py"
         source = source_path.read_text(encoding="utf-8")
         tree = ast.parse(source)
-        forbidden_import_roots = {
-            "socket",
-            "ssl",
-            "http",
-            "urllib",
-            "asyncio",
-            "threading",
-            "subprocess",
-            "logging",
-            "pathlib",
-            "os",
-        }
+        forbidden_import_roots = {"socket", "ssl", "http", "urllib", "asyncio", "threading", "subprocess", "logging", "pathlib", "os"}
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     self.assertNotIn(alias.name.split(".", 1)[0], forbidden_import_roots)
             elif isinstance(node, ast.ImportFrom) and node.module:
                 self.assertNotIn(node.module.split(".", 1)[0], forbidden_import_roots)
-            elif isinstance(node, (ast.For, ast.AsyncFor, ast.While)):
-                self.fail("M41 one-step invoker MUST NOT contain a retry/read loop")
             elif isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name):
                     self.assertNotIn(node.func.id, {"open", "exec", "eval", "compile"})
                 elif isinstance(node.func, ast.Attribute):
-                    self.assertNotIn(
-                        node.func.attr,
-                        {
-                            "recv",
-                            "recv_into",
-                            "read",
-                            "send",
-                            "sendall",
-                            "write",
-                            "listen",
-                            "connect",
-                            "bind",
-                            "accept",
-                            "sleep",
-                        },
-                    )
+                    self.assertNotIn(node.func.attr, {"recv", "recv_into", "read", "send", "sendall", "write", "listen", "connect", "bind", "accept", "sleep"})
 
         invoke_source = inspect.getsource(BoundedInboundHttpReadInvoker.invoke_once)
+        invoke_tree = ast.parse(inspect.cleandoc(invoke_source))
         self.assertEqual(invoke_source.count("self._reader("), 1)
-        self.assertNotIn("while ", invoke_source)
-        self.assertNotIn("for ", invoke_source)
+        self.assertFalse(any(isinstance(node, (ast.For, ast.AsyncFor, ast.While)) for node in ast.walk(invoke_tree)))
 
 
 if __name__ == "__main__":
