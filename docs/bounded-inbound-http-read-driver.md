@@ -38,6 +38,8 @@ M42 captures the original exact M41 `invoke_once`, `close`, and `closed` getter 
 
 M42 never stores or calls M41's injected reader directly.
 
+The supplied M41/M40/M39 chain may already own a valid partial or complete request state when M42 is constructed. M42 does not reset or reinterpret that prior state. Its step/time accounting starts only when `run_to_completion()` begins, while M39 `reads_completed` remains cumulative local accounting for the whole owning session.
+
 The configured M42 step ceiling must not exceed the actual M37 read-call ceiling retained by the construction-bound M39 session. With no explicit M42 limits, the effective default is `min(64, retained_m37_max_read_calls)`.
 
 This is intentionally conservative: an M41 completion-transfer call consumes an M42 orchestration step even though it performs no reader call. M42 therefore may stop before exercising every theoretical M37 read slot rather than widening lower-layer authority.
@@ -57,6 +59,8 @@ hard aggregate time budget:   120 seconds
 
 The injected clock is checked before and after every M41 step. Clock exceptions, non-finite values, or backward movement fail closed with stable M42 reason codes. There is no sleep, alarm, thread, scheduler, cancellation token, signal, or background timeout worker.
 
+The elapsed-time budget covers only the M42 `run_to_completion()` call. It does not claim to measure or constrain time spent before M42 was constructed around an existing M39 session.
+
 ## Driver behavior
 
 `run_to_completion()` contains one finite `for` loop bounded by the construction-frozen M42 step ceiling.
@@ -71,8 +75,9 @@ For every iteration M42:
 6. validates M42/M41 bindings again;
 7. samples and validates the clock again;
 8. replays the exact immutable M41 result;
-9. continues only for exact M41 `PROGRESS` carrying a canonical M37 READ/COMPLETE plan;
-10. returns immediately for exact M41 `COMPLETED` after proving the M41 source session is closed.
+9. increments M42 `reader_invocations` only when that exact M41 result truthfully records `reader_invoked=True`;
+10. continues only for exact M41 `PROGRESS` carrying a canonical M37 READ/COMPLETE plan;
+11. returns immediately for exact M41 `COMPLETED` after proving the M41 source session is closed.
 
 Step exhaustion closes/clears through captured M41 cleanup authority before failing `READ_DRIVER_STEP_LIMIT_EXHAUSTED`.
 
@@ -82,7 +87,9 @@ A lower-layer error is wrapped as `READ_DRIVER_INVOCATION_REJECTED` while preser
 
 ## Cleanup uncertainty
 
-Once any driver step may have consumed input, failures must not silently strand a reusable partial request. M42's cleanup uses only the construction-captured exact M41 `close` and `closed` bindings.
+Because M42 may be constructed around an already-partial M39 session, a run-time binding or clock failure must not assume that zero completed M42 steps means zero retained request material. Run-time failures therefore use the construction-captured M41 cleanup boundary even before M42's first reader step when cleanup authority is intact.
+
+M42's cleanup uses only the construction-captured exact M41 `close` and `closed` bindings.
 
 If those bindings are no longer provably the construction-bound cleanup authority, or cleanup cannot be verified, M42 reports `READ_DRIVER_CLEANUP_UNCERTAIN` rather than claiming state was cleared.
 
@@ -92,13 +99,16 @@ This is fail-closed state-accounting, not process isolation. M42 does not claim 
 
 `CompletedInboundHttpReadDriverResult` wraps the existing exact M39 `CompletedInboundHttpReadSession` one-shot handoff and records:
 
-- M42 invocation steps;
-- M39-owned reader invocation count;
-- elapsed monotonic time;
+- M42 invocation steps performed during this driver run;
+- M42-observed reader invocations, counted only from exact M41 results with `reader_invoked=True` during this driver run;
+- cumulative M39 `reads_completed` local accounting, derived from the exact completion handoff;
+- elapsed monotonic time for this M42 run;
 - nested completion integrity witness;
 - authority-negative facts.
 
-Its M42 integrity witness includes only the existing M39 completion integrity snapshot, not a second copy of the raw request prefix.
+`reads_completed` is local session accounting, not proof that an external reader or network was invoked. It may be greater than M42 `driver_steps` when the supplied session already contained valid prior transitions before M42 began. Conversely, `reader_invocations` describes only reader calls observed through M41 during this M42 run and does not prove that those calls accessed a socket or network.
+
+Its M42 integrity witness includes only the existing M39 completion integrity snapshot plus bounded operational metadata, not a second copy of the raw request prefix.
 
 The M39 completion object itself remains the explicit one-shot raw request handoff.
 
@@ -107,6 +117,7 @@ The M39 completion object itself remains the explicit one-shot raw request hando
 ```text
 finite M42 orchestration       != socket/listener authority
 M41 reader invocation          != network origin proof
+M39 reads_completed            != proof a reader was invoked
 multiple M41 steps             != retry permission after error
 elapsed clock budget           != transport timeout enforcement
 completed request bytes        != authenticated requester
