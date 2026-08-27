@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
+import marketplace.runtime as runtime_api
 from marketplace.reference import (
     TYPE_INTENT,
     evaluate_discovery,
@@ -157,6 +159,15 @@ class FederationSynchronizationHardeningTests(unittest.TestCase):
             monotonic_clock=lambda: 0.0,
         )
         return runtime, service, planner, orchestrator
+
+    def test_m31_required_repository_and_runtime_package_artifacts_are_present(self):
+        root = Path(__file__).resolve().parents[1]
+        self.assertTrue((root / "src/marketplace/runtime/synchronization.py").is_file())
+        self.assertTrue((root / "docs/bounded-multipage-federation-synchronization.md").is_file())
+        self.assertIs(
+            runtime_api.BoundedFederationSynchronizationOrchestrator,
+            BoundedFederationSynchronizationOrchestrator,
+        )
 
     def test_provider_alias_mutation_cannot_change_detached_control_response(self):
         original = _final_page()
