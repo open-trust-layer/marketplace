@@ -19,6 +19,17 @@ DEFAULT_MAX_INBOUND_HTTP_WRITE_BYTES: Final = 16 * 1024
 MAX_INBOUND_HTTP_WRITE_CALLS: Final = 1_024
 MAX_INBOUND_HTTP_WRITE_BYTES: Final = 1 * 1024 * 1024
 
+_AUTHORITY_NEGATIVE_FIELDS: Final = (
+    "socket_access_proven",
+    "network_origin_proven",
+    "request_authenticated",
+    "peer_identity_proven",
+    "establishes_marketplace_truth",
+    "establishes_trust",
+    "establishes_authorization",
+    "authorizes_protected_side_effects",
+)
+
 
 class InboundHttpResponseWritePlanError(RuntimeError):
     """Fail-closed M44 planning error with stable local reason metadata."""
@@ -35,6 +46,11 @@ def _fail(code: str, message: str) -> None:
 def _validate_prepared(value: PreparedInboundHttpReadResponse) -> PreparedInboundHttpReadResponse:
     if type(value) is not PreparedInboundHttpReadResponse:
         _fail("WRITE_PREPARED_RESPONSE_TYPE", "prepared_response MUST be exact M43 result")
+    if value.response_prepared is not True or value.transmitted is not False:
+        _fail("WRITE_PREPARED_RESPONSE_DRIFT", "M43 prepared response authority changed")
+    for name in _AUTHORITY_NEGATIVE_FIELDS:
+        if getattr(value, name, None) is not False:
+            _fail("WRITE_AUTHORITY_ESCALATION", "M43 prepared response promoted authority")
     try:
         replayed = replace(value)
     except ValueError as exc:
@@ -44,16 +60,7 @@ def _validate_prepared(value: PreparedInboundHttpReadResponse) -> PreparedInboun
         ) from exc
     if replayed.response_prepared is not True or replayed.transmitted is not False:
         _fail("WRITE_PREPARED_RESPONSE_DRIFT", "M43 prepared response authority changed")
-    for name in (
-        "socket_access_proven",
-        "network_origin_proven",
-        "request_authenticated",
-        "peer_identity_proven",
-        "establishes_marketplace_truth",
-        "establishes_trust",
-        "establishes_authorization",
-        "authorizes_protected_side_effects",
-    ):
+    for name in _AUTHORITY_NEGATIVE_FIELDS:
         if getattr(replayed, name, None) is not False:
             _fail("WRITE_AUTHORITY_ESCALATION", "M43 prepared response promoted authority")
     return replayed
