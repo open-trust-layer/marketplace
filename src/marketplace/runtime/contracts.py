@@ -89,6 +89,22 @@ class FederationRequestValidator(Protocol):
     def __call__(self, value: Any) -> Mapping[str, Any]: ...
 
 
+class FederationScopeFingerprintProvider(Protocol):
+    """Derive the canonical M8 scope fingerprint without performing I/O."""
+
+    def __call__(self, scope: Any) -> str: ...
+
+
+class FederationCapabilityNegotiator(Protocol):
+    """Evaluate required capabilities against one local M8 advertisement."""
+
+    def __call__(
+        self,
+        advertisement: Any,
+        required_capabilities: Iterable[Any],
+    ) -> Mapping[str, Any]: ...
+
+
 class FederationEnvelopeMaker(Protocol):
     """Create an abstract transport envelope without transmitting it."""
 
