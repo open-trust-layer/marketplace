@@ -1,9 +1,9 @@
-"""Immutable local integrity snapshots for prepared federation exchanges.
+"""Deeply immutable prepared federation host values and integrity snapshots.
 
 This module contains no semantic authority and no network capability. It turns
-the bounded M8 host representation used by a prepared exchange into an immutable,
-type-tagged snapshot and a detached built-in copy. The snapshot exists only to
-detect post-prepare mutation before a later M26 send.
+the bounded M8 host representation used by a prepared exchange into detached
+``dict``/``list`` subclasses that preserve ordinary Mapping/list behavior while
+rejecting mutation, together with an immutable type-tagged integrity snapshot.
 """
 from __future__ import annotations
 
@@ -27,6 +27,42 @@ def _fail(code: str, message: str) -> None:
     raise PreparedExchangeIntegrityError(code, message)
 
 
+class FrozenList(list):
+    """A detached list-compatible host value with mutation disabled."""
+
+    def _immutable(self, *args: Any, **kwargs: Any) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    append = _immutable
+    clear = _immutable
+    extend = _immutable
+    insert = _immutable
+    pop = _immutable
+    remove = _immutable
+    reverse = _immutable
+    sort = _immutable
+    __iadd__ = _immutable
+    __imul__ = _immutable
+
+
+class FrozenDict(dict):
+    """A detached dict-compatible host value with mutation disabled."""
+
+    def _immutable(self, *args: Any, **kwargs: Any) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+    __ior__ = _immutable
+
+
 def _detach(value: Any, *, depth: int = 0) -> tuple[Any, tuple[Any, ...]]:
     if depth > MAX_PREPARED_SNAPSHOT_DEPTH:
         _fail("SNAPSHOT_DEPTH_EXCEEDED", "prepared exchange exceeds the integrity snapshot depth bound")
@@ -43,20 +79,33 @@ def _detach(value: Any, *, depth: int = 0) -> tuple[Any, tuple[Any, ...]]:
     if value_type is bytes:
         return value, ("bytes", value)
 
-    if value_type is tuple or value_type is list:
+    if value_type is tuple:
         if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
-            _fail("SNAPSHOT_ITEM_LIMIT", "prepared exchange sequence exceeds the integrity snapshot item bound")
+            _fail("SNAPSHOT_ITEM_LIMIT", "prepared exchange tuple exceeds the integrity snapshot item bound")
         detached_items: list[Any] = []
         snapshots: list[tuple[Any, ...]] = []
         for item in value:
             detached, snapshot = _detach(item, depth=depth + 1)
             detached_items.append(detached)
             snapshots.append(snapshot)
-        if value_type is tuple:
-            return tuple(detached_items), ("tuple", tuple(snapshots))
-        return detached_items, ("list", tuple(snapshots))
+        return tuple(detached_items), ("tuple", tuple(snapshots))
+
+    if isinstance(value, list):
+        if value_type not in (list, FrozenList):
+            _fail("SNAPSHOT_UNSUPPORTED_TYPE", f"unsupported prepared exchange list type {value_type.__name__}")
+        if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
+            _fail("SNAPSHOT_ITEM_LIMIT", "prepared exchange list exceeds the integrity snapshot item bound")
+        detached_items = []
+        snapshots = []
+        for item in value:
+            detached, snapshot = _detach(item, depth=depth + 1)
+            detached_items.append(detached)
+            snapshots.append(snapshot)
+        return FrozenList(detached_items), ("list", tuple(snapshots))
 
     if isinstance(value, Mapping):
+        if value_type not in (dict, FrozenDict):
+            _fail("SNAPSHOT_UNSUPPORTED_TYPE", f"unsupported prepared exchange mapping type {value_type.__name__}")
         try:
             items = tuple(islice(value.items(), MAX_PREPARED_SNAPSHOT_ITEMS + 1))
         except Exception as exc:
@@ -75,7 +124,7 @@ def _detach(value: Any, *, depth: int = 0) -> tuple[Any, tuple[Any, ...]]:
             detached_map[key] = detached
             snapshot_items.append((key, snapshot))
         snapshot_items.sort(key=lambda pair: pair[0].encode("utf-8"))
-        return detached_map, ("map", tuple(snapshot_items))
+        return FrozenDict(detached_map), ("map", tuple(snapshot_items))
 
     _fail("SNAPSHOT_UNSUPPORTED_TYPE", f"unsupported prepared exchange host value type {value_type.__name__}")
 
@@ -118,7 +167,7 @@ def _binding_snapshot(binding: Any) -> tuple[Any, ...]:
 
 
 def detach_prepared_exchange(binding: Any, envelope: Any) -> tuple[tuple[Any, ...], tuple[Any, ...]]:
-    """Return a detached envelope plus immutable binding+envelope integrity snapshot."""
+    """Return a deeply immutable detached envelope plus its integrity snapshot."""
     detached, envelope_snapshot = _detach(envelope)
     if type(detached) is not tuple or len(detached) != 4:
         _fail("INVALID_ENVELOPE", "prepared exchange envelope MUST be an exact four-element tuple")
