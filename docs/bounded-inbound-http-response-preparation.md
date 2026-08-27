@@ -10,14 +10,14 @@ The runtime answers one narrow question: after the exact construction-bound M42 
 
 `BoundedInboundHttpResponsePreparer` accepts one exact `BoundedInboundHttpReadDriver`. At construction it derives and retains the exact M39 session, M37 planner, M36 assembler, M35 wire adapter, and M34 application adapter beneath that driver. It snapshots M37/M36/M35/M34 limits and the configured M35 Host authority, captures exact method/function bindings, and records one construction witness.
 
-The preparer captures the original M42 `run_to_completion`/`close`, M37 `plan`, M35 private parser, M35 `prepare`, and M35 private application-response validator. Public method replacement after construction cannot substitute those captured call paths. Configuration or binding drift fails closed.
+The preparer captures the original M42 `run_to_completion`/`close`, the exact M39 `close` cleanup primitive, M37 `plan`, M35 private parser, M35 `prepare`, and M35 private application-response validator. Public method replacement after construction cannot substitute those captured call paths. Configuration or binding drift fails closed.
 
 ## One-shot preparation flow
 
 `prepare()` performs these steps exactly once:
 
-1. validate the construction binding and mark the preparer used;
-2. call the captured M42 `run_to_completion()` once, with no retry;
+1. validate the construction binding; if a pre-run drift is detected, mark the preparer terminal and clear any retained partial M39 prefix through the construction-captured exact M39 cleanup before returning the drift error;
+2. mark the preparer used and call the captured M42 `run_to_completion()` once, with no retry;
 3. require exact M42/M39 completion types, integrity replay, and authority-negative facts;
 4. obtain the exact completed immutable M39 prefix from that one-shot handoff;
 5. independently invoke the captured M37 planner on the exact prefix and cumulative M39 read count;
@@ -29,6 +29,16 @@ The preparer captures the original M42 `run_to_completion`/`close`, M37 `plan`, 
 11. return one immutable `PreparedInboundHttpReadResponse` with the exact M35 prepared exchange, replayed M37 completion plan, and bounded M42/M39 accounting.
 
 There is no fallback preparation path and no retry after any M42, M37, or M35 failure.
+
+## Terminal cleanup and partial-state safety
+
+An M43 instance may be constructed around a legitimate M42/M39 chain that already contains a partial request. Therefore a binding or configuration failure detected **before** M42 starts cannot merely return while leaving that prefix resident.
+
+M43 captures the exact original `BoundedInboundHttpReadSession.close` binding at construction. On pre-run M43 drift, it marks the preparer used, invokes that captured M39 cleanup directly, and verifies that the retained session reports its private raw prefix as `b""` and its closed marker as exact `True`. Only after verified cleanup does M43 preserve the original binding/configuration failure.
+
+If the captured cleanup binding itself has drifted, cleanup raises, or cleared/closed state cannot be verified, M43 reports `RESPONSE_PREPARATION_CLEANUP_UNCERTAIN` rather than claiming the request was erased. Explicit `close()` uses the same construction-captured M39 cleanup path and remains idempotent even when downstream M35/M34 configuration has drifted.
+
+This direct cleanup path is lifecycle-only authority: it can clear the already-owned local M39 prefix but cannot read a socket, prepare or transmit a response, authenticate a requester, or authorize any external effect.
 
 ## Aggregate-prefix rule
 
@@ -76,6 +86,8 @@ Any future concrete accepted-socket reader, response writer, listener, TLS termi
 ## Retention
 
 All request, completion, prepared-response, plan, and accounting material is **EPHEMERAL**, with a maximum retention of 10 seconds post-use. M43 adds no durable store, cache, journal, log, checkpoint, filesystem output, or background retention mechanism. Callers remain responsible for consuming or releasing the returned one-shot material within the project retention bound.
+
+Pre-run drift is destructive with respect to the owned partial M39 prefix: M43 attempts immediate captured cleanup instead of relying on caller cooperation. Successful response preparation still returns the existing immutable prepared material to the caller, which remains subject to the same maximum 10-second post-use retention bound.
 
 ## Recovery
 
