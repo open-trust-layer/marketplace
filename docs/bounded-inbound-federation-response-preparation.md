@@ -10,7 +10,7 @@
 
 ## Purpose
 
-M32 adds the local preparation boundary for one inbound Marketplace M8 snapshot or sync request. It validates one supplied transport envelope, requires one explicit local disclosure decision, materializes one bounded local page, validates that page through existing M8 helpers, and prepares one immutable response envelope.
+M32 adds the local preparation boundary for one inbound Marketplace M8 snapshot or sync request. It validates one supplied transport envelope, rebinds its scope and capability requirements to local M8 facts, requires one explicit local disclosure decision, materializes one bounded local page, validates that page through existing M8 helpers, and prepares one immutable response envelope.
 
 M32 stops before transmission.
 
@@ -22,6 +22,7 @@ It does not implement an inbound network server. A future transport adapter may 
 valid M8 request                 != permission to disclose Record IDs
 request source                   != authenticated peer identity
 request capability declaration  != local capability enablement
+capability negotiation          != disclosure authorization
 operation profile               != disclosure authorization
 cursor possession               != authorization
 cursor binding                  != requester identity proof
@@ -34,9 +35,42 @@ absence                         != deletion evidence
 prepared disclosure             != truth / trust / agreement / protected-action authority
 ```
 
-M32 treats the disclosure decision as an injected local policy fact. Request validity, source URI, operation, capabilities, page size, cursor presence, and transport-envelope validity cannot substitute for that decision.
+M32 treats the disclosure decision as an injected local policy fact. Request validity, source URI, operation, capabilities, page size, cursor presence, transport-envelope validity, and successful capability negotiation cannot substitute for that decision.
 
-The disclosure authorizer is called exactly once after request validation and binding checks and before the page source. Only exact boolean `True` permits page materialization. `False`, non-boolean values, or authorizer failure stop the request before local Record enumeration.
+The disclosure authorizer is called exactly once after request validation, scope binding, local capability negotiation, and other request binding checks, and before the page source. Only exact boolean `True` permits page materialization. `False`, non-boolean values, or authorizer failure stop the request before local Record enumeration.
+
+## Scope binding
+
+M32 does not trust a request normalizer to rewrite scope invisibly.
+
+Before disclosure authorization, the responder uses the existing injected M8 `scope_fingerprint(...)` semantic helper to derive fingerprints independently from:
+
+1. the detached raw request scope; and
+2. the normalized request scope returned by the existing M8 request validator.
+
+Both derived fingerprints must be non-empty exact text and must equal the request validator's reported `scope_fingerprint`. Any mismatch fails closed before capability negotiation, disclosure authorization, or page-source invocation.
+
+This preserves semantic normalization where raw list/tuple host representations may differ while preventing a miswired/hostile normalizer from silently changing the requested scope.
+
+## Local capability binding
+
+A request's `required_capabilities` field is a requirement, not proof that the local responder implements or enables those capabilities.
+
+The responder is configured with one detached local M8 capability advertisement whose `source` must equal the responder's configured local source. After request normalization/scope binding and before disclosure authorization, M32 invokes the existing injected M8 `negotiate_capabilities(...)` helper exactly for the request's canonical required-capability tuple.
+
+M32 requires:
+
+- exact negotiation result shape;
+- `required_capabilities` preserved exactly;
+- `status = SUPPORTED`;
+- empty unsupported and unavailable sets;
+- `no_silent_downgrade = True`.
+
+Any unsupported/unavailable requirement, silent-downgrade attempt, result-shape drift, or required-set drift fails before disclosure authorization or Record enumeration.
+
+The local capability advertisement is deeply detached at responder construction, so later caller mutation cannot silently change the responder's capability state for an in-progress value.
+
+Successful capability negotiation remains only a local compatibility fact. It does not authenticate a peer and does not authorize disclosure.
 
 ## Record-body minimization
 
@@ -60,11 +94,15 @@ The caller selects one configured operation profile locally, for example snapsho
 1. deeply detaches the supplied request envelope using the bounded M30 immutable host representation;
 2. validates it against the configured request message type;
 3. requires the transport validator to preserve the negative facts that transport does not define Record Identity and transport authentication is not object proof;
-4. validates/normalizes the M8 request payload;
-5. cross-binds the normalized operation to the configured operation profile;
-6. requires the normalized request `source` to equal the responder's configured local federation source;
-7. enforces canonical required capabilities, page-size bounds, and exact cursor-presence consistency;
-8. creates one immutable `InboundFederationRequestContext`.
+4. independently fingerprints the detached raw request scope;
+5. validates/normalizes the M8 request payload;
+6. cross-binds the normalized operation to the configured operation profile;
+7. requires the normalized request `source` to equal the responder's configured local federation source;
+8. independently fingerprints the normalized scope and requires raw, normalized, and reported scope fingerprints to agree;
+9. enforces canonical required capabilities, page-size bounds, and exact cursor-presence consistency;
+10. creates one immutable `InboundFederationRequestContext`;
+11. requires the exact requested capabilities to be fully supported by the detached local capability advertisement;
+12. only then invokes the local disclosure authorizer.
 
 The request context explicitly keeps `request_authenticated = False`, `peer_identity_proven = False`, and `authorizes_protected_side_effects = False`.
 
@@ -74,7 +112,7 @@ Incoming and outgoing cursors remain opaque bytes.
 
 M32 does not decode, generate, interpret, rank, log, persist, or authenticate cursors.
 
-An incoming cursor is exposed only inside the already-authorized immutable request context passed to the page source. The page source/policy component decides how, if at all, to interpret that cursor for local pagination.
+An incoming cursor is exposed only inside the authorized immutable request context passed to the page source. The page source/policy component decides how, if at all, to interpret that cursor for local pagination.
 
 A truncated page must return one bounded nonempty opaque `next_cursor` no larger than the existing M8 4096-byte maximum. A final page must not return a cursor.
 
@@ -135,12 +173,13 @@ M32 reuses M30's tuple-backed immutable `FrozenDict`/`FrozenList` host values.
 Consequences:
 
 - mutation of the caller's original request after entry cannot alter the detached request M32 validates;
+- mutation of the caller's capability-advertisement object after construction cannot alter the responder's detached advertisement;
 - a disclosure authorizer cannot change the authoritative request scope by mutating a mapping alias;
 - a result validator or envelope maker cannot mutate the authoritative frozen response payload;
 - mutation of an envelope-maker list/dict alias after `prepare_response(...)` cannot change the returned prepared response;
 - if a page evaluator mutates selected Record content such that canonical Record Identity changes, M32 fails closed before constructing a response.
 
-These protections do not make transport authentication, source URIs, or page contents true or trusted.
+These protections do not make transport authentication, source URIs, capability advertisements, or page contents true or trusted.
 
 ## No network/server surface
 
@@ -154,9 +193,9 @@ A source-level adversarial test enforces this boundary.
 
 M32 introduces no durable state.
 
-Request envelope/payload, cursor, local authorization context, selected Record bodies used transiently during preparation, response payload, and response envelope remain EPHEMERAL under the project retention policy, with a maximum of **10 seconds post-use**.
+Request envelope/payload, cursor, local capability advertisement/context, local authorization context, selected Record bodies used transiently during preparation, response payload, and response envelope remain EPHEMERAL under the project retention policy, with a maximum of **10 seconds post-use**.
 
-M32 does not log request, response, Record, or cursor contents.
+M32 does not log request, response, Record, capability, or cursor contents.
 
 ## Out of scope
 
