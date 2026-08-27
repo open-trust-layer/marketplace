@@ -84,6 +84,14 @@ from .inbound_http import (
     InboundHttpRequest,
     PreparedInboundHttpResponse,
 )
+from .inbound_http_read_outcome import (
+    READ_OUTCOME_DATA,
+    READ_OUTCOME_EOF,
+    READ_OUTCOME_FAILURE,
+    BoundedInboundHttpReadOutcomeHandler,
+    InboundHttpReadOutcome,
+    InboundHttpReadOutcomeError,
+)
 from .inbound_http_read_plan import (
     DEFAULT_MAX_INBOUND_HTTP_READ_BYTES,
     DEFAULT_MAX_INBOUND_HTTP_READ_CALLS,
@@ -215,6 +223,7 @@ __all__ = [
     "BoundedFederationSynchronizationOrchestrator",
     "BoundedInboundFederationResponder",
     "BoundedInboundHttpApplicationAdapter",
+    "BoundedInboundHttpReadOutcomeHandler",
     "BoundedInboundHttpReadPlanner",
     "BoundedInboundHttpReadSession",
     "BoundedInboundHttpReadTransitioner",
@@ -282,6 +291,8 @@ __all__ = [
     "InboundHttpApplicationLimits",
     "InboundHttpError",
     "InboundHttpReadLimits",
+    "InboundHttpReadOutcome",
+    "InboundHttpReadOutcomeError",
     "InboundHttpReadPlan",
     "InboundHttpReadPlanError",
     "InboundHttpReadSessionError",
@@ -343,6 +354,9 @@ __all__ = [
     "PreparedInboundRecordResponse",
     "READ_ACTION_COMPLETE",
     "READ_ACTION_READ",
+    "READ_OUTCOME_DATA",
+    "READ_OUTCOME_EOF",
+    "READ_OUTCOME_FAILURE",
     "RECORD_RETRIEVAL_OPERATION",
     "RECORD_ROUTE_PREFIX",
     "RETENTION_CLASS_EPHEMERAL",
