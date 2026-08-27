@@ -17,7 +17,7 @@ M31 composes four already reviewed boundaries into one strictly bounded sequenti
 3. M28 retrieves, verifies, and accepts exactly that page's Records;
 4. M29 may prepare exactly one unsent continuation for a truncated page.
 
-M30's deeply detached `PreparedFederationExchange` representation is the request-integrity foundation for every control send.
+M30's deeply detached `PreparedFederationExchange` representation is the request-integrity foundation for every control send. M31 also reuses M30's tuple-backed immutable host representation to detach every accepted M26 response envelope before it is exposed to M24, the page target provider, or M28. The original transport result may remain mutable to its caller or test double, but later alias mutation cannot alter the page value that M31 validates and hydrates.
 
 M31 does **not** add another socket, TLS, HTTP, DNS, resolver, proxy, credential, retry, scheduler, or persistence implementation.
 
@@ -38,7 +38,15 @@ synchronization outcome         != truth / trust / agreement / protected-action 
 
 The orchestrator never mints authorization. Every possible control request requires one explicit `FederationControlTarget` supplied before execution. Each target contains an exact endpoint and an already existing `FederationEndpointAuthorization`. A target slot is consumed by at most one control exchange.
 
+The full control-target set MUST be supplied as an exact immutable tuple. M31 deliberately refuses generators, arbitrary iterables, and subclasses rather than enumerating them to discover a bound; a finite authority budget must be known without executing caller-controlled iteration code. The tuple must be non-empty, contain only exact `FederationControlTarget` values, and contain no more entries than the configured page bound.
+
 Repeated use of the same authorization value in separate finite target slots is still a caller decision; M31 never expands one slot into an unbounded loop. M26 independently revalidates the selected authorization before DNS and again immediately before connection.
+
+## Shared service graph
+
+M31, M28, and M29 MUST share the exact same `OfflineFederationService` instance. The orchestrator rejects a split graph where its M24 validator, the M28 hydrator, or the M29 continuation planner are wired to different M24 service objects.
+
+This is an operational composition invariant, not a new semantic rule. It prevents a miswired runtime from validating one page/request context with one service and then hydrating or continuing through another independently configured service.
 
 ## Limits
 
@@ -61,10 +69,12 @@ The aggregate time budget is a **phase-start budget**, not asynchronous cancella
 For each page M31 performs this order:
 
 ```text
-explicit control slot
+exact finite control slot
     -> M26-compatible one-shot control exchange
     -> strict transport-result/negative-authority validation
+    -> immutable response-envelope detachment
     -> M24 side-effect-free page validation
+    -> independent M31 page-to-prepared cross-binding
     -> aggregate Record budget check
     -> bounded page Record-target resolution
     -> M28 hydrate_and_accept
@@ -77,15 +87,27 @@ explicit control slot
     -> next explicit control slot
 ```
 
-M31 validates hostile/miswired helper results even when the helper has an existing runtime-compatible surface. In particular, a control result cannot claim retries, redirects, proxy/credential use, multiple connection attempts, trust, truth, agreement, or authorization; M28 and M29 outcomes are likewise checked for forbidden authority promotion.
+M31 validates hostile/miswired helper results even when the helper has an existing runtime-compatible surface. A control result cannot claim retries, redirects, proxy/credential use, multiple connection attempts, trust, truth, agreement, or authorization. A `ValidatedFederationPage` must independently match the current prepared binding's source, operation, scope fingerprint, and page size and must preserve all negative authority facts. M28 and M29 outcomes are likewise checked for binding drift and forbidden authority promotion.
+
+## Response immutability boundary
+
+M26's transport result is operational transport data, not an immutable semantic witness. Before any later helper can observe the response, M31 deep-detaches the complete OLP response envelope through the same bounded immutable host-value machinery introduced by M30.
+
+This has three consequences:
+
+1. later mutation of an alias to the original M26 response cannot alter M31's page controls or Record identifiers;
+2. unsupported container subclasses fail closed before M24 or target resolution;
+3. M24 validation and M28 revalidation receive the same detached response value.
+
+The detachment limit remains bounded by the existing M30 host snapshot limits. This reuse does not make the response true, trusted, authorized, complete, or proof-verified.
 
 ## Cursor handling
 
 Cursors remain opaque bytes. M31 does not decode, log, persist, index, rank, or reinterpret them.
 
-Within one synchronization call, M31 keeps only a small in-memory set of cursor byte values already used/observed. Repetition fails closed with `CURSOR_REPLAY_DETECTED` before another continuation is planned or sent. This is a per-call loop-safety guard, not a durable replay cache and not a completeness proof.
+Within one synchronization call, M31 keeps only a small in-memory set of cursor byte values already used/observed. Repetition fails closed with `CURSOR_REPLAY_DETECTED` before another continuation is planned or sent, but only when another continuation is otherwise permitted by the page/control/time bounds. A page that already ends at a local bound is returned as a bounded stop without inventing an error for a continuation M31 will not attempt.
 
-The cursor set is EPHEMERAL content. It exists only for the active call and is not retained by the orchestrator afterward.
+This is a per-call loop-safety guard, not a durable replay cache and not a completeness proof. The cursor set is EPHEMERAL content and is not retained by the orchestrator afterward.
 
 ## Bounded stop versus failure
 
@@ -97,7 +119,7 @@ A fully accepted truncated page can end the call normally with one of these boun
 
 These dispositions do not claim an error at the already accepted page. They state only that M31 refused to begin another continuation step.
 
-A malformed result, hostile authority claim, Record-budget overflow, cursor replay, M24/M28/M29 failure, or other invariant violation raises `FederationSynchronizationError` with a stable local code.
+A malformed result, hostile authority claim, Record-budget overflow, cursor replay when another continuation would otherwise be attempted, M24/M28/M29 failure, or other invariant violation raises `FederationSynchronizationError` with a stable local code.
 
 ## Partial progress
 
@@ -115,20 +137,23 @@ The outcome reports counts and operational facts only:
 
 - pages accepted;
 - control exchanges performed;
-- continuations planned/transmitted;
+- continuations planned;
+- continuations transmitted **by M31 after the initial control exchange**;
 - hydrated Record count;
 - Record retrieval attempts;
 - final-page observation;
 - last declared source completeness;
 - whether control/Record transport was invoked.
 
-It always preserves `global_completeness = UNKNOWN` and negative truth/trust/agreement/authorization/protected-side-effect facts.
+`continuations_transmitted` is defined as control exchanges after the first exchange in the current M31 call. It does not assert that the caller's initial request was a first-page request; an explicitly supplied initial request may itself already carry an M8 cursor.
+
+The outcome always preserves `global_completeness = UNKNOWN` and negative truth/trust/agreement/authorization/protected-side-effect facts.
 
 ## Record-target provider
 
 The injected `PageRecordTargetProvider` receives only the validated page number and exact `record_ids`. It does not receive cursor bytes.
 
-Its output is bounded to exactly one `RecordHydrationTarget` per page Record identity before M28 is invoked. The provider itself is not a network authorization mechanism: every returned target still contains an explicit M27/M25 authorization that M28/M27 validates before use.
+Its output is bounded to exactly one exact `RecordHydrationTarget` per page Record identity before M28 is invoked. The provider itself is not a network authorization mechanism: every returned target still contains an explicit M27/M25 authorization that M28/M27 validates before use.
 
 M31 performs the aggregate Record-limit check **before** invoking the provider, so an oversized page cannot trigger target resolution or Record transport.
 
@@ -140,7 +165,7 @@ A failed control exchange, hydration, or continuation plan terminates the call. 
 
 ## Retention and privacy
 
-M31 introduces no durable storage. Request, page, cursor, authorization, endpoint, and target values are operational/transient inputs already governed by existing runtime policy.
+M31 introduces no durable storage. Request, page, cursor, authorization, endpoint, detached response, and target values are operational/transient inputs already governed by existing runtime policy.
 
 Cursor/request/response content remains EPHEMERAL with the project maximum retention of **10 seconds post-use**. M31 does not log or persist those values.
 
