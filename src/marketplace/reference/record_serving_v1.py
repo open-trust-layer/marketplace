@@ -8,6 +8,11 @@ from olp import RecordV1
 from olp.encoding.record_identity import record_identity_text
 from olp.transport import TransportEnvelopeV1, decode_identity_text
 
+from marketplace.runtime.prepared_integrity import (
+    MAX_PREPARED_SNAPSHOT_DEPTH,
+    MAX_PREPARED_SNAPSHOT_ITEMS,
+)
+
 from .record_retrieval_v1 import verify_retrieved_market_record
 from .record_v1 import validate_market_record
 
@@ -39,14 +44,18 @@ def _expected_identity(value: object) -> str:
     return value
 
 
-def _plain(value: Any) -> Any:
-    """Convert frozen OLP host containers into bounded-runtime-compatible values."""
+def _plain(value: Any, *, depth: int = 0) -> Any:
+    """Convert validated OLP values without exceeding the M30 prepared-host profile."""
+    if depth > MAX_PREPARED_SNAPSHOT_DEPTH:
+        _fail("PAYLOAD_DEPTH_EXCEEDED", "Record payload exceeds the prepared-host depth bound")
     if isinstance(value, Mapping):
-        return {key: _plain(item) for key, item in value.items()}
-    if isinstance(value, tuple):
-        return [_plain(item) for item in value]
-    if isinstance(value, list):
-        return [_plain(item) for item in value]
+        if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
+            _fail("PAYLOAD_ITEM_LIMIT", "Record payload map exceeds the prepared-host item bound")
+        return {key: _plain(item, depth=depth + 1) for key, item in value.items()}
+    if isinstance(value, (tuple, list)):
+        if len(value) > MAX_PREPARED_SNAPSHOT_ITEMS:
+            _fail("PAYLOAD_ITEM_LIMIT", "Record payload array exceeds the prepared-host item bound")
+        return [_plain(item, depth=depth + 1) for item in value]
     return value
 
 
@@ -55,7 +64,7 @@ def market_record_transport_payload(
     *,
     expected_record_identity: str,
 ) -> dict[str, Any]:
-    """Validate one local Record and materialize a transport-safe mapping."""
+    """Validate one local Record and materialize a bounded transport-safe mapping."""
     expected = _expected_identity(expected_record_identity)
     if not isinstance(record, RecordV1):
         _fail("INVALID_OLP_RECORD", "local Record MUST be RecordV1")
