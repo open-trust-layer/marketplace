@@ -97,14 +97,13 @@ class InboundHttpReadTransitionHardeningTests(unittest.TestCase):
             dataclasses.replace(transition, prefix=b"X")
         with self.assertRaises(ValueError):
             dataclasses.replace(transition, reads_completed=2)
+        forged_next = dataclasses.replace(
+            transition.next_plan,
+            reads_completed=transition.next_plan.reads_completed + 1,
+            integrity_snapshot=None,
+        )
         with self.assertRaises(ValueError):
-            dataclasses.replace(
-                transition,
-                next_plan=dataclasses.replace(
-                    transition.next_plan,
-                    integrity_snapshot=None,
-                ),
-            )
+            dataclasses.replace(transition, next_plan=forged_next)
         object.__setattr__(transition, "establishes_authorization", True)
         with self.assertRaises(ValueError):
             transition.__post_init__()
