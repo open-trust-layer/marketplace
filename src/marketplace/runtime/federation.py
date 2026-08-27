@@ -21,7 +21,7 @@ from .contracts import (
     StoreDisposition,
 )
 from .node import MarketplaceNode
-from .prepared_integrity import PreparedExchangeIntegrityError, prepared_exchange_integrity_snapshot
+from .prepared_integrity import PreparedExchangeIntegrityError, detach_prepared_exchange
 
 MAX_OFFLINE_FEDERATION_PAGE_RECORDS = 10_000
 MAX_OFFLINE_FEDERATION_CURSOR_BYTES = 4_096
@@ -69,7 +69,7 @@ class FederationRequestBinding:
 
 @dataclass(frozen=True)
 class PreparedFederationExchange:
-    """Abstract request value plus immutable local integrity witness; never a transmission."""
+    """Deeply detached request value plus immutable local integrity witness."""
 
     binding: FederationRequestBinding
     envelope: tuple[Any, ...]
@@ -77,14 +77,15 @@ class PreparedFederationExchange:
     integrity_snapshot: tuple[Any, ...] | None = None
 
     def __post_init__(self) -> None:
-        current = prepared_exchange_integrity_snapshot(self.binding, self.envelope)
-        if self.integrity_snapshot is None:
-            object.__setattr__(self, "integrity_snapshot", current)
-        elif self.integrity_snapshot != current:
+        detached_envelope, current = detach_prepared_exchange(self.binding, self.envelope)
+        if self.integrity_snapshot is not None and self.integrity_snapshot != current:
             raise PreparedExchangeIntegrityError(
                 "INTEGRITY_SNAPSHOT_MISMATCH",
                 "prepared exchange binding/envelope differs from its immutable integrity snapshot",
             )
+        object.__setattr__(self, "envelope", detached_envelope)
+        if self.integrity_snapshot is None:
+            object.__setattr__(self, "integrity_snapshot", current)
 
 
 @dataclass(frozen=True)
