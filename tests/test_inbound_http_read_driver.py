@@ -92,11 +92,11 @@ class InboundHttpReadDriverTests(unittest.TestCase):
             limits.max_elapsed_seconds,
             DEFAULT_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS,
         )
-        self.assertEqual(MAX_INBOUND_HTTP_READ_DRIVER_STEPS, 1024)
+        self.assertEqual(MAX_INBOUND_HTTP_READ_DRIVER_STEPS, 1025)
         self.assertEqual(MAX_INBOUND_HTTP_READ_DRIVER_TIMEOUT_SECONDS, 120.0)
 
     def test_limit_types_bounds_and_nonfinite_values_fail_closed(self):
-        for value in (True, 0, -1, 1025, 1.5, "1"):
+        for value in (True, 0, -1, 1026, 1.5, "1"):
             with self.subTest(max_steps=value):
                 with self.assertRaises(ValueError):
                     InboundHttpReadDriverLimits(max_steps=value)
@@ -105,20 +105,54 @@ class InboundHttpReadDriverTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     InboundHttpReadDriverLimits(max_elapsed_seconds=value)
 
-    def test_default_step_limit_clamps_to_retained_m37_limit(self):
+    def test_default_step_limit_includes_completion_transfer(self):
         _, _, _, invoker, _ = _build(lambda _: InboundHttpReadOutcome.eof(), max_read_calls=3)
         driver = BoundedInboundHttpReadDriver(read_invoker=invoker, clock=lambda: 0.0)
-        self.assertEqual(driver.limits.max_steps, 3)
+        self.assertEqual(driver.limits.max_steps, 4)
         self.assertEqual(driver.m37_max_read_calls, 3)
 
-    def test_explicit_step_limit_cannot_exceed_retained_m37_limit(self):
+    def test_explicit_step_limit_cannot_exceed_lower_ceiling_plus_transfer(self):
         _, _, _, invoker, _ = _build(lambda _: InboundHttpReadOutcome.eof(), max_read_calls=3)
+        allowed = BoundedInboundHttpReadDriver(
+            read_invoker=invoker,
+            clock=lambda: 0.0,
+            limits=InboundHttpReadDriverLimits(max_steps=4),
+        )
+        self.assertEqual(allowed.limits.max_steps, 4)
+
+        _, _, _, invoker2, _ = _build(lambda _: InboundHttpReadOutcome.eof(), max_read_calls=3)
         with self.assertRaises(ValueError):
             BoundedInboundHttpReadDriver(
-                read_invoker=invoker,
+                read_invoker=invoker2,
                 clock=lambda: 0.0,
-                limits=InboundHttpReadDriverLimits(max_steps=4),
+                limits=InboundHttpReadDriverLimits(max_steps=5),
             )
+
+    def test_default_64_reads_reserve_step_65_for_zero_reader_completion(self):
+        calls = []
+        holder = {"offset": 0}
+
+        def reader(max_bytes):
+            calls.append(max_bytes)
+            raw = holder["raw"]
+            start = holder["offset"]
+            end = start + 1 if len(calls) < 64 else len(raw)
+            holder["offset"] = end
+            return InboundHttpReadOutcome.data(raw[start:end])
+
+        _, session, _, invoker, raw = _build(reader, max_read_calls=64)
+        self.assertGreater(len(raw), 64)
+        holder["raw"] = raw
+        driver = BoundedInboundHttpReadDriver(read_invoker=invoker, clock=lambda: 0.0)
+
+        result = driver.run_to_completion()
+
+        self.assertEqual(driver.limits.max_steps, 65)
+        self.assertEqual(result.driver_steps, 65)
+        self.assertEqual(result.reader_invocations, 64)
+        self.assertEqual(len(calls), 64)
+        self.assertEqual(result.completed.prefix, raw)
+        self.assertTrue(session.closed)
 
     def test_one_data_read_plus_completion_transfer_finishes(self):
         calls = []

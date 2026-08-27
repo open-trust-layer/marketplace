@@ -40,15 +40,15 @@ M42 never stores or calls M41's injected reader directly.
 
 The supplied M41/M40/M39 chain may already own a valid partial or complete request state when M42 is constructed. M42 does not reset or reinterpret that prior state. Its step/time accounting starts only when `run_to_completion()` begins, while M39 `reads_completed` remains cumulative local accounting for the whole owning session.
 
-The configured M42 step ceiling must not exceed the actual M37 read-call ceiling retained by the construction-bound M39 session. With no explicit M42 limits, the effective default is `min(64, retained_m37_max_read_calls)`.
+The configured M42 step ceiling may use at most `retained_m37_max_read_calls + 1` steps. The one additional step is reserved solely for M41's zero-reader completion transfer after the final accepted read; it cannot authorize another reader call. With no explicit M42 limits, the effective default is `min(65, retained_m37_max_read_calls + 1)`.
 
-This is intentionally conservative: an M41 completion-transfer call consumes an M42 orchestration step even though it performs no reader call. M42 therefore may stop before exercising every theoretical M37 read slot rather than widening lower-layer authority.
+This preserves the M37 reader-call ceiling exactly while ensuring a request that becomes complete on the final permitted read can still perform its one-shot completion handoff.
 
 ## Finite limits
 
 ```text
-default max M42 steps:          64
-hard max M42 steps:           1024
+default max M42 steps:          65
+hard max M42 steps:           1025
 default aggregate time budget: 30 seconds
 hard aggregate time budget:   120 seconds
 ```
