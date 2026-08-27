@@ -33,6 +33,8 @@ _REQUIRED_SECURITY_FILES = (
     Path("docs/immutable-record-retrieval.md"),
     Path("src/marketplace/runtime/page_hydration.py"),
     Path("docs/bounded-federation-page-hydration.md"),
+    Path("src/marketplace/runtime/continuation.py"),
+    Path("docs/cursor-bound-federation-continuation.md"),
 )
 _REQUIRED_REFERENCE_FILES = (
     Path("src/marketplace/reference/__init__.py"),

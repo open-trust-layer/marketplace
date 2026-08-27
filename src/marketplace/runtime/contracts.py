@@ -105,3 +105,21 @@ class FederationResultValidator(Protocol):
     """Validate/normalize an M8 snapshot or sync result payload."""
 
     def __call__(self, value: Any) -> Mapping[str, Any]: ...
+
+
+class FederationCursorBinder(Protocol):
+    """Bind one opaque M8 cursor to source, operation, and scope without I/O."""
+
+    def __call__(self, source: Any, operation: Any, scope: Any, cursor: Any) -> Any: ...
+
+
+class FederationCursorBindingValidator(Protocol):
+    """Validate one existing M8 cursor binding without granting authority."""
+
+    def __call__(
+        self,
+        binding: Any,
+        source: Any,
+        operation: Any,
+        scope: Any,
+    ) -> Mapping[str, Any]: ...
