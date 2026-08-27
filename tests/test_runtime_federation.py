@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from olp import RecordV1
 
@@ -136,6 +137,46 @@ class OfflineFederationRuntimeTests(unittest.TestCase):
             )
             self.assertEqual(prepared.envelope[2], federation_v1.MSG_SNAPSHOT_REQUEST)
             self.assertEqual(len(runtime.repository), 0)
+        finally:
+            runtime.close()
+
+    def test_validate_page_is_side_effect_free_and_preserves_binding(self):
+        runtime, service = self.runtime_and_service()
+        try:
+            record = intent("did:example:alice")
+            record_id = record_identity_text(record)
+            cursor = b"opaque-m28-preview"
+            prepared = service.prepare(request(page_size=3))
+            validated = service.validate_page(
+                prepared,
+                self.result_envelope(response_payload([record], next_cursor=cursor)),
+            )
+            self.assertEqual(validated.source, SOURCE)
+            self.assertEqual(validated.operation, federation_v1.OP_SNAPSHOT)
+            self.assertEqual(validated.scope_fingerprint, prepared.binding.scope_fingerprint)
+            self.assertEqual(validated.page_size, 3)
+            self.assertEqual(validated.record_ids, (record_id,))
+            self.assertEqual(validated.source_completeness, "PARTIAL_SOURCE")
+            self.assertTrue(validated.page_truncated)
+            self.assertEqual(validated.next_cursor, cursor)
+            self.assertEqual(validated.global_completeness, "UNKNOWN")
+            self.assertFalse(validated.absence_is_deletion_evidence)
+            self.assertFalse(validated.creates_agreement)
+            self.assertFalse(validated.authorizes_side_effects)
+            self.assertEqual(len(runtime.repository), 0)
+        finally:
+            runtime.close()
+
+    def test_accept_page_reuses_side_effect_free_validate_page(self):
+        runtime, service = self.runtime_and_service()
+        try:
+            record = intent("did:example:alice")
+            prepared = service.prepare(request())
+            envelope = self.result_envelope(response_payload([record]))
+            with patch.object(service, "validate_page", wraps=service.validate_page) as validator:
+                outcome = service.accept_page(prepared, envelope, [record])
+            validator.assert_called_once_with(prepared, envelope)
+            self.assertEqual(outcome.record_ids, (record_identity_text(record),))
         finally:
             runtime.close()
 
