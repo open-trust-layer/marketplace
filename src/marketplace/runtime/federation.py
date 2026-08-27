@@ -21,6 +21,7 @@ from .contracts import (
     StoreDisposition,
 )
 from .node import MarketplaceNode
+from .prepared_integrity import PreparedExchangeIntegrityError, prepared_exchange_integrity_snapshot
 
 MAX_OFFLINE_FEDERATION_PAGE_RECORDS = 10_000
 MAX_OFFLINE_FEDERATION_CURSOR_BYTES = 4_096
@@ -68,11 +69,22 @@ class FederationRequestBinding:
 
 @dataclass(frozen=True)
 class PreparedFederationExchange:
-    """Abstract request value plus local binding; never a transmission."""
+    """Abstract request value plus immutable local integrity witness; never a transmission."""
 
     binding: FederationRequestBinding
     envelope: tuple[Any, ...]
     transmitted: bool = False
+    integrity_snapshot: tuple[Any, ...] | None = None
+
+    def __post_init__(self) -> None:
+        current = prepared_exchange_integrity_snapshot(self.binding, self.envelope)
+        if self.integrity_snapshot is None:
+            object.__setattr__(self, "integrity_snapshot", current)
+        elif self.integrity_snapshot != current:
+            raise PreparedExchangeIntegrityError(
+                "INTEGRITY_SNAPSHOT_MISMATCH",
+                "prepared exchange binding/envelope differs from its immutable integrity snapshot",
+            )
 
 
 @dataclass(frozen=True)
