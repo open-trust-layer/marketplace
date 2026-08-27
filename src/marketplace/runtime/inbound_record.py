@@ -306,7 +306,7 @@ class BoundedInboundRecordResponder:
             _fail("INVALID_RECORD_ENVELOPE", "prepared Record envelope version MUST equal integer 1")
         if message_type != "record":
             _fail("RECORD_MESSAGE_TYPE_REQUIRED", "prepared response MUST use OLP message type 'record'")
-        if envelope_payload != detached_payload:
+        if host_value_integrity_snapshot(envelope_payload) != payload_snapshot:
             _fail("RECORD_ENVELOPE_PAYLOAD_DRIFT", "prepared Record envelope changed the validated payload")
 
         envelope_snapshot = host_value_integrity_snapshot(detached_envelope)
