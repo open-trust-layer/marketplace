@@ -40,23 +40,45 @@ def scope() -> dict[str, object]:
     return {"version": 1, "record_types": [TYPE_INTENT]}
 
 
+def capability_advertisement(*, source: str = SOURCE) -> dict[str, object]:
+    capabilities = sorted(
+        [federation_v1.CAP_SNAPSHOT, federation_v1.CAP_SYNC],
+        key=lambda value: value.encode("utf-8"),
+    )
+    return {
+        "version": 1,
+        "source": source,
+        "implemented": capabilities,
+        "enabled": capabilities,
+        "configured": capabilities,
+        "limits": {
+            "max_page_records": federation_v1.MAX_PAGE_RECORDS,
+            "max_cursor_bytes": federation_v1.MAX_CURSOR_BYTES,
+            "max_submission_records": federation_v1.MAX_SUBMISSION_RECORDS,
+        },
+    }
+
+
 def request(
     *,
     source: str = SOURCE,
     operation: str = federation_v1.OP_SNAPSHOT,
     page_size: int = 4,
     cursor: bytes | None = None,
+    required_capabilities: list[str] | None = None,
 ) -> dict[str, object]:
     capability = {
         federation_v1.OP_SNAPSHOT: federation_v1.CAP_SNAPSHOT,
         federation_v1.OP_SYNC: federation_v1.CAP_SYNC,
     }[operation]
+    capabilities = required_capabilities or [capability]
+    capabilities = sorted(capabilities, key=lambda value: value.encode("utf-8"))
     result: dict[str, object] = {
         "version": 1,
         "source": source,
         "operation": operation,
         "scope": scope(),
-        "required_capabilities": [capability],
+        "required_capabilities": capabilities,
         "page_size": page_size,
     }
     if cursor is not None:
@@ -88,7 +110,7 @@ def profiles() -> tuple[FederationOperationProfile, ...]:
     )
 
 
-def responder(*, authorize= None, page_source=None, max_page_records: int = 256):
+def responder(*, authorize=None, page_source=None, max_page_records: int = 256):
     authorize = authorize or (lambda context: True)
     page_source = page_source or (
         lambda context: InboundFederationPageMaterial(
@@ -101,6 +123,9 @@ def responder(*, authorize= None, page_source=None, max_page_records: int = 256)
         local_source=SOURCE,
         validate_transport_envelope=federation_v1.validate_transport_envelope,
         validate_exchange_request=federation_v1.validate_exchange_request,
+        scope_fingerprint=federation_v1.scope_fingerprint,
+        negotiate_capabilities=federation_v1.negotiate_capabilities,
+        capability_advertisement=capability_advertisement(),
         evaluate_exchange_page=federation_v1.evaluate_exchange_page,
         validate_exchange_result=federation_v1.validate_exchange_result,
         make_transport_envelope=federation_v1.make_transport_envelope,
@@ -202,6 +227,22 @@ class InboundFederationTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "LOCAL_PAGE_LIMIT_EXCEEDED")
         authorize.assert_not_called()
 
+    def test_unavailable_required_capability_fails_before_authorizer_and_page_source(self):
+        authorize = Mock(return_value=True)
+        page_source = Mock()
+        service = responder(authorize=authorize, page_source=page_source)
+        unsupported = "https://example.test/federation/capability/not-local-v1"
+        with self.assertRaises(InboundFederationError) as caught:
+            service.prepare_response(
+                request_envelope(
+                    required_capabilities=[federation_v1.CAP_SNAPSHOT, unsupported],
+                ),
+                operation=federation_v1.OP_SNAPSHOT,
+            )
+        self.assertEqual(caught.exception.code, "REQUIRED_CAPABILITY_UNAVAILABLE")
+        authorize.assert_not_called()
+        page_source.assert_not_called()
+
     def test_page_source_runs_exactly_once_after_authorization(self):
         authorize = Mock(return_value=True)
         page_source = Mock(
@@ -222,6 +263,9 @@ class InboundFederationTests(unittest.TestCase):
             local_source=SOURCE,
             validate_transport_envelope=federation_v1.validate_transport_envelope,
             validate_exchange_request=federation_v1.validate_exchange_request,
+            scope_fingerprint=federation_v1.scope_fingerprint,
+            negotiate_capabilities=federation_v1.negotiate_capabilities,
+            capability_advertisement=capability_advertisement(),
             evaluate_exchange_page=federation_v1.evaluate_exchange_page,
             validate_exchange_result=federation_v1.validate_exchange_result,
             make_transport_envelope=federation_v1.make_transport_envelope,
