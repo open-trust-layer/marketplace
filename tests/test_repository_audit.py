@@ -69,7 +69,7 @@ class RepositoryAuditTests(unittest.TestCase):
             _audit_required_governance_files(root, findings)
             self.assertEqual(findings, [])
 
-    def test_security_audit_requires_m25_m26_and_m27_runtime_reference_and_docs(self):
+    def test_security_audit_requires_m25_through_m28_runtime_reference_and_docs(self):
         expected = {
             Path("src/marketplace/runtime/network_policy.py"),
             Path("docs/federation-egress-security.md"),
@@ -79,6 +79,8 @@ class RepositoryAuditTests(unittest.TestCase):
             Path("src/marketplace/runtime/record_retrieval.py"),
             Path("src/marketplace/reference/record_retrieval_v1.py"),
             Path("docs/immutable-record-retrieval.md"),
+            Path("src/marketplace/runtime/page_hydration.py"),
+            Path("docs/bounded-federation-page-hydration.md"),
         }
         self.assertTrue(expected.issubset(set(_REQUIRED_SECURITY_FILES)))
 
@@ -102,7 +104,7 @@ class RepositoryAuditTests(unittest.TestCase):
             _audit_required_security_files(root, findings)
             self.assertEqual(findings, [])
 
-    def test_reference_layout_includes_packaged_m8_m26_m27_and_historical_wrapper(self):
+    def test_reference_layout_includes_packaged_m8_and_m27_reusable_verifier_surface(self):
         self.assertIn(Path("src/marketplace/reference/federation_v1.py"), _REQUIRED_REFERENCE_FILES)
         self.assertIn(Path("src/marketplace/reference/transport_json_v1.py"), _REQUIRED_REFERENCE_FILES)
         self.assertIn(Path("src/marketplace/reference/record_retrieval_v1.py"), _REQUIRED_REFERENCE_FILES)

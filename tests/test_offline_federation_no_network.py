@@ -52,7 +52,7 @@ class OfflineFederationNoNetworkTests(unittest.TestCase):
                 f"{relative} introduced dynamic execution/import",
             )
 
-    def test_offline_service_exposes_no_send_fetch_connect_or_request_method(self):
+    def test_offline_service_exposes_only_prepare_validate_and_accept_operations(self):
         source = (REPO_ROOT / "src/marketplace/runtime/federation.py").read_text(encoding="utf-8-sig")
         tree = ast.parse(source)
         service = next(
@@ -65,7 +65,7 @@ class OfflineFederationNoNetworkTests(unittest.TestCase):
             for node in service.body
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
         }
-        self.assertEqual(methods, {"__init__", "prepare", "accept_page"})
+        self.assertEqual(methods, {"__init__", "prepare", "validate_page", "accept_page"})
         self.assertTrue({"send", "fetch", "connect", "request", "transmit"}.isdisjoint(methods))
 
 

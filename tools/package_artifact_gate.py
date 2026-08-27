@@ -42,6 +42,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/network_policy.py",
     "marketplace/runtime/https_transport.py",
     "marketplace/runtime/record_retrieval.py",
+    "marketplace/runtime/page_hydration.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",

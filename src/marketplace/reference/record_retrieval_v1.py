@@ -110,3 +110,20 @@ def verify_retrieved_market_record(
         requested_record_identity=expected,
         recomputed_record_identity=recomputed,
     )
+
+
+def verified_retrieved_market_record_value(
+    envelope: Any,
+    *,
+    expected_record_identity: str,
+) -> RecordV1:
+    """Return only the Record value after the existing M27 verifier succeeds.
+
+    M28 injects this thin adapter into its OLP-independent runtime hydrator. No
+    identity or semantic rule is duplicated here: all verification delegates to
+    ``verify_retrieved_market_record`` first.
+    """
+    return verify_retrieved_market_record(
+        envelope,
+        expected_record_identity=expected_record_identity,
+    ).record

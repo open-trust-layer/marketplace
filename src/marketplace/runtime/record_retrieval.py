@@ -29,6 +29,7 @@ from .https_transport import (
     _validated_response_envelope,
 )
 from .network_policy import (
+    CanonicalFederationEndpoint,
     FederationEgressPolicy,
     FederationEndpointAuthorization,
     validate_endpoint_authorization,
@@ -160,6 +161,49 @@ class AuthorizedHttpsRecordRetriever:
         self._monotonic = monotonic_clock
         self._concurrency = threading.BoundedSemaphore(self._limits.max_concurrent_exchanges)
 
+    def _validate_pre_network_target(
+        self,
+        *,
+        endpoint: str,
+        authorization: FederationEndpointAuthorization,
+        expected_record_identity: str,
+        now_epoch: int,
+    ) -> tuple[str, CanonicalFederationEndpoint, bytes]:
+        """Validate every condition that can fail safely before DNS/network use."""
+        expected = _expected_record_identity(expected_record_identity)
+        canonical = validate_endpoint_authorization(
+            authorization,
+            endpoint=endpoint,
+            operation=RECORD_RETRIEVAL_OPERATION,
+            now_epoch=now_epoch,
+            policy=self._policy,
+        )
+        _require_exact_record_path(canonical.path, expected)
+        request = _get_request_bytes(canonical.path, canonical.hostname, canonical.port)
+        if len(request) > self._limits.max_header_bytes:
+            _fail("REQUEST_HEADER_LIMIT", "immutable-record GET request exceeds configured header bound")
+        return expected, canonical, request
+
+    def preflight(
+        self,
+        *,
+        endpoint: str,
+        authorization: FederationEndpointAuthorization,
+        expected_record_identity: str,
+    ) -> None:
+        """Validate one retrieval target without DNS, socket creation, or storage.
+
+        This is an early rejection aid for bounded batch orchestration only. It
+        does not reserve authorization or make a later request safe: ``retrieve``
+        independently repeats these checks and still revalidates after fresh DNS.
+        """
+        self._validate_pre_network_target(
+            endpoint=endpoint,
+            authorization=authorization,
+            expected_record_identity=expected_record_identity,
+            now_epoch=int(self._wall_clock()),
+        )
+
     def retrieve(
         self,
         *,
@@ -167,25 +211,17 @@ class AuthorizedHttpsRecordRetriever:
         authorization: FederationEndpointAuthorization,
         expected_record_identity: str,
     ) -> RetrievedRecordTransportResult:
-        expected = _expected_record_identity(expected_record_identity)
         if not self._concurrency.acquire(blocking=False):
             _fail("CONCURRENCY_LIMIT", "maximum concurrent immutable-record retrievals reached")
         connection: SecureConnection | None = None
         try:
             start = self._monotonic()
-            canonical = validate_endpoint_authorization(
-                authorization,
+            expected, canonical, request = self._validate_pre_network_target(
                 endpoint=endpoint,
-                operation=RECORD_RETRIEVAL_OPERATION,
+                authorization=authorization,
+                expected_record_identity=expected_record_identity,
                 now_epoch=int(self._wall_clock()),
-                policy=self._policy,
             )
-            _require_exact_record_path(canonical.path, expected)
-
-            # No body is sent.  The bounded request head is fully determined before DNS.
-            request = _get_request_bytes(canonical.path, canonical.hostname, canonical.port)
-            if len(request) > self._limits.max_header_bytes:
-                _fail("REQUEST_HEADER_LIMIT", "immutable-record GET request exceeds configured header bound")
 
             try:
                 resolver_values = self._resolver(canonical.hostname, canonical.port)
