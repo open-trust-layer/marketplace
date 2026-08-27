@@ -144,6 +144,7 @@ class CompletedInboundHttpReadDriverResult:
     driver_steps: int
     reader_invocations: int
     elapsed_seconds: float
+    reads_completed: int = field(default=0, init=False)
     integrity_snapshot: tuple[Any, ...] | None = field(default=None, repr=False)
     socket_access_proven: bool = field(default=False, init=False)
     network_origin_proven: bool = field(default=False, init=False)
@@ -162,15 +163,16 @@ class CompletedInboundHttpReadDriverResult:
         except ValueError as exc:
             raise ValueError("M42 completion failed M39 integrity replay") from exc
         object.__setattr__(self, "completed", witnessed_completed)
+        object.__setattr__(self, "reads_completed", witnessed_completed.reads_completed)
 
         if type(self.driver_steps) is not int or self.driver_steps <= 0:
             raise ValueError("driver_steps MUST be one positive exact integer")
         if type(self.reader_invocations) is not int or self.reader_invocations < 0:
             raise ValueError("reader_invocations MUST be one non-negative exact integer")
-        if self.reader_invocations != witnessed_completed.reads_completed:
-            raise ValueError("reader_invocations MUST equal the M39 owned read count")
         if self.reader_invocations > self.driver_steps:
             raise ValueError("reader_invocations MUST NOT exceed M42 invocation steps")
+        if self.reader_invocations > self.reads_completed:
+            raise ValueError("M42 reader invocations MUST NOT exceed cumulative M39 read accounting")
         if type(self.elapsed_seconds) is not float or not isfinite(self.elapsed_seconds):
             raise ValueError("elapsed_seconds MUST be one finite float")
         if self.elapsed_seconds < 0.0:
@@ -185,6 +187,7 @@ class CompletedInboundHttpReadDriverResult:
             witnessed_completed.integrity_snapshot,
             self.driver_steps,
             self.reader_invocations,
+            self.reads_completed,
             self.elapsed_seconds,
             self.socket_access_proven,
             self.network_origin_proven,
@@ -449,6 +452,7 @@ class BoundedInboundHttpReadDriver:
         start = self._guarded_clock_value()
         prior_clock = start
         completed_steps = 0
+        reader_invocations = 0
 
         for _ in range(self._max_steps):
             before = self._guarded_clock_value()
@@ -477,6 +481,8 @@ class BoundedInboundHttpReadDriver:
             prior_clock = after
 
             witnessed = self._replay_result(result)
+            if witnessed.reader_invoked is True:
+                reader_invocations += 1
             if witnessed.state == READ_INVOCATION_COMPLETED:
                 if type(witnessed.completed) is not CompletedInboundHttpReadSession:
                     self._best_effort_close()
@@ -488,7 +494,7 @@ class BoundedInboundHttpReadDriver:
                 return CompletedInboundHttpReadDriverResult(
                     completed=witnessed.completed,
                     driver_steps=completed_steps,
-                    reader_invocations=witnessed.completed.reads_completed,
+                    reader_invocations=reader_invocations,
                     elapsed_seconds=float(elapsed),
                 )
 
