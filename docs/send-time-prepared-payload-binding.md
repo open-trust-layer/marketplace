@@ -31,6 +31,21 @@ Every `PreparedFederationExchange` now:
 
 The detached payload is what the existing M26 transport later serializes. Mutating the original request after `prepare(...)` cannot change the prepared envelope.
 
+## Prepare-time envelope cross-binding
+
+M30 also hardens the boundary immediately before the immutable prepared object is constructed. The injected M8 envelope maker is not treated as authority to reinterpret the already validated request.
+
+`OfflineFederationService.prepare(...)` now snapshots the validated request before invoking the envelope maker and requires all of the following before construction succeeds:
+
+- the envelope maker must not mutate the validated request;
+- the result must contain exactly four transport-envelope elements;
+- the transport marker must remain `OLP-TRANSPORT`;
+- the transport version must remain exact integer `1`;
+- the request message type must exactly match the configured M8 operation profile;
+- the envelope payload's type-tagged snapshot must exactly equal the validated request snapshot.
+
+A miswired or hostile envelope maker therefore cannot silently change the message profile or payload and then rely on the immutable wrapper to preserve the wrong value.
+
 ## Integrity snapshot
 
 The snapshot is local integrity metadata, not protocol evidence and not cryptographic proof. It is type-tagged so Python scalar equality does not collapse semantically distinct host values such as `True` and `1`.
@@ -68,7 +83,7 @@ These limits are local implementation bounds below the broader OLP OJVE limits. 
 
 ## M26 behavior remains unchanged
 
-M30 does not add or alter:
+M30 does not modify `src/marketplace/runtime/https_transport.py` and does not add or alter:
 
 - endpoint discovery;
 - DNS behavior;
@@ -87,6 +102,19 @@ M26 still performs one explicitly authorized HTTPS exchange only. The difference
 
 No live federation peer is contacted by M30 development or CI.
 
+## End-to-end former-exploit regression proof
+
+The M30 test suite reproduces the original vulnerability shape across the actual M24 -> M26 composition while replacing the network with a deterministic fake connection:
+
+1. create a valid M8 sync request;
+2. call M24 `prepare(...)`;
+3. mutate the caller-owned request's source, operation, page size, cursor, nested scope, and capability list;
+4. pass the already prepared exchange to the unchanged M26 transport;
+5. allow M26 to serialize and write one HTTP request to the fake connection;
+6. compare the transmitted HTTP body against independently encoded original and attacker-mutated envelopes.
+
+Acceptance requires that the transmitted body equal the original request exactly and differ from the mutated request. This proves the former caller-alias path is closed at the real M26 serialization boundary without making a live network request.
+
 ## Privacy and retention
 
 The immutable prepared representation does not create durable storage. Cursor bytes remain opaque and are not logged, interpreted, persisted, or copied into a new durable checkpoint. Prepared request content remains `EPHEMERAL` and subject to the project's maximum 10-second post-use retention rule when retained by a runtime component.
@@ -98,8 +126,12 @@ The integrity snapshot may contain opaque bytes already present in the prepared 
 M30 tests require at least:
 
 - mutation of the original request after `prepare(...)` cannot change the prepared payload;
+- the exact former M24 -> M26 alias exploit shape cannot change transmitted bytes;
 - top-level prepared payload mutation is rejected;
 - nested scope/capability list mutation is rejected;
+- an envelope maker cannot mutate the validated request;
+- an envelope maker cannot change the M8 request message profile;
+- an envelope maker cannot return a payload different from the validated request;
 - changed binding/envelope through dataclass replacement is rejected against the old snapshot;
 - manual construction also detaches mutable aliases;
 - boolean/integer snapshot values remain distinct;
