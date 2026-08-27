@@ -248,7 +248,6 @@ class BoundedInboundHttpResponseWriteOutcomeHandler:
     ) -> InboundHttpResponseWriteSessionProgress:
         if type(value) is not InboundHttpResponseWriteSessionProgress:
             _fail("WRITE_OUTCOME_PROGRESS_DRIFT", "M46 returned unexpected progress type")
-        # Required by M46: inspect original init=False authority facts before replay.
         _require_negative(value, code="WRITE_OUTCOME_PROGRESS_AUTHORITY")
         try:
             replayed = replace(value)
@@ -418,7 +417,5 @@ class BoundedInboundHttpResponseWriteOutcomeHandler:
         return witnessed
 
     def close(self) -> None:
-        """Idempotently close the construction-bound M46 source session."""
-        if self._closed_value():
-            return
+        """Unconditionally ask captured M46 close to release retained response state."""
         self._terminal_close()
