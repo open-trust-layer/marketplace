@@ -14,6 +14,7 @@ from .inbound_http import InboundHttpRequest
 from .inbound_http_wire import (
     BoundedInboundHttpWireAdapter,
     InboundHttpWireError,
+    InboundHttpWireLimits,
     PreparedInboundHttpWireExchange,
 )
 
@@ -91,6 +92,16 @@ def _wire_snapshot(value: PreparedInboundHttpWireExchange) -> tuple[Any, ...]:
         value.establishes_trust,
         value.establishes_authorization,
         value.authorizes_protected_side_effects,
+    )
+
+
+def _limits_snapshot(value: InboundHttpWireLimits) -> tuple[int, int, int]:
+    if type(value) is not InboundHttpWireLimits:
+        _fail("WIRE_CONFIGURATION_DRIFT", "M35 limits object changed type after M36 construction")
+    return (
+        value.max_header_bytes,
+        value.max_body_bytes,
+        value.max_response_body_bytes,
     )
 
 
@@ -183,7 +194,10 @@ class PreparedInboundHttpStreamExchange:
     def __post_init__(self) -> None:
         if type(self.wire_exchange) is not PreparedInboundHttpWireExchange:
             raise ValueError("wire_exchange has the wrong type")
-        _validate_wire_authority(self.wire_exchange)
+        try:
+            _validate_wire_authority(self.wire_exchange)
+        except InboundHttpStreamError as exc:
+            raise ValueError("wire_exchange promoted a forbidden M35 authority fact") from exc
         try:
             replace(self.wire_exchange)
         except ValueError as exc:
@@ -269,8 +283,22 @@ class BoundedInboundHttpStreamAssembler:
             max_chunks=limits.max_chunks,
             max_chunk_bytes=limits.max_chunk_bytes,
         )
+        wire_limits = wire_adapter.limits
+        if type(wire_limits) is not InboundHttpWireLimits:
+            raise TypeError("wire_adapter limits MUST be exact InboundHttpWireLimits")
+        detached_wire_limits = InboundHttpWireLimits(
+            max_header_bytes=wire_limits.max_header_bytes,
+            max_body_bytes=wire_limits.max_body_bytes,
+            max_response_body_bytes=wire_limits.max_response_body_bytes,
+        )
+        wire_authority = wire_adapter.authority
+        if type(wire_authority) is not str or not wire_authority:
+            raise ValueError("wire_adapter authority MUST be a non-empty canonical string")
+
         self._wire_adapter = wire_adapter
         self._limits = detached_limits
+        self._wire_authority = wire_authority
+        self._wire_limits = detached_wire_limits
 
     @property
     def limits(self) -> InboundHttpStreamLimits:
@@ -279,6 +307,32 @@ class BoundedInboundHttpStreamAssembler:
     @property
     def wire_adapter(self) -> BoundedInboundHttpWireAdapter:
         return self._wire_adapter
+
+    @property
+    def wire_authority(self) -> str:
+        return self._wire_authority
+
+    @property
+    def wire_limits(self) -> InboundHttpWireLimits:
+        return self._wire_limits
+
+    def _validate_wire_configuration(self) -> None:
+        if self._wire_adapter.authority != self._wire_authority:
+            _fail("WIRE_CONFIGURATION_DRIFT", "M35 authority changed after M36 construction")
+        current_limits = _limits_snapshot(self._wire_adapter.limits)
+        expected_limits = _limits_snapshot(self._wire_limits)
+        if current_limits != expected_limits:
+            _fail("WIRE_CONFIGURATION_DRIFT", "M35 limits changed after M36 construction")
+
+    def _parse_with_configuration_guard(self, raw: bytes) -> InboundHttpRequest:
+        self._validate_wire_configuration()
+        try:
+            parsed = self._wire_adapter.parse_request(raw)
+        except InboundHttpWireError as exc:
+            self._validate_wire_configuration()
+            _wire_rejected(exc)
+        self._validate_wire_configuration()
+        return parsed
 
     def _validated_declared_body_bytes(self, head_only: bytes) -> int:
         try:
@@ -304,7 +358,7 @@ class BoundedInboundHttpStreamAssembler:
             or (len(declared) > 1 and declared.startswith("0"))
         ):
             _fail("CONTENT_LENGTH_BINDING_DRIFT", "validated Content-Length is noncanonical")
-        body_limit = self._wire_adapter.limits.max_body_bytes
+        body_limit = self._wire_limits.max_body_bytes
         if _decimal_exceeds_bound(declared, body_limit):
             _fail(
                 "DECLARED_BODY_LIMIT_EXCEEDED",
@@ -317,8 +371,9 @@ class BoundedInboundHttpStreamAssembler:
         """Classify one in-memory prefix without invoking M35 prepare or disclosure logic."""
         if type(prefix) is not bytes:
             _fail("INVALID_STREAM_PREFIX", "stream prefix MUST be exact immutable bytes")
+        self._validate_wire_configuration()
 
-        wire_limits = self._wire_adapter.limits
+        wire_limits = self._wire_limits
         total_limit = wire_limits.max_header_bytes + wire_limits.max_body_bytes
         if len(prefix) > total_limit:
             _fail("STREAM_TOTAL_LIMIT_EXCEEDED", "stream prefix exceeds the configured M35 total limit")
@@ -345,9 +400,11 @@ class BoundedInboundHttpStreamAssembler:
             _fail("STREAM_BODY_LIMIT_EXCEEDED", "request body exceeds the configured M35 body limit")
 
         head_only = prefix[:head_end]
+        self._validate_wire_configuration()
         try:
             self._wire_adapter.parse_request(head_only)
         except InboundHttpWireError as exc:
+            self._validate_wire_configuration()
             if exc.code != "CONTENT_LENGTH_MISMATCH":
                 _wire_rejected(exc)
             declared_body_bytes = self._validated_declared_body_bytes(head_only)
@@ -367,10 +424,7 @@ class BoundedInboundHttpStreamAssembler:
                     "TRAILING_OR_PIPELINED_BYTES",
                     "stream prefix contains bytes beyond one exact M35 request",
                 )
-            try:
-                self._wire_adapter.parse_request(prefix)
-            except InboundHttpWireError as final_exc:
-                _wire_rejected(final_exc)
+            self._parse_with_configuration_guard(prefix)
             return InboundHttpStreamProgress(
                 state=PROGRESS_COMPLETE,
                 buffered_bytes=len(prefix),
@@ -380,6 +434,7 @@ class BoundedInboundHttpStreamAssembler:
                 head_validated=True,
                 request_complete=True,
             )
+        self._validate_wire_configuration()
 
         if len(prefix) > head_end:
             _fail(
@@ -404,9 +459,9 @@ class BoundedInboundHttpStreamAssembler:
             _fail("INCOMPLETE_REQUEST", "no request bytes were supplied")
         if len(chunks) > self._limits.max_chunks:
             _fail("CHUNK_COUNT_LIMIT_EXCEEDED", "chunk tuple exceeds the configured M36 count limit")
+        self._validate_wire_configuration()
 
-        wire_limits = self._wire_adapter.limits
-        total_limit = wire_limits.max_header_bytes + wire_limits.max_body_bytes
+        total_limit = self._wire_limits.max_header_bytes + self._wire_limits.max_body_bytes
         aggregate_bytes = 0
         for chunk in chunks:
             if type(chunk) is not bytes or not chunk:
@@ -418,18 +473,20 @@ class BoundedInboundHttpStreamAssembler:
             aggregate_bytes += len(chunk)
 
         raw = b"".join(chunks)
+        if len(raw) != aggregate_bytes:
+            _fail("ASSEMBLY_LENGTH_DRIFT", "joined request byte count changed during M36 assembly")
         progress = self.probe(raw)
         if progress.state != PROGRESS_COMPLETE:
             _fail("INCOMPLETE_REQUEST", "supplied chunks do not contain one complete M35 request")
 
-        try:
-            parsed = self._wire_adapter.parse_request(raw)
-        except InboundHttpWireError as exc:
-            _wire_rejected(exc)
+        parsed = self._parse_with_configuration_guard(raw)
+        self._validate_wire_configuration()
         try:
             wire_result = self._wire_adapter.prepare(raw)
         except InboundHttpWireError as exc:
+            self._validate_wire_configuration()
             _wire_rejected(exc)
+        self._validate_wire_configuration()
 
         _validate_wire_authority(wire_result)
         try:
@@ -438,7 +495,7 @@ class BoundedInboundHttpStreamAssembler:
             _fail("WIRE_INTEGRITY_DRIFT", "M35 result failed its original integrity witness")
         if witnessed.request != parsed:
             _fail("WIRE_REQUEST_BINDING_DRIFT", "M35 result is not bound to the assembled request")
-        if witnessed.host_authority != self._wire_adapter.authority:
+        if witnessed.host_authority != self._wire_authority:
             _fail("WIRE_AUTHORITY_BINDING_DRIFT", "M35 result changed configured Host authority")
 
         return PreparedInboundHttpStreamExchange(
