@@ -19,6 +19,7 @@ from marketplace.runtime import (
     FederationEndpointAuthorization,
     FederationOperationProfile,
     PageHydrationLimits,
+    ValidatedFederationPage,
     compose_offline_federation_service,
     create_in_memory_runtime,
 )
@@ -82,6 +83,46 @@ def _target() -> FederationControlTarget:
     return FederationControlTarget(endpoint=endpoint, authorization=authorization)
 
 
+def _compose_service(runtime):
+    return compose_offline_federation_service(
+        runtime,
+        validate_record=validate_market_record,
+        record_identity_text=record_identity_text,
+        validate_exchange_request=federation_v1.validate_exchange_request,
+        make_transport_envelope=federation_v1.make_transport_envelope,
+        validate_transport_envelope=federation_v1.validate_transport_envelope,
+        validate_exchange_result=federation_v1.validate_exchange_result,
+        operation_profiles=(
+            FederationOperationProfile(
+                federation_v1.OP_SYNC,
+                federation_v1.MSG_SYNC_REQUEST,
+                federation_v1.MSG_SYNC_RESULT,
+            ),
+        ),
+    )
+
+
+def _planner(service):
+    return FederationContinuationPlanner(
+        federation_service=service,
+        validate_exchange_request=federation_v1.validate_exchange_request,
+        bind_cursor=federation_v1.bind_cursor,
+        validate_cursor_binding=federation_v1.validate_cursor_binding,
+    )
+
+
+def _hydrator(service):
+    return BoundedFederationPageHydrator(
+        federation_service=service,
+        record_retriever=_NeverRecordRetriever(),
+        verify_record_value=lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("empty page must not verify a Record")
+        ),
+        limits=PageHydrationLimits(max_records=4, total_timeout_seconds=60.0),
+        monotonic_clock=lambda: 0.0,
+    )
+
+
 class _NeverRecordRetriever:
     def preflight(self, **kwargs):
         raise AssertionError("empty page must not preflight a Record")
@@ -110,6 +151,15 @@ class _UnsupportedPayload(dict):
     pass
 
 
+class _ExplodingControlTargets:
+    def __init__(self):
+        self.iterated = False
+
+    def __iter__(self):
+        self.iterated = True
+        raise AssertionError("non-tuple control targets must never be enumerated")
+
+
 class FederationSynchronizationHardeningTests(unittest.TestCase):
     def _stack(self, transport, provider):
         runtime = create_in_memory_runtime(
@@ -119,37 +169,9 @@ class FederationSynchronizationHardeningTests(unittest.TestCase):
             evaluate_match=evaluate_match,
             max_entries=16,
         )
-        service = compose_offline_federation_service(
-            runtime,
-            validate_record=validate_market_record,
-            record_identity_text=record_identity_text,
-            validate_exchange_request=federation_v1.validate_exchange_request,
-            make_transport_envelope=federation_v1.make_transport_envelope,
-            validate_transport_envelope=federation_v1.validate_transport_envelope,
-            validate_exchange_result=federation_v1.validate_exchange_result,
-            operation_profiles=(
-                FederationOperationProfile(
-                    federation_v1.OP_SYNC,
-                    federation_v1.MSG_SYNC_REQUEST,
-                    federation_v1.MSG_SYNC_RESULT,
-                ),
-            ),
-        )
-        planner = FederationContinuationPlanner(
-            federation_service=service,
-            validate_exchange_request=federation_v1.validate_exchange_request,
-            bind_cursor=federation_v1.bind_cursor,
-            validate_cursor_binding=federation_v1.validate_cursor_binding,
-        )
-        hydrator = BoundedFederationPageHydrator(
-            federation_service=service,
-            record_retriever=_NeverRecordRetriever(),
-            verify_record_value=lambda *args, **kwargs: (_ for _ in ()).throw(
-                AssertionError("empty page must not verify a Record")
-            ),
-            limits=PageHydrationLimits(max_records=4, total_timeout_seconds=60.0),
-            monotonic_clock=lambda: 0.0,
-        )
+        service = _compose_service(runtime)
+        planner = _planner(service)
+        hydrator = _hydrator(service)
         orchestrator = BoundedFederationSynchronizationOrchestrator(
             federation_service=service,
             control_transport=transport,
@@ -168,6 +190,89 @@ class FederationSynchronizationHardeningTests(unittest.TestCase):
             runtime_api.BoundedFederationSynchronizationOrchestrator,
             BoundedFederationSynchronizationOrchestrator,
         )
+
+    def test_non_tuple_control_targets_fail_without_enumeration_or_transport(self):
+        transport = _AliasingControlTransport(_final_page())
+        runtime, service, planner, orchestrator = self._stack(
+            transport,
+            lambda record_ids, *, page_number: (),
+        )
+        exploding = _ExplodingControlTargets()
+        try:
+            initial = _request()
+            prepared = service.prepare(initial)
+            with self.assertRaises(FederationSynchronizationError) as caught:
+                orchestrator.synchronize(initial, prepared, exploding)  # type: ignore[arg-type]
+            self.assertEqual(caught.exception.code, "CONTROL_TARGET_LIMIT_EXCEEDED")
+            self.assertFalse(exploding.iterated)
+            self.assertEqual(transport.calls, 0)
+        finally:
+            runtime.close()
+
+    def test_orchestrator_rejects_split_m24_service_graph(self):
+        runtime = create_in_memory_runtime(
+            validate_record=validate_market_record,
+            record_identity_text=record_identity_text,
+            evaluate_discovery=evaluate_discovery,
+            evaluate_match=evaluate_match,
+            max_entries=16,
+        )
+        service = _compose_service(runtime)
+        other_service = _compose_service(runtime)
+        transport = _AliasingControlTransport(_final_page())
+        try:
+            with self.assertRaisesRegex(ValueError, "page_hydrator MUST share"):
+                BoundedFederationSynchronizationOrchestrator(
+                    federation_service=service,
+                    control_transport=transport,
+                    page_hydrator=_hydrator(other_service),
+                    continuation_planner=_planner(service),
+                    record_target_provider=lambda record_ids, *, page_number: (),
+                    monotonic_clock=lambda: 0.0,
+                )
+            with self.assertRaisesRegex(ValueError, "continuation_planner MUST share"):
+                BoundedFederationSynchronizationOrchestrator(
+                    federation_service=service,
+                    control_transport=transport,
+                    page_hydrator=_hydrator(service),
+                    continuation_planner=_planner(other_service),
+                    record_target_provider=lambda record_ids, *, page_number: (),
+                    monotonic_clock=lambda: 0.0,
+                )
+        finally:
+            runtime.close()
+
+    def test_hostile_validated_page_binding_drift_fails_before_target_provider(self):
+        transport = _AliasingControlTransport(_final_page())
+        provider_called = False
+
+        def provider(record_ids, *, page_number):
+            nonlocal provider_called
+            provider_called = True
+            return ()
+
+        runtime, service, planner, orchestrator = self._stack(transport, provider)
+        try:
+            initial = _request()
+            prepared = service.prepare(initial)
+            hostile_page = ValidatedFederationPage(
+                source="https://attacker.example/federation",
+                operation=prepared.binding.operation,
+                scope_fingerprint=prepared.binding.scope_fingerprint,
+                page_size=prepared.binding.page_size,
+                record_ids=(),
+                source_completeness="COMPLETE_FOR_DECLARED_SOURCE",
+                page_truncated=False,
+                next_cursor=None,
+            )
+            with patch.object(service, "validate_page", return_value=hostile_page):
+                with self.assertRaises(FederationSynchronizationError) as caught:
+                    orchestrator.synchronize(initial, prepared, (_target(),))
+            self.assertEqual(caught.exception.code, "VALIDATED_PAGE_BINDING_MISMATCH")
+            self.assertFalse(provider_called)
+            self.assertEqual(transport.calls, 1)
+        finally:
+            runtime.close()
 
     def test_provider_alias_mutation_cannot_change_detached_control_response(self):
         original = _final_page()
