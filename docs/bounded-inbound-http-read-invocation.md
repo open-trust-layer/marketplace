@@ -45,7 +45,7 @@ Reader exceptions are not reflected to callers. Arbitrary exception text may con
 
 A reader that returns anything other than an **exact** `InboundHttpReadOutcome` is treated as a hostile/miswired capability. M41 closes the session and fails `INVALID_READER_RESULT` before adopting the value.
 
-After the reader has been invoked, any detected M41 binding drift is terminal. M41 makes a best-effort cleanup through the construction-captured exact M40 `close`/`closed` boundary before reporting drift, so already-consumed external input cannot intentionally leave a reusable partial request session when the original cleanup authority is still intact.
+After the reader has been invoked, any detected M41 binding drift is terminal. M41 makes a best-effort cleanup through the construction-captured exact M40 `close`/`closed` boundary before reporting drift, so already-consumed external input cannot intentionally leave a reusable partial request session when the original cleanup authority is still intact. If that captured cleanup authority itself no longer passes its construction witness, M41 reports `READ_INVOCATION_CLEANUP_UNCERTAIN` rather than claiming successful cleanup.
 
 EOF, explicit FAILURE, malformed DATA, oversized DATA, and lower-layer framing failures retain the terminal/fail-closed semantics already established by M40.
 
@@ -74,6 +74,14 @@ M41 progress results contain no raw request prefix or DATA chunk. Integrity witn
 A `COMPLETED` result may carry the existing explicit M39 one-shot completion handoff. M41 does not make a second copy of those raw request bytes in its own witness.
 
 Reader-returned DATA, M40 outcome values, progress, and completion material are **EPHEMERAL**, maximum **10 seconds post-use**. M41 adds no durable cache, log, journal, checkpoint, filesystem persistence, or background retention.
+
+## Governance boundary
+
+M41 is a **HIGH-risk source change** eligible for the adopted Section 7 solo-maintainer procedure while a valid bounded standing owner mandate remains active. Eligibility does not turn CI or maintainer review into independent human review.
+
+For merge, the exact current PR head and current `main` base must have fresh conformance acceptance, the HIGH-risk self/security review must be recorded honestly, merge must be guarded by the exact expected head SHA, and the resulting exact merged `main` commit must pass the same conformance gate before M41 is complete.
+
+The standing source-control mandate does **not** authorize a concrete live reader against a real peer/public endpoint. Live external execution, deployment, secrets, provider administration, CRITICAL changes, destructive external state, and protected economic side effects remain outside this milestone's authority.
 
 ## Deliberately absent features
 
