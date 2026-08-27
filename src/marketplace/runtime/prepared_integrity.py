@@ -2,8 +2,9 @@
 
 This module contains no semantic authority and no network capability. It turns
 the bounded M8 host representation used by a prepared exchange into detached
-``dict``/``list`` subclasses that preserve ordinary Mapping/list behavior while
-rejecting mutation, together with an immutable type-tagged integrity snapshot.
+``dict``/``list``-compatible values whose authoritative state is stored only in
+private immutable tuples, together with an immutable type-tagged integrity
+snapshot.
 """
 from __future__ import annotations
 
@@ -28,7 +29,57 @@ def _fail(code: str, message: str) -> None:
 
 
 class FrozenList(list):
-    """A detached list-compatible host value with mutation disabled."""
+    """List-compatible immutable host value backed by one private tuple.
+
+    The inherited ``list`` storage is deliberately left empty. Even an explicit
+    call such as ``list.append(frozen, value)`` can only alter ignored base-class
+    storage; iteration, indexing, length, equality, representation, and OLP
+    encoding all read the immutable tuple instead.
+    """
+
+    __slots__ = ("_values",)
+
+    def __init__(self, values: Any = ()) -> None:
+        list.__init__(self)
+        object.__setattr__(self, "_values", tuple(values))
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    def __delattr__(self, name: str) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    def __iter__(self):
+        return iter(self._values)
+
+    def __len__(self) -> int:
+        return len(self._values)
+
+    def __getitem__(self, key: Any) -> Any:
+        return self._values[key]
+
+    def __contains__(self, value: object) -> bool:
+        return value in self._values
+
+    def __reversed__(self):
+        return reversed(self._values)
+
+    def count(self, value: object) -> int:
+        return self._values.count(value)
+
+    def index(self, value: object, *args: int) -> int:
+        return self._values.index(value, *args)
+
+    def copy(self) -> list[Any]:
+        return list(self._values)
+
+    def __repr__(self) -> str:
+        return repr(list(self._values))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, (list, tuple)):
+            return self._values == tuple(other)
+        return NotImplemented
 
     def _immutable(self, *args: Any, **kwargs: Any) -> None:
         raise TypeError("prepared federation host values are immutable")
@@ -48,7 +99,69 @@ class FrozenList(list):
 
 
 class FrozenDict(dict):
-    """A detached dict-compatible host value with mutation disabled."""
+    """Dict-compatible immutable host value backed by private tuple pairs.
+
+    The inherited ``dict`` storage is deliberately left empty. Explicit base
+    calls such as ``dict.__setitem__(frozen, key, value)`` can only modify ignored
+    base storage; all Mapping behavior used by Marketplace/OLP reads ``_items``.
+    """
+
+    __slots__ = ("_items",)
+
+    def __init__(self, values: Mapping[str, Any] | None = None) -> None:
+        dict.__init__(self)
+        source = {} if values is None else values
+        object.__setattr__(self, "_items", tuple(source.items()))
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    def __delattr__(self, name: str) -> None:
+        raise TypeError("prepared federation host values are immutable")
+
+    def __iter__(self):
+        return (key for key, _ in self._items)
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __getitem__(self, key: Any) -> Any:
+        for existing_key, value in self._items:
+            if existing_key == key:
+                return value
+        raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        return any(existing_key == key for existing_key, _ in self._items)
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def keys(self) -> tuple[str, ...]:
+        return tuple(key for key, _ in self._items)
+
+    def items(self) -> tuple[tuple[str, Any], ...]:
+        return self._items
+
+    def values(self) -> tuple[Any, ...]:
+        return tuple(value for _, value in self._items)
+
+    def copy(self) -> dict[str, Any]:
+        return {key: value for key, value in self._items}
+
+    def __repr__(self) -> str:
+        return repr(self.copy())
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Mapping):
+            try:
+                return self.copy() == dict(other)
+            except Exception:
+                return False
+        return NotImplemented
 
     def _immutable(self, *args: Any, **kwargs: Any) -> None:
         raise TypeError("prepared federation host values are immutable")
