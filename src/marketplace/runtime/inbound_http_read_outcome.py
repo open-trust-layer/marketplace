@@ -175,6 +175,7 @@ class BoundedInboundHttpReadOutcomeHandler:
         "_take",
         "_close",
         "_closed_getter",
+        "_binding_witness",
     )
 
     def __init__(self, *, read_session: BoundedInboundHttpReadSession) -> None:
@@ -212,8 +213,20 @@ class BoundedInboundHttpReadOutcomeHandler:
             read_session,
             BoundedInboundHttpReadSession,
         )
+        self._binding_witness = self._binding_snapshot()
         self._validate_bindings()
         self._closed_value()
+
+    def _binding_snapshot(self) -> tuple[Any, ...]:
+        return (
+            "inbound-http-read-outcome-binding-v1",
+            self._session,
+            self._progress_function,
+            self._accept_function,
+            self._take_function,
+            self._close_function,
+            self._closed_function,
+        )
 
     def _validate_bound_method(self, bound: Any, function: Any, label: str) -> None:
         if (
@@ -225,6 +238,8 @@ class BoundedInboundHttpReadOutcomeHandler:
     def _validate_bindings(self) -> None:
         if type(self._session) is not BoundedInboundHttpReadSession:
             _fail("READ_OUTCOME_BINDING_DRIFT", "M39 session changed type after M40 construction")
+        if self._binding_witness != self._binding_snapshot():
+            _fail("READ_OUTCOME_BINDING_DRIFT", "M40 captured M39 binding witness changed")
         self._validate_bound_method(self._progress, self._progress_function, "progress")
         self._validate_bound_method(self._accept, self._accept_function, "accept")
         self._validate_bound_method(self._take, self._take_function, "take-completed")
@@ -275,6 +290,39 @@ class BoundedInboundHttpReadOutcomeHandler:
         if not self._closed_value():
             _fail("READ_OUTCOME_CLOSE_DRIFT", "M39 did not close after terminal M40 outcome")
 
+    def _terminal_fail(
+        self,
+        code: str,
+        message: str,
+        *,
+        session_code: str | None = None,
+        transition_code: str | None = None,
+        plan_code: str | None = None,
+        stream_code: str | None = None,
+        wire_code: str | None = None,
+    ) -> None:
+        self._terminal_close()
+        _fail(
+            code,
+            message,
+            session_code=session_code,
+            transition_code=transition_code,
+            plan_code=plan_code,
+            stream_code=stream_code,
+            wire_code=wire_code,
+        )
+
+    def _terminal_fail_from_session(self, exc: InboundHttpReadSessionError) -> None:
+        self._terminal_fail(
+            "READ_SESSION_REJECTED",
+            "M39 rejected already-returned M40 DATA; session was closed",
+            session_code=exc.code,
+            transition_code=exc.transition_code,
+            plan_code=exc.plan_code,
+            stream_code=exc.stream_code,
+            wire_code=exc.wire_code,
+        )
+
     @property
     def closed(self) -> bool:
         return self._closed_value()
@@ -294,8 +342,7 @@ class BoundedInboundHttpReadOutcomeHandler:
 
         prior = self._open_progress()
         if prior.plan.action == READ_ACTION_COMPLETE:
-            self._terminal_close()
-            _fail(
+            self._terminal_fail(
                 "READ_OUTCOME_AFTER_COMPLETE",
                 "M40 rejects any supplied read outcome after request completion",
             )
@@ -305,43 +352,59 @@ class BoundedInboundHttpReadOutcomeHandler:
                 progress = self._accept(witnessed_outcome.chunk)
             except InboundHttpReadSessionError as exc:
                 self._validate_bindings()
-                _fail_from_session(exc)
+                self._terminal_fail_from_session(exc)
             self._validate_bindings()
-            witnessed_progress = self._replay_progress(progress)
+            try:
+                witnessed_progress = self._replay_progress(progress)
+            except InboundHttpReadOutcomeError:
+                self._terminal_close()
+                raise
             if witnessed_progress.reads_completed != prior.reads_completed + 1:
-                _fail(
+                self._terminal_fail(
                     "READ_OUTCOME_PROGRESS_DRIFT",
                     "M39 did not advance read accounting exactly once for M40 DATA",
                 )
             if witnessed_progress.buffered_bytes != prior.buffered_bytes + len(
                 witnessed_outcome.chunk
             ):
-                _fail(
+                self._terminal_fail(
                     "READ_OUTCOME_PROGRESS_DRIFT",
                     "M39 buffered byte accounting does not match M40 DATA",
                 )
             if witnessed_progress.last_accepted_chunk_bytes != len(witnessed_outcome.chunk):
-                _fail(
+                self._terminal_fail(
                     "READ_OUTCOME_PROGRESS_DRIFT",
                     "M39 accepted chunk accounting does not match M40 DATA",
+                )
+            try:
+                current = self._open_progress()
+            except InboundHttpReadOutcomeError:
+                self._terminal_close()
+                raise
+            if (
+                current.buffered_bytes != witnessed_progress.buffered_bytes
+                or current.reads_completed != witnessed_progress.reads_completed
+                or current.plan.integrity_snapshot != witnessed_progress.plan.integrity_snapshot
+            ):
+                self._terminal_fail(
+                    "READ_OUTCOME_PROGRESS_DRIFT",
+                    "M39 current state does not match its returned M40 DATA progress",
                 )
             return witnessed_progress
 
         if witnessed_outcome.kind == READ_OUTCOME_EOF:
-            self._terminal_close()
-            _fail(
+            self._terminal_fail(
                 "READ_EOF_BEFORE_COMPLETE",
                 "M40 observed EOF before the bounded request reached COMPLETE",
             )
 
         if witnessed_outcome.kind == READ_OUTCOME_FAILURE:
-            self._terminal_close()
-            _fail(
+            self._terminal_fail(
                 "READ_FAILURE_BEFORE_COMPLETE",
                 "M40 observed a generic read failure before request completion",
             )
 
-        _fail("READ_OUTCOME_DRIFT", "M40 outcome kind changed after integrity replay")
+        self._terminal_fail("READ_OUTCOME_DRIFT", "M40 outcome kind changed after integrity replay")
 
     def take_completed(self) -> CompletedInboundHttpReadSession:
         """Delegate one-shot completion transfer to the captured M39 session."""
