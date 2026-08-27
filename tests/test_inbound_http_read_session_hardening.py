@@ -111,6 +111,20 @@ class InboundHttpReadSessionHardeningTests(unittest.TestCase):
         self.assertEqual(progress.reads_completed, 1)
         self.assertEqual(self.harness.calls, [])
 
+    def test_private_captured_helper_rebinding_is_detected(self):
+        original_transition = self.session._transition
+        object.__setattr__(self.session, "_transition", lambda *args, **kwargs: None)
+        with self.assertRaises(InboundHttpReadSessionError) as caught:
+            self.session.progress()
+        self.assertEqual(caught.exception.code, "READ_CONFIGURATION_DRIFT")
+
+        object.__setattr__(self.session, "_transition", original_transition)
+        object.__setattr__(self.session, "_transition_function", lambda *args, **kwargs: None)
+        with self.assertRaises(InboundHttpReadSessionError) as caught:
+            self.session.progress()
+        self.assertEqual(caught.exception.code, "READ_SESSION_STATE_DRIFT")
+        self.session.close()
+
     def test_m37_configuration_mutation_during_initial_plan_is_detected(self):
         planner = BoundedInboundHttpReadPlanner(stream_assembler=self.stream)
         transitioner = BoundedInboundHttpReadTransitioner(read_planner=planner)
@@ -218,6 +232,14 @@ class InboundHttpReadSessionHardeningTests(unittest.TestCase):
             and node.func.attr == "_transition"
         ]
         self.assertEqual(len(transition_calls), 1)
+
+    def test_accept_chunk_independently_verifies_count_and_prefix_content(self):
+        source = inspect.getsource(BoundedInboundHttpReadSession.accept_chunk)
+        self.assertIn("witnessed.accepted_chunk_bytes != len(chunk)", source)
+        self.assertIn("expected_prefix_digest.update(prefix)", source)
+        self.assertIn("expected_prefix_digest.update(chunk)", source)
+        self.assertIn("sha256(witnessed.prefix).digest()", source)
+        self.assertNotIn("prefix + chunk", source)
 
     def test_source_has_no_network_reader_writer_tls_server_process_persistence_or_background_surface(self):
         source = inspect.getsource(session_module)
