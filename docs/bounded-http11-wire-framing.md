@@ -116,6 +116,7 @@ It rejects:
 - malformed colon spacing;
 - non-ASCII header text;
 - control-bearing header values;
+- leading or trailing ordinary spaces in header values;
 - case-insensitive duplicate header names.
 
 Every wire header line must use exact:
@@ -182,12 +183,12 @@ If `Content-Length` is present, it must be canonical decimal ASCII text with no 
 str(len(body))
 ```
 
-M35 **does not convert untrusted Content-Length text to a Python integer**. This avoids unnecessary arbitrary-size integer work and makes message delimitation exact at the wire boundary.
+M35 **does not convert untrusted Content-Length text to a Python integer**. The only integer conversion in the module is for the already bounded, trusted configuration port text. This avoids unnecessary arbitrary-size integer work and makes message delimitation exact at the wire boundary.
 
 Consequences:
 
 - bytes beyond the declared body fail before M34;
-- a pipelined second request appended to a declared body fails the exact length comparison or later strict body processing;
+- a pipelined second request appended to a declared body fails the exact length comparison;
 - body bytes without a declaration fail before M34;
 - duplicate `Content-Length` names fail case-insensitively;
 - `Transfer-Encoding` is not in the accepted header set and cannot create a second framing interpretation.
@@ -210,16 +211,47 @@ M35 does not retain caller-owned mutable route or request-header containers. Inp
 
 ## M34 response revalidation
 
-M35 does not assume an object is safe merely because it was returned from M34. It requires an exact `PreparedInboundHttpResponse` and checks:
+M35 does not assume an object is safe merely because it was returned from M34.
 
-- its canonical request exactly matches the M35 parsed request;
-- `transmitted=False`;
-- `request_authenticated=False`;
-- `peer_identity_proven=False`;
-- no Marketplace-truth, trust, authorization, or protected-side-effect promotion;
-- response body is exact immutable non-empty bytes within the M35 configured response limit.
+The order is deliberate:
 
-M35 then reconstructs a fresh `PreparedInboundHttpResponse` from those exact fields. This reruns M34's own immutable response invariants and prevents stale/fabricated witness reuse from becoming a wire response.
+1. require the exact `PreparedInboundHttpResponse` type;
+2. inspect the **returned object's** `transmitted`, authentication, peer-identity, truth, trust, authorization, and protected-side-effect flags directly and require exact `False`;
+3. replay M34's original integrity witness with `dataclasses.replace(result)`; changed request, route, status, headers, body, or message type must therefore fail against the original M34 snapshot;
+4. require the witnessed M34 request to equal the canonical request parsed by M35;
+5. independently cross-bind the witnessed route semantics to the parsed wire route;
+6. require a bounded exact response body;
+7. reconstruct one fresh valid `PreparedInboundHttpResponse` before framing.
+
+The direct authority check occurs **before** witness replay because Python dataclass replacement reconstructs `init=False` fields from their defaults. Relying on replacement alone could otherwise hide a low-level mutation of a negative authority flag.
+
+The original M34 integrity witness is still necessary for `init=True` authoritative fields. Adversarial tests prove that a same-length body mutation or route-operation mutation cannot be re-canonicalized into a new M35 response.
+
+### Independent route cross-binding
+
+M35 also rejects a response that is internally self-consistent under M34's generic response shape but semantically mismatched to the wire request.
+
+For a Record request path under `/v1/records/`, success requires all of:
+
+```text
+request method   = GET
+route_kind       = IMMUTABLE_RECORD
+route_operation  = exact M33/M27 immutable Record retrieval operation
+olp_message_type = record
+```
+
+The reserved `/v1/records` collection path cannot produce M35 success.
+
+For any non-Record successful request, M35 requires:
+
+```text
+request method = POST
+route_kind     = FEDERATION_CONTROL
+```
+
+and the route operation may not impersonate the immutable Record retrieval operation.
+
+Adversarial tests construct **self-consistent** M34 response objects with the wrong route kind, wrong Record operation, or wrong Record message type. Those objects pass their own M34 integrity witness but are rejected by M35 with route-binding drift. This provides an independent composition check rather than merely detecting post-construction mutation.
 
 ## Exact success response frame
 
@@ -246,15 +278,18 @@ M35 intentionally does not construct public remote error pages. A future listene
 
 - canonical M34 request;
 - configured Host authority;
-- route kind and operation;
+- route kind and bounded route operation;
 - exact status code;
 - exact framed response bytes;
-- exact response body byte count;
-- OLP message type;
-- positive Host-match fact;
-- negative TLS/authentication/peer/transmission/truth/trust/authorization facts.
+- bounded exact response body byte count;
+- bounded OLP message type;
+- `host_authority_validated=True`;
+- `tls_sni_bound=False`;
+- `transmitted=False`;
+- request authentication and peer identity false;
+- Marketplace truth, trust, authorization, and protected-side-effect authority false.
 
-The constructor reconstructs the canonical response prefix from the claimed body length and requires exact frame length. Dataclass replacement cannot reuse an old witness for changed authority, route, body count, response bytes, or message type.
+Every positive/negative authority fact above is independently checked before witness construction and is included in the witness itself. The constructor reconstructs the canonical response prefix from the claimed body length and requires exact frame length. Dataclass replacement cannot reuse an old witness for changed authority, route, body count, response bytes, message type, or authority facts.
 
 The prepared result does **not** retain the original raw request byte sequence; it retains only the canonical M34 request required for provenance plus the prepared response wire image.
 
@@ -266,6 +301,8 @@ M35's accepted request profile intentionally includes the exact one-shot request
 - M27 immutable Record GET: Host, Accept, Connection close.
 
 M35 canonicalizes the accepted application header order only after duplicate rejection and exact Host verification. It does not broaden either client's semantics.
+
+The M35 success frame is also checked against the existing strict M26 response parser.
 
 ## No network/server surface
 
