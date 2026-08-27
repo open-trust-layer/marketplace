@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import dataclasses
 import inspect
+import textwrap
 import unittest
 
 import marketplace.runtime.inbound_http_read_plan as read_plan_module
@@ -163,7 +164,7 @@ class InboundHttpReadPlanHardeningTests(unittest.TestCase):
 
     def test_plan_uses_one_m36_probe_and_no_prefix_copy_loop(self):
         source = inspect.getsource(BoundedInboundHttpReadPlanner.plan)
-        tree = ast.parse(inspect.cleandoc(source))
+        tree = ast.parse(textwrap.dedent(source))
         probe_calls = [
             node
             for node in ast.walk(tree)
