@@ -34,7 +34,7 @@ M33 deliberately reuses existing reviewed boundaries:
 - `marketplace.reference.record_serving_v1.market_record_transport_payload` for pinned-OLP RecordV1-to-host-payload materialization;
 - `TransportEnvelopeV1(message_type="record", ...)` only in the reference layer;
 - the existing M27 `verify_retrieved_market_record` semantics, wrapped by `verify_prepared_record_transport_envelope`, to re-verify the completed prepared envelope;
-- M30 `detach_host_value` / `host_value_integrity_snapshot` for bounded deep detachment and immutable integrity witnesses.
+- M30 `detach_host_value` / `host_value_integrity_snapshot` and the same depth/item constants for bounded deep detachment, pre-copy conversion limits, and immutable integrity witnesses.
 
 The runtime module does not import OLP and contains no concrete network/server implementation.
 
@@ -50,12 +50,12 @@ One call to `BoundedInboundRecordResponder.prepare(...)` follows this fail-close
 6. treat `None` only as local unavailability, never deletion/global nonexistence;
 7. validate Marketplace semantics of the returned local Record;
 8. derive authoritative OLP Record Identity and require exact equality to the requested ID;
-9. invoke the pinned reference payload preparer;
+9. invoke the pinned reference payload preparer, applying M30's depth/item profile before copying frozen OLP containers into mutable host values;
 10. re-run semantic validation and identity derivation after that helper boundary to detect mutation of a mutable/custom source Record;
 11. deeply detach the prepared payload with M30 bounded host-value machinery;
 12. require a string-keyed mapping;
 13. prepare one abstract OLP transport envelope;
-14. require exact marker `OLP-TRANSPORT`, integer version `1`, message type `record`, and exact payload preservation;
+14. require exact marker `OLP-TRANSPORT`, integer version `1`, message type `record`, and payload integrity-snapshot equality to the validated payload;
 15. independently re-verify the completed envelope using the existing M27 Record verifier semantics;
 16. require exact identity equality, Marketplace semantic verification, and negative proof/truth/ownership/authority/trust/authorization/ingest facts;
 17. bind an immutable integrity snapshot to request context + completed envelope;
@@ -89,15 +89,19 @@ authorizes_protected_side_effects = False
 
 The prepared value intentionally does not retain a second reference to the local source `RecordV1`; the body exists only in the deeply detached envelope that a future transport adapter would need.
 
-## Reference payload round trip
+## Reference payload round trip and resource profile
 
 `market_record_transport_payload(...)` validates the local `RecordV1`, validates Marketplace semantics, verifies the expected Record Identity, converts frozen OLP host containers to ordinary bounded host values, reconstructs a fresh `RecordV1` from that payload, revalidates it, and recomputes the same identity.
+
+Pinned OLP permits a broader reference-value resource profile than M30's prepared-host representation. M33 therefore enforces `MAX_PREPARED_SNAPSHOT_DEPTH` and `MAX_PREPARED_SNAPSHOT_ITEMS` **during** OLP-container conversion, before allocating the corresponding mutable dict/list representation. A Record may be valid OLP evidence yet be locally undisclosable through this bounded M33 profile; that is an explicit implementation/resource result, not a semantic invalidity claim.
 
 `verify_prepared_record_transport_envelope(...)` then reuses M27's `verify_retrieved_market_record(...)` over the final envelope. This provides an independent post-envelope proof that the body a future M27 client would receive is the same immutable Marketplace Record identified by the requested identity.
 
 ## Alias and TOCTOU resistance
 
 The payload is deeply detached before the envelope-maker boundary. Later mutation of the payload provider's caller-owned alias cannot change authoritative prepared content.
+
+Envelope payload preservation is checked with `host_value_integrity_snapshot(...)`, not ordinary container equality. This is necessary because M30's tuple-backed `FrozenDict`/`FrozenList` deliberately keep inherited base-class storage non-authoritative; authoritative equality for security binding is the type-tagged snapshot.
 
 The completed envelope is deeply detached before verification and return. M30 tuple-backed `FrozenDict` / `FrozenList` authoritative state means even explicit base-class writes affect ignored backing storage rather than the values consumed by Marketplace/OLP logic.
 
@@ -165,11 +169,12 @@ M33 acceptance requires:
 - wrong-identity/non-Marketplace Record rejection;
 - source-Record mutation detection across payload helper boundary;
 - payload alias detachment proof;
-- envelope marker/version/type/payload binding checks;
+- pre-copy depth/item resource-bound rejection;
+- envelope marker/version/type/payload integrity-snapshot binding checks;
 - verifier identity-drift and authority-escalation rejection;
 - base-container mutation resistance;
 - prepared-object integrity rebinding rejection;
-- no-network/server/filesystem/background/logging source guard;
+- no-network/server/filesystem/background/logging source guard for runtime and reference adapter;
 - actual built-wheel membership checks for M33 runtime and reference adapter;
 - repository presence check for this security document;
 - full existing conformance gate, deterministic vector replays, package smokes, artifact reproducibility, and whitespace checks;
