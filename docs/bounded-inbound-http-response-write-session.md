@@ -65,6 +65,14 @@ Direct private counter resets, prepared-response rebinding, plan rebinding, capt
 
 `close()` is idempotent and releases M46's retained prepared-response reference. Closed state cannot be reopened through the public API.
 
+### Original-object authority rule
+
+Python `dataclasses.replace()` reconstructs fields declared with `init=False` from their defaults. Therefore a low-level mutation of an authority-negative `init=False` field on an existing frozen dataclass can be normalized away by a raw `replace()` call.
+
+Consequently, every downstream layer that consumes an M46 progress or completion object MUST check the authority-negative fields on the **original supplied object before canonical dataclass replay**. M46 follows the same rule for M43/M44/M45 objects through its checked `_require_negative(...)` boundary. A later M47 consumer must not treat raw `dataclasses.replace()` alone as evidence that the source M46 object carried no promoted authority.
+
+This is a validation-order rule, not a new authority claim.
+
 ## Authority boundary
 
 The following facts remain false on M46 progress/completion objects:
