@@ -242,6 +242,12 @@ def _detach(value: Any, *, depth: int = 0) -> tuple[Any, tuple[Any, ...]]:
     _fail("SNAPSHOT_UNSUPPORTED_TYPE", f"unsupported prepared exchange host value type {value_type.__name__}")
 
 
+def detach_host_value(value: Any) -> Any:
+    """Return one bounded deeply detached host value with immutable authoritative state."""
+    detached, _ = _detach(value)
+    return detached
+
+
 def host_value_integrity_snapshot(value: Any) -> tuple[Any, ...]:
     """Return the bounded type-tagged snapshot of one supported host value."""
     _, snapshot = _detach(value)
