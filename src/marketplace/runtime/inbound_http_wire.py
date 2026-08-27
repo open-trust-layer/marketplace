@@ -397,12 +397,6 @@ class BoundedInboundHttpWireAdapter:
     ) -> PreparedInboundHttpResponse:
         if type(result) is not PreparedInboundHttpResponse:
             _fail("INVALID_APPLICATION_RESPONSE", "M34 returned an unexpected result type")
-        try:
-            witnessed = replace(result)
-        except (TypeError, ValueError):
-            _fail("APPLICATION_RESPONSE_INTEGRITY_DRIFT", "M34 response no longer matches its integrity witness")
-        if _request_snapshot(witnessed.request) != _request_snapshot(request):
-            _fail("APPLICATION_REQUEST_BINDING_DRIFT", "M34 response is not bound to the parsed M35 request")
         for name in (
             "transmitted",
             "request_authenticated",
@@ -412,8 +406,14 @@ class BoundedInboundHttpWireAdapter:
             "establishes_authorization",
             "authorizes_protected_side_effects",
         ):
-            if getattr(witnessed, name, None) is not False:
+            if getattr(result, name, None) is not False:
                 _fail("APPLICATION_AUTHORITY_ESCALATION", "M34 response promoted a forbidden authority fact")
+        try:
+            witnessed = replace(result)
+        except (TypeError, ValueError):
+            _fail("APPLICATION_RESPONSE_INTEGRITY_DRIFT", "M34 response no longer matches its integrity witness")
+        if _request_snapshot(witnessed.request) != _request_snapshot(request):
+            _fail("APPLICATION_REQUEST_BINDING_DRIFT", "M34 response is not bound to the parsed M35 request")
         if type(witnessed.body) is not bytes or not 1 <= len(witnessed.body) <= self._limits.max_response_body_bytes:
             _fail("RESPONSE_BODY_LIMIT_EXCEEDED", "M34 response body is outside the configured M35 bound")
         try:
