@@ -4,6 +4,7 @@ import inspect
 import unittest
 from dataclasses import replace
 
+import marketplace.runtime.inbound_http_response_write_session as m46
 from marketplace.runtime.inbound_http_response_write_plan import (
     WRITE_ACTION_COMPLETE,
     WRITE_ACTION_WRITE,
@@ -120,15 +121,22 @@ class InboundHttpResponseWriteSessionTests(unittest.TestCase):
                 method()
             self.assertEqual(ctx.exception.code, "WRITE_SESSION_CLOSED")
 
-    def test_completion_integrity_blocks_rebinding(self):
+    def test_completion_integrity_blocks_rebinding_and_original_authority_promotion(self):
         prepared, _, _, session = self._session(size=1_000_000)
         session.accept_write_count(prepared.response_bytes)
         completed = session.take_completed()
         with self.assertRaises(ValueError):
             replace(completed, bytes_written=completed.bytes_written - 1)
+
+        # init=False fields are reset to defaults by dataclasses.replace(). Consumers
+        # must inspect the original object before replay rather than treating replace()
+        # as proof that the source object carried no authority promotion.
         object.__setattr__(completed, "transmitted", True)
-        with self.assertRaises(ValueError):
-            replace(completed)
+        with self.assertRaises(InboundHttpResponseWriteSessionError) as ctx:
+            m46._require_negative(completed)
+        self.assertEqual(ctx.exception.code, "WRITE_SESSION_AUTHORITY_ESCALATION")
+        replayed = replace(completed)
+        self.assertFalse(replayed.transmitted)
 
 
 if __name__ == "__main__":
