@@ -77,6 +77,19 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
+          function Remove-CIPath {
+            param([Parameter(Mandatory = $true)][string]$Path)
+            if (-not (Test-Path -LiteralPath $Path)) { return }
+            for ($attempt = 1; $attempt -le 8; $attempt++) {
+              try {
+                Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+                return
+              } catch {
+                if ($attempt -eq 8) { throw }
+                Start-Sleep -Milliseconds 250
+              }
+            }
+          }
           $targets = @(
             (Join-Path $env:RUNNER_TEMP 'marketplace-ci-venv'),
             (Join-Path $env:RUNNER_TEMP 'pip-cache'),
@@ -89,15 +102,13 @@ jobs:
             (Join-Path $env:GITHUB_WORKSPACE 'olp\.pytest_cache')
           )
           foreach ($target in $targets) {
-            if (Test-Path -LiteralPath $target) {
-              Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction Stop
-            }
+            Remove-CIPath -Path $target
           }
           foreach ($root in @((Join-Path $env:GITHUB_WORKSPACE 'marketplace'), (Join-Path $env:GITHUB_WORKSPACE 'olp'))) {
             if (Test-Path -LiteralPath $root) {
               Get-ChildItem -LiteralPath $root -Directory -Recurse -Force -Filter '__pycache__' -ErrorAction SilentlyContinue |
                 Sort-Object FullName -Descending |
-                Remove-Item -Recurse -Force -ErrorAction Stop
+                ForEach-Object { Remove-CIPath -Path $_.FullName }
             }
           }
           foreach ($target in $targets) {

@@ -78,6 +78,7 @@ CI migration does not authorize deployment or production restart.
 - The `_actions` cache is also transient. Before repository steps execute, an administrator-owned hook validates the exact pinned `actions/checkout` cache against a trusted 101-file SHA-256 manifest generated independently from commit `3d3c42e5aac5ba805825da76410c181273ba90b1`; the cache is purged after every job.
 - PowerShell remains unchanged machine-wide. `RemoteSigned` is scoped only to the dedicated CI account; workflow steps explicitly use that policy and never require administrator elevation.
 - Both checkout steps set `persist-credentials: false`.
+- M31-M43 wheel-membership unit tests share one real wheel build per unittest process; every membership assertion still executes, while the independent reproducible-artifact gate performs its own builds and audits.
 - External fork workflows require manual approval for all external contributors and MUST NOT be approved before workflow code is trusted for local-runner execution.
 
 The runner host itself is persistent, so these controls reduce but do not make public-repository self-hosting equivalent to an ephemeral VM. If the trust boundary cannot be maintained, the runner MUST be disabled rather than relaxing these controls.
