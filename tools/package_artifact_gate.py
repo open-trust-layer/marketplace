@@ -44,6 +44,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/record_retrieval.py",
     "marketplace/runtime/page_hydration.py",
     "marketplace/runtime/continuation.py",
+    "marketplace/runtime/inbound_http_connection.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",

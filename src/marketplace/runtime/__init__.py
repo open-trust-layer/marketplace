@@ -132,6 +132,13 @@ from .inbound_http_read_transition import (
     InboundHttpReadTransition,
     InboundHttpReadTransitionError,
 )
+from .inbound_http_connection import (
+    BoundedInboundHttpSingleConnectionIO,
+    BoundedInboundHttpSingleConnectionTransport,
+    CompletedInboundHttpSingleConnectionTransport,
+    InboundHttpSingleConnection,
+    InboundHttpSingleConnectionTransportError,
+)
 from .inbound_http_transaction import (
     BoundedInboundHttpRequestResponseTransaction,
     CompletedInboundHttpRequestResponseTransaction,
@@ -298,6 +305,8 @@ __all__ = [
     "BoundedFederationSynchronizationOrchestrator",
     "BoundedInboundFederationResponder",
     "BoundedInboundHttpApplicationAdapter",
+    "BoundedInboundHttpSingleConnectionIO",
+    "BoundedInboundHttpSingleConnectionTransport",
     "BoundedInboundHttpReadDriver",
     "BoundedInboundHttpReadInvoker",
     "BoundedInboundHttpReadOutcomeHandler",
@@ -320,6 +329,7 @@ __all__ = [
     "CanonicalFederationEndpoint",
     "CompletedInboundHttpReadDriverResult",
     "CompletedInboundHttpRequestResponseTransaction",
+    "CompletedInboundHttpSingleConnectionTransport",
     "CompletedInboundHttpResponseWriteDriverResult",
     "CompletedInboundHttpReadSession",
     "CompletedInboundHttpResponseWriteSession",
@@ -398,6 +408,8 @@ __all__ = [
     "InboundHttpReadTransitionError",
     "InboundHttpRequest",
     "InboundHttpRequestResponseTransactionError",
+    "InboundHttpSingleConnection",
+    "InboundHttpSingleConnectionTransportError",
     "InboundHttpResponsePreparationError",
     "InboundHttpResponseWriteDriverError",
     "InboundHttpResponseWriteDriverLimits",

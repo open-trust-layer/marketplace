@@ -267,9 +267,17 @@ class BoundedInboundHttpSingleConnectionIO:
                 "connection close was previously attempted but not verified",
             )
         self._close_attempted = True
+        close_error = False
         try:
             self._connection_close()
         except Exception:
+            close_error = True
+        finally:
+            self._connection = None
+            self._recv = None
+            self._send = None
+            self._connection_close = None
+        if close_error:
             _fail("CONNECTION_CLEANUP_UNCERTAIN", "captured connection close failed")
         self._closed = True
 
@@ -337,10 +345,10 @@ class CompletedInboundHttpSingleConnectionTransport:
             raise ValueError("M51 write accounting MUST cover the exact response")
         if self.response_body_bytes > self.response_bytes:
             raise ValueError("response body bytes exceed response wire bytes")
-        if self.read_calls >= self.read_driver_steps + 1:
-            raise ValueError("M51 read calls exceed bounded driver accounting")
-        if self.write_calls >= self.write_driver_steps + 1:
-            raise ValueError("M51 write calls exceed bounded driver accounting")
+        if self.read_driver_steps != self.read_calls + 1:
+            raise ValueError("M51 read driver accounting MUST include one completion transfer")
+        if self.write_driver_steps != self.write_calls + 1:
+            raise ValueError("M51 write driver accounting MUST include one completion transfer")
         for name in (
             "preparation_integrity_sha256",
             "write_completion_integrity_sha256",
