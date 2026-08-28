@@ -50,7 +50,10 @@ def _same_callable(current: object, captured: object) -> bool:
 
 
 def _close_unadapted_connection(connection: object) -> bool:
-    close = getattr(connection, "close", None)
+    try:
+        close = getattr(connection, "close", None)
+    except Exception:
+        return False
     if not callable(close):
         return False
     try:
@@ -70,14 +73,18 @@ class BoundedInboundHttpSingleAccept:
         "_io_class",
         "_accept_once_function",
         "_close_function",
+        "_binding_witness",
         "_accept_attempted",
         "_close_attempted",
         "_closed",
     )
 
     def __init__(self, *, acceptor: InboundHttpSingleConnectionAcceptor) -> None:
-        accept = getattr(acceptor, "accept", None)
-        close = getattr(acceptor, "close", None)
+        try:
+            accept = getattr(acceptor, "accept", None)
+            close = getattr(acceptor, "close", None)
+        except Exception:
+            _fail("ACCEPTOR_INTERFACE_INVALID", "M52 acceptor interface could not be inspected")
         if not callable(accept) or not callable(close):
             raise TypeError("acceptor MUST expose callable accept and close")
         self._acceptor = acceptor
@@ -86,6 +93,7 @@ class BoundedInboundHttpSingleAccept:
         self._io_class = BoundedInboundHttpSingleConnectionIO
         self._accept_once_function = BoundedInboundHttpSingleAccept.accept_once
         self._close_function = BoundedInboundHttpSingleAccept.close
+        self._binding_witness = self._binding_snapshot()
         self._accept_attempted = False
         self._close_attempted = False
         self._closed = False
@@ -99,7 +107,20 @@ class BoundedInboundHttpSingleAccept:
     def closed(self) -> bool:
         return self._closed
 
+    def _binding_snapshot(self) -> tuple[object, ...]:
+        return (
+            "inbound-http-single-accept-binding-v1",
+            self._acceptor,
+            self._accept,
+            self._acceptor_close,
+            self._io_class,
+            self._accept_once_function,
+            self._close_function,
+        )
+
     def _validate_bindings(self) -> None:
+        if self._binding_witness != self._binding_snapshot():
+            _fail("ACCEPTOR_BINDING_DRIFT", "M52 accept boundary binding witness changed")
         if type(self) is not BoundedInboundHttpSingleAccept:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 accept boundary changed type")
         if (
@@ -115,8 +136,15 @@ class BoundedInboundHttpSingleAccept:
             ("accept", self._accept),
             ("close", self._acceptor_close),
         ):
-            current = getattr(self._acceptor, name, None)
-            if not callable(current) or not _same_callable(current, captured):
+            try:
+                current = getattr(self._acceptor, name, None)
+                same = callable(current) and _same_callable(current, captured)
+            except Exception:
+                _fail(
+                    "ACCEPTOR_METHOD_BINDING_UNVERIFIABLE",
+                    f"captured acceptor {name} binding could not be verified",
+                )
+            if not same:
                 _fail(
                     "ACCEPTOR_METHOD_BINDING_DRIFT",
                     f"captured acceptor {name} binding changed",
@@ -126,12 +154,20 @@ class BoundedInboundHttpSingleAccept:
         self._acceptor = None
         self._accept = None
         self._acceptor_close = None
+        self._binding_witness = None
 
     def _close_captured_acceptor(self) -> None:
         if self._close_attempted:
             return
         self._close_attempted = True
-        close = self._acceptor_close
+        witness = self._binding_witness
+        close = witness[3] if type(witness) is tuple and len(witness) == 7 else None
+        if not callable(close):
+            self._release_acceptor()
+            _fail(
+                "ACCEPTOR_CLEANUP_UNCERTAIN",
+                "M52 original acceptor cleanup binding is unavailable",
+            )
         try:
             close()
         except Exception:

@@ -73,6 +73,24 @@ class _Acceptor:
             raise self.close_exception
 
 
+class _HostileAttributeAcceptor(_Acceptor):
+    def __init__(self, connection: object) -> None:
+        super().__init__(connection)
+        self.hostile_lookup = False
+
+    def __getattribute__(self, name: str):
+        if name in {"accept", "close"} and object.__getattribute__(self, "hostile_lookup"):
+            raise RuntimeError("TOP-SECRET-ATTRIBUTE-TEXT")
+        return object.__getattribute__(self, name)
+
+
+class _HostileCloseLookupConnection(_Connection):
+    def __getattribute__(self, name: str):
+        if name == "close":
+            raise RuntimeError("TOP-SECRET-CONNECTION-LOOKUP")
+        return object.__getattribute__(self, name)
+
+
 class InboundHttpSingleAcceptTests(unittest.TestCase):
     def test_accept_once_returns_exact_m51_io_and_closes_acceptor(self):
         connection = _Connection()
@@ -89,6 +107,7 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
         self.assertIsNone(boundary._acceptor)
         self.assertIsNone(boundary._accept)
         self.assertIsNone(boundary._acceptor_close)
+        self.assertIsNone(boundary._binding_witness)
         self.assertFalse(io.closed)
         io.close()
         self.assertTrue(io.closed)
@@ -104,6 +123,34 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
             boundary.accept_once()
 
         self.assertEqual(caught.exception.code, "ACCEPTOR_USED")
+        self.assertEqual(acceptor.accept_calls, 1)
+        self.assertEqual(acceptor.close_calls, 1)
+
+    def test_hostile_acceptor_attribute_lookup_is_redacted_and_cleans_up(self):
+        connection = _Connection()
+        acceptor = _HostileAttributeAcceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        acceptor.hostile_lookup = True
+
+        with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+            boundary.accept_once()
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_METHOD_BINDING_UNVERIFIABLE")
+        self.assertNotIn("TOP-SECRET", str(caught.exception))
+        self.assertEqual(acceptor.accept_calls, 0)
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertIsNone(boundary._acceptor)
+
+    def test_hostile_returned_close_lookup_is_stable_cleanup_uncertainty(self):
+        connection = _HostileCloseLookupConnection()
+        acceptor = _Acceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+
+        with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+            boundary.accept_once()
+
+        self.assertEqual(caught.exception.code, "ACCEPTED_CONNECTION_CLEANUP_UNCERTAIN")
+        self.assertNotIn("TOP-SECRET", str(caught.exception))
         self.assertEqual(acceptor.accept_calls, 1)
         self.assertEqual(acceptor.close_calls, 1)
 
@@ -140,6 +187,22 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
         self.assertEqual(connection.close_calls, 1)
         self.assertFalse(boundary.closed)
         boundary.close()
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertIsNone(boundary._acceptor)
+
+    def test_private_captured_close_rebinding_uses_original_close(self):
+        connection = _Connection()
+        acceptor = _Acceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        hostile_calls = []
+        boundary._acceptor_close = lambda: hostile_calls.append("called")
+
+        with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+            boundary.accept_once()
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(acceptor.accept_calls, 0)
         self.assertEqual(acceptor.close_calls, 1)
         self.assertIsNone(boundary._acceptor)
 
