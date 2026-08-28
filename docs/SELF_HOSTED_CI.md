@@ -29,3 +29,44 @@ The workflow creates a fresh virtual environment under the runner temporary dire
 - pinned OLP source commit: `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`
 
 No production virtual environment, package directory, runtime configuration, database, or credential store is reused by CI.
+
+## Public-repository threat boundary
+
+Marketplace is public, so persistent self-hosted runner use is allowed only with the separately reviewed compensating controls recorded in Infrastructure Issue #109.
+At migration time GitHub's fork approval policy was verified as `all_external_contributors`.
+External-fork jobs must not be approved until the exact workflow and code to be executed have been manually reviewed as trusted for this runner.
+
+The repository had no Actions secrets, variables, or environments at migration inspection time.
+The workflow retains `permissions: contents: read` and does not use `pull_request_target`.
+The dedicated CI account is explicitly denied read access to the interactive administrator profile and other project runner roots inspected during provisioning.
+
+## Filesystem and cleanup
+
+Runner binaries/configuration and host hooks are administrator/SYSTEM owned and read-only to `MACHINE\marketplace-ci`.
+The CI account has modify access only to the runner work/diagnostic directories and Marketplace temporary directory needed for job execution.
+The toolcache and host hooks are read-only to the CI account.
+
+An administrator-owned pre-job hook verifies repository scope, service identity, non-admin status, workspace location, and the inspected forbidden-root ACL boundary.
+An administrator-owned post-job hook removes Marketplace job workspace and transient runner temp content.
+The workflow itself additionally uses an `always()` cleanup step for the disposable virtualenv, pip cache, build output, test caches, and Python bytecode caches.
+A cleanup failure is a CI failure rather than a warning.
+
+## Preserved acceptance semantics
+
+The workflow name remains `Marketplace conformance` and the job/check identity remains `acceptance`.
+The exact repository acceptance authority remains:
+
+```text
+python tools/conformance_gate.py --olp-root ../olp --timeout 90
+```
+
+The two `actions/checkout` uses are pinned to commit `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1).
+No formatter, linter, policy, repository-audit, unit, semantic-vector, replay, packaging, package-smoke, or git-cleanliness behavior inside the unified conformance gate is removed or renamed by this migration.
+
+## Databases and deployment
+
+The pre-migration workflow has no database, service-container, or external integration-service step.
+Therefore this migration introduces no database port, user, service, or production-service dependency and skips none.
+If future CI requires a database or service, it must use a separately isolated test-only service and must not reuse production state.
+
+CI migration does not authorize deployment or production restart.
