@@ -16,6 +16,7 @@ from package_artifact_gate import (
     ArtifactGateError,
     SOURCE_DATE_EPOCH,
     _build_environment,
+    _normalize_source_mtime,
     _verify_clean_source,
     audit_wheel,
     canonical_report_json,
@@ -234,6 +235,28 @@ class PackageArtifactGateTests(unittest.TestCase):
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_PLATFORM")
+
+    def test_mtime_normalization_windows_fallback_requires_regular_path(self):
+        path = Path("copied-source.py")
+        with (
+            patch("package_artifact_gate.os.utime", side_effect=[NotImplementedError, None]) as mocked_utime,
+            patch.object(Path, "is_symlink", return_value=False),
+        ):
+            _normalize_source_mtime(path)
+        self.assertEqual(mocked_utime.call_count, 2)
+        self.assertEqual(mocked_utime.call_args_list[0].kwargs, {"follow_symlinks": False})
+        self.assertEqual(mocked_utime.call_args_list[1].kwargs, {})
+
+    def test_mtime_normalization_never_follows_symlink_on_windows_fallback(self):
+        path = Path("copied-link")
+        with (
+            patch("package_artifact_gate.os.utime", side_effect=NotImplementedError) as mocked_utime,
+            patch.object(Path, "is_symlink", return_value=True),
+            self.assertRaises(ArtifactGateError) as caught,
+        ):
+            _normalize_source_mtime(path)
+        self.assertEqual(caught.exception.code, "SOURCE_SYMLINK")
+        self.assertEqual(mocked_utime.call_count, 1)
 
     def test_build_environment_fixes_reproducibility_controls_and_removes_pythonpath(self):
         env = _build_environment()

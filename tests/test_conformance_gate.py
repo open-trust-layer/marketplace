@@ -120,7 +120,7 @@ class ConformanceGateTests(unittest.TestCase):
             self.assertEqual(len(executor.calls), 1)
             argv, cwd, env, timeout = executor.calls[0]
             self.assertEqual(argv[0], sys.executable)
-            self.assertTrue(argv[1].endswith("tools/package_artifact_gate.py"))
+            self.assertEqual(Path(argv[1]).parts[-2:], ("tools", "package_artifact_gate.py"))
             self.assertEqual(argv[2:4], ("--repo-root", str(config.repo_root.resolve())))
             self.assertEqual(argv[4:6], ("--timeout", "4"))
             self.assertEqual(cwd, config.repo_root.resolve())

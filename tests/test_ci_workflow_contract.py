@@ -26,6 +26,8 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("ubuntu-latest", self.workflow)
         self.assertNotIn("actions/setup-python", self.workflow)
         self.assertNotIn("pull_request_target", self.workflow)
+        self.assertIn("ExecutionPolicy RemoteSigned", self.workflow)
+        self.assertNotIn("ExecutionPolicy Bypass", self.workflow)
 
     def test_uses_verified_runtime_and_unconditional_cleanup(self) -> None:
         self.assertIn(
@@ -41,6 +43,7 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("secrets.", self.workflow)
         checkout_sha = "3d3c42e5aac5ba805825da76410c181273ba90b1"
         self.assertEqual(self.workflow.count(f"actions/checkout@{checkout_sha}"), 2)
+        self.assertEqual(self.workflow.count("persist-credentials: false"), 2)
 
 
 if __name__ == "__main__":

@@ -70,3 +70,14 @@ Therefore this migration introduces no database port, user, service, or producti
 If future CI requires a database or service, it must use a separately isolated test-only service and must not reuse production state.
 
 CI migration does not authorize deployment or production restart.
+
+## Persistent runner hardening
+
+- The service account Windows profile is read-only; disposable `HOME`, `APPDATA`, `LOCALAPPDATA`, `TEMP`, and `TMP` live under `C:\CI` and are purged after jobs.
+- The runner work tree and `_PipelineMapping` are writable only as required runner state and are treated as transient.
+- The `_actions` cache is also transient. Before repository steps execute, an administrator-owned hook validates the exact pinned `actions/checkout` cache against a trusted 101-file SHA-256 manifest generated independently from commit `3d3c42e5aac5ba805825da76410c181273ba90b1`; the cache is purged after every job.
+- PowerShell remains unchanged machine-wide. `RemoteSigned` is scoped only to the dedicated CI account; workflow steps explicitly use that policy and never require administrator elevation.
+- Both checkout steps set `persist-credentials: false`.
+- External fork workflows require manual approval for all external contributors and MUST NOT be approved before workflow code is trusted for local-runner execution.
+
+The runner host itself is persistent, so these controls reduce but do not make public-repository self-hosting equivalent to an ephemeral VM. If the trust boundary cannot be maintained, the runner MUST be disabled rather than relaxing these controls.

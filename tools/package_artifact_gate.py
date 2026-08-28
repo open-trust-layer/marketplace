@@ -216,6 +216,26 @@ def _build_environment() -> dict[str, str]:
     return env
 
 
+def _normalize_source_mtime(path: Path) -> None:
+    """Normalize one copied path without weakening symlink safety on Windows."""
+    timestamp = (SOURCE_DATE_EPOCH, SOURCE_DATE_EPOCH)
+    try:
+        os.utime(path, timestamp, follow_symlinks=False)
+        return
+    except NotImplementedError:
+        # Windows does not implement follow_symlinks=False for os.utime.
+        # Falling back is safe only after an explicit no-symlink check.
+        if path.is_symlink():
+            _fail("SOURCE_SYMLINK", f"copied source path MUST NOT be a symlink: {path}")
+    except OSError as exc:
+        _fail("SOURCE_MTIME_NORMALIZATION", f"could not normalize {path}: {exc}")
+
+    try:
+        os.utime(path, timestamp)
+    except OSError as exc:
+        _fail("SOURCE_MTIME_NORMALIZATION", f"could not normalize {path}: {exc}")
+
+
 def _copy_source(repo_root: Path, destination: Path) -> None:
     shutil.copytree(
         repo_root,
@@ -234,11 +254,8 @@ def _copy_source(repo_root: Path, destination: Path) -> None:
     # Normalize copied-source mtimes as an additional defense against archive
     # metadata variance. The developer worktree is never mutated.
     for path in sorted(destination.rglob("*"), key=lambda item: len(item.parts), reverse=True):
-        try:
-            os.utime(path, (SOURCE_DATE_EPOCH, SOURCE_DATE_EPOCH), follow_symlinks=False)
-        except (OSError, NotImplementedError) as exc:
-            _fail("SOURCE_MTIME_NORMALIZATION", f"could not normalize {path}: {exc}")
-    os.utime(destination, (SOURCE_DATE_EPOCH, SOURCE_DATE_EPOCH))
+        _normalize_source_mtime(path)
+    _normalize_source_mtime(destination)
 
 
 def _build_wheel(repo_root: Path, build_root: Path, timeout: float, label: str) -> Path:
