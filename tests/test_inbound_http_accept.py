@@ -5,6 +5,7 @@ import inspect
 import pathlib
 import unittest
 
+import marketplace.runtime.inbound_http_accept as accept_module
 from marketplace.runtime.inbound_http_accept import (
     BoundedInboundHttpSingleAccept,
     InboundHttpSingleAcceptError,
@@ -172,6 +173,32 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
         self.assertEqual(acceptor.close_calls, 1)
         self.assertEqual(connection.close_calls, 1)
         self.assertIsNone(boundary._acceptor)
+
+    def test_m51_io_class_swap_during_accept_fails_before_hostile_construction(self):
+        connection = _Connection()
+        acceptor = _Acceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        original = accept_module.BoundedInboundHttpSingleConnectionIO
+        constructed = []
+
+        class _HostileIO:
+            def __init__(self, *, connection):
+                constructed.append(connection)
+
+        acceptor.mutate_on_accept = lambda current: setattr(
+            accept_module, "BoundedInboundHttpSingleConnectionIO", _HostileIO
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+                boundary.accept_once()
+        finally:
+            accept_module.BoundedInboundHttpSingleConnectionIO = original
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_BINDING_DRIFT")
+        self.assertEqual(constructed, [])
+        self.assertEqual(acceptor.accept_calls, 1)
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
 
     def test_invalid_accepted_connection_is_closed_when_possible(self):
         connection = _InvalidConnection()

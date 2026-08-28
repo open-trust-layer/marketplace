@@ -67,6 +67,7 @@ class BoundedInboundHttpSingleAccept:
         "_acceptor",
         "_accept",
         "_acceptor_close",
+        "_io_class",
         "_accept_once_function",
         "_close_function",
         "_accept_attempted",
@@ -82,6 +83,7 @@ class BoundedInboundHttpSingleAccept:
         self._acceptor = acceptor
         self._accept = accept
         self._acceptor_close = close
+        self._io_class = BoundedInboundHttpSingleConnectionIO
         self._accept_once_function = BoundedInboundHttpSingleAccept.accept_once
         self._close_function = BoundedInboundHttpSingleAccept.close
         self._accept_attempted = False
@@ -105,6 +107,8 @@ class BoundedInboundHttpSingleAccept:
             or BoundedInboundHttpSingleAccept.close is not self._close_function
         ):
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 boundary method graph changed")
+        if BoundedInboundHttpSingleConnectionIO is not self._io_class:
+            _fail("ACCEPTOR_BINDING_DRIFT", "M52 M51 I/O class binding changed")
         if self._acceptor is None:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 acceptor reference is unavailable")
         for name, captured in (
@@ -164,7 +168,19 @@ class BoundedInboundHttpSingleAccept:
             _fail("ACCEPT_FAILED", "M52 acceptor did not return a connection")
 
         try:
-            io = BoundedInboundHttpSingleConnectionIO(connection=connection)
+            self._validate_bindings()
+        except InboundHttpSingleAcceptError as binding_error:
+            connection_closed = _close_unadapted_connection(connection)
+            try:
+                self._cleanup_after_terminal_error()
+            except InboundHttpSingleAcceptError:
+                raise
+            if not connection_closed:
+                _fail("ACCEPTED_CONNECTION_CLEANUP_UNCERTAIN", "M52 could not verify accepted connection cleanup")
+            raise binding_error
+
+        try:
+            io = self._io_class(connection=connection)
         except Exception:
             connection_closed = _close_unadapted_connection(connection)
             try:
