@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 15
     env:
       CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
-      PIP_CACHE_DIR: '${{ runner.temp }}\pip-cache'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: Check out Marketplace
@@ -43,8 +42,11 @@ jobs:
             throw "Unexpected CI Python version: $version"
           }
           $venv = Join-Path $env:RUNNER_TEMP 'marketplace-ci-venv'
-          if (Test-Path -LiteralPath $venv) {
-            Remove-Item -LiteralPath $venv -Recurse -Force
+          $pipCache = Join-Path $env:RUNNER_TEMP 'pip-cache'
+          foreach ($path in @($venv, $pipCache)) {
+            if (Test-Path -LiteralPath $path) {
+              Remove-Item -LiteralPath $path -Recurse -Force
+            }
           }
           & $env:CI_PYTHON -m venv $venv
           if ($LASTEXITCODE -ne 0) { throw 'Failed to create disposable CI virtualenv' }
@@ -53,6 +55,7 @@ jobs:
             throw 'Disposable CI Python was not created'
           }
           "MARKETPLACE_CI_PYTHON=$jobPython" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PIP_CACHE_DIR=$pipCache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Install reviewed build backend
         shell: powershell
