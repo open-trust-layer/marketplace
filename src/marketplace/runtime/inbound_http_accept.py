@@ -119,7 +119,19 @@ class BoundedInboundHttpSingleAccept:
         )
 
     def _validate_bindings(self) -> None:
-        if self._binding_witness != self._binding_snapshot():
+        witness = self._binding_witness
+        if (
+            type(witness) is not tuple
+            or len(witness) != 7
+            or type(witness[0]) is not str
+            or witness[0] != "inbound-http-single-accept-binding-v1"
+            or witness[1] is not self._acceptor
+            or witness[2] is not self._accept
+            or witness[3] is not self._acceptor_close
+            or witness[4] is not self._io_class
+            or witness[5] is not self._accept_once_function
+            or witness[6] is not self._close_function
+        ):
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 accept boundary binding witness changed")
         if type(self) is not BoundedInboundHttpSingleAccept:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 accept boundary changed type")
@@ -202,6 +214,14 @@ class BoundedInboundHttpSingleAccept:
                 raise
             self._cleanup_after_terminal_error()
             _fail("ACCEPT_FAILED", "M52 acceptor did not return a connection")
+
+        witness = self._binding_witness
+        if type(witness) is tuple and len(witness) == 7 and connection is witness[1]:
+            self._cleanup_after_terminal_error()
+            _fail(
+                "ACCEPTED_CONNECTION_ALIASES_ACCEPTOR",
+                "M52 acceptor MUST NOT return itself as the accepted connection",
+            )
 
         try:
             self._validate_bindings()

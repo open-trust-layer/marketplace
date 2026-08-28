@@ -39,6 +39,16 @@ class _Connection:
             raise self.close_exception
 
 
+class _AliasingAcceptorConnection(_Connection):
+    def __init__(self) -> None:
+        super().__init__()
+        self.accept_calls = 0
+
+    def accept(self):
+        self.accept_calls += 1
+        return self
+
+
 class _InvalidConnection:
     def __init__(self) -> None:
         self.close_calls = 0
@@ -71,6 +81,11 @@ class _Acceptor:
         self.close_calls += 1
         if self.close_exception is not None:
             raise self.close_exception
+
+
+class _ExplosiveEqAcceptor(_Acceptor):
+    def __eq__(self, other: object) -> bool:
+        raise RuntimeError("TOP-SECRET-EQUALITY-TEXT")
 
 
 class _HostileAttributeAcceptor(_Acceptor):
@@ -112,6 +127,19 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
         io.close()
         self.assertTrue(io.closed)
         self.assertEqual(connection.close_calls, 1)
+
+    def test_acceptor_cannot_return_itself_as_connection_capability(self):
+        acceptor = _AliasingAcceptorConnection()
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+
+        with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+            boundary.accept_once()
+
+        self.assertEqual(caught.exception.code, "ACCEPTED_CONNECTION_ALIASES_ACCEPTOR")
+        self.assertEqual(acceptor.accept_calls, 1)
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertTrue(boundary.closed)
+        self.assertIsNone(boundary._acceptor)
 
     def test_accept_is_one_shot_and_never_retried(self):
         connection = _Connection()
@@ -189,6 +217,20 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
         boundary.close()
         self.assertEqual(acceptor.close_calls, 1)
         self.assertIsNone(boundary._acceptor)
+
+    def test_private_acceptor_rebinding_never_invokes_caller_equality(self):
+        connection = _Connection()
+        acceptor = _ExplosiveEqAcceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        boundary._acceptor = object()
+
+        with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+            boundary.accept_once()
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_BINDING_DRIFT")
+        self.assertNotIn("TOP-SECRET", str(caught.exception))
+        self.assertEqual(acceptor.accept_calls, 0)
+        self.assertEqual(acceptor.close_calls, 1)
 
     def test_private_captured_close_rebinding_uses_original_close(self):
         connection = _Connection()

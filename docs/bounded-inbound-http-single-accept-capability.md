@@ -20,6 +20,8 @@ M52 captures both callables at construction time. It validates those bindings
 before and after the single accept attempt. The accepted object is validated by
 constructing the exact M51 `BoundedInboundHttpSingleConnectionIO`; M52 does not
 introduce an alternative reader/writer transport contract.
+The accepted object must also be identity-distinct from the acceptor itself; an
+acceptor cannot return itself and then be handed out after M52 closes it.
 
 On successful handoff, M52 closes the acceptor before returning the M51 I/O
 capability. There is no accept loop, retry, backoff, worker, queue, pool, or
