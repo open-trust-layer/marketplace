@@ -10,34 +10,107 @@ permissions:
 
 jobs:
   acceptance:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Windows, X64, marketplace-ci]
     timeout-minutes: 15
+    env:
+      CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
     steps:
       - name: Check out Marketplace
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: marketplace
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check out pinned Open Layer Protocol
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: open-trust-layer/protocol
           ref: 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
           path: olp
           fetch-depth: 1
+          persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v7.0.0
-        with:
-          python-version: "3.12"
+      - name: Create isolated Python environment
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path -LiteralPath $env:CI_PYTHON -PathType Leaf)) {
+            throw "Verified CI Python is missing: $env:CI_PYTHON"
+          }
+          $version = & $env:CI_PYTHON -c "import sys; print('.'.join(map(str, sys.version_info[:3])))"
+          if ($version -ne '3.12.10') {
+            throw "Unexpected CI Python version: $version"
+          }
+          $venv = Join-Path $env:RUNNER_TEMP 'marketplace-ci-venv'
+          $pipCache = Join-Path $env:RUNNER_TEMP 'pip-cache'
+          foreach ($path in @($venv, $pipCache)) {
+            if (Test-Path -LiteralPath $path) {
+              Remove-Item -LiteralPath $path -Recurse -Force
+            }
+          }
+          & $env:CI_PYTHON -m venv $venv
+          if ($LASTEXITCODE -ne 0) { throw 'Failed to create disposable CI virtualenv' }
+          $jobPython = Join-Path $venv 'Scripts\python.exe'
+          if (-not (Test-Path -LiteralPath $jobPython -PathType Leaf)) {
+            throw 'Disposable CI Python was not created'
+          }
+          "MARKETPLACE_CI_PYTHON=$jobPython" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PIP_CACHE_DIR=$pipCache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Install reviewed build backend
-        run: python -m pip install --disable-pip-version-check "setuptools==80.9.0"
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "setuptools==80.9.0"'
 
       - name: Install OLP reference dependency
-        run: python -m pip install --disable-pip-version-check --no-build-isolation -e ./olp
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check --no-build-isolation -e ./olp'
 
       - name: Run Marketplace acceptance gate
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         working-directory: marketplace
-        run: python tools/conformance_gate.py --olp-root ../olp --timeout 90
+        run: '& $env:MARKETPLACE_CI_PYTHON tools/conformance_gate.py --olp-root ../olp --timeout 90'
+
+      - name: Cleanup disposable CI state
+        if: ${{ always() }}
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Remove-CIPath {
+            param([Parameter(Mandatory = $true)][string]$Path)
+            if (-not (Test-Path -LiteralPath $Path)) { return }
+            for ($attempt = 1; $attempt -le 8; $attempt++) {
+              try {
+                Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop
+                return
+              } catch {
+                if ($attempt -eq 8) { throw }
+                Start-Sleep -Milliseconds 250
+              }
+            }
+          }
+          $targets = @(
+            (Join-Path $env:RUNNER_TEMP 'marketplace-ci-venv'),
+            (Join-Path $env:RUNNER_TEMP 'pip-cache'),
+            (Join-Path $env:GITHUB_WORKSPACE 'marketplace\build'),
+            (Join-Path $env:GITHUB_WORKSPACE 'marketplace\dist'),
+            (Join-Path $env:GITHUB_WORKSPACE 'marketplace\.pytest_cache'),
+            (Join-Path $env:GITHUB_WORKSPACE 'marketplace\.mypy_cache'),
+            (Join-Path $env:GITHUB_WORKSPACE 'marketplace\.ruff_cache'),
+            (Join-Path $env:GITHUB_WORKSPACE 'olp\build'),
+            (Join-Path $env:GITHUB_WORKSPACE 'olp\.pytest_cache')
+          )
+          foreach ($target in $targets) {
+            Remove-CIPath -Path $target
+          }
+          foreach ($root in @((Join-Path $env:GITHUB_WORKSPACE 'marketplace'), (Join-Path $env:GITHUB_WORKSPACE 'olp'))) {
+            if (Test-Path -LiteralPath $root) {
+              Get-ChildItem -LiteralPath $root -Directory -Recurse -Force -Filter '__pycache__' -ErrorAction SilentlyContinue |
+                Sort-Object FullName -Descending |
+                ForEach-Object { Remove-CIPath -Path $_.FullName }
+            }
+          }
+          foreach ($target in $targets) {
+            if (Test-Path -LiteralPath $target) { throw "CI cleanup incomplete: $target" }
+          }
