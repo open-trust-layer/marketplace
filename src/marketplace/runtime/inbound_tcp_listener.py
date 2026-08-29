@@ -203,13 +203,13 @@ class _CapturedListenerAcceptor:
     def close(self) -> None:
         if self._closed:
             return
-        witness = self._binding_witness
-        binding_drift = False
         try:
             self._validate_bindings()
         except RuntimeError:
-            binding_drift = True
-        close = witness[3] if type(witness) is tuple and len(witness) == 6 else None
+            self._closed = True
+            self._release()
+            raise RuntimeError("M53 captured acceptor cleanup binding is uncertain") from None
+        close = self._close
         self._closed = True
         self._release()
         if not callable(close):
@@ -218,8 +218,6 @@ class _CapturedListenerAcceptor:
             close()
         except Exception:
             raise RuntimeError("M53 captured listener cleanup failed") from None
-        if binding_drift:
-            raise RuntimeError("M53 captured acceptor binding drift")
 
 
 class BoundedInboundTcpListenerConstruction:

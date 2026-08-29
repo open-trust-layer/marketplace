@@ -68,6 +68,14 @@ or claims cleanup succeeded when it cannot verify the call completed. Factory,
 bind, listen, getter, and close exception bodies are redacted from stable error
 messages.
 
+The M52 handoff uses a private captured-acceptor wrapper whose accept/close
+authority and method graph are identity-witnessed. If that wrapper's own
+integrity witness or captured fields drift, M53 does not invoke any cleanup
+callable from the uncertain wrapper state. M52 therefore reports cleanup
+uncertainty rather than risking execution of a forged or unverified close
+operation. This can conservatively leave listener cleanup unverified, but it
+never substitutes cleanup authority merely to claim closure.
+
 No successful M53 result exposes a listener handle directly. The returned
 object is the exact M52 single-accept boundary.
 

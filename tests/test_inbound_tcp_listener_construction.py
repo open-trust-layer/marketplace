@@ -514,10 +514,10 @@ class InboundTcpListenerCapturedAcceptorHardeningTests(unittest.TestCase):
             accept_boundary.accept_once()
         self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
         self.assertEqual(hostile_calls, [])
-        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(listener.close_calls, 0)
         self.assertEqual(connection.close_calls, 0)
 
-    def test_private_captured_close_rebinding_uses_original_close_and_fails_closed(self):
+    def test_private_captured_close_rebinding_fails_without_cleanup_substitution(self):
         connection, listener, accept_boundary = self._constructed()
         hostile_calls = []
         wrapper = accept_boundary._acceptor
@@ -526,5 +526,35 @@ class InboundTcpListenerCapturedAcceptorHardeningTests(unittest.TestCase):
             accept_boundary.accept_once()
         self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
         self.assertEqual(hostile_calls, [])
-        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(listener.close_calls, 0)
         self.assertEqual(connection.close_calls, 0)
+
+
+class InboundTcpListenerCapturedWitnessHardeningTests(unittest.TestCase):
+    def test_private_binding_witness_replacement_never_substitutes_cleanup_authority(self):
+        connection = _AcceptedConnection()
+        listener = _LateAcceptMutationListener(connection, [])
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+        accept_boundary = boundary.construct_once()
+        wrapper = accept_boundary._acceptor
+        hostile_calls = []
+        wrapper._binding_witness = (
+            "m53-captured-listener-acceptor-v1",
+            wrapper._listener,
+            wrapper._accept,
+            lambda: hostile_calls.append("forged-close"),
+            wrapper._accept_function,
+            wrapper._close_function,
+        )
+
+        with self.assertRaises(Exception) as caught:
+            accept_boundary.close()
+
+        self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 0)
