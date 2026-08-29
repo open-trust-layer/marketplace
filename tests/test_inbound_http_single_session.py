@@ -79,9 +79,12 @@ class _PreparerFactory:
         self.harness = None
         self.session = None
         self.raw = None
+        self.io = None
+        self.preparer = None
 
     def __call__(self, reader):
         self.calls += 1
+        self.io = getattr(reader, "__self__", None)
         if self.exception is not None:
             raise self.exception
         if self.return_value is not None:
@@ -92,7 +95,8 @@ class _PreparerFactory:
         self.harness = harness
         self.session = session
         self.raw = raw
-        return BoundedInboundHttpResponsePreparer(read_driver=driver)
+        self.preparer = BoundedInboundHttpResponsePreparer(read_driver=driver)
+        return self.preparer
 
 
 def _build_orchestrator():
@@ -541,5 +545,94 @@ class InboundHttpSingleSessionM43GraphTests(unittest.TestCase):
         finally:
             BoundedInboundHttpResponsePreparer._validate_bindings = original
 
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+
+
+class InboundHttpSingleSessionObjectBindingTests(unittest.TestCase):
+    def test_factory_cannot_poison_exact_io_validator_before_handoff(self):
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("poisoned M51 I/O validator MUST NOT run")
+
+        class PoisonFactory(_PreparerFactory):
+            def __call__(self, reader):
+                preparer = super().__call__(reader)
+                self.io._validate_function = hostile
+                return preparer
+
+        connection = _Connection()
+        listener = _Listener(connection)
+        factory = PoisonFactory(connection)
+        orchestrator = BoundedInboundHttpSingleSessionOrchestrator(
+            constructor=_Constructor(listener),
+            response_preparer_factory=factory,
+            clock=lambda: 0.0,
+            port=PORT,
+        )
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError):
+            orchestrator.run_once()
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+
+    def test_factory_cannot_poison_exact_m43_validator_before_handoff(self):
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("poisoned M43 validator MUST NOT run")
+
+        class PoisonFactory(_PreparerFactory):
+            def __call__(self, reader):
+                preparer = super().__call__(reader)
+                preparer._validate_function = hostile
+                return preparer
+
+        connection = _Connection()
+        listener = _Listener(connection)
+        factory = PoisonFactory(connection)
+        orchestrator = BoundedInboundHttpSingleSessionOrchestrator(
+            constructor=_Constructor(listener),
+            response_preparer_factory=factory,
+            clock=lambda: 0.0,
+            port=PORT,
+        )
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError):
+            orchestrator.run_once()
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+
+    def test_recv_cannot_poison_retained_io_validator(self):
+        orchestrator, _, _, connection, factory = _build_orchestrator()
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("mid-read poisoned M51 I/O validator MUST NOT run")
+
+        def mutate(_current):
+            factory.io._validate_function = hostile
+
+        connection.mutate_on_recv = mutate
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError):
+            orchestrator.run_once()
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+    def test_recv_cannot_poison_retained_m43_validator(self):
+        orchestrator, _, _, connection, factory = _build_orchestrator()
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("mid-read poisoned M43 validator MUST NOT run")
+
+        def mutate(_current):
+            factory.preparer._validate_function = hostile
+
+        connection.mutate_on_recv = mutate
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError):
+            orchestrator.run_once()
         self.assertEqual(hostile_calls, [])
         self.assertEqual(connection.close_calls, 1)
