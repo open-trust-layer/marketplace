@@ -137,6 +137,8 @@ class BoundedInboundTcpListenerConstruction:
 
     __slots__ = (
         "_factory",
+        "_factory_type",
+        "_factory_call",
         "_host",
         "_port",
         "_backlog",
@@ -159,6 +161,13 @@ class BoundedInboundTcpListenerConstruction:
     ) -> None:
         if not callable(factory):
             _fail("LISTENER_FACTORY_INVALID", "M53 listener factory MUST be callable")
+        factory_type = type(factory)
+        try:
+            factory_call = getattr(factory_type, "__call__", None)
+        except Exception:
+            _fail("LISTENER_FACTORY_BINDING_UNVERIFIABLE", "M53 factory call binding could not be inspected")
+        if not callable(factory_call):
+            _fail("LISTENER_FACTORY_INVALID", "M53 listener factory call binding is invalid")
         if type(host) is not str or host != _LOOPBACK_HOST:
             _fail("LISTENER_HOST_FORBIDDEN", "M53 host MUST be exact IPv4 loopback")
         if type(port) is not int or not (_MIN_PORT <= port <= _MAX_PORT):
@@ -166,6 +175,8 @@ class BoundedInboundTcpListenerConstruction:
         if type(backlog) is not int or backlog != _EXACT_BACKLOG:
             _fail("LISTENER_BACKLOG_INVALID", "M53 backlog MUST be exactly one")
         self._factory = factory
+        self._factory_type = factory_type
+        self._factory_call = factory_call
         self._host = host
         self._port = port
         self._backlog = backlog
@@ -194,6 +205,8 @@ class BoundedInboundTcpListenerConstruction:
         return (
             "inbound-tcp-listener-construction-v1",
             self._factory,
+            self._factory_type,
+            self._factory_call,
             self._host,
             self._port,
             self._backlog,
@@ -206,17 +219,27 @@ class BoundedInboundTcpListenerConstruction:
         witness = self._binding_witness
         if (
             type(witness) is not tuple
-            or len(witness) != 8
+            or len(witness) != 10
             or witness[0] != "inbound-tcp-listener-construction-v1"
             or witness[1] is not self._factory
-            or witness[2] is not self._host
-            or witness[3] is not self._port
-            or witness[4] is not self._backlog
-            or witness[5] is not self._m52_class
-            or witness[6] is not self._construct_once_function
-            or witness[7] is not self._close_function
+            or witness[2] is not self._factory_type
+            or witness[3] is not self._factory_call
+            or witness[4] is not self._host
+            or witness[5] is not self._port
+            or witness[6] is not self._backlog
+            or witness[7] is not self._m52_class
+            or witness[8] is not self._construct_once_function
+            or witness[9] is not self._close_function
         ):
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction binding witness changed")
+        if type(self._factory) is not self._factory_type:
+            _fail("LISTENER_FACTORY_BINDING_DRIFT", "M53 factory type binding changed")
+        try:
+            current_factory_call = getattr(self._factory_type, "__call__", None)
+        except Exception:
+            _fail("LISTENER_FACTORY_BINDING_UNVERIFIABLE", "M53 factory call binding could not be verified")
+        if current_factory_call is not self._factory_call:
+            _fail("LISTENER_FACTORY_BINDING_DRIFT", "M53 factory call binding changed")
         if type(self) is not BoundedInboundTcpListenerConstruction:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction boundary changed type")
         if (
@@ -231,6 +254,8 @@ class BoundedInboundTcpListenerConstruction:
 
     def _release(self) -> None:
         self._factory = None
+        self._factory_type = None
+        self._factory_call = None
         self._host = None
         self._port = None
         self._backlog = None
@@ -258,7 +283,7 @@ class BoundedInboundTcpListenerConstruction:
         self._validate_bindings()
 
         try:
-            listener = self._factory()
+            listener = self._factory_call(self._factory)
         except Exception:
             self._release()
             _fail("LISTENER_FACTORY_FAILED", "M53 listener factory failed")
