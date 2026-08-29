@@ -71,6 +71,7 @@ class BoundedInboundHttpSingleAccept:
         "_accept",
         "_acceptor_close",
         "_io_class",
+        "_io_construction_graph",
         "_accept_once_function",
         "_close_function",
         "_binding_witness",
@@ -91,6 +92,16 @@ class BoundedInboundHttpSingleAccept:
         self._accept = accept
         self._acceptor_close = close
         self._io_class = BoundedInboundHttpSingleConnectionIO
+        self._io_construction_graph = (
+            "m51-io-construction-graph-v1",
+            BoundedInboundHttpSingleConnectionIO.__new__,
+            BoundedInboundHttpSingleConnectionIO.__init__,
+            BoundedInboundHttpSingleConnectionIO._validate_bindings,
+            BoundedInboundHttpSingleConnectionIO._ensure_open,
+            BoundedInboundHttpSingleConnectionIO._read_once,
+            BoundedInboundHttpSingleConnectionIO._write_once,
+            BoundedInboundHttpSingleConnectionIO._close_once,
+        )
         self._accept_once_function = BoundedInboundHttpSingleAccept.accept_once
         self._close_function = BoundedInboundHttpSingleAccept.close
         self._binding_witness = self._binding_snapshot()
@@ -114,6 +125,7 @@ class BoundedInboundHttpSingleAccept:
             self._accept,
             self._acceptor_close,
             self._io_class,
+            self._io_construction_graph,
             self._accept_once_function,
             self._close_function,
         )
@@ -122,15 +134,16 @@ class BoundedInboundHttpSingleAccept:
         witness = self._binding_witness
         if (
             type(witness) is not tuple
-            or len(witness) != 7
+            or len(witness) != 8
             or type(witness[0]) is not str
             or witness[0] != "inbound-http-single-accept-binding-v1"
             or witness[1] is not self._acceptor
             or witness[2] is not self._accept
             or witness[3] is not self._acceptor_close
             or witness[4] is not self._io_class
-            or witness[5] is not self._accept_once_function
-            or witness[6] is not self._close_function
+            or witness[5] is not self._io_construction_graph
+            or witness[6] is not self._accept_once_function
+            or witness[7] is not self._close_function
         ):
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 accept boundary binding witness changed")
         if type(self) is not BoundedInboundHttpSingleAccept:
@@ -142,6 +155,20 @@ class BoundedInboundHttpSingleAccept:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 boundary method graph changed")
         if BoundedInboundHttpSingleConnectionIO is not self._io_class:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 M51 I/O class binding changed")
+        graph = self._io_construction_graph
+        if (
+            type(graph) is not tuple
+            or len(graph) != 8
+            or graph[0] != "m51-io-construction-graph-v1"
+            or graph[1] is not BoundedInboundHttpSingleConnectionIO.__new__
+            or graph[2] is not BoundedInboundHttpSingleConnectionIO.__init__
+            or graph[3] is not BoundedInboundHttpSingleConnectionIO._validate_bindings
+            or graph[4] is not BoundedInboundHttpSingleConnectionIO._ensure_open
+            or graph[5] is not BoundedInboundHttpSingleConnectionIO._read_once
+            or graph[6] is not BoundedInboundHttpSingleConnectionIO._write_once
+            or graph[7] is not BoundedInboundHttpSingleConnectionIO._close_once
+        ):
+            _fail("ACCEPTOR_BINDING_DRIFT", "M52 M51 I/O construction graph changed")
         if self._acceptor is None:
             _fail("ACCEPTOR_BINDING_DRIFT", "M52 acceptor reference is unavailable")
         for name, captured in (
@@ -173,7 +200,7 @@ class BoundedInboundHttpSingleAccept:
             return
         self._close_attempted = True
         witness = self._binding_witness
-        close = witness[3] if type(witness) is tuple and len(witness) == 7 else None
+        close = witness[3] if type(witness) is tuple and len(witness) == 8 else None
         if not callable(close):
             self._release_acceptor()
             _fail(
@@ -216,7 +243,7 @@ class BoundedInboundHttpSingleAccept:
             _fail("ACCEPT_FAILED", "M52 acceptor did not return a connection")
 
         witness = self._binding_witness
-        if type(witness) is tuple and len(witness) == 7 and connection is witness[1]:
+        if type(witness) is tuple and len(witness) == 8 and connection is witness[1]:
             self._cleanup_after_terminal_error()
             _fail(
                 "ACCEPTED_CONNECTION_ALIASES_ACCEPTOR",

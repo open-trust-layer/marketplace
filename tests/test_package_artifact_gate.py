@@ -39,6 +39,7 @@ REQUIRED = {
     "marketplace/runtime/continuation.py": b"# cursor-bound federation continuation planning\n",
     "marketplace/runtime/inbound_http_accept.py": b"# bounded inbound single-accept capability\n",
     "marketplace/runtime/inbound_http_connection.py": b"# bounded inbound single-connection transport\n",
+    "marketplace/runtime/inbound_http_single_session.py": b"# bounded inbound single-session orchestrator\n",
     "marketplace/runtime/inbound_tcp_listener.py": b"# bounded inbound listener construction\n",
     "marketplace/runtime/inbound_tcp_socket_factory.py": b"# bounded Python TCP socket factory\n",
     "marketplace/reference/__init__.py": b"",
@@ -157,6 +158,9 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_missing_inbound_connection_runtime_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/runtime/inbound_http_connection.py")
+
+    def test_missing_inbound_single_session_runtime_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/runtime/inbound_http_single_session.py")
 
     def test_missing_inbound_tcp_listener_runtime_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/runtime/inbound_tcp_listener.py")

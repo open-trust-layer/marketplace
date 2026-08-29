@@ -120,6 +120,8 @@ class BoundedInboundHttpSingleConnectionIO:
         "_recv",
         "_send",
         "_connection_close",
+        "_validate_function",
+        "_ensure_open_function",
         "_read_function",
         "_write_function",
         "_close_function",
@@ -145,6 +147,8 @@ class BoundedInboundHttpSingleConnectionIO:
         self._recv = recv
         self._send = send
         self._connection_close = close
+        self._validate_function = BoundedInboundHttpSingleConnectionIO._validate_bindings
+        self._ensure_open_function = BoundedInboundHttpSingleConnectionIO._ensure_open
         self._read_function = BoundedInboundHttpSingleConnectionIO._read_once
         self._write_function = BoundedInboundHttpSingleConnectionIO._write_once
         self._close_function = BoundedInboundHttpSingleConnectionIO._close_once
@@ -163,7 +167,7 @@ class BoundedInboundHttpSingleConnectionIO:
         self._write_bytes = 0
         self._close_attempted = False
         self._closed = False
-        self._validate_bindings()
+        self._validate_function(self)
 
     @property
     def reader(self) -> Callable[[int], InboundHttpReadOutcome]:
@@ -181,7 +185,9 @@ class BoundedInboundHttpSingleConnectionIO:
         if type(self) is not BoundedInboundHttpSingleConnectionIO:
             _fail("CONNECTION_IO_BINDING_DRIFT", "M51 connection I/O adapter changed type")
         if (
-            BoundedInboundHttpSingleConnectionIO._read_once is not self._read_function
+            BoundedInboundHttpSingleConnectionIO._validate_bindings is not self._validate_function
+            or BoundedInboundHttpSingleConnectionIO._ensure_open is not self._ensure_open_function
+            or BoundedInboundHttpSingleConnectionIO._read_once is not self._read_function
             or BoundedInboundHttpSingleConnectionIO._write_once is not self._write_function
             or BoundedInboundHttpSingleConnectionIO._close_once is not self._close_function
         ):
@@ -199,12 +205,14 @@ class BoundedInboundHttpSingleConnectionIO:
                 )
 
     def _ensure_open(self) -> None:
-        self._validate_bindings()
+        self._validate_function(self)
         if self._close_attempted or self._closed:
             _fail("CONNECTION_CLOSED", "M51 connection I/O adapter is closed")
 
     def _read_once(self, max_bytes: int) -> InboundHttpReadOutcome:
-        self._ensure_open()
+        ensure_open = self._ensure_open_function
+        validate = self._validate_function
+        ensure_open(self)
         if type(max_bytes) is not int or max_bytes <= 0:
             _fail(
                 "CONNECTION_READ_BUDGET_INVALID",
@@ -214,9 +222,9 @@ class BoundedInboundHttpSingleConnectionIO:
         try:
             chunk = self._recv(max_bytes)
         except Exception:
-            self._validate_bindings()
+            validate(self)
             raise
-        self._validate_bindings()
+        validate(self)
         if type(chunk) is not bytes:
             _fail("CONNECTION_READ_RESULT_INVALID", "connection recv MUST return exact bytes")
         if len(chunk) > max_bytes:
@@ -230,7 +238,9 @@ class BoundedInboundHttpSingleConnectionIO:
         return InboundHttpReadOutcome.data(chunk)
 
     def _write_once(self, data: bytes) -> InboundHttpResponseWriteOutcome:
-        self._ensure_open()
+        ensure_open = self._ensure_open_function
+        validate = self._validate_function
+        ensure_open(self)
         if type(data) is not bytes or not data:
             _fail(
                 "CONNECTION_WRITE_INPUT_INVALID",
@@ -240,9 +250,9 @@ class BoundedInboundHttpSingleConnectionIO:
         try:
             accepted = self._send(data)
         except Exception:
-            self._validate_bindings()
+            validate(self)
             raise
-        self._validate_bindings()
+        validate(self)
         if type(accepted) is not int:
             _fail(
                 "CONNECTION_WRITE_RESULT_INVALID",
@@ -406,6 +416,13 @@ class BoundedInboundHttpSingleConnectionTransport:
         "_transaction_close",
         "_io_close",
         "_io_closed_getter",
+        "_binding_snapshot_function",
+        "_validate_function",
+        "_cleanup_connection_function",
+        "_wrap_transaction_failure_function",
+        "_completed_result_function",
+        "_run_function",
+        "_close_function",
         "_binding_witness",
         "_used",
     )
@@ -472,9 +489,16 @@ class BoundedInboundHttpSingleConnectionTransport:
         self._io_closed_getter = closed_function.__get__(
             connection_io, BoundedInboundHttpSingleConnectionIO
         )
-        self._binding_witness = self._binding_snapshot()
+        self._binding_snapshot_function = BoundedInboundHttpSingleConnectionTransport._binding_snapshot
+        self._validate_function = BoundedInboundHttpSingleConnectionTransport._validate_bindings
+        self._cleanup_connection_function = BoundedInboundHttpSingleConnectionTransport._cleanup_connection
+        self._wrap_transaction_failure_function = BoundedInboundHttpSingleConnectionTransport._wrap_transaction_failure
+        self._completed_result_function = BoundedInboundHttpSingleConnectionTransport._completed_result
+        self._run_function = BoundedInboundHttpSingleConnectionTransport.run
+        self._close_function = BoundedInboundHttpSingleConnectionTransport.close
+        self._binding_witness = self._binding_snapshot_function(self)
         self._used = False
-        self._validate_bindings()
+        self._validate_function(self)
 
     @property
     def used(self) -> bool:
@@ -492,14 +516,45 @@ class BoundedInboundHttpSingleConnectionTransport:
             self._transaction_close_function,
             self._io._reader,
             self._io._writer,
+            self._binding_snapshot_function,
+            self._validate_function,
+            self._cleanup_connection_function,
+            self._wrap_transaction_failure_function,
+            self._completed_result_function,
+            self._run_function,
+            self._close_function,
         )
 
     def _validate_bindings(self) -> None:
-        if self._binding_witness != self._binding_snapshot():
+        witness = self._binding_witness
+        current = self._binding_snapshot_function(self)
+        if (
+            type(witness) is not tuple
+            or len(witness) != 17
+            or witness[0] != "inbound-http-single-connection-transport-binding-v1"
+            or any(witness[index] is not current[index] for index in range(1, 17))
+        ):
             _fail(
                 "CONNECTION_TRANSPORT_BINDING_DRIFT",
                 "M51 transport binding witness changed",
             )
+        if type(self) is not BoundedInboundHttpSingleConnectionTransport:
+            _fail("CONNECTION_TRANSPORT_BINDING_DRIFT", "M51 transport changed type")
+        if (
+            BoundedInboundHttpSingleConnectionTransport._binding_snapshot
+            is not self._binding_snapshot_function
+            or BoundedInboundHttpSingleConnectionTransport._validate_bindings
+            is not self._validate_function
+            or BoundedInboundHttpSingleConnectionTransport._cleanup_connection
+            is not self._cleanup_connection_function
+            or BoundedInboundHttpSingleConnectionTransport._wrap_transaction_failure
+            is not self._wrap_transaction_failure_function
+            or BoundedInboundHttpSingleConnectionTransport._completed_result
+            is not self._completed_result_function
+            or BoundedInboundHttpSingleConnectionTransport.run is not self._run_function
+            or BoundedInboundHttpSingleConnectionTransport.close is not self._close_function
+        ):
+            _fail("CONNECTION_TRANSPORT_BINDING_DRIFT", "M51 transport method graph changed")
         if type(self._transaction) is not BoundedInboundHttpRequestResponseTransaction:
             _fail("CONNECTION_TRANSPORT_BINDING_DRIFT", "M50 transaction changed type")
         if getattr(self._driver, "_invoker", None) is not self._invoker:
@@ -514,7 +569,7 @@ class BoundedInboundHttpSingleConnectionTransport:
                 "CONNECTION_TRANSPORT_BINDING_DRIFT",
                 "M50 writer no longer matches M51",
             )
-        self._io._validate_bindings()
+        self._io._validate_function(self._io)
 
     def _cleanup_connection(
         self,
@@ -615,27 +670,27 @@ class BoundedInboundHttpSingleConnectionTransport:
             _fail("CONNECTION_TRANSPORT_USED", "M51 transport is one-shot")
         self._used = True
         try:
-            self._validate_bindings()
+            self._validate_function(self)
         except InboundHttpSingleConnectionTransportError:
-            self._cleanup_connection()
+            self._cleanup_connection_function(self)
             raise
 
         try:
             transaction_result = self._transaction_run()
         except InboundHttpRequestResponseTransactionError as exc:
-            self._cleanup_connection(transaction_error=exc)
-            self._wrap_transaction_failure(exc)
+            self._cleanup_connection_function(self, transaction_error=exc)
+            self._wrap_transaction_failure_function(self, exc)
         except Exception:
-            self._cleanup_connection()
+            self._cleanup_connection_function(self)
             _fail("CONNECTION_TRANSACTION_FAILED", "M50 transaction failed unexpectedly")
 
         try:
-            self._validate_bindings()
+            self._validate_function(self)
         except InboundHttpSingleConnectionTransportError:
-            self._cleanup_connection()
+            self._cleanup_connection_function(self)
             raise
-        self._cleanup_connection()
-        return self._completed_result(transaction_result)
+        self._cleanup_connection_function(self)
+        return self._completed_result_function(self, transaction_result)
 
     def close(self) -> None:
         if not self._used:
@@ -645,10 +700,10 @@ class BoundedInboundHttpSingleConnectionTransport:
                 self._transaction_close()
             except Exception:
                 transaction_failed = True
-            self._cleanup_connection()
+            self._cleanup_connection_function(self)
             if transaction_failed:
                 _fail("CONNECTION_CLEANUP_UNCERTAIN", "M50 close could not be verified")
             return
-        if self._io.closed:
+        if self._io_closed_getter():
             return
-        self._cleanup_connection()
+        self._cleanup_connection_function(self)
