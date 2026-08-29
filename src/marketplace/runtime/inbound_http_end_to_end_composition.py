@@ -70,15 +70,6 @@ def _callable_binding_snapshot(value: object) -> tuple[object, ...]:
     return ("direct", value)
 
 
-def _callable_binding_matches(value: object, witness: tuple[object, ...]) -> bool:
-    if witness[0] == "bound":
-        return (
-            getattr(value, "__self__", None) is witness[1]
-            and getattr(value, "__func__", None) is witness[2]
-        )
-    return value is witness[1]
-
-
 class BoundedInboundHttpEndToEndSourceCompositionRoot:
     """Construct exactly one M32/M33 -> M34 -> M35 -> M57 -> M55 graph."""
 
@@ -128,6 +119,13 @@ class BoundedInboundHttpEndToEndSourceCompositionRoot:
             or not all(map(lambda route: type(route) is InboundFederationHttpRoute, control_routes))
         ):
             raise TypeError("control_routes MUST be a bounded exact tuple of M34 routes")
+        if not all(
+            map(
+                lambda route: type(route.path) is str and type(route.operation) is str,
+                control_routes,
+            )
+        ):
+            raise TypeError("control_routes MUST retain exact text route fields")
         if not callable(decode_transport_envelope_json) or not callable(
             encode_transport_envelope_json
         ):
@@ -210,7 +208,12 @@ class BoundedInboundHttpEndToEndSourceCompositionRoot:
                 "END_TO_END_COMPOSITION_BINDING_DRIFT",
                 "M59 class-snapshot authority changed",
             )
-        if type(graph) is not tuple or len(graph) != 15 or graph[0] != _GRAPH_MARKER:
+        if (
+            type(graph) is not tuple
+            or len(graph) != 15
+            or type(graph[0]) is not str
+            or graph[0] != _GRAPH_MARKER
+        ):
             _fail(
                 "END_TO_END_COMPOSITION_BINDING_DRIFT",
                 "M59 construction graph witness changed",
@@ -251,6 +254,7 @@ class BoundedInboundHttpEndToEndSourceCompositionRoot:
             type(self) is not BoundedInboundHttpEndToEndSourceCompositionRoot
             or type(witness) is not tuple
             or len(witness) != 20
+            or type(witness[0]) is not str
             or witness[0] != _BINDING_MARKER
             or witness[1] is not self._federation_responder
             or witness[2] is not self._record_responder
@@ -303,6 +307,16 @@ class BoundedInboundHttpEndToEndSourceCompositionRoot:
             _fail(
                 "END_TO_END_COMPOSITION_BINDING_DRIFT",
                 "M59 retained route collection changed",
+            )
+        if not all(
+            map(
+                lambda route: type(route.path) is str and type(route.operation) is str,
+                self._control_routes,
+            )
+        ):
+            _fail(
+                "END_TO_END_COMPOSITION_CONFIGURATION_DRIFT",
+                "M59 retained route field types changed",
             )
         current_routes = tuple(
             map(lambda route: (route.path, route.operation), self._control_routes)
