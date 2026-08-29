@@ -60,7 +60,7 @@ private state only after the corresponding exact class graph has been checked;
 it does not invoke the application handler.
 
 The factory keeps a private binding witness for these retained values, its clock,
-construction graph, cleanup authority, release authority, and call path. The
+construction graph, cleanup authority, and call path. The
 witness is checked by identity before trusted private helpers are invoked.
 Caller-defined equality is not used for capability or binding decisions.
 
