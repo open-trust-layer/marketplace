@@ -275,6 +275,44 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
 
+    def test_early_binding_drift_consumes_factory_and_releases_capabilities(self):
+        wire = _wire_adapter()
+        reader = _Reader()
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+
+        def hostile_limits(_self):
+            raise AssertionError("hostile M34 property MUST NOT execute")
+
+        with patch.object(
+            BoundedInboundHttpApplicationAdapter,
+            "limits",
+            property(hostile_limits),
+        ):
+            with self.assertRaises(
+                InboundHttpResponsePreparerCompositionError
+            ) as caught:
+                factory(reader)
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
+        self.assertTrue(getattr(factory, "_used"))
+        for name in (
+            "_wire_adapter",
+            "_application_adapter",
+            "_wire_limits_object",
+            "_application_limits_object",
+            "_clock",
+            "_construction_graph",
+            "_binding_witness",
+        ):
+            self.assertIsNone(getattr(factory, name))
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as second:
+            factory(reader)
+        self.assertEqual(second.exception.code, "PREPARER_FACTORY_EXHAUSTED")
+        self.assertEqual(reader.calls, [])
+
     def test_private_binding_witness_poisoning_fails_closed(self):
         reader = _Reader()
         factory = BoundedInboundHttpResponsePreparerCompositionFactory(
