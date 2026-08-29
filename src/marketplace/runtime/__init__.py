@@ -174,6 +174,10 @@ from .inbound_http_response_preparer_factory import (
     BoundedInboundHttpResponsePreparerCompositionFactory,
     InboundHttpResponsePreparerCompositionError,
 )
+from .inbound_http_single_session_composition import (
+    BoundedInboundHttpSingleSessionCompositionRoot,
+    InboundHttpSingleSessionCompositionError,
+)
 from .inbound_http_response_write_driver import (
     DEFAULT_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_TIMEOUT_SECONDS,
     DEFAULT_MAX_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_STEPS,
@@ -352,6 +356,7 @@ __all__ = [
     "BoundedInboundHttpWireAdapter",
     "BoundedInboundTcpListenerConstruction",
     "BoundedInboundHttpSingleSessionOrchestrator",
+    "BoundedInboundHttpSingleSessionCompositionRoot",
     "BoundedPythonTcpSocketFactory",
     "BoundedInboundRecordResponder",
     "BoundedRecordSource",
@@ -444,6 +449,7 @@ __all__ = [
     "InboundHttpSingleConnectionTransportError",
     "InboundHttpResponsePreparerFactory",
     "InboundHttpSingleSessionOrchestratorError",
+    "InboundHttpSingleSessionCompositionError",
     "InboundTcpListenerCapability",
     "InboundTcpListenerConstructionError",
     "InboundTcpListenerFactory",

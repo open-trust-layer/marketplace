@@ -48,6 +48,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/inbound_http_connection.py",
     "marketplace/runtime/inbound_http_single_session.py",
     "marketplace/runtime/inbound_http_response_preparer_factory.py",
+    "marketplace/runtime/inbound_http_single_session_composition.py",
     "marketplace/runtime/inbound_tcp_listener.py",
     "marketplace/runtime/inbound_tcp_socket_factory.py",
     "marketplace/reference/__init__.py",
