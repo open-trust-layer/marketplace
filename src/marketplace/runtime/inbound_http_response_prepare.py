@@ -661,8 +661,24 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M35 response validator function changed",
             )
+        snapshot = self._binding_snapshot_function
+        require_bound = self._require_bound_function
+        if (
+            snapshot is not BoundedInboundHttpResponsePreparer._binding_snapshot
+            or require_bound is not BoundedInboundHttpResponsePreparer._require_bound
+            or self._validate_function
+            is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or self._terminal_cleanup_function
+            is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or self._independent_response_replay_function
+            is not BoundedInboundHttpResponsePreparer._independent_response_replay
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M43 helper method graph changed",
+            )
         witness = self._binding_witness
-        current = self._binding_snapshot_function(self)
+        current = snapshot(self)
         if (
             type(witness) is not tuple
             or len(witness) != 25
@@ -673,45 +689,29 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M43 construction witness changed",
             )
-        if (
-            BoundedInboundHttpResponsePreparer._binding_snapshot
-            is not self._binding_snapshot_function
-            or BoundedInboundHttpResponsePreparer._require_bound
-            is not self._require_bound_function
-            or BoundedInboundHttpResponsePreparer._validate_bindings
-            is not self._validate_function
-            or BoundedInboundHttpResponsePreparer._terminal_cleanup
-            is not self._terminal_cleanup_function
-            or BoundedInboundHttpResponsePreparer._independent_response_replay
-            is not self._independent_response_replay_function
-        ):
-            _fail(
-                "RESPONSE_PREPARATION_BINDING_DRIFT",
-                "M43 helper method graph changed",
-            )
-        self._require_bound_function(
+        require_bound(
             self, self._run, self._run_function, self._driver, "M42 run"
         )
-        self._require_bound_function(
+        require_bound(
             self, self._close, self._close_function, self._driver, "M42 close"
         )
-        self._require_bound_function(
+        require_bound(
             self,
             self._session_close,
             self._session_close_function,
             self._session,
             "M39 cleanup",
         )
-        self._require_bound_function(
+        require_bound(
             self, self._plan, self._plan_function, self._planner, "M37 plan"
         )
-        self._require_bound_function(
+        require_bound(
             self, self._parse, self._parse_function, self._wire, "M35 parser"
         )
-        self._require_bound_function(
+        require_bound(
             self, self._prepare, self._prepare_function, self._wire, "M35 prepare"
         )
-        self._require_bound_function(
+        require_bound(
             self,
             self._response_validate,
             self._response_validate_function,
@@ -756,9 +756,14 @@ class BoundedInboundHttpResponsePreparer:
         *,
         request: InboundHttpRequest,
     ) -> None:
+        validate = self._validate_function
         witness = self._binding_witness
-        validate = witness[22] if type(witness) is tuple and len(witness) == 25 else None
-        if not callable(validate):
+        if (
+            validate is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[22] is not validate
+        ):
             _fail(
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M43 trusted validator binding is unavailable",
@@ -825,16 +830,21 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARER_USED",
                 "M43 response preparer is one-shot",
             )
+        validate = self._validate_function
+        terminal_cleanup = self._terminal_cleanup_function
+        independent_replay = self._independent_response_replay_function
         witness = self._binding_witness
-        if type(witness) is not tuple or len(witness) != 25:
-            _fail(
-                "RESPONSE_PREPARATION_BINDING_DRIFT",
-                "M43 trusted helper witness is unavailable",
-            )
-        validate = witness[22]
-        terminal_cleanup = witness[23]
-        independent_replay = witness[24]
-        if not all(callable(value) for value in (validate, terminal_cleanup, independent_replay)):
+        if (
+            validate is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or terminal_cleanup is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or independent_replay
+            is not BoundedInboundHttpResponsePreparer._independent_response_replay
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[22] is not validate
+            or witness[23] is not terminal_cleanup
+            or witness[24] is not independent_replay
+        ):
             _fail(
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M43 trusted helper binding is unavailable",
@@ -1000,9 +1010,14 @@ class BoundedInboundHttpResponsePreparer:
         """Idempotently prevent use and clear the construction-bound M39 request state."""
         if not self._used:
             self._used = True
+        terminal_cleanup = self._terminal_cleanup_function
         witness = self._binding_witness
-        terminal_cleanup = witness[23] if type(witness) is tuple and len(witness) == 25 else None
-        if not callable(terminal_cleanup):
+        if (
+            terminal_cleanup is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[23] is not terminal_cleanup
+        ):
             _fail(
                 "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
                 "M43 trusted cleanup binding is unavailable",
