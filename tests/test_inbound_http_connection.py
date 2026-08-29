@@ -434,3 +434,70 @@ class InboundHttpConnectionClassGraphSecurityTests(unittest.TestCase):
 
         self.assertEqual(hostile_calls, [])
         self.assertEqual(connection.close_calls, 1)
+
+
+class InboundHttpConnectionPrivateHelperTests(unittest.TestCase):
+    def test_private_io_validator_poison_never_executes(self):
+        connection = _Connection()
+        io = BoundedInboundHttpSingleConnectionIO(connection=connection)
+        original = BoundedInboundHttpSingleConnectionIO._validate_bindings
+        hostile_calls = []
+
+        def hostile(current):
+            hostile_calls.append(True)
+            return original(current)
+
+        io._validate_function = hostile
+        with self.assertRaises(InboundHttpSingleConnectionTransportError) as caught:
+            io.reader(1)
+        self.assertEqual(caught.exception.code, "CONNECTION_IO_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
+    def test_private_io_ensure_open_poison_never_executes(self):
+        connection = _Connection()
+        io = BoundedInboundHttpSingleConnectionIO(connection=connection)
+        original = BoundedInboundHttpSingleConnectionIO._ensure_open
+        hostile_calls = []
+
+        def hostile(current):
+            hostile_calls.append(True)
+            return original(current)
+
+        io._ensure_open_function = hostile
+        with self.assertRaises(InboundHttpSingleConnectionTransportError) as caught:
+            io.reader(1)
+        self.assertEqual(caught.exception.code, "CONNECTION_IO_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
+    def test_private_transport_validator_poison_never_executes(self):
+        connection = _Connection()
+        _, _, _, _, transport, _ = _transport(connection)
+        original = BoundedInboundHttpSingleConnectionTransport._validate_bindings
+        hostile_calls = []
+
+        def hostile(current):
+            hostile_calls.append(True)
+            return original(current)
+
+        transport._validate_function = hostile
+        with self.assertRaises(InboundHttpSingleConnectionTransportError) as caught:
+            transport.run()
+        self.assertEqual(caught.exception.code, "CONNECTION_TRANSPORT_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+
+    def test_private_transport_cleanup_poison_never_executes(self):
+        connection = _Connection()
+        _, _, _, _, transport, _ = _transport(connection)
+        hostile_calls = []
+
+        def hostile(_current, **_kwargs):
+            hostile_calls.append(True)
+            raise AssertionError("poisoned M51 cleanup MUST NOT run")
+
+        transport._cleanup_connection_function = hostile
+        with self.assertRaises(InboundHttpSingleConnectionTransportError) as caught:
+            transport.run()
+        self.assertEqual(caught.exception.code, "CONNECTION_TRANSPORT_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
