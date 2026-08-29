@@ -428,6 +428,11 @@ class BoundedInboundHttpResponsePreparer:
         "_parse_function",
         "_prepare_function",
         "_response_validate_function",
+        "_binding_snapshot_function",
+        "_require_bound_function",
+        "_validate_function",
+        "_terminal_cleanup_function",
+        "_independent_response_replay_function",
         "_run",
         "_close",
         "_session_close",
@@ -479,6 +484,11 @@ class BoundedInboundHttpResponsePreparer:
         self._response_validate_function = (
             BoundedInboundHttpWireAdapter._validated_application_response
         )
+        self._binding_snapshot_function = BoundedInboundHttpResponsePreparer._binding_snapshot
+        self._require_bound_function = BoundedInboundHttpResponsePreparer._require_bound
+        self._validate_function = BoundedInboundHttpResponsePreparer._validate_bindings
+        self._terminal_cleanup_function = BoundedInboundHttpResponsePreparer._terminal_cleanup
+        self._independent_response_replay_function = BoundedInboundHttpResponsePreparer._independent_response_replay
         self._run = self._run_function.__get__(
             read_driver, BoundedInboundHttpReadDriver
         )
@@ -513,8 +523,8 @@ class BoundedInboundHttpResponsePreparer:
         if type(self._wire_authority) is not str or not self._wire_authority:
             raise ValueError("M35 authority MUST remain non-empty exact text")
         self._used = False
-        self._binding_witness = self._binding_snapshot()
-        self._validate_bindings()
+        self._binding_witness = self._binding_snapshot_function(self)
+        self._validate_function(self)
 
     def _binding_snapshot(self) -> tuple[Any, ...]:
         return (
@@ -538,6 +548,11 @@ class BoundedInboundHttpResponsePreparer:
             self._application_limits,
             self._wire_authority,
             self._application_handle_witness,
+            self._binding_snapshot_function,
+            self._require_bound_function,
+            self._validate_function,
+            self._terminal_cleanup_function,
+            self._independent_response_replay_function,
         )
 
     def _require_bound(
@@ -646,33 +661,58 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M35 response validator function changed",
             )
-        if self._binding_snapshot() != self._binding_witness:
+        snapshot = self._binding_snapshot_function
+        require_bound = self._require_bound_function
+        if (
+            snapshot is not BoundedInboundHttpResponsePreparer._binding_snapshot
+            or require_bound is not BoundedInboundHttpResponsePreparer._require_bound
+            or self._validate_function
+            is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or self._terminal_cleanup_function
+            is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or self._independent_response_replay_function
+            is not BoundedInboundHttpResponsePreparer._independent_response_replay
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M43 helper method graph changed",
+            )
+        witness = self._binding_witness
+        current = snapshot(self)
+        if (
+            type(witness) is not tuple
+            or len(witness) != 25
+            or witness[0] != _BINDING_MARKER
+            or any(witness[index] is not current[index] for index in range(1, 25))
+        ):
             _fail(
                 "RESPONSE_PREPARATION_BINDING_DRIFT",
                 "M43 construction witness changed",
             )
-        self._require_bound(
-            self._run, self._run_function, self._driver, "M42 run"
+        require_bound(
+            self, self._run, self._run_function, self._driver, "M42 run"
         )
-        self._require_bound(
-            self._close, self._close_function, self._driver, "M42 close"
+        require_bound(
+            self, self._close, self._close_function, self._driver, "M42 close"
         )
-        self._require_bound(
+        require_bound(
+            self,
             self._session_close,
             self._session_close_function,
             self._session,
             "M39 cleanup",
         )
-        self._require_bound(
-            self._plan, self._plan_function, self._planner, "M37 plan"
+        require_bound(
+            self, self._plan, self._plan_function, self._planner, "M37 plan"
         )
-        self._require_bound(
-            self._parse, self._parse_function, self._wire, "M35 parser"
+        require_bound(
+            self, self._parse, self._parse_function, self._wire, "M35 parser"
         )
-        self._require_bound(
-            self._prepare, self._prepare_function, self._wire, "M35 prepare"
+        require_bound(
+            self, self._prepare, self._prepare_function, self._wire, "M35 prepare"
         )
-        self._require_bound(
+        require_bound(
+            self,
             self._response_validate,
             self._response_validate_function,
             self._wire,
@@ -716,6 +756,18 @@ class BoundedInboundHttpResponsePreparer:
         *,
         request: InboundHttpRequest,
     ) -> None:
+        validate = self._validate_function
+        witness = self._binding_witness
+        if (
+            validate is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[22] is not validate
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M43 trusted validator binding is unavailable",
+            )
         body_bytes = value.response_body_bytes
         if (
             type(body_bytes) is not int
@@ -748,23 +800,23 @@ class BoundedInboundHttpResponsePreparer:
                 "M35 wire result cannot reconstruct one canonical M34 response",
             )
 
-        self._validate_bindings()
+        validate(self)
         try:
             replayed = self._response_validate(candidate, request=request)
         except InboundHttpWireError as exc:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_RESPONSE_REJECTED",
                 "captured M35 response validator rejected the prepared response",
                 wire_code=exc.code,
             )
         except Exception:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_RESPONSE_FAILED",
                 "captured M35 response validation failed unexpectedly",
             )
-        self._validate_bindings()
+        validate(self)
         if _response_snapshot(replayed) != _response_snapshot(candidate):
             _fail(
                 "RESPONSE_PREPARATION_RESPONSE_DRIFT",
@@ -778,11 +830,30 @@ class BoundedInboundHttpResponsePreparer:
                 "RESPONSE_PREPARER_USED",
                 "M43 response preparer is one-shot",
             )
+        validate = self._validate_function
+        terminal_cleanup = self._terminal_cleanup_function
+        independent_replay = self._independent_response_replay_function
+        witness = self._binding_witness
+        if (
+            validate is not BoundedInboundHttpResponsePreparer._validate_bindings
+            or terminal_cleanup is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or independent_replay
+            is not BoundedInboundHttpResponsePreparer._independent_response_replay
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[22] is not validate
+            or witness[23] is not terminal_cleanup
+            or witness[24] is not independent_replay
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_BINDING_DRIFT",
+                "M43 trusted helper binding is unavailable",
+            )
         try:
-            self._validate_bindings()
+            validate(self)
         except InboundHttpResponsePreparationError:
             self._used = True
-            self._terminal_cleanup()
+            terminal_cleanup(self)
             raise
         self._used = True
 
@@ -796,7 +867,7 @@ class BoundedInboundHttpResponsePreparer:
                 "M42 read completion failed unexpectedly",
             )
 
-        self._validate_bindings()
+        validate(self)
         _validate_m42_authority(completion)
         if completion.reads_completed != completion.completed.reads_completed:
             _fail(
@@ -819,16 +890,16 @@ class BoundedInboundHttpResponsePreparer:
                 "M39 completion prefix is not exact non-empty bytes",
             )
 
-        self._validate_bindings()
+        validate(self)
         try:
             replay_plan = self._plan(
                 prefix,
                 reads_completed=completed.reads_completed,
             )
         except InboundHttpReadPlanError as exc:
-            self._validate_bindings()
+            validate(self)
             _fail_from_plan(exc)
-        self._validate_bindings()
+        validate(self)
         if type(replay_plan) is not InboundHttpReadPlan:
             _fail(
                 "RESPONSE_PREPARATION_PLAN_DRIFT",
@@ -860,41 +931,41 @@ class BoundedInboundHttpResponsePreparer:
                 "M37 completed request accounting drifted",
             )
 
-        self._validate_bindings()
+        validate(self)
         try:
             parsed = self._parse(prefix)
         except InboundHttpWireError as exc:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_PARSE_REJECTED",
                 "M35 rejected the completed bytes during independent parse",
                 wire_code=exc.code,
             )
         except Exception:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_PARSE_FAILED",
                 "M35 independent parse failed unexpectedly",
             )
-        self._validate_bindings()
+        validate(self)
         parsed_snapshot = _request_snapshot(parsed)
 
         try:
             wire_result = self._prepare(prefix)
         except InboundHttpWireError as exc:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_WIRE_REJECTED",
                 "M35 rejected response preparation",
                 wire_code=exc.code,
             )
         except Exception:
-            self._validate_bindings()
+            validate(self)
             _fail(
                 "RESPONSE_PREPARATION_WIRE_FAILED",
                 "M35 response preparation failed unexpectedly",
             )
-        self._validate_bindings()
+        validate(self)
 
         _validate_wire_authority(wire_result)
         if _request_snapshot(wire_result.request) != parsed_snapshot:
@@ -920,7 +991,7 @@ class BoundedInboundHttpResponsePreparer:
                 "M35 replay changed the prepared request",
             )
 
-        self._independent_response_replay(
+        independent_replay(self,
             witnessed_wire,
             request=parsed,
         )
@@ -939,4 +1010,16 @@ class BoundedInboundHttpResponsePreparer:
         """Idempotently prevent use and clear the construction-bound M39 request state."""
         if not self._used:
             self._used = True
-        self._terminal_cleanup()
+        terminal_cleanup = self._terminal_cleanup_function
+        witness = self._binding_witness
+        if (
+            terminal_cleanup is not BoundedInboundHttpResponsePreparer._terminal_cleanup
+            or type(witness) is not tuple
+            or len(witness) != 25
+            or witness[23] is not terminal_cleanup
+        ):
+            _fail(
+                "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN",
+                "M43 trusted cleanup binding is unavailable",
+            )
+        terminal_cleanup(self)

@@ -558,3 +558,67 @@ class InboundTcpListenerCapturedWitnessHardeningTests(unittest.TestCase):
         self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
         self.assertEqual(hostile_calls, [])
         self.assertEqual(listener.close_calls, 0)
+
+
+class InboundTcpListenerDownstreamConstructionBindingTests(unittest.TestCase):
+    def test_m52_init_mutation_during_bind_fails_before_substituted_constructor(self):
+        listener = _ConfigurableListener()
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+        original = BoundedInboundHttpSingleAccept.__init__
+        hostile_calls = []
+
+        def hostile(_self, **_kwargs):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M52 constructor MUST NOT run")
+
+        listener.mutate_on_bind = lambda _listener: setattr(
+            BoundedInboundHttpSingleAccept,
+            "__init__",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundTcpListenerConstructionError) as caught:
+                boundary.construct_once()
+        finally:
+            BoundedInboundHttpSingleAccept.__init__ = original
+
+        self.assertEqual(caught.exception.code, "LISTENER_CONSTRUCTION_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.listen_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+
+    def test_m52_validation_helper_mutation_during_bind_fails_before_constructor(self):
+        listener = _ConfigurableListener()
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+        original = BoundedInboundHttpSingleAccept._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M52 validation MUST NOT run")
+
+        listener.mutate_on_bind = lambda _listener: setattr(
+            BoundedInboundHttpSingleAccept,
+            "_validate_bindings",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundTcpListenerConstructionError) as caught:
+                boundary.construct_once()
+        finally:
+            BoundedInboundHttpSingleAccept._validate_bindings = original
+
+        self.assertEqual(caught.exception.code, "LISTENER_CONSTRUCTION_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.listen_calls, [])
+        self.assertEqual(listener.close_calls, 1)

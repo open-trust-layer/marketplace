@@ -406,3 +406,52 @@ class InboundHttpResponsePreparationSourceTests(unittest.TestCase):
         self.assertNotIn(".write(", prepare_source)
         self.assertNotIn(".recv(", prepare_source)
         self.assertNotIn(".read(", prepare_source)
+
+
+class InboundHttpResponsePreparationPrivateWitnessTests(unittest.TestCase):
+    def _preparer(self):
+        holder = {}
+
+        def reader(_max_bytes):
+            return InboundHttpReadOutcome.data(holder["raw"])
+
+        _, _, _, session, driver, raw = _build(reader)
+        holder["raw"] = raw
+        return BoundedInboundHttpResponsePreparer(read_driver=driver), session
+
+    def test_private_binding_witness_validator_replacement_never_executes(self):
+        preparer, _ = self._preparer()
+        original_validate = BoundedInboundHttpResponsePreparer._validate_bindings
+        hostile_calls = []
+
+        def hostile(current):
+            hostile_calls.append(True)
+            return original_validate(current)
+
+        witness = list(preparer._binding_witness)
+        witness[22] = hostile
+        preparer._binding_witness = tuple(witness)
+
+        with self.assertRaises(InboundHttpResponsePreparationError) as caught:
+            preparer.prepare()
+        self.assertEqual(caught.exception.code, "RESPONSE_PREPARATION_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
+    def test_private_binding_witness_cleanup_replacement_never_executes(self):
+        preparer, session = self._preparer()
+        original_cleanup = BoundedInboundHttpResponsePreparer._terminal_cleanup
+        hostile_calls = []
+
+        def hostile(current):
+            hostile_calls.append(True)
+            return original_cleanup(current)
+
+        witness = list(preparer._binding_witness)
+        witness[23] = hostile
+        preparer._binding_witness = tuple(witness)
+
+        with self.assertRaises(InboundHttpResponsePreparationError) as caught:
+            preparer.close()
+        self.assertEqual(caught.exception.code, "RESPONSE_PREPARATION_CLEANUP_UNCERTAIN")
+        self.assertEqual(hostile_calls, [])
+        self.assertFalse(session.closed)

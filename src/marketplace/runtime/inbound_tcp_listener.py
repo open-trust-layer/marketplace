@@ -231,6 +231,7 @@ class BoundedInboundTcpListenerConstruction:
         "_port",
         "_backlog",
         "_m52_class",
+        "_m52_construction_graph",
         "_acceptor_wrapper_class",
         "_construct_once_function",
         "_close_function",
@@ -270,6 +271,15 @@ class BoundedInboundTcpListenerConstruction:
         self._port = port
         self._backlog = backlog
         self._m52_class = BoundedInboundHttpSingleAccept
+        self._m52_construction_graph = (
+            "m52-construction-graph-v1",
+            BoundedInboundHttpSingleAccept.__new__,
+            BoundedInboundHttpSingleAccept.__init__,
+            BoundedInboundHttpSingleAccept._binding_snapshot,
+            BoundedInboundHttpSingleAccept._validate_bindings,
+            BoundedInboundHttpSingleAccept.accept_once,
+            BoundedInboundHttpSingleAccept.close,
+        )
         self._acceptor_wrapper_class = _CapturedListenerAcceptor
         self._construct_once_function = BoundedInboundTcpListenerConstruction.construct_once
         self._close_function = BoundedInboundTcpListenerConstruction.close
@@ -301,6 +311,7 @@ class BoundedInboundTcpListenerConstruction:
             self._port,
             self._backlog,
             self._m52_class,
+            self._m52_construction_graph,
             self._acceptor_wrapper_class,
             self._construct_once_function,
             self._close_function,
@@ -310,7 +321,7 @@ class BoundedInboundTcpListenerConstruction:
         witness = self._binding_witness
         if (
             type(witness) is not tuple
-            or len(witness) != 11
+            or len(witness) != 12
             or witness[0] != "inbound-tcp-listener-construction-v1"
             or witness[1] is not self._factory
             or witness[2] is not self._factory_type
@@ -319,9 +330,10 @@ class BoundedInboundTcpListenerConstruction:
             or witness[5] is not self._port
             or witness[6] is not self._backlog
             or witness[7] is not self._m52_class
-            or witness[8] is not self._acceptor_wrapper_class
-            or witness[9] is not self._construct_once_function
-            or witness[10] is not self._close_function
+            or witness[8] is not self._m52_construction_graph
+            or witness[9] is not self._acceptor_wrapper_class
+            or witness[10] is not self._construct_once_function
+            or witness[11] is not self._close_function
         ):
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction binding witness changed")
         if type(self._factory) is not self._factory_type:
@@ -341,6 +353,22 @@ class BoundedInboundTcpListenerConstruction:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction method graph changed")
         if BoundedInboundHttpSingleAccept is not self._m52_class:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 M52 class binding changed")
+        graph = self._m52_construction_graph
+        if (
+            type(graph) is not tuple
+            or len(graph) != 7
+            or graph[0] != "m52-construction-graph-v1"
+            or graph[1] is not BoundedInboundHttpSingleAccept.__new__
+            or graph[2] is not BoundedInboundHttpSingleAccept.__init__
+            or graph[3] is not BoundedInboundHttpSingleAccept._binding_snapshot
+            or graph[4] is not BoundedInboundHttpSingleAccept._validate_bindings
+            or graph[5] is not BoundedInboundHttpSingleAccept.accept_once
+            or graph[6] is not BoundedInboundHttpSingleAccept.close
+        ):
+            _fail(
+                "LISTENER_CONSTRUCTION_BINDING_DRIFT",
+                "M53 M52 construction graph changed",
+            )
         if _CapturedListenerAcceptor is not self._acceptor_wrapper_class:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 acceptor wrapper class binding changed")
         if self._factory is None:
