@@ -394,10 +394,143 @@ class BoundedInboundHttpApplicationAdapter:
         self._decode_json = decode_transport_envelope_json
         self._encode_json = encode_transport_envelope_json
         self._limits = detached_limits
+        self._federation_responder_witness = federation_responder
+        self._record_responder_witness = record_responder
+        self._routes_witness = by_path
+        self._routes_snapshot = tuple(by_path.items())
+        self._decode_json_witness = decode_transport_envelope_json
+        self._encode_json_witness = encode_transport_envelope_json
+        self._limits_witness = detached_limits
+        self._limits_snapshot = (
+            detached_limits.max_request_body_bytes,
+            detached_limits.max_response_body_bytes,
+            detached_limits.max_header_bytes,
+        )
+        self._federation_prepare_class_function = BoundedInboundFederationResponder.prepare_response
+        self._record_prepare_class_function = BoundedInboundRecordResponder.prepare
+        self._federation_prepare_callable = federation_responder.prepare_response
+        self._record_prepare_callable = record_responder.prepare
+        self._header_map_function = _header_map
+        self._wire_snapshot_function = _wire_value_snapshot
+        self._detach_host_value_function = detach_host_value
+        self._host_snapshot_function = host_value_integrity_snapshot
+        self._record_identity_function = canonical_record_identity_transport_text
+        self._fail_function = _fail
+        self._validate_common_headers_function = BoundedInboundHttpApplicationAdapter._validate_common_headers
+        self._decode_control_request_function = BoundedInboundHttpApplicationAdapter._decode_control_request
+        self._validate_get_request_function = BoundedInboundHttpApplicationAdapter._validate_get_request
+        self._validate_federation_result_function = BoundedInboundHttpApplicationAdapter._validate_federation_result
+        self._validate_record_result_function = BoundedInboundHttpApplicationAdapter._validate_record_result
+        self._serialize_response_function = BoundedInboundHttpApplicationAdapter._serialize_response
+        self._validate_bindings_function = BoundedInboundHttpApplicationAdapter._validate_bindings
+        self._handle_function = BoundedInboundHttpApplicationAdapter.handle
+        self._validate_bindings_function(self)
 
     @property
     def limits(self) -> InboundHttpApplicationLimits:
         return self._limits
+
+    def _validate_bindings(self) -> None:
+        if type(self) is not BoundedInboundHttpApplicationAdapter:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 application adapter changed type",
+            ) from None
+        if (
+            self._validate_bindings_function is not BoundedInboundHttpApplicationAdapter._validate_bindings
+            or self._validate_common_headers_function is not BoundedInboundHttpApplicationAdapter._validate_common_headers
+            or self._decode_control_request_function is not BoundedInboundHttpApplicationAdapter._decode_control_request
+            or self._validate_get_request_function is not BoundedInboundHttpApplicationAdapter._validate_get_request
+            or self._validate_federation_result_function is not BoundedInboundHttpApplicationAdapter._validate_federation_result
+            or self._validate_record_result_function is not BoundedInboundHttpApplicationAdapter._validate_record_result
+            or self._serialize_response_function is not BoundedInboundHttpApplicationAdapter._serialize_response
+            or self._handle_function is not BoundedInboundHttpApplicationAdapter.handle
+        ):
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 application helper graph changed",
+            ) from None
+        if (
+            self._federation_responder is not self._federation_responder_witness
+            or self._record_responder is not self._record_responder_witness
+            or self._decode_json is not self._decode_json_witness
+            or self._encode_json is not self._encode_json_witness
+        ):
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 retained responder or codec binding changed",
+            ) from None
+        if self._routes is not self._routes_witness:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 detached control-route binding changed",
+            ) from None
+        if tuple(self._routes.items()) != self._routes_snapshot:
+            raise InboundHttpError(
+                "APPLICATION_CONFIGURATION_DRIFT",
+                "M34 detached control-route configuration changed",
+            ) from None
+        if self._limits is not self._limits_witness:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 detached application limits binding changed",
+            ) from None
+        current_limits = (
+            self._limits.max_request_body_bytes,
+            self._limits.max_response_body_bytes,
+            self._limits.max_header_bytes,
+        )
+        if current_limits != self._limits_snapshot:
+            raise InboundHttpError(
+                "APPLICATION_CONFIGURATION_DRIFT",
+                "M34 detached application limits changed",
+            ) from None
+        if (
+            BoundedInboundFederationResponder.prepare_response is not self._federation_prepare_class_function
+            or BoundedInboundRecordResponder.prepare is not self._record_prepare_class_function
+            or _header_map is not self._header_map_function
+            or _wire_value_snapshot is not self._wire_snapshot_function
+            or detach_host_value is not self._detach_host_value_function
+            or host_value_integrity_snapshot is not self._host_snapshot_function
+            or canonical_record_identity_transport_text is not self._record_identity_function
+            or _fail is not self._fail_function
+        ):
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 reviewed dependency graph changed",
+            ) from None
+        current_federation = self._federation_responder.prepare_response
+        captured_federation = self._federation_prepare_callable
+        captured_federation_self = getattr(captured_federation, "__self__", None)
+        captured_federation_func = getattr(captured_federation, "__func__", None)
+        if captured_federation_self is self._federation_responder and captured_federation_func is not None:
+            federation_changed = (
+                getattr(current_federation, "__self__", None) is not self._federation_responder
+                or getattr(current_federation, "__func__", None) is not captured_federation_func
+            )
+        else:
+            federation_changed = current_federation is not captured_federation
+        if federation_changed:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 retained M32 callable binding changed",
+            ) from None
+        current_record = self._record_responder.prepare
+        captured_record = self._record_prepare_callable
+        captured_record_self = getattr(captured_record, "__self__", None)
+        captured_record_func = getattr(captured_record, "__func__", None)
+        if captured_record_self is self._record_responder and captured_record_func is not None:
+            record_changed = (
+                getattr(current_record, "__self__", None) is not self._record_responder
+                or getattr(current_record, "__func__", None) is not captured_record_func
+            )
+        else:
+            record_changed = current_record is not captured_record
+        if record_changed:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 retained M33 callable binding changed",
+            ) from None
 
     def _validate_common_headers(self, request: InboundHttpRequest) -> dict[str, str]:
         headers = _header_map(request.headers)
@@ -410,7 +543,11 @@ class BoundedInboundHttpApplicationAdapter:
         return headers
 
     def _decode_control_request(self, request: InboundHttpRequest) -> tuple[Any, ...]:
-        headers = self._validate_common_headers(request)
+        validate = self._validate_bindings_function
+        if validate is not BoundedInboundHttpApplicationAdapter._validate_bindings:
+            raise InboundHttpError('APPLICATION_BINDING_DRIFT', 'M34 decoder validator binding changed') from None
+        validate(self)
+        headers = self._validate_common_headers_function(self, request)
         if headers.get("content-type") != "application/json":
             _fail("CONTENT_TYPE_REQUIRED", "control POST requires exact application/json content type")
         declared = headers.get("content-length")
@@ -428,11 +565,14 @@ class BoundedInboundHttpApplicationAdapter:
         if declared != str(len(request.body)):
             _fail("CONTENT_LENGTH_MISMATCH", "declared content length does not equal the supplied body")
         try:
-            decoded = self._decode_json(request.body)
+            decoded = self._decode_json_witness(request.body)
         except Exception:
             _fail("CONTROL_BODY_REJECTED", "control request body is not a valid strict OLP JSON envelope")
+        if self._validate_bindings_function is not validate:
+            raise InboundHttpError('APPLICATION_BINDING_DRIFT', 'M34 decoder changed validator binding') from None
+        validate(self)
         try:
-            detached = detach_host_value(decoded)
+            detached = self._detach_host_value_function(decoded)
         except PreparedExchangeIntegrityError:
             _fail("CONTROL_ENVELOPE_UNSAFE", "decoded control envelope is outside the bounded immutable host profile")
         if type(detached) is not tuple or len(detached) != 4:
@@ -440,7 +580,7 @@ class BoundedInboundHttpApplicationAdapter:
         return detached
 
     def _validate_get_request(self, request: InboundHttpRequest) -> str:
-        headers = self._validate_common_headers(request)
+        headers = self._validate_common_headers_function(self, request)
         if request.body:
             _fail("RECORD_GET_BODY_FORBIDDEN", "immutable Record GET MUST NOT contain a request body")
         if "content-type" in headers or "content-length" in headers:
@@ -521,25 +661,38 @@ class BoundedInboundHttpApplicationAdapter:
         route_operation: str,
         envelope: tuple[Any, ...],
     ) -> PreparedInboundHttpResponse:
+        validate = self._validate_bindings_function
+        if validate is not BoundedInboundHttpApplicationAdapter._validate_bindings:
+            raise InboundHttpError('APPLICATION_BINDING_DRIFT', 'M34 serializer validator binding changed') from None
+        validate(self)
         try:
-            envelope_snapshot = host_value_integrity_snapshot(envelope)
-            wire_snapshot = _wire_value_snapshot(envelope)
+            envelope_snapshot = self._host_snapshot_function(envelope)
+            wire_snapshot = self._wire_snapshot_function(envelope)
         except (PreparedExchangeIntegrityError, ValueError):
             _fail("RESPONSE_ENVELOPE_UNSAFE", "prepared responder envelope is outside the M34 integrity profile")
         try:
-            body = self._encode_json(envelope)
+            body = self._encode_json_witness(envelope)
         except Exception:
             _fail("RESPONSE_ENCODING_FAILED", "prepared OLP response could not be encoded")
+        if self._validate_bindings_function is not validate:
+            raise InboundHttpError('APPLICATION_BINDING_DRIFT', 'M34 encoder changed validator binding') from None
+        validate(self)
         if type(body) is not bytes or not body:
             _fail("INVALID_RESPONSE_ENCODER_RESULT", "response encoder MUST return non-empty exact bytes")
         if len(body) > self._limits.max_response_body_bytes:
             _fail("RESPONSE_BODY_LIMIT_EXCEEDED", "encoded response exceeds the configured M34 bound")
-        if host_value_integrity_snapshot(envelope) != envelope_snapshot:
+        if self._host_snapshot_function(envelope) != envelope_snapshot:
             _fail("RESPONSE_ENCODER_MUTATED_ENVELOPE", "response encoder mutated the prepared responder envelope")
         try:
-            round_trip = self._decode_json(body)
-            detached_round_trip = detach_host_value(round_trip)
-            round_trip_snapshot = _wire_value_snapshot(detached_round_trip)
+            round_trip = self._decode_json_witness(body)
+        except Exception:
+            _fail("RESPONSE_ROUND_TRIP_FAILED", "encoded response failed strict local round-trip verification")
+        if self._validate_bindings_function is not validate:
+            raise InboundHttpError('APPLICATION_BINDING_DRIFT', 'M34 round-trip decoder changed validator binding') from None
+        validate(self)
+        try:
+            detached_round_trip = self._detach_host_value_function(round_trip)
+            round_trip_snapshot = self._wire_snapshot_function(detached_round_trip)
         except Exception:
             _fail("RESPONSE_ROUND_TRIP_FAILED", "encoded response failed strict local round-trip verification")
         if round_trip_snapshot != wire_snapshot:
@@ -567,6 +720,20 @@ class BoundedInboundHttpApplicationAdapter:
 
     def handle(self, request: InboundHttpRequest) -> PreparedInboundHttpResponse:
         """Handle exactly one canonical request and stop before transmission."""
+        validate = self._validate_bindings_function
+        if validate is not BoundedInboundHttpApplicationAdapter._validate_bindings:
+            raise InboundHttpError(
+                "APPLICATION_BINDING_DRIFT",
+                "M34 captured validator changed before execution",
+            ) from None
+        validate(self)
+        decode_control = self._decode_control_request_function
+        validate_get = self._validate_get_request_function
+        validate_federation = self._validate_federation_result_function
+        validate_record = self._validate_record_result_function
+        serialize = self._serialize_response_function
+        federation_prepare = self._federation_prepare_callable
+        record_prepare = self._record_prepare_callable
         if type(request) is not InboundHttpRequest:
             _fail("INVALID_REQUEST_TYPE", "request MUST be exact InboundHttpRequest")
         if request.request_authenticated is not False or request.peer_identity_proven is not False:
@@ -588,19 +755,23 @@ class BoundedInboundHttpApplicationAdapter:
         if operation is not None:
             if canonical_request.method != "POST":
                 _fail("METHOD_NOT_ALLOWED", "configured federation control route requires exact POST")
-            envelope = self._decode_control_request(canonical_request)
-            request_snapshot = host_value_integrity_snapshot(envelope)
+            envelope = decode_control(self, canonical_request)
+            if self._validate_bindings_function is not validate:
+                raise InboundHttpError("APPLICATION_BINDING_DRIFT", "M34 decoder changed validator binding") from None
+            validate(self)
+            request_snapshot = self._host_snapshot_function(envelope)
             try:
-                result = self._federation_responder.prepare_response(
-                    envelope,
-                    operation=operation,
-                )
+                result = federation_prepare(envelope, operation=operation)
             except Exception:
                 _fail("FEDERATION_REQUEST_REJECTED", "M32 rejected the inbound federation request")
-            if host_value_integrity_snapshot(envelope) != request_snapshot:
+            if self._validate_bindings_function is not validate:
+                raise InboundHttpError("APPLICATION_BINDING_DRIFT", "M32 changed M34 validator binding") from None
+            validate(self)
+            if self._host_snapshot_function(envelope) != request_snapshot:
                 _fail("FEDERATION_RESPONDER_MUTATED_REQUEST", "M32 mutated the detached control request envelope")
-            response_envelope = self._validate_federation_result(result, operation=operation)
-            return self._serialize_response(
+            response_envelope = validate_federation(self, result, operation=operation)
+            return serialize(
+                self,
                 request=canonical_request,
                 route_kind=ROUTE_FEDERATION_CONTROL,
                 route_operation=operation,
@@ -610,15 +781,17 @@ class BoundedInboundHttpApplicationAdapter:
         if canonical_request.path.startswith(RECORD_ROUTE_PREFIX):
             if canonical_request.method != "GET":
                 _fail("METHOD_NOT_ALLOWED", "immutable Record route requires exact GET")
-            identity = self._validate_get_request(canonical_request)
+            identity = validate_get(self, canonical_request)
             try:
-                result = self._record_responder.prepare(
-                    requested_record_identity=identity,
-                )
+                result = record_prepare(requested_record_identity=identity)
             except Exception:
                 _fail("RECORD_REQUEST_REJECTED", "M33 rejected the immutable Record request")
-            response_envelope = self._validate_record_result(result, expected_identity=identity)
-            return self._serialize_response(
+            if self._validate_bindings_function is not validate:
+                raise InboundHttpError("APPLICATION_BINDING_DRIFT", "M33 changed M34 validator binding") from None
+            validate(self)
+            response_envelope = validate_record(self, result, expected_identity=identity)
+            return serialize(
+                self,
                 request=canonical_request,
                 route_kind=ROUTE_IMMUTABLE_RECORD,
                 route_operation=result.request_context.operation,

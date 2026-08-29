@@ -8,6 +8,8 @@ M34 is a **transport-free HTTP application adapter** above the completed M32 and
 
 M34 is **HIGH risk** because route confusion or responder-result confusion could cross a privacy/disclosure boundary even without a live listener.
 
+Milestone 58 adds post-construction retained-binding hardening without changing M34 routing or disclosure semantics. See `docs/bounded-inbound-http-application-retained-binding-hardening.md`.
+
 ## Boundary
 
 ```text
