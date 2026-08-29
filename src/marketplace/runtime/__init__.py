@@ -150,6 +150,11 @@ from .inbound_tcp_listener import (
     InboundTcpListenerConstructionError,
     InboundTcpListenerFactory,
 )
+from .inbound_tcp_socket_factory import (
+    BoundedPythonTcpSocketFactory,
+    PythonTcpSocketConstructor,
+    PythonTcpSocketFactoryError,
+)
 from .inbound_http_transaction import (
     BoundedInboundHttpRequestResponseTransaction,
     CompletedInboundHttpRequestResponseTransaction,
@@ -336,6 +341,7 @@ __all__ = [
     "BoundedInboundHttpStreamAssembler",
     "BoundedInboundHttpWireAdapter",
     "BoundedInboundTcpListenerConstruction",
+    "BoundedPythonTcpSocketFactory",
     "BoundedInboundRecordResponder",
     "BoundedRecordSource",
     "CONTINUATION_PREPARED",
@@ -428,6 +434,8 @@ __all__ = [
     "InboundTcpListenerCapability",
     "InboundTcpListenerConstructionError",
     "InboundTcpListenerFactory",
+    "PythonTcpSocketConstructor",
+    "PythonTcpSocketFactoryError",
     "InboundHttpResponsePreparationError",
     "InboundHttpResponseWriteDriverError",
     "InboundHttpResponseWriteDriverLimits",
