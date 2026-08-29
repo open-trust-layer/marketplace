@@ -232,6 +232,49 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
 
         self.assertEqual(caught.exception.code, "PREPARER_FACTORY_CONFIGURATION_DRIFT")
 
+    def test_m34_limit_drift_is_rejected_before_construction(self):
+        wire = _wire_adapter()
+        application = getattr(wire, "_application_adapter")
+        limits = application.limits
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        object.__setattr__(
+            application,
+            "_limits",
+            InboundHttpApplicationLimits(
+                max_request_body_bytes=limits.max_request_body_bytes,
+                max_response_body_bytes=limits.max_response_body_bytes,
+                max_header_bytes=limits.max_header_bytes - 1,
+            ),
+        )
+
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as caught:
+            factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_CONFIGURATION_DRIFT")
+
+    def test_m34_handle_drift_is_rejected_without_executing_replacement(self):
+        wire = _wire_adapter()
+        application = getattr(wire, "_application_adapter")
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        hostile_calls = []
+
+        def hostile_handle(_request):
+            hostile_calls.append(True)
+            raise AssertionError("hostile M34 handle MUST NOT execute")
+
+        object.__setattr__(application, "handle", hostile_handle)
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as caught:
+            factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
     def test_private_binding_witness_poisoning_fails_closed(self):
         reader = _Reader()
         factory = BoundedInboundHttpResponsePreparerCompositionFactory(
