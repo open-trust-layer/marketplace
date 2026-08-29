@@ -304,6 +304,58 @@ class InboundHttpEndToEndSourceCompositionBoundaryTests(unittest.TestCase):
                 self.assertEqual(hostile_calls, [])
 
 
+class _HostileEquality:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, object]] = []
+
+    def __eq__(self, other):
+        self.calls.append(("eq", other))
+        raise AssertionError("hostile equality MUST NOT execute")
+
+    def __ne__(self, other):
+        self.calls.append(("ne", other))
+        raise AssertionError("hostile equality MUST NOT execute")
+
+
+class InboundHttpEndToEndSourceCompositionEqualityHardeningTests(unittest.TestCase):
+    def test_post_construction_route_field_poisoning_never_executes_equality(self):
+        routes = _routes()
+        root = _root(routes=routes)
+        hostile = _HostileEquality()
+        object.__setattr__(routes[0], "path", hostile)
+
+        with self.assertRaises(InboundHttpEndToEndSourceCompositionError) as caught:
+            root(_Constructor())
+
+        self.assertEqual(
+            caught.exception.code,
+            "END_TO_END_COMPOSITION_CONFIGURATION_DRIFT",
+        )
+        self.assertEqual(hostile.calls, [])
+
+    def test_preconstruction_route_field_poisoning_never_executes_equality(self):
+        routes = _routes()
+        hostile = _HostileEquality()
+        object.__setattr__(routes[0], "path", hostile)
+
+        with self.assertRaises(TypeError):
+            _root(routes=routes)
+
+        self.assertEqual(hostile.calls, [])
+
+    def test_private_binding_marker_poisoning_never_executes_equality(self):
+        root = _root()
+        witness = getattr(root, "_binding_witness")
+        hostile = _HostileEquality()
+        object.__setattr__(root, "_binding_witness", (hostile,) + witness[1:])
+
+        with self.assertRaises(InboundHttpEndToEndSourceCompositionError) as caught:
+            root(_Constructor())
+
+        self.assertEqual(caught.exception.code, "END_TO_END_COMPOSITION_BINDING_DRIFT")
+        self.assertEqual(hostile.calls, [])
+
+
 class InboundHttpEndToEndSourceCompositionSourceTests(unittest.TestCase):
     def test_source_has_no_external_io_background_retry_or_loop_surface(self):
         tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
