@@ -170,6 +170,10 @@ from .inbound_http_response_prepare import (
     InboundHttpResponsePreparationError,
     PreparedInboundHttpReadResponse,
 )
+from .inbound_http_response_preparer_factory import (
+    BoundedInboundHttpResponsePreparerCompositionFactory,
+    InboundHttpResponsePreparerCompositionError,
+)
 from .inbound_http_response_write_driver import (
     DEFAULT_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_TIMEOUT_SECONDS,
     DEFAULT_MAX_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_STEPS,
@@ -337,6 +341,7 @@ __all__ = [
     "BoundedInboundHttpReadTransitioner",
     "BoundedInboundHttpRequestResponseTransaction",
     "BoundedInboundHttpResponsePreparer",
+    "BoundedInboundHttpResponsePreparerCompositionFactory",
     "BoundedInboundHttpResponseWriteDriver",
     "BoundedInboundHttpResponseWriteInvoker",
     "BoundedInboundHttpResponseWriteOutcomeHandler",
@@ -445,6 +450,7 @@ __all__ = [
     "PythonTcpSocketConstructor",
     "PythonTcpSocketFactoryError",
     "InboundHttpResponsePreparationError",
+    "InboundHttpResponsePreparerCompositionError",
     "InboundHttpResponseWriteDriverError",
     "InboundHttpResponseWriteDriverLimits",
     "InboundHttpResponseWriteInvocationError",
