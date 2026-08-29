@@ -269,3 +269,179 @@ class InboundHttpSingleSessionTests(unittest.TestCase):
         self.assertEqual(listener.accept_calls, 1)
         self.assertEqual(connection.close_calls, 0)
         self.assertEqual(factory.calls, 0)
+
+    def test_close_before_run_releases_authority_without_constructor_invocation(self):
+        orchestrator, constructor, listener, connection, factory = _build_orchestrator()
+
+        orchestrator.close()
+        orchestrator.close()
+
+        self.assertTrue(orchestrator.closed)
+        self.assertTrue(orchestrator.used)
+        self.assertEqual(constructor.calls, [])
+        self.assertEqual(listener.bind_calls, [])
+        self.assertEqual(listener.accept_calls, 0)
+        self.assertEqual(connection.close_calls, 0)
+        self.assertEqual(factory.calls, 0)
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+            orchestrator.run_once()
+        self.assertEqual(caught.exception.code, "SESSION_ORCHESTRATOR_USED")
+
+    def test_transaction_rejection_is_stable_and_connection_remains_closed(self):
+        orchestrator, _, listener, connection, factory = _build_orchestrator()
+        connection.recv_override = b""
+
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+            orchestrator.run_once()
+        self.assertEqual(caught.exception.code, "SESSION_TRANSACTION_REJECTED")
+        self.assertEqual(caught.exception.lower_code, "CONNECTION_TRANSACTION_REJECTED")
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
+        self.assertEqual(factory.calls, 1)
+
+    def test_m52_method_graph_mutation_during_bind_closes_without_accept(self):
+        orchestrator, constructor, listener, connection, factory = _build_orchestrator()
+        original = BoundedInboundHttpSingleAccept.accept_once
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M52 accept MUST NOT run")
+
+        listener.mutate_on_bind = lambda: setattr(
+            BoundedInboundHttpSingleAccept,
+            "accept_once",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+                orchestrator.run_once()
+        finally:
+            BoundedInboundHttpSingleAccept.accept_once = original
+
+        self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(len(constructor.calls), 1)
+        self.assertEqual(listener.accept_calls, 0)
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 0)
+        self.assertEqual(factory.calls, 0)
+
+    def test_m51_io_graph_mutation_during_bind_closes_before_accept(self):
+        orchestrator, _, listener, connection, factory = _build_orchestrator()
+        original = BoundedInboundHttpSingleConnectionIO._read_once
+
+        def hostile(_self, _max_bytes):
+            raise AssertionError("substituted M51 read MUST NOT run")
+
+        listener.mutate_on_bind = lambda: setattr(
+            BoundedInboundHttpSingleConnectionIO,
+            "_read_once",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+                orchestrator.run_once()
+        finally:
+            BoundedInboundHttpSingleConnectionIO._read_once = original
+
+        self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
+        self.assertEqual(listener.accept_calls, 0)
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 0)
+        self.assertEqual(factory.calls, 0)
+
+    def test_private_preparer_call_rebinding_during_accept_never_executes(self):
+        orchestrator, _, listener, connection, factory = _build_orchestrator()
+        original_accept = listener.accept
+        hostile_calls = []
+
+        def hostile(*_args):
+            hostile_calls.append(True)
+            raise AssertionError("private preparer substitution MUST NOT run")
+
+        def mutating_accept():
+            orchestrator._preparer_factory_call = hostile
+            return original_accept()
+
+        listener.accept = mutating_accept
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+            orchestrator.run_once()
+
+        self.assertEqual(caught.exception.code, "SESSION_ORCHESTRATOR_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.accept_calls, 1)
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
+        self.assertEqual(factory.calls, 0)
+
+    def test_transport_graph_mutation_during_preparer_factory_is_cleaned(self):
+        from marketplace.runtime.inbound_http_connection import (
+            BoundedInboundHttpSingleConnectionTransport,
+        )
+
+        orchestrator, _, listener, connection, factory = _build_orchestrator()
+        original_call = factory.__class__.__call__
+        original_run = BoundedInboundHttpSingleConnectionTransport.run
+        hostile_calls = []
+        original_build = globals()["_build"]
+
+        def hostile_run(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 run MUST NOT execute")
+
+        def mutating_build(*args, **kwargs):
+            built = original_build(*args, **kwargs)
+            BoundedInboundHttpSingleConnectionTransport.run = hostile_run
+            return built
+
+        globals()["_build"] = mutating_build
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+                orchestrator.run_once()
+        finally:
+            globals()["_build"] = original_build
+            BoundedInboundHttpSingleConnectionTransport.run = original_run
+
+        self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
+        self.assertTrue(factory.session.closed)
+
+
+class InboundHttpSingleSessionSourceTests(unittest.TestCase):
+    def test_source_has_no_direct_network_background_or_loop_surface(self):
+        tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
+        blocked_imports = {
+            "socket", "ssl", "asyncio", "threading", "multiprocessing",
+            "subprocess", "selectors", "select", "concurrent", "logging",
+        }
+        direct_calls = {"bind", "listen", "accept", "recv", "send", "connect"}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                self.assertTrue(
+                    all(alias.name.split(".")[0] not in blocked_imports for alias in node.names)
+                )
+            if isinstance(node, ast.ImportFrom) and node.module:
+                self.assertNotIn(node.module.split(".")[0], blocked_imports)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                self.assertNotIn(node.func.attr, direct_calls)
+
+        run_node = next(
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == "run_once"
+        )
+        self.assertFalse(
+            any(isinstance(node, (ast.For, ast.AsyncFor, ast.While)) for node in ast.walk(run_node))
+        )
+
+    def test_public_run_and_result_do_not_add_transport_or_authority_surface(self):
+        signature = inspect.signature(BoundedInboundHttpSingleSessionOrchestrator.run_once)
+        self.assertEqual(tuple(signature.parameters), ("self",))
+        self.assertEqual(
+            signature.return_annotation,
+            "CompletedInboundHttpSingleConnectionTransport",
+        )

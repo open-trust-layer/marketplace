@@ -403,3 +403,61 @@ class InboundHttpSingleAcceptTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InboundHttpSingleAcceptDownstreamConstructionBindingTests(unittest.TestCase):
+    def test_m51_io_init_mutation_during_accept_fails_before_substituted_constructor(self):
+        connection = _Connection()
+        acceptor = _Acceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        original = BoundedInboundHttpSingleConnectionIO.__init__
+        hostile_calls = []
+
+        def hostile(_self, **_kwargs):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 I/O constructor MUST NOT run")
+
+        acceptor.mutate_on_accept = lambda _acceptor: setattr(
+            BoundedInboundHttpSingleConnectionIO,
+            "__init__",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+                boundary.accept_once()
+        finally:
+            BoundedInboundHttpSingleConnectionIO.__init__ = original
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(acceptor.accept_calls, 1)
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
+
+    def test_m51_io_validation_mutation_during_accept_fails_before_constructor(self):
+        connection = _Connection()
+        acceptor = _Acceptor(connection)
+        boundary = BoundedInboundHttpSingleAccept(acceptor=acceptor)
+        original = BoundedInboundHttpSingleConnectionIO._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 I/O validation MUST NOT run")
+
+        acceptor.mutate_on_accept = lambda _acceptor: setattr(
+            BoundedInboundHttpSingleConnectionIO,
+            "_validate_bindings",
+            hostile,
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleAcceptError) as caught:
+                boundary.accept_once()
+        finally:
+            BoundedInboundHttpSingleConnectionIO._validate_bindings = original
+
+        self.assertEqual(caught.exception.code, "ACCEPTOR_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(acceptor.accept_calls, 1)
+        self.assertEqual(acceptor.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
