@@ -319,7 +319,8 @@ class InboundHttpSingleSessionTests(unittest.TestCase):
         finally:
             BoundedInboundHttpSingleAccept.accept_once = original
 
-        self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
+        self.assertEqual(caught.exception.code, "SESSION_LISTENER_REJECTED")
+        self.assertEqual(caught.exception.lower_code, "LISTENER_CONSTRUCTION_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
         self.assertEqual(len(constructor.calls), 1)
         self.assertEqual(listener.accept_calls, 0)
@@ -445,3 +446,77 @@ class InboundHttpSingleSessionSourceTests(unittest.TestCase):
             signature.return_annotation,
             "CompletedInboundHttpSingleConnectionTransport",
         )
+
+
+class InboundHttpSingleSessionBindingWitnessTests(unittest.TestCase):
+    def test_private_factory_rebinding_never_invokes_caller_equality(self):
+        class ExplosiveFactory(_PreparerFactory):
+            def __eq__(self, _other):
+                raise RuntimeError("TOP-SECRET-M55-EQUALITY")
+
+        connection = _Connection()
+        listener = _Listener(connection)
+        constructor = _Constructor(listener)
+        factory = ExplosiveFactory(connection)
+        orchestrator = BoundedInboundHttpSingleSessionOrchestrator(
+            constructor=constructor,
+            response_preparer_factory=factory,
+            clock=lambda: 0.0,
+            port=PORT,
+        )
+        orchestrator._preparer_factory = ExplosiveFactory(connection)
+
+        with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+            orchestrator.run_once()
+
+        self.assertEqual(caught.exception.code, "SESSION_ORCHESTRATOR_BINDING_DRIFT")
+        self.assertNotIn("TOP-SECRET", str(caught.exception))
+        self.assertEqual(constructor.calls, [])
+        self.assertEqual(listener.bind_calls, [])
+
+
+class InboundHttpSingleSessionNoLoopTests(unittest.TestCase):
+    def test_m55_source_contains_no_loop_or_comprehension(self):
+        tree = ast.parse(SOURCE.read_text(encoding="utf-8"))
+        loop_nodes = (
+            ast.For,
+            ast.AsyncFor,
+            ast.While,
+            ast.ListComp,
+            ast.SetComp,
+            ast.DictComp,
+            ast.GeneratorExp,
+        )
+        self.assertFalse(any(isinstance(node, loop_nodes) for node in ast.walk(tree)))
+
+
+class InboundHttpSingleSessionTransportConstructionGraphTests(unittest.TestCase):
+    def test_transport_new_mutation_during_preparer_factory_never_executes(self):
+        from marketplace.runtime.inbound_http_connection import (
+            BoundedInboundHttpSingleConnectionTransport,
+        )
+
+        orchestrator, _, _, connection, _ = _build_orchestrator()
+        original_new = BoundedInboundHttpSingleConnectionTransport.__new__
+        original_build = globals()["_build"]
+        hostile_calls = []
+
+        def hostile_new(cls, *args, **kwargs):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 transport __new__ MUST NOT run")
+
+        def mutating_build(*args, **kwargs):
+            built = original_build(*args, **kwargs)
+            BoundedInboundHttpSingleConnectionTransport.__new__ = staticmethod(hostile_new)
+            return built
+        globals()["_build"] = mutating_build
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+                orchestrator.run_once()
+        finally:
+            globals()["_build"] = original_build
+            BoundedInboundHttpSingleConnectionTransport.__new__ = original_new
+
+        self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)

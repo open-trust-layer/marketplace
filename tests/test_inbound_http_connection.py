@@ -368,3 +368,69 @@ class InboundHttpSingleConnectionTransportTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class InboundHttpConnectionClassGraphSecurityTests(unittest.TestCase):
+    def test_io_validation_helper_mutation_during_recv_never_executes(self):
+        connection = _Connection()
+        _, _, _, _, transport, _ = _transport(connection)
+        original = BoundedInboundHttpSingleConnectionIO._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 I/O validator MUST NOT run")
+
+        connection.mutate_on_recv = lambda _current: setattr(
+            BoundedInboundHttpSingleConnectionIO, "_validate_bindings", hostile
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleConnectionTransportError):
+                transport.run()
+        finally:
+            BoundedInboundHttpSingleConnectionIO._validate_bindings = original
+
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+    def test_transport_validation_helper_mutation_during_recv_never_executes(self):
+        connection = _Connection()
+        _, _, _, _, transport, _ = _transport(connection)
+        original = BoundedInboundHttpSingleConnectionTransport._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 transport validator MUST NOT run")
+
+        connection.mutate_on_recv = lambda _current: setattr(
+            BoundedInboundHttpSingleConnectionTransport, "_validate_bindings", hostile
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleConnectionTransportError):
+                transport.run()
+        finally:
+            BoundedInboundHttpSingleConnectionTransport._validate_bindings = original
+
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
+    def test_transport_cleanup_helper_mutation_during_recv_never_executes(self):
+        connection = _Connection()
+        _, _, _, _, transport, _ = _transport(connection)
+        original = BoundedInboundHttpSingleConnectionTransport._cleanup_connection
+        hostile_calls = []
+
+        def hostile(_self, **_kwargs):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M51 cleanup helper MUST NOT run")
+
+        connection.mutate_on_recv = lambda _current: setattr(
+            BoundedInboundHttpSingleConnectionTransport, "_cleanup_connection", hostile
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleConnectionTransportError):
+                transport.run()
+        finally:
+            BoundedInboundHttpSingleConnectionTransport._cleanup_connection = original
+
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
