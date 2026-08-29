@@ -14,6 +14,16 @@ from marketplace.runtime.inbound_http_read_outcome import InboundHttpReadOutcome
 from marketplace.runtime.inbound_http_response_prepare import (
     BoundedInboundHttpResponsePreparer,
 )
+from marketplace.runtime.inbound_http_connection import (
+    CompletedInboundHttpSingleConnectionTransport,
+)
+from marketplace.runtime.inbound_http_single_session import (
+    BoundedInboundHttpSingleSessionOrchestrator,
+)
+from marketplace.runtime.record_retrieval import _get_request_bytes
+from test_inbound_http_connection import _Connection
+from test_inbound_http_response_prepare import _ApplicationHarness
+from test_inbound_http_single_session import _Constructor, _Listener
 from marketplace.runtime.inbound_http_wire import BoundedInboundHttpWireAdapter
 from marketplace.runtime.inbound_http_response_preparer_factory import (
     BoundedInboundHttpResponsePreparerCompositionFactory,
@@ -143,6 +153,31 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
 
+    def test_m34_property_substitution_is_blocked_before_execution(self):
+        wire = _wire_adapter()
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        hostile_calls = []
+
+        def hostile_limits(_self):
+            hostile_calls.append(True)
+            raise AssertionError("hostile M34 property MUST NOT execute")
+
+        with patch.object(
+            BoundedInboundHttpApplicationAdapter,
+            "limits",
+            property(hostile_limits),
+        ):
+            with self.assertRaises(
+                InboundHttpResponsePreparerCompositionError
+            ) as caught:
+                factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
     def test_private_binding_witness_poisoning_fails_closed(self):
         reader = _Reader()
         factory = BoundedInboundHttpResponsePreparerCompositionFactory(
@@ -157,6 +192,40 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
         self.assertEqual(reader.calls, [])
 
+
+class InboundHttpResponsePreparerCompositionFactoryM55IntegrationTests(unittest.TestCase):
+    def test_exact_m56_factory_composes_with_m55_using_only_doubles(self):
+        connection = _Connection()
+        connection.input_bytes = _get_request_bytes(
+            "/v1/records/r1_qcU6rT-ADJiC75Bg9w7qLSvauhY6zcEmy1dk-LrRlZc",
+            AUTHORITY,
+            443,
+        )
+        listener = _Listener(connection)
+        constructor = _Constructor(listener)
+        harness = _ApplicationHarness()
+        wire = BoundedInboundHttpWireAdapter(
+            application_adapter=harness.adapter,
+            authority=AUTHORITY,
+        )
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=lambda: 0.0,
+        )
+        orchestrator = BoundedInboundHttpSingleSessionOrchestrator(
+            constructor=constructor,
+            response_preparer_factory=factory,
+            clock=lambda: 0.0,
+            port=18081,
+        )
+
+        result = orchestrator.run_once()
+
+        self.assertIs(type(result), CompletedInboundHttpSingleConnectionTransport)
+        self.assertEqual(len(harness.calls), 1)
+        self.assertEqual(listener.accept_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
+        self.assertTrue(result.connection_closed)
 
 class InboundHttpResponsePreparerCompositionFactorySourceTests(unittest.TestCase):
     def test_source_has_no_external_io_background_retry_or_loop_surface(self):
