@@ -24,7 +24,10 @@ from marketplace.runtime.record_retrieval import _get_request_bytes
 from test_inbound_http_connection import _Connection
 from test_inbound_http_response_prepare import _ApplicationHarness
 from test_inbound_http_single_session import _Constructor, _Listener
-from marketplace.runtime.inbound_http_wire import BoundedInboundHttpWireAdapter
+from marketplace.runtime.inbound_http_wire import (
+    BoundedInboundHttpWireAdapter,
+    InboundHttpWireLimits,
+)
 from marketplace.runtime.inbound_http_response_preparer_factory import (
     BoundedInboundHttpResponsePreparerCompositionFactory,
     InboundHttpResponsePreparerCompositionError,
@@ -177,6 +180,57 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
 
         self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
+
+    def test_m35_application_binding_drift_is_rejected_before_construction(self):
+        wire = _wire_adapter()
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        replacement = object.__new__(BoundedInboundHttpApplicationAdapter)
+        object.__setattr__(replacement, "_limits", InboundHttpApplicationLimits())
+        object.__setattr__(replacement, "handle", lambda request: None)
+        object.__setattr__(wire, "_application_adapter", replacement)
+
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as caught:
+            factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_BINDING_DRIFT")
+
+    def test_m35_authority_drift_is_rejected_before_construction(self):
+        wire = _wire_adapter()
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        object.__setattr__(wire, "_authority", "other.example")
+
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as caught:
+            factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_CONFIGURATION_DRIFT")
+
+    def test_m35_limit_drift_is_rejected_before_construction(self):
+        wire = _wire_adapter()
+        limits = wire.limits
+        factory = BoundedInboundHttpResponsePreparerCompositionFactory(
+            wire_adapter=wire,
+            clock=_Clock(),
+        )
+        object.__setattr__(
+            wire,
+            "_limits",
+            InboundHttpWireLimits(
+                max_header_bytes=limits.max_header_bytes - 1,
+                max_body_bytes=limits.max_body_bytes,
+                max_response_body_bytes=limits.max_response_body_bytes,
+            ),
+        )
+
+        with self.assertRaises(InboundHttpResponsePreparerCompositionError) as caught:
+            factory(_Reader())
+
+        self.assertEqual(caught.exception.code, "PREPARER_FACTORY_CONFIGURATION_DRIFT")
 
     def test_private_binding_witness_poisoning_fails_closed(self):
         reader = _Reader()
