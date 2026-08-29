@@ -520,3 +520,26 @@ class InboundHttpSingleSessionTransportConstructionGraphTests(unittest.TestCase)
         self.assertEqual(caught.exception.code, "SESSION_LOWER_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
         self.assertEqual(connection.close_calls, 1)
+
+
+class InboundHttpSingleSessionM43GraphTests(unittest.TestCase):
+    def test_m43_validator_mutation_during_recv_never_executes(self):
+        orchestrator, _, _, connection, _ = _build_orchestrator()
+        original = BoundedInboundHttpResponsePreparer._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M43 validator MUST NOT run")
+
+        connection.mutate_on_recv = lambda _current: setattr(
+            BoundedInboundHttpResponsePreparer, "_validate_bindings", hostile
+        )
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError):
+                orchestrator.run_once()
+        finally:
+            BoundedInboundHttpResponsePreparer._validate_bindings = original
+
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(connection.close_calls, 1)
