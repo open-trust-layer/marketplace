@@ -397,3 +397,134 @@ class InboundTcpListenerConstructionFactoryBindingTests(unittest.TestCase):
         self.assertEqual(factory.calls, 0)
         self.assertEqual(hostile_calls, [])
         self.assertEqual(listener.bind_calls, [])
+
+
+class _EndpointMutationOnSecondBindLookup(_ConfigurableListener):
+    def __init__(self) -> None:
+        super().__init__()
+        self.boundary = None
+        self.bind_lookups = 0
+
+    def __getattribute__(self, name: str):
+        if name == "bind":
+            count = object.__getattribute__(self, "bind_lookups") + 1
+            object.__setattr__(self, "bind_lookups", count)
+            boundary = object.__getattribute__(self, "boundary")
+            if count == 2 and boundary is not None:
+                boundary._host = "0.0.0.0"
+        return object.__getattribute__(self, name)
+
+
+class InboundTcpListenerConstructionEndpointBindingTests(unittest.TestCase):
+    def test_listener_getter_cannot_rebind_endpoint_before_bind(self):
+        listener = _EndpointMutationOnSecondBindLookup()
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+        listener.boundary = boundary
+        with self.assertRaises(InboundTcpListenerConstructionError) as caught:
+            boundary.construct_once()
+        self.assertEqual(caught.exception.code, "LISTENER_CONSTRUCTION_BINDING_DRIFT")
+        self.assertEqual(listener.bind_calls, [])
+        self.assertEqual(listener.listen_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+
+
+class _AcceptedConnection:
+    def __init__(self) -> None:
+        self.close_calls = 0
+
+    def recv(self, max_bytes: int) -> bytes:
+        return b""
+
+    def send(self, data: bytes) -> int:
+        return len(data)
+
+    def close(self) -> None:
+        self.close_calls += 1
+
+
+class _LateAcceptMutationListener(_ConfigurableListener):
+    def __init__(self, connection: object, hostile_calls: list[object]) -> None:
+        super().__init__()
+        self.connection = connection
+        self.accept_calls = 0
+        self.close_lookups = 0
+        self.hostile_calls = hostile_calls
+
+    def accept(self):
+        self.accept_calls += 1
+        return self.connection
+
+    def __getattribute__(self, name: str):
+        if name == "close":
+            count = object.__getattribute__(self, "close_lookups") + 1
+            object.__setattr__(self, "close_lookups", count)
+            if count == 4:
+                hostile_calls = object.__getattribute__(self, "hostile_calls")
+                connection = object.__getattribute__(self, "connection")
+                object.__setattr__(self, "accept", lambda: hostile_calls.append(connection) or connection)
+        return object.__getattribute__(self, name)
+
+
+class InboundTcpListenerConstructionHandoffBindingTests(unittest.TestCase):
+    def test_handoff_uses_originally_captured_accept_authority(self):
+        connection = _AcceptedConnection()
+        hostile_calls: list[object] = []
+        listener = _LateAcceptMutationListener(connection, hostile_calls)
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+
+        accept_boundary = boundary.construct_once()
+        io = accept_boundary.accept_once()
+
+        self.assertEqual(listener.accept_calls, 1)
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+        self.assertFalse(io.closed)
+        io.close()
+        self.assertEqual(connection.close_calls, 1)
+
+
+class InboundTcpListenerCapturedAcceptorHardeningTests(unittest.TestCase):
+    def _constructed(self):
+        connection = _AcceptedConnection()
+        listener = _LateAcceptMutationListener(connection, [])
+        boundary = BoundedInboundTcpListenerConstruction(
+            factory=lambda: listener,
+            host="127.0.0.1",
+            port=18443,
+            backlog=1,
+        )
+        return connection, listener, boundary.construct_once()
+
+    def test_private_captured_accept_rebinding_never_substitutes_authority(self):
+        connection, listener, accept_boundary = self._constructed()
+        hostile_calls = []
+        wrapper = accept_boundary._acceptor
+        wrapper._accept = lambda: hostile_calls.append(1) or connection
+        with self.assertRaises(Exception) as caught:
+            accept_boundary.accept_once()
+        self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 0)
+
+    def test_private_captured_close_rebinding_uses_original_close_and_fails_closed(self):
+        connection, listener, accept_boundary = self._constructed()
+        hostile_calls = []
+        wrapper = accept_boundary._acceptor
+        wrapper._close = lambda: hostile_calls.append(1)
+        with self.assertRaises(Exception) as caught:
+            accept_boundary.accept_once()
+        self.assertEqual(getattr(caught.exception, "code", None), "ACCEPTOR_CLEANUP_UNCERTAIN")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 0)

@@ -132,6 +132,96 @@ def _close_captured_listener(witness: tuple[object, ...]) -> None:
         _fail("LISTENER_CLEANUP_UNCERTAIN", "M53 could not verify listener cleanup")
 
 
+class _CapturedListenerAcceptor:
+    """Freeze and witness listener accept/close authority for exact M52."""
+
+    __slots__ = (
+        "_listener", "_accept", "_close", "_accept_function",
+        "_close_function", "_binding_witness", "_closed",
+    )
+
+    def __init__(self, witness: tuple[object, ...]) -> None:
+        self._listener = witness[1]
+        self._accept = witness[4]
+        self._close = witness[5]
+        self._accept_function = _CapturedListenerAcceptor.accept
+        self._close_function = _CapturedListenerAcceptor.close
+        self._binding_witness = (
+            "m53-captured-listener-acceptor-v1",
+            self._listener,
+            self._accept,
+            self._close,
+            self._accept_function,
+            self._close_function,
+        )
+        self._closed = False
+        self._validate_bindings()
+
+    def _validate_bindings(self) -> None:
+        witness = self._binding_witness
+        if (
+            type(witness) is not tuple
+            or len(witness) != 6
+            or witness[0] != "m53-captured-listener-acceptor-v1"
+            or witness[1] is not self._listener
+            or witness[2] is not self._accept
+            or witness[3] is not self._close
+            or witness[4] is not self._accept_function
+            or witness[5] is not self._close_function
+            or type(self) is not _CapturedListenerAcceptor
+            or _CapturedListenerAcceptor.accept is not self._accept_function
+            or _CapturedListenerAcceptor.close is not self._close_function
+        ):
+            raise RuntimeError("M53 captured acceptor binding drift")
+
+    def _release(self) -> None:
+        self._listener = None
+        self._accept = None
+        self._close = None
+        self._binding_witness = None
+
+    def accept(self):
+        if self._closed:
+            raise RuntimeError("M53 transferred acceptor is unavailable")
+        self._validate_bindings()
+        witness = self._binding_witness
+        listener = witness[1]
+        accept = witness[2]
+        try:
+            connection = accept()
+        except Exception:
+            raise RuntimeError("M53 captured listener accept failed") from None
+        try:
+            self._validate_bindings()
+        except RuntimeError:
+            _close_untrusted_listener(connection)
+            raise
+        if connection is listener:
+            raise RuntimeError("M53 listener cannot return itself as a connection")
+        return connection
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        witness = self._binding_witness
+        binding_drift = False
+        try:
+            self._validate_bindings()
+        except RuntimeError:
+            binding_drift = True
+        close = witness[3] if type(witness) is tuple and len(witness) == 6 else None
+        self._closed = True
+        self._release()
+        if not callable(close):
+            raise RuntimeError("M53 captured listener cleanup binding is unavailable")
+        try:
+            close()
+        except Exception:
+            raise RuntimeError("M53 captured listener cleanup failed") from None
+        if binding_drift:
+            raise RuntimeError("M53 captured acceptor binding drift")
+
+
 class BoundedInboundTcpListenerConstruction:
     """Configure one injected listener and transfer it directly into exact M52."""
 
@@ -143,6 +233,7 @@ class BoundedInboundTcpListenerConstruction:
         "_port",
         "_backlog",
         "_m52_class",
+        "_acceptor_wrapper_class",
         "_construct_once_function",
         "_close_function",
         "_binding_witness",
@@ -181,6 +272,7 @@ class BoundedInboundTcpListenerConstruction:
         self._port = port
         self._backlog = backlog
         self._m52_class = BoundedInboundHttpSingleAccept
+        self._acceptor_wrapper_class = _CapturedListenerAcceptor
         self._construct_once_function = BoundedInboundTcpListenerConstruction.construct_once
         self._close_function = BoundedInboundTcpListenerConstruction.close
         self._binding_witness = self._binding_snapshot()
@@ -211,6 +303,7 @@ class BoundedInboundTcpListenerConstruction:
             self._port,
             self._backlog,
             self._m52_class,
+            self._acceptor_wrapper_class,
             self._construct_once_function,
             self._close_function,
         )
@@ -219,7 +312,7 @@ class BoundedInboundTcpListenerConstruction:
         witness = self._binding_witness
         if (
             type(witness) is not tuple
-            or len(witness) != 10
+            or len(witness) != 11
             or witness[0] != "inbound-tcp-listener-construction-v1"
             or witness[1] is not self._factory
             or witness[2] is not self._factory_type
@@ -228,8 +321,9 @@ class BoundedInboundTcpListenerConstruction:
             or witness[5] is not self._port
             or witness[6] is not self._backlog
             or witness[7] is not self._m52_class
-            or witness[8] is not self._construct_once_function
-            or witness[9] is not self._close_function
+            or witness[8] is not self._acceptor_wrapper_class
+            or witness[9] is not self._construct_once_function
+            or witness[10] is not self._close_function
         ):
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction binding witness changed")
         if type(self._factory) is not self._factory_type:
@@ -249,6 +343,8 @@ class BoundedInboundTcpListenerConstruction:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 construction method graph changed")
         if BoundedInboundHttpSingleAccept is not self._m52_class:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 M52 class binding changed")
+        if _CapturedListenerAcceptor is not self._acceptor_wrapper_class:
+            _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 acceptor wrapper class binding changed")
         if self._factory is None:
             _fail("LISTENER_CONSTRUCTION_BINDING_DRIFT", "M53 factory reference is unavailable")
 
@@ -259,6 +355,7 @@ class BoundedInboundTcpListenerConstruction:
         self._host = None
         self._port = None
         self._backlog = None
+        self._acceptor_wrapper_class = None
         self._binding_witness = None
         self._closed = True
 
@@ -304,9 +401,10 @@ class BoundedInboundTcpListenerConstruction:
                 _fail("LISTENER_CLEANUP_UNCERTAIN", "M53 could not verify invalid listener cleanup")
             raise interface_error
 
-        self._validate_bindings()
+        construction_witness = self._binding_witness
         try:
             _validate_listener_bindings(listener_witness)
+            self._validate_bindings()
         except InboundTcpListenerConstructionError as binding_error:
             self._cleanup_and_raise(
                 listener_witness,
@@ -315,7 +413,7 @@ class BoundedInboundTcpListenerConstruction:
             )
 
         try:
-            listener_witness[2]((self._host, self._port))
+            listener_witness[2]((construction_witness[4], construction_witness[5]))
         except Exception:
             try:
                 _validate_listener_bindings(listener_witness)
@@ -333,7 +431,7 @@ class BoundedInboundTcpListenerConstruction:
             self._cleanup_and_raise(listener_witness, binding_error.code, str(binding_error))
 
         try:
-            listener_witness[3](self._backlog)
+            listener_witness[3](construction_witness[6])
         except Exception:
             try:
                 _validate_listener_bindings(listener_witness)
@@ -352,7 +450,8 @@ class BoundedInboundTcpListenerConstruction:
             self._cleanup_and_raise(listener_witness, binding_error.code, str(binding_error))
 
         try:
-            accept_boundary = self._m52_class(acceptor=listener)
+            captured_acceptor = self._acceptor_wrapper_class(listener_witness)
+            accept_boundary = self._m52_class(acceptor=captured_acceptor)
         except Exception:
             self._cleanup_and_raise(
                 listener_witness,
