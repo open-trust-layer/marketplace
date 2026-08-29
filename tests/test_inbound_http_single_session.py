@@ -636,3 +636,31 @@ class InboundHttpSingleSessionObjectBindingTests(unittest.TestCase):
             orchestrator.run_once()
         self.assertEqual(hostile_calls, [])
         self.assertEqual(connection.close_calls, 1)
+
+
+class InboundHttpSingleSessionOwnGraphTests(unittest.TestCase):
+    def test_m55_validator_mutation_during_accept_never_executes(self):
+        orchestrator, _, listener, connection, _ = _build_orchestrator()
+        original_accept = listener.accept
+        original_validate = BoundedInboundHttpSingleSessionOrchestrator._validate_bindings
+        hostile_calls = []
+
+        def hostile(_self):
+            hostile_calls.append(True)
+            raise AssertionError("substituted M55 validator MUST NOT run")
+
+        def mutating_accept():
+            BoundedInboundHttpSingleSessionOrchestrator._validate_bindings = hostile
+            return original_accept()
+
+        listener.accept = mutating_accept
+        try:
+            with self.assertRaises(InboundHttpSingleSessionOrchestratorError) as caught:
+                orchestrator.run_once()
+        finally:
+            BoundedInboundHttpSingleSessionOrchestrator._validate_bindings = original_validate
+
+        self.assertEqual(caught.exception.code, "SESSION_ORCHESTRATOR_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+        self.assertEqual(listener.close_calls, 1)
+        self.assertEqual(connection.close_calls, 1)
