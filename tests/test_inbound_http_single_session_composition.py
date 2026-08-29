@@ -151,6 +151,23 @@ class InboundHttpSingleSessionCompositionTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "SESSION_COMPOSITION_BINDING_DRIFT")
         self.assertEqual(hostile_calls, [])
 
+    def test_module_snapshot_helper_poisoning_never_executes(self):
+        root = BoundedInboundHttpSingleSessionCompositionRoot(
+            wire_adapter=_wire_adapter(), clock=_Clock(), port=PORT
+        )
+        hostile_calls = []
+
+        def hostile_snapshot(_value):
+            hostile_calls.append(True)
+            raise AssertionError("hostile M57 snapshot helper MUST NOT execute")
+
+        with patch.object(m57, "_class_identity_snapshot", hostile_snapshot):
+            with self.assertRaises(InboundHttpSingleSessionCompositionError) as caught:
+                root(_Constructor())
+
+        self.assertEqual(caught.exception.code, "SESSION_COMPOSITION_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
     def test_private_validator_poisoning_never_executes(self):
         root = BoundedInboundHttpSingleSessionCompositionRoot(
             wire_adapter=_wire_adapter(), clock=_Clock(), port=PORT
