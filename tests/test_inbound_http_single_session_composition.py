@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch
 
 import marketplace.runtime.inbound_http_single_session_composition as m57
+from marketplace.runtime.inbound_http import BoundedInboundHttpApplicationAdapter
 from marketplace.runtime.inbound_http_response_preparer_factory import (
     BoundedInboundHttpResponsePreparerCompositionFactory,
 )
@@ -144,6 +145,23 @@ class InboundHttpSingleSessionCompositionTests(unittest.TestCase):
                 raise AssertionError("hostile M56 MUST NOT execute")
 
         with patch.object(m57, "BoundedInboundHttpResponsePreparerCompositionFactory", HostileM56):
+            with self.assertRaises(InboundHttpSingleSessionCompositionError) as caught:
+                root(_Constructor())
+
+        self.assertEqual(caught.exception.code, "SESSION_COMPOSITION_BINDING_DRIFT")
+        self.assertEqual(hostile_calls, [])
+
+    def test_m34_handle_substitution_is_blocked_before_m56_construction(self):
+        root = BoundedInboundHttpSingleSessionCompositionRoot(
+            wire_adapter=_wire_adapter(), clock=_Clock(), port=PORT
+        )
+        hostile_calls = []
+
+        def hostile_handle(_self):
+            hostile_calls.append(True)
+            raise AssertionError("hostile M34 handle MUST NOT execute")
+
+        with patch.object(BoundedInboundHttpApplicationAdapter, "handle", property(hostile_handle)):
             with self.assertRaises(InboundHttpSingleSessionCompositionError) as caught:
                 root(_Constructor())
 
