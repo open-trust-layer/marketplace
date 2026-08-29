@@ -60,9 +60,11 @@ identity surfaces plus the retained M35-to-M34 object binding. This prevents a
 post-construction M34 class substitution from being selected while M56 is being
 built.
 
-The first executable helper invocation is preceded by an inline identity check
-of M57's own class snapshot and captured validation helpers. A poisoned private
-validator therefore fails closed before it can execute.
+The first executable helper invocation is preceded by inline identity checks
+for the captured M57 validation helpers. Only after those identities are proven
+does M57 invoke its already-captured trusted class-snapshot function to validate
+the reviewed M34/M35/M56/M55 class surfaces. A poisoned private validator or
+module snapshot helper therefore fails closed before it can execute.
 
 These checks cover concrete class/helper substitution paths under the reviewed
 HIGH threat model. They are not a claim of universal immunity from arbitrary
