@@ -64,10 +64,12 @@ construction graph, cleanup authority, release authority, and call path. The
 witness is checked by identity before trusted private helpers are invoked.
 Caller-defined equality is not used for capability or binding decisions.
 
-A factory instance is one-shot. The first call consumes its construction
-authority even when input or lower construction fails. A successful call
-releases M56's references after handing ownership to exact M43; a second call
-cannot create another graph.
+A factory instance is one-shot. Entry to the first call consumes its construction
+authority before binding/configuration validation. Every first-call exit releases
+M56's retained M34/M35, clock, construction-witness, and cleanup references in an
+unconditional terminal path, including early drift, invalid input, lower-layer
+construction failure, cleanup uncertainty, and successful handoff to exact M43.
+A second call cannot create another graph.
 
 This is concrete hardening against the reviewed substitution paths. It is not a
 claim that arbitrary hostile code sharing the same Python process can be fully

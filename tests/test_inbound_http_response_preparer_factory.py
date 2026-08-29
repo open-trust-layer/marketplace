@@ -96,6 +96,17 @@ class InboundHttpResponsePreparerCompositionFactoryTests(unittest.TestCase):
         self.assertIs(getattr(driver, "_clock"), clock)
         self.assertEqual(reader.calls, [])
         self.assertEqual(clock.calls, 0)
+        self.assertTrue(getattr(factory, "_used"))
+        for name in (
+            "_wire_adapter",
+            "_application_adapter",
+            "_wire_limits_object",
+            "_application_limits_object",
+            "_clock",
+            "_construction_graph",
+            "_binding_witness",
+        ):
+            self.assertIsNone(getattr(factory, name))
 
     def test_factory_is_one_shot(self):
         reader = _Reader()

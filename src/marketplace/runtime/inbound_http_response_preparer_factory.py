@@ -196,7 +196,6 @@ class BoundedInboundHttpResponsePreparerCompositionFactory:
             self._m43_close_function,
             BoundedInboundHttpResponsePreparerCompositionFactory._validate_construction_graph,
             BoundedInboundHttpResponsePreparerCompositionFactory._validate_retained_wire,
-            BoundedInboundHttpResponsePreparerCompositionFactory._release,
             BoundedInboundHttpResponsePreparerCompositionFactory._cleanup,
             BoundedInboundHttpResponsePreparerCompositionFactory.__call__,
         )
@@ -302,23 +301,6 @@ class BoundedInboundHttpResponsePreparerCompositionFactory:
         else:
             _fail("PREPARER_FACTORY_BINDING_DRIFT", "M56 retained M34 handle witness changed")
 
-    def _release(self) -> None:
-        self._wire_adapter = None
-        self._application_adapter = None
-        self._wire_limits_object = None
-        self._application_limits_object = None
-        self._wire_authority = None
-        self._wire_limits_snapshot = None
-        self._application_limits_snapshot = None
-        self._application_handle_witness = None
-        self._clock = None
-        self._construction_graph = None
-        self._class_snapshot_function = None
-        self._m39_close_function = None
-        self._m39_closed_getter = None
-        self._m43_close_function = None
-        self._binding_witness = None
-
     def _cleanup(
         self,
         *,
@@ -356,132 +338,142 @@ class BoundedInboundHttpResponsePreparerCompositionFactory:
                 "PREPARER_FACTORY_EXHAUSTED",
                 "M56 response preparer factory is one-shot",
             )
-
-        witness = self._binding_witness
-        if (
-            type(self) is not BoundedInboundHttpResponsePreparerCompositionFactory
-            or type(witness) is not tuple
-            or len(witness) != 20
-            or witness[0] != _BINDING_MARKER
-            or witness[1] is not self._wire_adapter
-            or witness[2] is not self._application_adapter
-            or witness[3] is not self._wire_limits_object
-            or witness[4] is not self._application_limits_object
-            or witness[5] != self._wire_authority
-            or witness[6] is not self._wire_limits_snapshot
-            or witness[7] is not self._application_limits_snapshot
-            or witness[8] is not self._application_handle_witness
-            or witness[9] is not self._clock
-            or witness[10] is not self._construction_graph
-            or witness[11] is not self._class_snapshot_function
-            or witness[12] is not self._m39_close_function
-            or witness[13] is not self._m39_closed_getter
-            or witness[14] is not self._m43_close_function
-        ):
-            _fail(
-                "PREPARER_FACTORY_BINDING_DRIFT",
-                "M56 factory binding witness changed",
-            )
-        validate_graph = witness[15]
-        validate_retained = witness[16]
-        release = witness[17]
-        cleanup = witness[18]
-        call_function = witness[19]
-        if (
-            validate_graph
-            is not BoundedInboundHttpResponsePreparerCompositionFactory._validate_construction_graph
-            or validate_retained
-            is not BoundedInboundHttpResponsePreparerCompositionFactory._validate_retained_wire
-            or release
-            is not BoundedInboundHttpResponsePreparerCompositionFactory._release
-            or cleanup
-            is not BoundedInboundHttpResponsePreparerCompositionFactory._cleanup
-            or call_function
-            is not BoundedInboundHttpResponsePreparerCompositionFactory.__call__
-        ):
-            _fail(
-                "PREPARER_FACTORY_BINDING_DRIFT",
-                "M56 factory helper graph changed",
-            )
-
-        validate_graph(self)
-        validate_retained(self)
-        self._used = True
-        wire_adapter = witness[1]
-        clock = witness[9]
-        session = None
-        preparer = None
-        stage = "M36"
-
-        if not callable(reader):
-            release(self)
-            _fail(
-                "PREPARER_FACTORY_READER_INVALID",
-                "M56 reader MUST be callable",
-            )
+        object.__setattr__(self, "_used", True)
 
         try:
-            stream = BoundedInboundHttpStreamAssembler(
-                wire_adapter=wire_adapter,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M37"
-            planner = BoundedInboundHttpReadPlanner(
-                stream_assembler=stream,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M38"
-            transitioner = BoundedInboundHttpReadTransitioner(
-                read_planner=planner,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M39"
-            session = BoundedInboundHttpReadSession(
-                read_transitioner=transitioner,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M40"
-            handler = BoundedInboundHttpReadOutcomeHandler(
-                read_session=session,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M41"
-            invoker = BoundedInboundHttpReadInvoker(
-                read_outcome_handler=handler,
-                reader=reader,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M42"
-            driver = BoundedInboundHttpReadDriver(
-                read_invoker=invoker,
-                clock=clock,
-            )
-            validate_graph(self)
-            validate_retained(self)
-            stage = "M43"
-            preparer = BoundedInboundHttpResponsePreparer(
-                read_driver=driver,
-            )
-            validate_graph(self)
-            validate_retained(self)
-        except InboundHttpResponsePreparerCompositionError:
-            cleanup(self, session=session, preparer=preparer)
-            release(self)
-            raise
-        except Exception:
-            cleanup(self, session=session, preparer=preparer)
-            release(self)
-            _fail(
-                "PREPARER_FACTORY_CONSTRUCTION_FAILED",
-                "M56 reviewed response-preparation graph construction failed",
-                stage=stage,
-            )
+            witness = self._binding_witness
+            if (
+                type(self) is not BoundedInboundHttpResponsePreparerCompositionFactory
+                or type(witness) is not tuple
+                or len(witness) != 19
+                or witness[0] != _BINDING_MARKER
+                or witness[1] is not self._wire_adapter
+                or witness[2] is not self._application_adapter
+                or witness[3] is not self._wire_limits_object
+                or witness[4] is not self._application_limits_object
+                or witness[5] != self._wire_authority
+                or witness[6] is not self._wire_limits_snapshot
+                or witness[7] is not self._application_limits_snapshot
+                or witness[8] is not self._application_handle_witness
+                or witness[9] is not self._clock
+                or witness[10] is not self._construction_graph
+                or witness[11] is not self._class_snapshot_function
+                or witness[12] is not self._m39_close_function
+                or witness[13] is not self._m39_closed_getter
+                or witness[14] is not self._m43_close_function
+            ):
+                _fail(
+                    "PREPARER_FACTORY_BINDING_DRIFT",
+                    "M56 factory binding witness changed",
+                )
+            validate_graph = witness[15]
+            validate_retained = witness[16]
+            cleanup = witness[17]
+            call_function = witness[18]
+            if (
+                validate_graph
+                is not BoundedInboundHttpResponsePreparerCompositionFactory._validate_construction_graph
+                or validate_retained
+                is not BoundedInboundHttpResponsePreparerCompositionFactory._validate_retained_wire
+                or cleanup
+                is not BoundedInboundHttpResponsePreparerCompositionFactory._cleanup
+                or call_function
+                is not BoundedInboundHttpResponsePreparerCompositionFactory.__call__
+            ):
+                _fail(
+                    "PREPARER_FACTORY_BINDING_DRIFT",
+                    "M56 factory helper graph changed",
+                )
 
-        release(self)
-        return preparer
+            validate_graph(self)
+            validate_retained(self)
+            wire_adapter = witness[1]
+            clock = witness[9]
+            session = None
+            preparer = None
+            stage = "M36"
+
+            if not callable(reader):
+                _fail(
+                    "PREPARER_FACTORY_READER_INVALID",
+                    "M56 reader MUST be callable",
+                )
+
+            try:
+                stream = BoundedInboundHttpStreamAssembler(
+                    wire_adapter=wire_adapter,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M37"
+                planner = BoundedInboundHttpReadPlanner(
+                    stream_assembler=stream,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M38"
+                transitioner = BoundedInboundHttpReadTransitioner(
+                    read_planner=planner,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M39"
+                session = BoundedInboundHttpReadSession(
+                    read_transitioner=transitioner,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M40"
+                handler = BoundedInboundHttpReadOutcomeHandler(
+                    read_session=session,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M41"
+                invoker = BoundedInboundHttpReadInvoker(
+                    read_outcome_handler=handler,
+                    reader=reader,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M42"
+                driver = BoundedInboundHttpReadDriver(
+                    read_invoker=invoker,
+                    clock=clock,
+                )
+                validate_graph(self)
+                validate_retained(self)
+                stage = "M43"
+                preparer = BoundedInboundHttpResponsePreparer(
+                    read_driver=driver,
+                )
+                validate_graph(self)
+                validate_retained(self)
+            except InboundHttpResponsePreparerCompositionError:
+                cleanup(self, session=session, preparer=preparer)
+                raise
+            except Exception:
+                cleanup(self, session=session, preparer=preparer)
+                _fail(
+                    "PREPARER_FACTORY_CONSTRUCTION_FAILED",
+                    "M56 reviewed response-preparation graph construction failed",
+                    stage=stage,
+                )
+
+            return preparer
+        finally:
+            object.__setattr__(self, "_wire_adapter", None)
+            object.__setattr__(self, "_application_adapter", None)
+            object.__setattr__(self, "_wire_limits_object", None)
+            object.__setattr__(self, "_application_limits_object", None)
+            object.__setattr__(self, "_wire_authority", None)
+            object.__setattr__(self, "_wire_limits_snapshot", None)
+            object.__setattr__(self, "_application_limits_snapshot", None)
+            object.__setattr__(self, "_application_handle_witness", None)
+            object.__setattr__(self, "_clock", None)
+            object.__setattr__(self, "_construction_graph", None)
+            object.__setattr__(self, "_class_snapshot_function", None)
+            object.__setattr__(self, "_m39_close_function", None)
+            object.__setattr__(self, "_m39_closed_getter", None)
+            object.__setattr__(self, "_m43_close_function", None)
+            object.__setattr__(self, "_binding_witness", None)
