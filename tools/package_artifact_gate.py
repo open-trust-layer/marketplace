@@ -50,6 +50,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/inbound_http_response_preparer_factory.py",
     "marketplace/runtime/inbound_http_single_session_composition.py",
     "marketplace/runtime/inbound_http_end_to_end_composition.py",
+    "marketplace/runtime/inbound_http_execution_gate.py",
     "marketplace/runtime/inbound_tcp_listener.py",
     "marketplace/runtime/inbound_tcp_socket_factory.py",
     "marketplace/reference/__init__.py",

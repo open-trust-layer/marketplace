@@ -182,6 +182,12 @@ from .inbound_http_end_to_end_composition import (
     BoundedInboundHttpEndToEndSourceCompositionRoot,
     InboundHttpEndToEndSourceCompositionError,
 )
+from .inbound_http_execution_gate import (
+    LOOPBACK_EXECUTION_OPT_IN,
+    BoundedInboundHttpLoopbackExecutionGate,
+    InboundHttpLoopbackExecutionGateError,
+    InboundHttpLoopbackReadiness,
+)
 from .inbound_http_response_write_driver import (
     DEFAULT_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_TIMEOUT_SECONDS,
     DEFAULT_MAX_INBOUND_HTTP_RESPONSE_WRITE_DRIVER_STEPS,
@@ -362,6 +368,7 @@ __all__ = [
     "BoundedInboundHttpSingleSessionOrchestrator",
     "BoundedInboundHttpSingleSessionCompositionRoot",
     "BoundedInboundHttpEndToEndSourceCompositionRoot",
+    "BoundedInboundHttpLoopbackExecutionGate",
     "BoundedPythonTcpSocketFactory",
     "BoundedInboundRecordResponder",
     "BoundedRecordSource",
@@ -456,6 +463,9 @@ __all__ = [
     "InboundHttpSingleSessionOrchestratorError",
     "InboundHttpSingleSessionCompositionError",
     "InboundHttpEndToEndSourceCompositionError",
+    "InboundHttpLoopbackExecutionGateError",
+    "InboundHttpLoopbackReadiness",
+    "LOOPBACK_EXECUTION_OPT_IN",
     "InboundTcpListenerCapability",
     "InboundTcpListenerConstructionError",
     "InboundTcpListenerFactory",
