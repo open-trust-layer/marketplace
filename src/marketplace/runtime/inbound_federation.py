@@ -206,6 +206,65 @@ class PreparedInboundFederationResponse:
             object.__setattr__(self, "integrity_snapshot", current)
 
 
+_M60_BINDING_MARKER = "inbound-federation-responder-binding-v1"
+_M60_HELPER_NAMES = (
+    "_validate_transport_envelope",
+    "_validate_exchange_request",
+    "_scope_fingerprint",
+    "_negotiate_capabilities",
+    "_evaluate_exchange_page",
+    "_validate_exchange_result",
+    "_make_transport_envelope",
+    "_validate_record",
+    "_record_identity_text",
+    "_authorize_disclosure",
+    "_page_source",
+)
+_M60_METHOD_NAMES = (
+    "_validate_envelope_result",
+    "_scope_fingerprint_value",
+    "_normalize_request",
+    "_require_local_capabilities",
+    "_canonical_records",
+    "_validate_page_evaluation",
+    "_validate_result_normalization",
+    "_validate_bindings",
+    "_guarded_helper",
+    "prepare_response",
+)
+
+
+def _callable_binding(value: object, *, label: str) -> tuple[object, type, object]:
+    if not callable(value):
+        raise TypeError(f"{label} MUST be callable")
+    value_type = type(value)
+    try:
+        call_function = type.__getattribute__(value_type, "__call__")
+    except Exception as exc:
+        raise TypeError(f"{label} callable binding cannot be inspected") from exc
+    if not callable(call_function):
+        raise TypeError(f"{label} callable binding is invalid")
+    return (value, value_type, call_function)
+
+
+def _profile_configuration_snapshot(
+    profiles: dict[str, FederationOperationProfile],
+) -> tuple[tuple[str, str, str, int], ...]:
+    values: list[tuple[str, str, str, int]] = []
+    for operation, profile in profiles.items():
+        if type(operation) is not str or type(profile) is not FederationOperationProfile:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 operation profile mapping changed")
+        if any(
+            type(value) is not str or not value
+            for value in (profile.operation, profile.request_message_type, profile.result_message_type)
+        ):
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 operation profile fields changed type")
+        if profile.operation != operation:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 operation profile key changed")
+        values.append((operation, profile.request_message_type, profile.result_message_type, id(profile)))
+    return tuple(sorted(values, key=lambda item: item[0].encode("utf-8")))
+
+
 class BoundedInboundFederationResponder:
     """Prepare exactly one locally authorized M8 response without transmitting it."""
 
@@ -238,9 +297,32 @@ class BoundedInboundFederationResponder:
         for profile in operation_profiles:
             if type(profile) is not FederationOperationProfile:
                 raise ValueError("operation_profiles MUST contain exact FederationOperationProfile values")
+            if any(
+                type(value) is not str or not value
+                for value in (profile.operation, profile.request_message_type, profile.result_message_type)
+            ):
+                raise ValueError("operation_profiles MUST contain exact non-empty text fields")
             if profile.operation in profiles:
                 raise ValueError(f"duplicate inbound federation operation profile {profile.operation!r}")
             profiles[profile.operation] = profile
+
+        helper_values = (
+            ("_validate_transport_envelope", validate_transport_envelope),
+            ("_validate_exchange_request", validate_exchange_request),
+            ("_scope_fingerprint", scope_fingerprint),
+            ("_negotiate_capabilities", negotiate_capabilities),
+            ("_evaluate_exchange_page", evaluate_exchange_page),
+            ("_validate_exchange_result", validate_exchange_result),
+            ("_make_transport_envelope", make_transport_envelope),
+            ("_validate_record", validate_record),
+            ("_record_identity_text", record_identity_text),
+            ("_authorize_disclosure", authorize_disclosure),
+            ("_page_source", page_source),
+        )
+        helper_bindings = tuple(
+            (name, *_callable_binding(value, label=name))
+            for name, value in helper_values
+        )
 
         try:
             detached_advertisement = detach_host_value(capability_advertisement)
@@ -274,6 +356,7 @@ class BoundedInboundFederationResponder:
         self._scope_fingerprint = scope_fingerprint
         self._negotiate_capabilities = negotiate_capabilities
         self._capability_advertisement = detached_advertisement
+        self._advertised_page_limit = advertised_page_limit
         self._advertised_cursor_limit = advertised_cursor_limit
         self._evaluate_exchange_page = evaluate_exchange_page
         self._validate_exchange_result = validate_exchange_result
@@ -284,6 +367,177 @@ class BoundedInboundFederationResponder:
         self._page_source = page_source
         self._profiles = profiles
         self._max_page_records = max_page_records
+        self._helper_bindings = helper_bindings
+        self._profile_snapshot_function = _profile_configuration_snapshot
+        self._profile_snapshot = self._profile_snapshot_function(profiles)
+        self._capability_advertisement_snapshot = host_value_integrity_snapshot(
+            detached_advertisement
+        )
+        responder_class = BoundedInboundFederationResponder
+        self._method_graph = tuple(
+            (name, type.__getattribute__(responder_class, name))
+            for name in _M60_METHOD_NAMES
+        )
+        self._validate_bindings_function = responder_class._validate_bindings
+        self._guarded_helper_function = responder_class._guarded_helper
+        self._binding_witness = (
+            _M60_BINDING_MARKER,
+            self._local_source,
+            self._profiles,
+            self._profile_snapshot,
+            self._capability_advertisement,
+            self._capability_advertisement_snapshot,
+            self._advertised_page_limit,
+            self._advertised_cursor_limit,
+            self._max_page_records,
+            self._helper_bindings,
+            self._method_graph,
+            self._validate_bindings_function,
+            self._guarded_helper_function,
+            self._profile_snapshot_function,
+        )
+        self._validate_bindings_function(self)
+
+    def _validate_bindings(self) -> None:
+        try:
+            witness = object.__getattribute__(self, "_binding_witness")
+            helper_bindings = object.__getattribute__(self, "_helper_bindings")
+            method_graph = object.__getattribute__(self, "_method_graph")
+            validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+            guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+            profile_snapshot_function = object.__getattribute__(self, "_profile_snapshot_function")
+            binding_marker = _M60_BINDING_MARKER
+            helper_names = _M60_HELPER_NAMES
+            method_names = _M60_METHOD_NAMES
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained binding state is unavailable")
+        if (
+            type(binding_marker) is not str
+            or type(helper_names) is not tuple
+            or len(helper_names) != 11
+            or not all(type(name) is str for name in helper_names)
+            or type(method_names) is not tuple
+            or len(method_names) != 10
+            or not all(type(name) is str for name in method_names)
+        ):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 binding authority tables changed")
+        if (
+            type(self) is not BoundedInboundFederationResponder
+            or type(witness) is not tuple
+            or len(witness) != 14
+            or type(witness[0]) is not str
+            or witness[0] != binding_marker
+            or type(witness[6]) is not int
+            or type(witness[7]) is not int
+            or type(witness[8]) is not int
+            or witness[9] is not helper_bindings
+            or witness[10] is not method_graph
+            or witness[11] is not validate_bindings
+            or witness[12] is not guarded_helper
+            or witness[13] is not profile_snapshot_function
+            or validate_bindings is not BoundedInboundFederationResponder._validate_bindings
+            or guarded_helper is not BoundedInboundFederationResponder._guarded_helper
+            or profile_snapshot_function is not _profile_configuration_snapshot
+        ):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained binding witness changed")
+
+        state = object.__getattribute__(self, "__dict__")
+        if type(state) is not dict or any(type(key) is not str for key in state):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 instance state shape changed")
+        if type(method_graph) is not tuple or len(method_graph) != len(method_names):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper graph witness changed")
+        for expected_name, entry in zip(method_names, method_graph):
+            if (
+                type(entry) is not tuple
+                or len(entry) != 2
+                or type(entry[0]) is not str
+                or entry[0] != expected_name
+                or expected_name in state
+            ):
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper graph changed")
+            try:
+                current_function = type.__getattribute__(BoundedInboundFederationResponder, expected_name)
+            except Exception:
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper graph is unavailable")
+            if current_function is not entry[1]:
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper graph changed")
+
+        if type(helper_bindings) is not tuple or len(helper_bindings) != len(helper_names):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained helper witness changed")
+        for expected_name, binding in zip(helper_names, helper_bindings):
+            if (
+                type(binding) is not tuple
+                or len(binding) != 4
+                or type(binding[0]) is not str
+                or binding[0] != expected_name
+            ):
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained helper witness changed")
+            current = object.__getattribute__(self, expected_name)
+            if current is not binding[1] or type(current) is not binding[2]:
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained helper binding changed")
+            try:
+                current_call = type.__getattribute__(binding[2], "__call__")
+            except Exception:
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained helper call graph is unavailable")
+            if current_call is not binding[3]:
+                _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 retained helper call graph changed")
+
+        local_source = object.__getattribute__(self, "_local_source")
+        profiles = object.__getattribute__(self, "_profiles")
+        profile_snapshot = object.__getattribute__(self, "_profile_snapshot")
+        advertisement = object.__getattribute__(self, "_capability_advertisement")
+        advertisement_snapshot = object.__getattribute__(self, "_capability_advertisement_snapshot")
+        advertised_page_limit = object.__getattribute__(self, "_advertised_page_limit")
+        advertised_cursor_limit = object.__getattribute__(self, "_advertised_cursor_limit")
+        max_page_records = object.__getattribute__(self, "_max_page_records")
+        if (
+            type(local_source) is not str
+            or witness[1] is not local_source
+            or type(profiles) is not dict
+            or witness[2] is not profiles
+            or witness[3] is not profile_snapshot
+            or witness[4] is not advertisement
+            or witness[5] is not advertisement_snapshot
+            or type(advertised_page_limit) is not int
+            or type(advertised_cursor_limit) is not int
+            or type(max_page_records) is not int
+            or witness[6] != advertised_page_limit
+            or witness[7] != advertised_cursor_limit
+            or witness[8] != max_page_records
+        ):
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained configuration binding changed")
+        if not 1 <= max_page_records <= advertised_page_limit <= MAX_INBOUND_PAGE_RECORDS:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained page limits changed")
+        if not 1 <= advertised_cursor_limit <= MAX_INBOUND_CURSOR_BYTES:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained cursor limit changed")
+        try:
+            current_profiles = profile_snapshot_function(profiles)
+            current_advertisement = host_value_integrity_snapshot(advertisement)
+        except InboundFederationError:
+            raise
+        except PreparedExchangeIntegrityError:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained configuration is unsafe")
+        except Exception:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained configuration cannot be verified")
+        if current_profiles != profile_snapshot or current_advertisement != advertisement_snapshot:
+            _fail("INBOUND_FEDERATION_CONFIGURATION_DRIFT", "M32 retained configuration changed")
+
+    def _guarded_helper(self, name: str) -> object:
+        if type(name) is not str:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper selection is invalid")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        try:
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_validate_bindings = class_state["_validate_bindings"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 binding validator is unavailable")
+        if validate_bindings is not expected_validate_bindings:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 binding validator changed")
+        validate_bindings(self)
+        helper_names = _M60_HELPER_NAMES
+        if name not in helper_names:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper selection is invalid")
+        return object.__getattribute__(self, name)
 
     @property
     def local_source(self) -> str:
@@ -326,10 +580,22 @@ class BoundedInboundFederationResponder:
         return result
 
     def _scope_fingerprint_value(self, scope: Any, *, code: str, label: str) -> str:
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
         try:
-            fingerprint = self._scope_fingerprint(scope)
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_guarded_helper = class_state["_guarded_helper"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 guarded-helper authority is unavailable")
+        if guarded_helper is not expected_guarded_helper:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 guarded-helper authority changed")
+        scope_fingerprint = guarded_helper(self, "_scope_fingerprint")
+        try:
+            fingerprint = scope_fingerprint(scope)
         except Exception as exc:
+            validate_bindings(self)
             _fail(code, f"{label} fingerprint failed: {type(exc).__name__}")
+        validate_bindings(self)
         if type(fingerprint) is not str or not fingerprint:
             _fail(code, f"{label} fingerprint provider MUST return non-empty exact text")
         return fingerprint
@@ -341,15 +607,21 @@ class BoundedInboundFederationResponder:
         profile: FederationOperationProfile,
     ) -> InboundFederationRequestContext:
         raw_scope = payload.get("scope")
-        raw_scope_fingerprint = self._scope_fingerprint_value(
+        raw_scope_fingerprint = BoundedInboundFederationResponder._scope_fingerprint_value(
+            self,
             raw_scope,
             code="RAW_SCOPE_FINGERPRINT_FAILED",
             label="raw request scope",
         )
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        validate_exchange_request = guarded_helper(self, "_validate_exchange_request")
         try:
-            normalized = self._validate_exchange_request(payload)
+            normalized = validate_exchange_request(payload)
         except Exception as exc:
+            validate_bindings(self)
             _fail("REQUEST_VALIDATION_FAILED", f"M8 request validation failed: {type(exc).__name__}")
+        validate_bindings(self)
         expected_keys = {
             "version",
             "source",
@@ -374,7 +646,8 @@ class BoundedInboundFederationResponder:
         if source != self._local_source:
             _fail("REQUEST_SOURCE_MISMATCH", "inbound request source does not match the configured local source")
 
-        normalized_scope_fingerprint = self._scope_fingerprint_value(
+        normalized_scope_fingerprint = BoundedInboundFederationResponder._scope_fingerprint_value(
+            self,
             normalized["scope"],
             code="NORMALIZED_SCOPE_FINGERPRINT_FAILED",
             label="normalized request scope",
@@ -446,13 +719,19 @@ class BoundedInboundFederationResponder:
             _fail("INVALID_REQUEST_CONTEXT", f"cannot construct immutable request context: {type(exc).__name__}")
 
     def _require_local_capabilities(self, context: InboundFederationRequestContext) -> None:
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        negotiate_capabilities = guarded_helper(self, "_negotiate_capabilities")
+        advertisement = object.__getattribute__(self, "_capability_advertisement")
         try:
-            result = self._negotiate_capabilities(
-                self._capability_advertisement,
+            result = negotiate_capabilities(
+                advertisement,
                 context.required_capabilities,
             )
         except Exception as exc:
+            validate_bindings(self)
             _fail("CAPABILITY_NEGOTIATION_FAILED", f"M8 capability negotiation failed: {type(exc).__name__}")
+        validate_bindings(self)
         expected_keys = {
             "status",
             "required_capabilities",
@@ -475,16 +754,24 @@ class BoundedInboundFederationResponder:
             _fail("REQUIRED_CAPABILITY_UNAVAILABLE", "required inbound federation capabilities are not locally available")
 
     def _canonical_records(self, records: tuple[Any, ...]) -> tuple[tuple[Any, ...], tuple[str, ...]]:
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
         by_identity: dict[str, Any] = {}
         for record in records:
+            validate_record = guarded_helper(self, "_validate_record")
             try:
-                self._validate_record(record)
+                validate_record(record)
             except Exception as exc:
+                validate_bindings(self)
                 _fail("INVALID_PAGE_RECORD", f"selected Record failed validation: {type(exc).__name__}")
+            validate_bindings(self)
+            record_identity = guarded_helper(self, "_record_identity_text")
             try:
-                record_id = self._record_identity_text(record)
+                record_id = record_identity(record)
             except Exception as exc:
+                validate_bindings(self)
                 _fail("RECORD_IDENTITY_FAILED", f"selected Record identity failed: {type(exc).__name__}")
+            validate_bindings(self)
             if type(record_id) is not str or not record_id:
                 _fail("INVALID_RECORD_IDENTITY_RESULT", "Record identity provider MUST return non-empty exact text")
             if record_id in by_identity:
@@ -594,6 +881,20 @@ class BoundedInboundFederationResponder:
         operation: str,
     ) -> PreparedInboundFederationResponse:
         """Prepare one authorized-but-unsent response page and stop."""
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        try:
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_validate_bindings = class_state["_validate_bindings"]
+            expected_guarded_helper = class_state["_guarded_helper"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 execution guard is unavailable")
+        if (
+            validate_bindings is not expected_validate_bindings
+            or guarded_helper is not expected_guarded_helper
+        ):
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 execution guard changed")
+        validate_bindings(self)
         if type(operation) is not str or not operation:
             _fail("INVALID_OPERATION_SELECTION", "operation selection MUST be non-empty exact text")
         profile = self._profiles.get(operation)
@@ -605,14 +906,18 @@ class BoundedInboundFederationResponder:
         if not isinstance(detached_envelope, (tuple, list)) or len(detached_envelope) != 4:
             _fail("INVALID_REQUEST_ENVELOPE", "request envelope MUST contain exactly four elements")
 
+        validate_transport_envelope = guarded_helper(self, "_validate_transport_envelope")
         try:
-            envelope_result = self._validate_transport_envelope(
+            envelope_result = validate_transport_envelope(
                 detached_envelope,
                 profile.request_message_type,
             )
         except Exception as exc:
+            validate_bindings(self)
             _fail("REQUEST_ENVELOPE_VALIDATION_FAILED", f"M8 envelope validation failed: {type(exc).__name__}")
-        validated_envelope = self._validate_envelope_result(
+        validate_bindings(self)
+        validated_envelope = BoundedInboundFederationResponder._validate_envelope_result(
+            self,
             envelope_result,
             expected_message_type=profile.request_message_type,
             expected_payload=detached_envelope[3],
@@ -624,22 +929,28 @@ class BoundedInboundFederationResponder:
         )
         if not isinstance(payload, Mapping):
             _fail("INVALID_FEDERATION_REQUEST_PAYLOAD", "request payload MUST be a mapping")
-        context = self._normalize_request(payload, profile=profile)
-        self._require_local_capabilities(context)
+        context = BoundedInboundFederationResponder._normalize_request(self, payload, profile=profile)
+        BoundedInboundFederationResponder._require_local_capabilities(self, context)
 
+        authorize_disclosure = guarded_helper(self, "_authorize_disclosure")
         try:
-            disclosure_decision = self._authorize_disclosure(context)
+            disclosure_decision = authorize_disclosure(context)
         except Exception as exc:
+            validate_bindings(self)
             _fail("DISCLOSURE_AUTHORIZER_FAILED", f"local disclosure authorizer failed: {type(exc).__name__}")
+        validate_bindings(self)
         if type(disclosure_decision) is not bool:
             _fail("INVALID_DISCLOSURE_AUTHORIZER_RESULT", "local disclosure authorizer MUST return exact boolean")
         if disclosure_decision is not True:
             _fail("DISCLOSURE_DENIED", "local disclosure policy denied the inbound request")
 
+        page_source = guarded_helper(self, "_page_source")
         try:
-            material = self._page_source(context)
+            material = page_source(context)
         except Exception as exc:
+            validate_bindings(self)
             _fail("PAGE_SOURCE_FAILED", f"inbound page source failed: {type(exc).__name__}")
+        validate_bindings(self)
         if type(material) is not InboundFederationPageMaterial:
             _fail("INVALID_PAGE_SOURCE_RESULT", "page source MUST return exact InboundFederationPageMaterial")
         if type(material.records) is not tuple:
@@ -661,9 +972,12 @@ class BoundedInboundFederationResponder:
         elif material.next_cursor is not None:
             _fail("INVALID_PAGE_CURSOR", "final response MUST NOT contain a next cursor")
 
-        canonical_records, record_ids = self._canonical_records(material.records)
+        canonical_records, record_ids = BoundedInboundFederationResponder._canonical_records(
+            self, material.records
+        )
+        evaluate_exchange_page = guarded_helper(self, "_evaluate_exchange_page")
         try:
-            page_evaluation = self._evaluate_exchange_page(
+            page_evaluation = evaluate_exchange_page(
                 canonical_records,
                 source=context.source,
                 operation=context.operation,
@@ -674,8 +988,11 @@ class BoundedInboundFederationResponder:
                 max_records=context.page_size,
             )
         except Exception as exc:
+            validate_bindings(self)
             _fail("PAGE_EVALUATION_FAILED", f"M8 page evaluation failed: {type(exc).__name__}")
-        self._validate_page_evaluation(
+        validate_bindings(self)
+        BoundedInboundFederationResponder._validate_page_evaluation(
+            self,
             page_evaluation,
             context=context,
             material=material,
@@ -685,7 +1002,9 @@ class BoundedInboundFederationResponder:
         # The evaluator is an injected helper that sees Record objects. Re-run
         # validation/identity afterward so helper-side mutation cannot silently
         # change the selected Record set after the IDs were bound.
-        _, post_evaluation_ids = self._canonical_records(canonical_records)
+        _, post_evaluation_ids = BoundedInboundFederationResponder._canonical_records(
+            self, canonical_records
+        )
         if post_evaluation_ids != record_ids:
             _fail("PAGE_RECORD_MUTATION_DETECTED", "selected Records changed during page evaluation")
 
@@ -707,11 +1026,15 @@ class BoundedInboundFederationResponder:
         )
         payload_snapshot = host_value_integrity_snapshot(detached_payload)
 
+        validate_exchange_result = guarded_helper(self, "_validate_exchange_result")
         try:
-            normalized_result = self._validate_exchange_result(detached_payload)
+            normalized_result = validate_exchange_result(detached_payload)
         except Exception as exc:
+            validate_bindings(self)
             _fail("RESULT_VALIDATION_FAILED", f"M8 result validation failed: {type(exc).__name__}")
-        self._validate_result_normalization(
+        validate_bindings(self)
+        BoundedInboundFederationResponder._validate_result_normalization(
+            self,
             normalized_result,
             context=context,
             material=material,
@@ -720,13 +1043,16 @@ class BoundedInboundFederationResponder:
         if host_value_integrity_snapshot(detached_payload) != payload_snapshot:
             _fail("RESULT_VALIDATOR_MUTATED_PAYLOAD", "result validator mutated the detached response payload")
 
+        make_transport_envelope = guarded_helper(self, "_make_transport_envelope")
         try:
-            envelope_value = self._make_transport_envelope(
+            envelope_value = make_transport_envelope(
                 profile.result_message_type,
                 detached_payload,
             )
         except Exception as exc:
+            validate_bindings(self)
             _fail("RESPONSE_ENVELOPE_CREATION_FAILED", f"M8 envelope creation failed: {type(exc).__name__}")
+        validate_bindings(self)
         if host_value_integrity_snapshot(detached_payload) != payload_snapshot:
             _fail("ENVELOPE_MAKER_MUTATED_PAYLOAD", "envelope maker mutated the detached response payload")
         if type(envelope_value) not in (tuple, list) or len(envelope_value) != 4:
@@ -747,14 +1073,18 @@ class BoundedInboundFederationResponder:
         if host_value_integrity_snapshot(response_envelope[3]) != payload_snapshot:
             _fail("RESPONSE_ENVELOPE_PAYLOAD_DRIFT", "response envelope payload differs from validated result")
 
+        validate_transport_envelope = guarded_helper(self, "_validate_transport_envelope")
         try:
-            response_validation = self._validate_transport_envelope(
+            response_validation = validate_transport_envelope(
                 response_envelope,
                 profile.result_message_type,
             )
         except Exception as exc:
+            validate_bindings(self)
             _fail("RESPONSE_ENVELOPE_VALIDATION_FAILED", f"M8 response envelope validation failed: {type(exc).__name__}")
-        self._validate_envelope_result(
+        validate_bindings(self)
+        BoundedInboundFederationResponder._validate_envelope_result(
+            self,
             response_validation,
             expected_message_type=profile.result_message_type,
             expected_payload=detached_payload,
