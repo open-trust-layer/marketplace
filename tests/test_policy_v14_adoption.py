@@ -28,8 +28,11 @@ class PolicyV14AdoptionTests(unittest.TestCase):
         self.assertIn("## 16. CI, build, and test acceleration without gate reduction", policy)
         self.assertIn("KEEP | REVISE | REVERT", policy)
         self.assertIn("Caching is a performance mechanism, not a trust mechanism", policy)
-        self.assertIn("required quality/security/integration/governance/conformance gates", policy)
-        self.assertIn("MUST NOT", policy)
+        self.assertIn(
+            "Required quality/security/integration/governance/conformance gates are not renamed, removed, skipped, bypassed, weakened, or short-circuited merely to reduce CI duration.",
+            policy,
+        )
+        self.assertIn("CI optimization MUST NOT:", policy)
 
     def test_pr_template_requires_material_optimization_evidence(self):
         template = _read(".github/pull_request_template.md")
