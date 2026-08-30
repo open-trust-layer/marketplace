@@ -339,5 +339,38 @@ class InboundFederationM60RetainedBindingTests(unittest.TestCase):
                 inbound_federation_module._profile_configuration_snapshot = original
         self.assertEqual(touched, [])
 
+    def test_module_responder_class_poisoning_fails_before_attribute_execution(self):
+        service = _service()
+        touched = []
+        original = getattr(inbound_federation_module, "BoundedInboundFederationResponder")
+
+        class HostileClassBinding:
+            def __getattr__(self, name):
+                touched.append(name)
+                raise AssertionError("poisoned responder class binding MUST NOT execute")
+
+        inbound_federation_module.BoundedInboundFederationResponder = HostileClassBinding()
+        try:
+            _assert_binding_drift(self, service)
+        finally:
+            inbound_federation_module.BoundedInboundFederationResponder = original
+        self.assertEqual(touched, [])
+
+    def test_private_binding_validator_poisoning_is_blocked_before_execution(self):
+        service = _service()
+        hostile = _HostileEqualityCallable()
+        service._validate_bindings_function = hostile
+        _assert_binding_drift(self, service)
+        self.assertEqual(hostile.calls, 0)
+        self.assertEqual(hostile.equalities, 0)
+
+    def test_private_guarded_helper_poisoning_is_blocked_before_execution(self):
+        service = _service()
+        hostile = _HostileEqualityCallable()
+        service._guarded_helper_function = hostile
+        _assert_binding_drift(self, service)
+        self.assertEqual(hostile.calls, 0)
+        self.assertEqual(hostile.equalities, 0)
+
 if __name__ == "__main__":
     unittest.main()
