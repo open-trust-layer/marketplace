@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 import ast
 import inspect
 import pathlib
@@ -23,6 +23,8 @@ from test_inbound_http_end_to_end_composition import AUTHORITY, _root
 from test_inbound_http_hardening import FakeSource, record, record_responder
 from test_inbound_http_single_session import _Constructor, _Listener
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+class _OptInSubclass(str):
+    pass
 SOURCE = ROOT / "src/marketplace/runtime/inbound_http_execution_gate.py"
 def _execution_fixture():
     served = record()
@@ -65,7 +67,7 @@ class InboundHttpLoopbackExecutionGateTests(unittest.TestCase):
         self.assertTrue(gate.closed)
         self.assertTrue(getattr(root, "_used"))
     def test_missing_or_malformed_opt_in_fails_before_composition(self):
-        for value in (None, "", "execute", str.__new__(str, LOOPBACK_EXECUTION_OPT_IN)):
+        for value in (None, "", "execute", _OptInSubclass(LOOPBACK_EXECUTION_OPT_IN)):
             with self.subTest(value=value):
                 root = _root()
                 gate = BoundedInboundHttpLoopbackExecutionGate(source_composition_root=root)
