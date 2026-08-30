@@ -160,6 +160,14 @@ class InboundRecordM61RetainedBindingTests(unittest.TestCase):
         self.assert_binding_drift(lambda: subject.prepare(requested_record_identity=RECORD_ID))
         self.assertEqual(calls, [])
 
+    def test_private_validate_bindings_function_poisoning_never_executes(self):
+        subject = responder()
+        calls: list[str] = []
+        subject._validate_bindings_function = lambda value: calls.append("hostile")
+
+        self.assert_binding_drift(lambda: subject.prepare(requested_record_identity=RECORD_ID))
+        self.assertEqual(calls, [])
+
     def test_hostile_equality_is_never_invoked_during_binding_validation(self):
         calls: list[str] = []
 
