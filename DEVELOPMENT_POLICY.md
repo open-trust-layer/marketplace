@@ -1,10 +1,10 @@
 # Marketplace Development Policy
 
-**Status:** Project engineering policy  
-**Applies to:** repository development, coding agents, maintainers, CI, conformance tooling, future runtime code, adapters, deployment work, and project governance  
-**Policy basis:** portable provisions adapted from Coding Agent Development Principles v1.4  
-**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`  
-**Adoption record:** `docs/POLICY_V1_4_ADOPTION.md`  
+**Status:** Project engineering policy
+**Applies to:** repository development, coding agents, maintainers, CI, conformance tooling, future runtime code, adapters, deployment work, and project governance
+**Policy basis:** portable provisions adapted from Coding Agent Development Principles v1.4
+**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`
+**Adoption record:** `docs/POLICY_V1_4_ADOPTION.md`
 **Semantic authority:** `PRINCIPLES.md` remains authoritative for Marketplace protocol/semantic constraints
 
 This policy governs **how Marketplace is developed**. It does not redefine Marketplace protocol semantics and MUST NOT weaken `PRINCIPLES.md`, the numbered Marketplace specifications, or applicable Open Layer Protocol requirements.

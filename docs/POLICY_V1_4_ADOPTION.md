@@ -1,10 +1,10 @@
 # Coding Agent Development Principles v1.4 — Marketplace Adoption Record
 
-**Status:** Project policy provenance and adaptation record  
-**Adopted source:** `CODING_AGENT_DEVELOPMENT_PRINCIPLES_SYSTEM_PROMPT_v1.4.md`  
-**Source revision:** 2026-08-30 — evidence-driven performance and optimization engineering  
-**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`  
-**Marketplace adoption issue:** #131  
+**Status:** Project policy provenance and adaptation record
+**Adopted source:** `CODING_AGENT_DEVELOPMENT_PRINCIPLES_SYSTEM_PROMPT_v1.4.md`
+**Source revision:** 2026-08-30 — evidence-driven performance and optimization engineering
+**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`
+**Marketplace adoption issue:** #131
 **Base at adoption:** `1880b75c073aa7524036ed7d7fe4951734fc7686`
 
 This document records how Coding Agent Development Principles v1.4 is adopted by Open Layer Marketplace. It is intentionally an **adaptation record**, not a verbatim replacement for Marketplace policy.
