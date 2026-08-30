@@ -1,4 +1,4 @@
-﻿# Bounded Inbound Federation Retained-Binding Hardening
+# Bounded Inbound Federation Retained-Binding Hardening
 
 ## Status
 
@@ -63,6 +63,15 @@ The hardened path revalidates retained bindings after callbacks that can mutate
 the responder before selecting a later helper. In particular, an authorized
 callback cannot replace the page source for the same request, and a result
 validator cannot replace the envelope maker for the same response.
+
+A later HIGH self-review regression is preserved at exact test-only commit
+`bc28e0b5aab3781bf9c92edc5b58b02e313a0e7e`. It proves that replacing the
+module-global responder class with a hostile attribute provider could otherwise
+execute attacker code before the retained validator ran. The final guard reads
+reviewed validator/helper functions from the actual instance type before the
+first validation, so poisoning the module class binding fails without invoking
+its attribute machinery. Private validator/helper replacement controls remain
+fail-closed without executing the replacement.
 
 ## Authority boundary
 

@@ -526,7 +526,12 @@ class BoundedInboundFederationResponder:
         if type(name) is not str:
             _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 helper selection is invalid")
         validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
-        if validate_bindings is not BoundedInboundFederationResponder._validate_bindings:
+        try:
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_validate_bindings = class_state["_validate_bindings"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 binding validator is unavailable")
+        if validate_bindings is not expected_validate_bindings:
             _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 binding validator changed")
         validate_bindings(self)
         helper_names = _M60_HELPER_NAMES
@@ -577,7 +582,12 @@ class BoundedInboundFederationResponder:
     def _scope_fingerprint_value(self, scope: Any, *, code: str, label: str) -> str:
         guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
         validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
-        if guarded_helper is not BoundedInboundFederationResponder._guarded_helper:
+        try:
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_guarded_helper = class_state["_guarded_helper"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 guarded-helper authority is unavailable")
+        if guarded_helper is not expected_guarded_helper:
             _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 guarded-helper authority changed")
         scope_fingerprint = guarded_helper(self, "_scope_fingerprint")
         try:
@@ -873,9 +883,15 @@ class BoundedInboundFederationResponder:
         """Prepare one authorized-but-unsent response page and stop."""
         validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
         guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        try:
+            class_state = type.__getattribute__(type(self), "__dict__")
+            expected_validate_bindings = class_state["_validate_bindings"]
+            expected_guarded_helper = class_state["_guarded_helper"]
+        except Exception:
+            _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 execution guard is unavailable")
         if (
-            validate_bindings is not BoundedInboundFederationResponder._validate_bindings
-            or guarded_helper is not BoundedInboundFederationResponder._guarded_helper
+            validate_bindings is not expected_validate_bindings
+            or guarded_helper is not expected_guarded_helper
         ):
             _fail("INBOUND_FEDERATION_BINDING_DRIFT", "M32 execution guard changed")
         validate_bindings(self)
