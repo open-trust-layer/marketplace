@@ -1,8 +1,8 @@
 # Coding Agent Instructions — Open Layer Marketplace
 
-**Development-method baseline:** Coding Agent Development Principles v1.4 (portable Marketplace adoption)  
-**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`  
-**Adopted:** 2026-08-30  
+**Development-method baseline:** Coding Agent Development Principles v1.4 (portable Marketplace adoption)
+**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`
+**Adopted:** 2026-08-30
 **Adaptation record:** `docs/POLICY_V1_4_ADOPTION.md`
 
 This repository adopts the portable v1.4 engineering method for coding-agent work. The adoption is project-scoped and does not import data, credentials, memory, permissions, repository settings, or project-specific authority from another project.
