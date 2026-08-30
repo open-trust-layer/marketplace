@@ -173,6 +173,48 @@ class PreparedInboundRecordResponse:
             object.__setattr__(self, "integrity_snapshot", current)
 
 
+_M61_BINDING_MARKER = "inbound-record-responder-binding-v1"
+_M61_HELPER_NAMES = (
+    "_authorize_disclosure",
+    "_validate_record",
+    "_record_identity",
+    "_prepare_payload",
+    "_make_record_envelope",
+    "_verify_record_envelope",
+)
+_M61_METHOD_NAMES = (
+    "_validate_bindings",
+    "_guarded_helper",
+    "_guarded_record_get",
+    "_validate_local_record",
+    "prepare",
+)
+
+
+def _callable_binding(value: object, *, label: str) -> tuple[object, type, object]:
+    if not callable(value):
+        raise TypeError(f"{label} MUST be callable")
+    value_type = type(value)
+    try:
+        call_function = type.__getattribute__(value_type, "__call__")
+    except Exception as exc:
+        raise TypeError(f"{label} callable binding cannot be inspected") from exc
+    if not callable(call_function):
+        raise TypeError(f"{label} callable binding is invalid")
+    return (value, value_type, call_function)
+
+
+def _record_source_binding(value: object) -> tuple[object, type, object]:
+    value_type = type(value)
+    try:
+        get_function = type.__getattribute__(value_type, "get")
+    except Exception as exc:
+        raise TypeError("record_source MUST provide inspectable get(record_id)") from exc
+    if not callable(get_function):
+        raise TypeError("record_source MUST provide callable get(record_id)")
+    return (value, value_type, get_function)
+
+
 class BoundedInboundRecordResponder:
     """Prepare one locally authorized immutable Record response and stop."""
 
@@ -189,18 +231,19 @@ class BoundedInboundRecordResponder:
         verify_record_envelope: RecordTransportEnvelopeVerifier,
     ) -> None:
         self._local_source = _local_source(local_source)
-        if not callable(getattr(record_source, "get", None)):
-            raise TypeError("record_source MUST provide callable get(record_id)")
-        for name, helper in (
-            ("authorize_disclosure", authorize_disclosure),
-            ("validate_record", validate_record),
-            ("record_identity", record_identity),
-            ("prepare_payload", prepare_payload),
-            ("make_record_envelope", make_record_envelope),
-            ("verify_record_envelope", verify_record_envelope),
-        ):
-            if not callable(helper):
-                raise TypeError(f"{name} MUST be callable")
+        record_source_binding = _record_source_binding(record_source)
+        helper_values = (
+            ("_authorize_disclosure", authorize_disclosure),
+            ("_validate_record", validate_record),
+            ("_record_identity", record_identity),
+            ("_prepare_payload", prepare_payload),
+            ("_make_record_envelope", make_record_envelope),
+            ("_verify_record_envelope", verify_record_envelope),
+        )
+        helper_bindings = tuple(
+            (name, *_callable_binding(value, label=name)) for name, value in helper_values
+        )
+
         self._record_source = record_source
         self._authorize_disclosure = authorize_disclosure
         self._validate_record = validate_record
@@ -208,21 +251,165 @@ class BoundedInboundRecordResponder:
         self._prepare_payload = prepare_payload
         self._make_record_envelope = make_record_envelope
         self._verify_record_envelope = verify_record_envelope
+        self._record_source_binding = record_source_binding
+        self._helper_bindings = helper_bindings
+        responder_class = BoundedInboundRecordResponder
+        self._method_graph = tuple(
+            (name, type.__getattribute__(responder_class, name)) for name in _M61_METHOD_NAMES
+        )
+        self._validate_bindings_function = responder_class._validate_bindings
+        self._guarded_helper_function = responder_class._guarded_helper
+        self._guarded_record_get_function = responder_class._guarded_record_get
+        self._binding_witness = (
+            _M61_BINDING_MARKER,
+            self._local_source,
+            self._record_source_binding,
+            self._helper_bindings,
+            self._method_graph,
+            self._validate_bindings_function,
+            self._guarded_helper_function,
+            self._guarded_record_get_function,
+        )
+        self._validate_bindings_function(self)
+
+    def _validate_bindings(self) -> None:
+        try:
+            witness = object.__getattribute__(self, "_binding_witness")
+            source_binding = object.__getattribute__(self, "_record_source_binding")
+            helper_bindings = object.__getattribute__(self, "_helper_bindings")
+            method_graph = object.__getattribute__(self, "_method_graph")
+            validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+            guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+            guarded_record_get = object.__getattribute__(self, "_guarded_record_get_function")
+            binding_marker = _M61_BINDING_MARKER
+            helper_names = _M61_HELPER_NAMES
+            method_names = _M61_METHOD_NAMES
+        except Exception:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained binding state is unavailable")
+        if (
+            type(binding_marker) is not str
+            or type(helper_names) is not tuple
+            or len(helper_names) != 6
+            or not all(type(name) is str for name in helper_names)
+            or type(method_names) is not tuple
+            or len(method_names) != 5
+            or not all(type(name) is str for name in method_names)
+        ):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 binding authority tables changed")
+        if (
+            type(self) is not BoundedInboundRecordResponder
+            or type(witness) is not tuple
+            or len(witness) != 8
+            or type(witness[0]) is not str
+            or witness[0] != binding_marker
+            or witness[2] is not source_binding
+            or witness[3] is not helper_bindings
+            or witness[4] is not method_graph
+            or witness[5] is not validate_bindings
+            or witness[6] is not guarded_helper
+            or witness[7] is not guarded_record_get
+            or validate_bindings is not BoundedInboundRecordResponder._validate_bindings
+            or guarded_helper is not BoundedInboundRecordResponder._guarded_helper
+            or guarded_record_get is not BoundedInboundRecordResponder._guarded_record_get
+        ):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained binding witness changed")
+
+        state = object.__getattribute__(self, "__dict__")
+        if type(state) is not dict or any(type(key) is not str for key in state):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 instance state shape changed")
+        if type(method_graph) is not tuple or len(method_graph) != len(method_names):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper graph witness changed")
+        for expected_name, entry in zip(method_names, method_graph):
+            if (
+                type(entry) is not tuple
+                or len(entry) != 2
+                or type(entry[0]) is not str
+                or entry[0] != expected_name
+                or expected_name in state
+            ):
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper graph changed")
+            try:
+                current_function = type.__getattribute__(BoundedInboundRecordResponder, expected_name)
+            except Exception:
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper graph is unavailable")
+            if current_function is not entry[1]:
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper graph changed")
+
+        if type(helper_bindings) is not tuple or len(helper_bindings) != len(helper_names):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained helper witness changed")
+        for expected_name, binding in zip(helper_names, helper_bindings):
+            if (
+                type(binding) is not tuple
+                or len(binding) != 4
+                or type(binding[0]) is not str
+                or binding[0] != expected_name
+            ):
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained helper witness changed")
+            current = object.__getattribute__(self, expected_name)
+            if current is not binding[1] or type(current) is not binding[2]:
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained helper binding changed")
+            try:
+                current_call = type.__getattribute__(binding[2], "__call__")
+            except Exception:
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained helper call graph is unavailable")
+            if current_call is not binding[3]:
+                _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained helper call graph changed")
+
+        if type(source_binding) is not tuple or len(source_binding) != 3:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 Record source witness changed")
+        source = object.__getattribute__(self, "_record_source")
+        if source is not source_binding[0] or type(source) is not source_binding[1]:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 retained Record source changed")
+        try:
+            current_get = type.__getattribute__(source_binding[1], "get")
+        except Exception:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 Record source get binding is unavailable")
+        if current_get is not source_binding[2]:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 Record source get binding changed")
+
+        local_source = object.__getattribute__(self, "_local_source")
+        if type(local_source) is not str or witness[1] is not local_source:
+            _fail("INBOUND_RECORD_CONFIGURATION_DRIFT", "M33 retained local source changed")
+
+    def _guarded_helper(self, name: str) -> object:
+        if type(name) is not str:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper selection is invalid")
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        if validate_bindings is not type.__getattribute__(type(self), "_validate_bindings"):
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 binding validator changed")
+        validate_bindings(self)
+        if name not in _M61_HELPER_NAMES:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 helper selection is invalid")
+        return object.__getattribute__(self, name)
+
+    def _guarded_record_get(self) -> tuple[object, object]:
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        validate_bindings(self)
+        binding = object.__getattribute__(self, "_record_source_binding")
+        return binding[0], binding[2]
 
     def _validate_local_record(self, record: Any, expected: str, *, phase: str) -> None:
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        validate_record = guarded_helper(self, "_validate_record")
         try:
-            self._validate_record(record)
+            validate_record(record)
         except Exception as exc:
+            validate_bindings(self)
             code = getattr(exc, "code", None)
             suffix = f": {code}" if type(code) is str else ""
             _fail("INVALID_LOCAL_RECORD", f"local Record failed Marketplace validation during {phase}{suffix}")
+        validate_bindings(self)
+        record_identity = guarded_helper(self, "_record_identity")
         try:
-            derived = self._record_identity(record)
+            derived = record_identity(record)
         except Exception as exc:
+            validate_bindings(self)
             _fail(
                 "RECORD_IDENTITY_DERIVATION_FAILED",
                 f"local Record identity derivation failed during {phase}: {type(exc).__name__}",
             )
+        validate_bindings(self)
         if type(derived) is not str:
             _fail("INVALID_IDENTITY_PROVIDER_RESULT", "Record identity provider MUST return exact text")
         derived = _canonical_record_identity(derived)
@@ -233,44 +420,60 @@ class BoundedInboundRecordResponder:
             )
 
     def prepare(self, *, requested_record_identity: str) -> PreparedInboundRecordResponse:
+        validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
+        guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
+        guarded_record_get = object.__getattribute__(self, "_guarded_record_get_function")
+        validate_bindings(self)
         expected = _canonical_record_identity(requested_record_identity)
         context = InboundRecordRequestContext(
-            local_source=self._local_source,
+            local_source=object.__getattribute__(self, "_local_source"),
             requested_record_identity=expected,
         )
 
+        authorize_disclosure = guarded_helper(self, "_authorize_disclosure")
         try:
-            decision = self._authorize_disclosure(context)
+            decision = authorize_disclosure(context)
         except Exception as exc:
+            validate_bindings(self)
             _fail(
                 "DISCLOSURE_AUTHORIZATION_FAILED",
                 f"local Record disclosure authorizer failed: {type(exc).__name__}",
             )
+        validate_bindings(self)
         if type(decision) is not bool:
             _fail("INVALID_DISCLOSURE_DECISION", "Record disclosure decision MUST be exact boolean")
         if decision is not True:
             _fail("DISCLOSURE_DENIED", "local policy denied immutable Record disclosure")
 
+        record_source, record_get = guarded_record_get(self)
         try:
-            record = self._record_source.get(expected)
+            record = record_get(record_source, expected)
         except Exception as exc:
+            validate_bindings(self)
             _fail("RECORD_SOURCE_FAILED", f"exact local Record source failed: {type(exc).__name__}")
+        validate_bindings(self)
         if record is None:
             _fail(
                 "LOCAL_RECORD_NOT_FOUND",
                 "requested Record is not currently available in the local source; global existence is unknown",
             )
 
-        self._validate_local_record(record, expected, phase="preparation-start")
+        validate_bindings(self)
+        validate_local_record = type.__getattribute__(type(self), "_validate_local_record")
+        validate_local_record(self, record, expected, phase="preparation-start")
 
+        prepare_payload_helper = guarded_helper(self, "_prepare_payload")
         try:
-            payload_value = self._prepare_payload(record, expected_record_identity=expected)
+            payload_value = prepare_payload_helper(record, expected_record_identity=expected)
         except Exception as exc:
+            validate_bindings(self)
             code = getattr(exc, "code", None)
             suffix = f": {code}" if type(code) is str else ""
             _fail("RECORD_PAYLOAD_PREPARATION_FAILED", f"Record payload preparation failed{suffix}")
+        validate_bindings(self)
 
-        self._validate_local_record(record, expected, phase="post-payload-preparation")
+        validate_local_record = type.__getattribute__(type(self), "_validate_local_record")
+        validate_local_record(self, record, expected, phase="post-payload-preparation")
 
         detached_payload = _detach(
             payload_value,
@@ -283,12 +486,15 @@ class BoundedInboundRecordResponder:
             _fail("INVALID_RECORD_PAYLOAD", "prepared Record payload keys MUST be exact text")
         payload_snapshot = host_value_integrity_snapshot(detached_payload)
 
+        make_record_envelope_helper = guarded_helper(self, "_make_record_envelope")
         try:
-            envelope_value = self._make_record_envelope(detached_payload)
+            envelope_value = make_record_envelope_helper(detached_payload)
         except Exception as exc:
+            validate_bindings(self)
             code = getattr(exc, "code", None)
             suffix = f": {code}" if type(code) is str else ""
             _fail("RECORD_ENVELOPE_PREPARATION_FAILED", f"Record envelope preparation failed{suffix}")
+        validate_bindings(self)
         if host_value_integrity_snapshot(detached_payload) != payload_snapshot:
             _fail("RECORD_PAYLOAD_MUTATED", "Record envelope maker mutated prepared payload")
 
@@ -310,15 +516,18 @@ class BoundedInboundRecordResponder:
             _fail("RECORD_ENVELOPE_PAYLOAD_DRIFT", "prepared Record envelope changed the validated payload")
 
         envelope_snapshot = host_value_integrity_snapshot(detached_envelope)
+        verify_record_envelope_helper = guarded_helper(self, "_verify_record_envelope")
         try:
-            verification = self._verify_record_envelope(
+            verification = verify_record_envelope_helper(
                 detached_envelope,
                 expected_record_identity=expected,
             )
         except Exception as exc:
+            validate_bindings(self)
             code = getattr(exc, "code", None)
             suffix = f": {code}" if type(code) is str else ""
             _fail("RECORD_ENVELOPE_VERIFICATION_FAILED", f"prepared Record envelope verification failed{suffix}")
+        validate_bindings(self)
         if host_value_integrity_snapshot(detached_envelope) != envelope_snapshot:
             _fail("RECORD_ENVELOPE_MUTATED", "Record envelope verifier mutated prepared envelope")
         if not isinstance(verification, Mapping):
