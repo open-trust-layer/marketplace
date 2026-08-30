@@ -207,6 +207,44 @@ class InboundRecordM61RetainedBindingTests(unittest.TestCase):
             inbound_record_module.BoundedInboundRecordResponder = original
         self.assertEqual(calls, [])
 
+    def test_local_source_rebinding_is_configuration_drift(self):
+        subject = responder()
+        subject._local_source = "urn:example:source:changed"
+        with self.assertRaises(InboundRecordError) as raised:
+            subject.prepare(requested_record_identity=RECORD_ID)
+        self.assertEqual(raised.exception.code, "INBOUND_RECORD_CONFIGURATION_DRIFT")
+
+    def test_binding_witness_marker_poisoning_never_executes_equality(self):
+        calls: list[str] = []
+
+        class EqualityTrap:
+            def __eq__(self, other: object) -> bool:
+                calls.append("eq")
+                raise AssertionError("caller equality executed")
+
+        subject = responder()
+        witness = list(subject._binding_witness)
+        witness[0] = EqualityTrap()
+        subject._binding_witness = tuple(witness)
+        self.assert_binding_drift(lambda: subject.prepare(requested_record_identity=RECORD_ID))
+        self.assertEqual(calls, [])
+
+    def test_module_helper_name_table_poisoning_never_executes_equality(self):
+        calls: list[str] = []
+        original = inbound_record_module._M61_HELPER_NAMES
+
+        class EqualityTrap:
+            def __eq__(self, other: object) -> bool:
+                calls.append("eq")
+                raise AssertionError("caller equality executed")
+
+        try:
+            inbound_record_module._M61_HELPER_NAMES = (EqualityTrap(), *original[1:])
+            self.assert_binding_drift(lambda: responder().prepare(requested_record_identity=RECORD_ID))
+        finally:
+            inbound_record_module._M61_HELPER_NAMES = original
+        self.assertEqual(calls, [])
+
     def test_valid_existing_behavior_still_prepares_one_unsent_record(self):
         subject = responder()
         prepared = subject.prepare(requested_record_identity=RECORD_ID)

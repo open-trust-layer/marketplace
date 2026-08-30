@@ -423,6 +423,12 @@ class BoundedInboundRecordResponder:
         validate_bindings = object.__getattribute__(self, "_validate_bindings_function")
         guarded_helper = object.__getattribute__(self, "_guarded_helper_function")
         guarded_record_get = object.__getattribute__(self, "_guarded_record_get_function")
+        try:
+            expected_validate_bindings = type.__getattribute__(type(self), "_validate_bindings")
+        except Exception:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 binding validator is unavailable")
+        if validate_bindings is not expected_validate_bindings:
+            _fail("INBOUND_RECORD_BINDING_DRIFT", "M33 binding validator changed")
         validate_bindings(self)
         expected = _canonical_record_identity(requested_record_identity)
         context = InboundRecordRequestContext(
