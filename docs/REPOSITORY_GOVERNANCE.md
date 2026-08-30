@@ -23,15 +23,17 @@ The desired remote policy for `main` is:
 
 The exact GitHub ruleset/check identifiers MUST be discovered from the provider before configuration. Do not substitute an assumed check name.
 
+Performance or CI pressure never authorizes reducing these controls or renaming/skipping required checks to evade them.
+
 ## 2. Repository governance-as-code
 
 The repository contains:
 
 - `.github/CODEOWNERS` for sensitive paths;
-- `.github/pull_request_template.md` for risk/capability/retention/security review;
+- `.github/pull_request_template.md` for risk/capability/retention/security and performance-evidence review;
 - `.github/workflows/conformance.yml` for provider-neutral acceptance invocation;
 - `tools/repository_audit.py` and `tools/conformance_gate.py` for local/CI acceptance;
-- `DEVELOPMENT_POLICY.md` and `docs/RETENTION_POLICY.md` for engineering policy.
+- `DEVELOPMENT_POLICY.md`, `docs/POLICY_V1_4_ADOPTION.md`, and `docs/RETENTION_POLICY.md` for engineering policy/provenance/retention.
 
 These controls are reviewable source artifacts. They do **not** equal GitHub branch protection.
 
@@ -48,6 +50,7 @@ The following paths are policy/security-sensitive and SHOULD receive explicit ow
 ```text
 PRINCIPLES.md
 DEVELOPMENT_POLICY.md
+docs/POLICY_V1_4_ADOPTION.md
 docs/RETENTION_POLICY.md
 docs/REPOSITORY_GOVERNANCE.md
 .github/**
@@ -61,7 +64,7 @@ conformance/olp-source-pin.txt
 specification/**
 ```
 
-Authorization, secret-management, retention, deployment, network, persistence, and protected-side-effect execution paths are security-sensitive even when not named individually above.
+Authorization, secret-management, retention, deployment, network, persistence, optimization fast paths/caches, and protected-side-effect execution paths are security-sensitive even when not named individually above.
 
 ## 5. Pull-request evidence
 
@@ -79,6 +82,21 @@ Each meaningful PR SHOULD state:
 - conformance/vector impact;
 - unresolved provider/external controls;
 - rollback/recovery notes for HIGH/CRITICAL changes.
+
+For a material performance/resource claim or optimization-sensitive change, the PR SHOULD also state:
+
+- user/business/operational problem and critical path;
+- target metric and budget/success condition;
+- representative baseline;
+- profiling or bottleneck evidence;
+- optimization hypothesis;
+- candidate measurement under equivalent conditions or documented limitations;
+- tail latency/saturation and CPU/memory/allocation/I/O/network/queue/external-service effects where relevant;
+- cache/batching/concurrency/backpressure/invalidation/retention effects where relevant;
+- variance/noise limitations;
+- final `KEEP`, `REVISE`, or `REVERT` decision.
+
+A material optimization claim MUST NOT be accepted solely because functional CI is green. Performance evidence and correctness/security evidence are distinct.
 
 The PR template encodes these prompts.
 
@@ -105,6 +123,8 @@ After emergency use:
 3. open follow-up review/audit work;
 4. document why ordinary PR controls were insufficient; and
 5. remove the exception when its condition ends.
+
+Performance targets or CI duration are not, by themselves, sufficient reasons for an emergency governance bypass.
 
 ## 7. Solo-maintainer review procedure
 
@@ -191,16 +211,17 @@ Before merge under this procedure:
 1. the PR MUST be open, review-ready, and mergeable;
 2. the exact accepted head SHA MUST be recorded;
 3. the complete applicable Marketplace acceptance/conformance gate MUST be green for that exact candidate, or for the exact GitHub synthetic merge candidate formed from that head and unchanged base with the relation recorded;
-4. all applicable deterministic unit, adversarial/security, repository-audit, reproducible-artifact, package-smoke, vector, generator-replay, and whitespace checks MUST be green;
+4. all applicable deterministic unit, adversarial/security, repository-audit, reproducible-artifact, package-smoke, vector, generator-replay, whitespace, and stable performance-regression checks MUST be green;
 5. there MUST be no unresolved review threads;
 6. the PR MUST explicitly state that automated acceptance and maintainer self-review are not independent human review;
 7. known material security, privacy, retention, project-isolation, or governance defects MUST be absent or separately tracked with a fail-closed scope that does not invalidate the change;
 8. HIGH changes MUST include exact rollback/recovery notes and blast-radius/side-effect analysis;
-9. merge MUST use an exact-head guard (`expected_head_sha` or provider-equivalent) so a moving head cannot be substituted;
-10. the resulting merged `main` commit MUST independently pass the applicable push acceptance workflow before the milestone/change is declared complete;
-11. provider-side branch/ruleset enforcement claims MUST remain separate and independently verified.
+9. material performance/resource claims MUST include evidence adequate to the claim and MUST NOT rely on weakened or non-equivalent acceptance conditions;
+10. merge MUST use an exact-head guard (`expected_head_sha` or provider-equivalent) so a moving head cannot be substituted;
+11. the resulting merged `main` commit MUST independently pass the applicable push acceptance workflow before the milestone/change is declared complete;
+12. provider-side branch/ruleset enforcement claims MUST remain separate and independently verified.
 
-A green CI result does not convert this procedure into independent review.
+A green CI result does not convert this procedure into independent review, and a faster CI result does not authorize gate reduction.
 
 ### 7.5 No self-approval fiction
 
@@ -235,6 +256,7 @@ issue/scope
 -> dedicated branch
 -> smallest coherent implementation
 -> focused tests
+-> performance baseline/evidence when applicable
 -> repository audit
 -> full conformance gate when applicable
 -> PR with objective evidence
@@ -242,6 +264,8 @@ issue/scope
 -> exact-head guarded merge
 -> verify merged-main CI
 ```
+
+For performance-sensitive work, measurement should occur before and after the smallest safe candidate under equivalent conditions. Do not make the first implementation more complex merely to produce an impressive benchmark.
 
 Policy/security changes SHOULD use the same workflow even when they are documentation-heavy because they can alter future authority and operational behavior.
 
@@ -259,3 +283,5 @@ The following statements require provider-side verification before use:
 - branch deletion is disabled.
 
 Desired configuration and verified active configuration are separate facts.
+
+Performance, reproducibility, cache integrity, benchmark equivalence, and CI-acceleration claims likewise require evidence appropriate to those claims; desired behavior and verified behavior are separate facts.

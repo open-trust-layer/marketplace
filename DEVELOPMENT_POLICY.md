@@ -2,12 +2,14 @@
 
 **Status:** Project engineering policy
 **Applies to:** repository development, coding agents, maintainers, CI, conformance tooling, future runtime code, adapters, deployment work, and project governance
-**Policy basis:** portable provisions adapted from Coding Agent Development Principles v1.3
+**Policy basis:** portable provisions adapted from Coding Agent Development Principles v1.4
+**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`
+**Adoption record:** `docs/POLICY_V1_4_ADOPTION.md`
 **Semantic authority:** `PRINCIPLES.md` remains authoritative for Marketplace protocol/semantic constraints
 
 This policy governs **how Marketplace is developed**. It does not redefine Marketplace protocol semantics and MUST NOT weaken `PRINCIPLES.md`, the numbered Marketplace specifications, or applicable Open Layer Protocol requirements.
 
-Repository-specific controls from another project are not imported as facts. In particular, controls described specifically for `ai-automation-department` are treated as source examples unless Marketplace explicitly adopts an equivalent rule here.
+Repository-specific controls from another project are not imported as facts. Source-handbook statements specific to `ai-automation-department` or companion files absent from Marketplace are treated as source examples/history unless Marketplace explicitly adopts an equivalent rule here.
 
 ## 1. SAFETY FIRST
 
@@ -23,7 +25,7 @@ safety / security / privacy / legal obligations
 -> performance and convenience
 ```
 
-A material security control MUST NOT be weakened merely to make a test pass, silence an error, preserve unsafe compatibility, simplify implementation, or ship faster.
+A material security control MUST NOT be weakened merely to make a test pass, silence an error, preserve unsafe compatibility, simplify implementation, ship faster, or make a benchmark/CI result look better.
 
 Known material security, privacy, project-isolation, unauthorized-retention, or governance defects prevent a change from being declared complete unless an explicit authorized, scoped, owned, expiring exception exists.
 
@@ -34,7 +36,7 @@ Marketplace development MUST preserve two independent boundary sets:
 1. **Marketplace semantic boundaries** in `PRINCIPLES.md` and the specifications; and
 2. **engineering safety boundaries** in this policy.
 
-Project-scoped files, credentials, messages, prompts/responses, logs, caches, tool state, indexes, derived data, generated artifacts, and retained context MUST NOT cross into another project by default.
+Project-scoped files, credentials, messages, prompts/responses, logs, caches, tool state, indexes, benchmark/profile data, derived data, generated artifacts, and retained context MUST NOT cross into another project by default.
 
 An authorized cross-project flow MUST identify source, destination, purpose, minimum necessary data, required capabilities, retention, and access controls.
 
@@ -43,19 +45,21 @@ An authorized cross-project flow MUST identify source, destination, purpose, min
 The following invariants apply to current tooling and future runtime code:
 
 1. Unauthorized input cannot trigger protected side effects.
-2. Secrets do not enter source control, logs, messages, telemetry, crash output, screenshots, diagnostics, vectors, or test fixtures.
+2. Secrets do not enter source control, logs, messages, telemetry, crash output, screenshots, diagnostics, vectors, test fixtures, benchmark inputs, or profile output.
 3. Ephemeral project content does not outlive its retention deadline without an authorized exception or hold.
 4. Untrusted input cannot directly become executable code, shell commands, queries, paths, templates, or network destinations without safe construction and validation.
-5. TLS certificate and hostname verification are not disabled for convenience.
+5. TLS certificate and hostname verification are not disabled for convenience or performance.
 6. Privileged or destructive targets are re-verified immediately before execution.
 7. Security failures fail closed where authorization or protected side effects are involved.
-8. Dependencies do not gain trust merely because they are convenient.
+8. Dependencies do not gain trust merely because they are convenient or fast.
 9. Green tests do not override a known material security defect.
-10. Deletion, encryption, isolation, authorization, CI, or branch-protection guarantees are never claimed without verification.
+10. Deletion, encryption, isolation, authorization, CI, branch-protection, reproducibility, or performance guarantees are never claimed without appropriate verification.
 11. Content-bearing logs do not silently inherit metadata-only long retention.
 12. Repository policy files do not prove provider-side branch/ruleset enforcement.
+13. Optimization, caching, precomputation, batching, concurrency, or fast paths do not bypass authentication, authorization, capability checks, validation, project isolation, provenance, retention, or destructive-target re-verification.
+14. Required quality/security/integration/governance/conformance gates are not renamed, removed, skipped, bypassed, weakened, or short-circuited merely to reduce CI duration.
 
-Where practical, invariants SHOULD be encoded as tests, guards, types, validators, or architecture constraints.
+Where practical, invariants SHOULD be encoded as tests, guards, types, validators, architecture constraints, or controlled regression checks.
 
 ## 4. Capability model and least privilege
 
@@ -82,7 +86,7 @@ The default is deny-by-default. Each task MUST identify the minimum capabilities
 Meaningful mutations MUST be classified honestly:
 
 - **LOW** — read-only inspection; documentation/test work with no security effect.
-- **MODERATE** — dependency changes, external network reads, broad refactors, non-production configuration, or security/governance documentation changes.
+- **MODERATE** — dependency changes, external network reads, broad refactors, non-production configuration, performance-sensitive implementation, or security/governance documentation changes.
 - **HIGH** — deployments, data deletion, schema migration, credential changes, or privileged external side effects.
 - **CRITICAL** — destructive production operations, protected-branch force push, disabling material security controls, irreversible infrastructure changes, broad credential revocation/rotation, or high-risk retention exceptions.
 
@@ -145,27 +149,31 @@ M11 remains authoritative for Marketplace protected-operation authorization sema
 
 External and repository-derived inputs MUST be treated as untrusted until validated at the appropriate boundary.
 
-Use bounded collection sizes, explicit timeouts, concurrency limits, quotas, safe path handling, parameterized queries/builders, subprocess argument arrays instead of shell interpolation, SSRF defenses for user-controlled URLs, and non-code-executing deserializers.
+Use bounded collection sizes, explicit timeouts, concurrency limits, quotas, queue limits, safe path handling, parameterized queries/builders, subprocess argument arrays instead of shell interpolation, SSRF defenses for user-controlled URLs, and non-code-executing deserializers.
 
-Do not add arbitrary shell, filesystem, network, package-installation, deployment, secret, or administrative flexibility merely because it is easy to expose.
+Do not add arbitrary shell, filesystem, network, package-installation, deployment, secret, administrative, or concurrency flexibility merely because it is easy to expose.
+
+When producers can outrun consumers, use bounded queues, backpressure, admission control, or explicit shedding rather than unbounded buffering.
 
 ## 9. Secrets and dependencies
 
 Secrets MUST NOT be hard-coded or printed to prove they exist. Prefer scoped short-lived credentials and managed secret injection.
 
-A new dependency is executable trust. Admission requires a concrete need and review of maintenance, provenance/publisher, transitive footprint, vulnerabilities, permissions/install scripts, license/policy fit, and safer alternatives. Reproducible resolution and official registries are preferred.
+A new dependency, benchmark tool, profiler, native extension, or build accelerator is executable trust. Admission requires a concrete need and review of maintenance, provenance/publisher, transitive footprint, vulnerabilities, permissions/install scripts, license/policy fit, portability, and safer alternatives. Reproducible resolution and official registries are preferred.
 
 Unreviewed remote scripts MUST NOT be piped directly to a shell.
 
 ## 10. Retention and data minimization
 
-Every project-scoped file, message, prompt/response, tool payload/result, cache, trace, telemetry item, temporary artifact, and log MUST have a retention class defined by `docs/RETENTION_POLICY.md`.
+Every project-scoped file, message, prompt/response, tool payload/result, cache, trace, telemetry item, benchmark/profile sample, temporary artifact, and log MUST have a retention class defined by `docs/RETENTION_POLICY.md`.
 
 The default maximum post-use retention for `EPHEMERAL` content is **10 seconds**.
 
-Durable repository source, specifications, tests, approved documentation, reviewed configuration, and accepted conformance artifacts are `DURABLE_PROJECT_ARTIFACT` by intent. Persistence by accident does not make content durable.
+Durable repository source, specifications, tests, approved documentation, reviewed configuration, accepted conformance artifacts, and approved aggregate benchmark evidence are `DURABLE_PROJECT_ARTIFACT` by intent. Persistence by accident does not make content durable.
 
-Current Marketplace is a specification/conformance repository and does not yet provide a production conversation/message runtime. Future runtime/reference-node milestones MUST implement automatic retention/expiry behavior before content-bearing transient storage is accepted.
+Benchmark/profile evidence MUST NOT become a reason to retain sensitive project payloads longer than their authorized class. Prefer aggregate metadata over raw content.
+
+Current Marketplace is primarily a specification/conformance/runtime-source repository and does not authorize production content persistence merely because runtime code exists. Future content-bearing runtime/deployment milestones MUST implement and verify applicable automatic retention/expiry behavior before durable operation is accepted.
 
 ## 11. Logging, diagnostics, provenance, and metrics
 
@@ -176,6 +184,8 @@ Useful audit metadata includes correlation ID, operation, pseudonymous actor/tar
 Diagnostics MUST distinguish fact, inference, confidence, and unknown conditions and MUST NOT overclaim.
 
 Security-sensitive build/release artifacts SHOULD use checksums, signatures, attestations, or equivalent provenance where supported.
+
+Performance metrics SHOULD derive from an explicit component/service objective. Metric labels MUST remain low-cardinality and MUST NOT contain sensitive project content. Observability overhead on critical paths SHOULD be measured and bounded where material, but required safety/audit visibility MUST NOT be removed merely for speed.
 
 ## 12. Testing and acceptance
 
@@ -191,28 +201,185 @@ python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 
 A semantic increment is not complete unless all applicable registered conformance vectors remain green and deterministic generator replay succeeds.
 
-Green tests are necessary but not sufficient: known material security defects still block completion.
+Green functional tests are necessary but not sufficient: they do not override known material security defects and they do not, by themselves, prove an optimization claim.
 
-## 13. Development method
+## 13. Evidence-driven optimization
+
+Optimization is governed by the same safety, correctness, privacy, retention, project-isolation, provenance, authorization, and recoverability requirements as any other change.
+
+For a material performance-sensitive change, when safe and practical:
+
+1. identify the user/business/operational problem and the relevant critical path;
+2. define the target metric and explicit success condition or budget;
+3. establish a representative baseline;
+4. profile or otherwise identify the demonstrated bottleneck;
+5. state a concrete optimization hypothesis;
+6. make the smallest safe change;
+7. repeat equivalent measurements;
+8. inspect correctness, security, tail latency, throughput/saturation, CPU, memory/allocation, I/O, queueing, external-service usage, and failure behavior where relevant;
+9. verify all required invariants and gates; and
+10. record `KEEP`, `REVISE`, or `REVERT` based on evidence.
+
+Use this governing sequence:
+
+```text
+measure -> identify -> hypothesize -> change -> measure again -> verify invariants -> KEEP | REVISE | REVERT
+```
+
+Do not claim `faster`, `lighter`, `more efficient`, `higher throughput`, or equivalent material improvements from intuition alone when measurement is practical.
+
+Baseline and candidate measurements MUST represent equivalent workloads/environments for the claim being made, or the limitation MUST be stated explicitly. A single favorable run is not sufficient evidence for a durable material claim.
+
+Latency-sensitive paths SHOULD consider distribution/percentiles and saturation rather than averages alone.
+
+## 14. Optimization priority and resource design
+
+Prefer optimization in roughly this order:
+
+```text
+1. remove unnecessary work
+2. remove duplicate work
+3. improve algorithm/data structure/data access
+4. reduce copying/parsing/serialization/data movement
+5. reduce unnecessary filesystem/database/network round trips
+6. batch/coalesce compatible work with explicit bounds
+7. cache safe reusable results with explicit invalidation and retention
+8. reuse expensive initialized resources safely
+9. precompute stable immutable work
+10. add bounded concurrency/parallelism with backpressure
+11. reduce allocation/object churn and memory pressure
+12. apply runtime/interpreter/compiler-specific optimization
+13. add native/specialized acceleration only when evidence justifies its extra risk and maintenance cost
+```
+
+The absence of a measurable or operationally justified problem is normally a reason to preserve simpler code.
+
+### 14.1 Caching and reusable state
+
+Caching is a performance mechanism, not a trust mechanism. A material cache/reusable-state design SHOULD define, as applicable:
+
+```text
+purpose
+key semantics
+owner
+source of truth
+maximum size
+entry lifetime
+retention class
+invalidation/revalidation rule
+eviction behavior
+integrity/provenance assumptions
+project/tenant isolation
+concurrency behavior
+failure behavior
+observability
+```
+
+Security-sensitive cached decisions require explicit freshness/invalidation. Cache misses remain a correct supported path. Cache poisoning and cross-project cache collisions are security defects. Secrets and sensitive raw content MUST NOT appear in ordinary cache keys, logs, or metric labels.
+
+Restored CI/build caches and generated artifacts are untrusted inputs unless integrity/provenance is independently established to the degree required by their use.
+
+### 14.2 Batching, coalescing, and duplicate suppression
+
+Batching/coalescing MUST bound maximum batch size, maximum wait time, memory use, queue depth, retry/cancellation behavior, and partial-failure semantics. Do not batch operations whose authorization, project boundary, confidentiality, transactionality, or failure semantics require separation.
+
+### 14.3 Concurrency and backpressure
+
+Concurrency MUST have a demonstrated reason. Bound active tasks, workers, queues, connections, subprocesses, requests, open files, memory, retries, and per-user/project work where relevant.
+
+Higher concurrency that reduces one latency metric while increasing saturation, instability, attack surface, unfairness, or resource exhaustion is not automatically an improvement.
+
+### 14.4 Memory, allocation, and I/O efficiency
+
+Look for accidental retention, duplicate materialization, whole-file/whole-response buffering where bounded streaming is appropriate, repeated serialization/parsing, object churn, oversized caches, queue accumulation, and resource leaks.
+
+Prefer bounded buffers, streaming/iterators, compact structures, and explicit lifecycle when they preserve clarity and correctness. Sensitive content MUST NOT be retained longer merely to avoid recomputation without explicit retention authority.
+
+Fewer milliseconds never justify weaker TLS, SSRF/egress restrictions, destination validation, authorization, timeouts, size limits, retry bounds, or retention/deletion controls.
+
+## 15. Performance budgets, benchmarks, and regression control
+
+Important components MAY define project-specific performance/resource budgets when useful. A budget SHOULD state workload/scope, environment assumptions, metric/percentile, target and hard limit where appropriate, measurement method, owner, and review trigger.
+
+Illustrative values from external handbooks are not Marketplace defaults. Marketplace budgets become policy only when explicitly adopted for a specific path.
+
+A significant optimization evidence record SHOULD include:
+
+```text
+problem
+critical_path
+baseline
+metric
+budget / success_condition
+profiling_or_bottleneck_evidence
+hypothesis
+change
+candidate_measurement
+resource_effects
+correctness/security/retention verification
+variance / limitations
+result: KEEP | REVISE | REVERT
+```
+
+A benchmark record SHOULD identify enough context to reproduce/understand the claim: commit/artifact, runner/environment, runtime/compiler/interpreter, dependency/build configuration, workload/input size, warmup, sample count, concurrency, measurement method, timeouts, latency distribution/percentiles where relevant, throughput where relevant, CPU/resource and memory data where relevant, baseline, candidate, delta, and variance/noise notes.
+
+Do not cherry-pick favorable runs, compare warm candidates against undisclosed cold baselines, reduce representative workload merely to make a gate pass, or hide slow samples without a justified model change.
+
+Automated performance-regression checks SHOULD be added only when the path is important and environment variance is sufficiently controlled. Prefer stable microbenchmarks for pure hot paths, controlled integration benchmarks for important boundaries, and load/capacity testing outside ordinary PR CI when expensive or disruptive.
+
+Load/capacity testing against external or production systems requires separately applicable authorization and scope.
+
+## 16. CI, build, and test acceleration without gate reduction
+
+Optimize engineering feedback while preserving the same acceptance semantics.
+
+Prefer, where safe and supported:
+
+- dependency/build caching with lockfile- or artifact-aware keys and explicit integrity/retention rules;
+- reusable deterministic environments and verified toolchains/images;
+- parallel execution of genuinely independent jobs;
+- deterministic test partitioning;
+- incremental compilation/checking where omitted work is provably irrelevant and policy permits it;
+- avoiding duplicate dependency installation/setup;
+- cancellation of superseded non-deployment runs where appropriate;
+- self-hosted runner tuning and resource sizing when authorized;
+- local commands that mirror CI to reduce failed round trips.
+
+CI optimization MUST NOT:
+
+- rename a required check to evade repository controls;
+- remove, skip, bypass, weaken, short-circuit, or silently narrow a required quality/security/integration/governance/conformance gate merely for speed;
+- trust cache/generated output as source authority without provenance/invalidation;
+- leak secrets into caches, artifacts, logs, or cache keys;
+- suppress flaky failures instead of repairing their cause;
+- run privileged reusable workers without required isolation/cleanup.
+
+Measure queue time, setup time, execution time, cache effectiveness, critical path, and failure/retry waste separately where useful.
+
+## 17. Development method
 
 For each meaningful increment:
 
 1. resolve the exact repository/project/branch target;
-2. inspect current implementation, tests, interfaces, callers, configuration, relevant specifications, security/retention policy, and docs;
+2. inspect current implementation, tests, interfaces, callers, configuration, relevant specifications, security/retention policy, docs, and applicable operational/performance evidence;
 3. define behavior to change and behavior to preserve;
 4. classify risk;
 5. identify minimum capabilities;
-6. identify trust, privacy, retention, project-isolation, and side-effect boundaries;
-7. place responsibility in the correct architectural layer;
-8. add/update deterministic, regression, negative-security, and retention tests as applicable;
-9. implement the smallest coherent safe change;
-10. apply the destructive-action protocol when relevant;
-11. run focused tests;
-12. run repository audit and applicable quality/security/governance checks;
-13. run the full Marketplace conformance gate when the change can affect acceptance behavior;
-14. review security invariants, project isolation, provenance, retention, and provider-control claims;
-15. open/update a reviewable pull request; and
-16. report changed files, behavior, tests, risk, capabilities, security/retention impact, and unresolved external controls.
+6. identify trust, privacy, retention, project-isolation, side-effect, and resource boundaries;
+7. if performance-sensitive, define the operational problem, metric/objective, success condition, and representative baseline before optimizing when safe/practical;
+8. if performance-sensitive, identify the demonstrated bottleneck/critical path and state an optimization hypothesis;
+9. place responsibility in the correct architectural layer;
+10. add/update deterministic, regression, negative-security, retention, and stable performance tests/benchmarks as applicable;
+11. implement the smallest coherent safe change, preferring removal of unnecessary work and algorithm/data-movement improvements before added concurrency/specialized machinery;
+12. apply the destructive-action protocol when relevant;
+13. run focused tests;
+14. if performance-sensitive, repeat equivalent measurements and compare baseline vs candidate, including tail/resource/failure effects where relevant;
+15. run repository audit and applicable quality/security/governance checks;
+16. run the full Marketplace conformance gate when the change can affect acceptance behavior;
+17. review security invariants, project isolation, provenance, retention, resource bounds, cache trust/invalidation, performance budgets, and provider-control claims;
+18. keep performance complexity only when measured benefit justifies it and no required invariant regressed; otherwise simplify or revert;
+19. open/update a reviewable pull request; and
+20. report changed files, behavior, tests, benchmark evidence where relevant, risk, capabilities, security/retention impact, resource impact, and unresolved external controls.
 
 The established milestone workflow remains preferred:
 
@@ -222,22 +389,23 @@ issue/scope
 -> specification or implementation
 -> deterministic vectors/tests
 -> documentation
+-> performance baseline/evidence when applicable
 -> unified acceptance gate
 -> pull request with objective evidence
 -> review
--> merge
+-> exact-head guarded merge
 -> verify merged-main CI
 ```
 
-## 14. Small coherent changes and read-before-edit
+## 18. Small coherent changes and read-before-edit
 
-Inspect code and policy before editing unfamiliar areas. Do not claim files/functions/controls/tests exist or pass unless verified.
+Inspect code and policy before editing unfamiliar areas. Do not claim files/functions/controls/tests/benchmarks exist or pass unless verified.
 
-Prefer small coherent changes with one architectural purpose, relevant tests, stable unrelated behavior, easy review/revert, and no silent privilege or retention expansion.
+Prefer small coherent changes with one architectural purpose, relevant tests, stable unrelated behavior, easy review/revert, and no silent privilege, retention, or resource expansion.
 
-Existing architecture SHOULD be followed unless it is demonstrably unsafe.
+Existing architecture SHOULD be followed unless it is demonstrably unsafe or a measured critical bottleneck justifies a documented change.
 
-## 15. Repository governance
+## 19. Repository governance
 
 Repository-governance requirements are defined in `docs/REPOSITORY_GOVERNANCE.md`.
 
@@ -245,9 +413,11 @@ Repository-governance requirements are defined in `docs/REPOSITORY_GOVERNANCE.md
 
 Provider-side enforcement MUST be independently configured and verified through an authorized administrative control plane before it is described as enforced.
 
-## 16. Exceptions
+Performance/CI pressure does not authorize bypass of repository review or merge controls.
 
-Security, retention, project-isolation, capability, and governance exceptions MUST record:
+## 20. Exceptions
+
+Security, retention, project-isolation, capability, governance, and material performance-budget exceptions MUST record:
 
 ```text
 owner
@@ -263,8 +433,12 @@ removal_condition
 
 Exceptions are narrow, expiring, reviewable, and removable. They do not silently renew themselves.
 
-## 17. Completion standard
+A performance-budget exception does not authorize weakening security, correctness, retention, project isolation, or required CI/governance controls.
 
-The preferred solution is the smallest safe solution that preserves Marketplace semantic constraints, minimizes privilege and retained data, validates trust boundaries, controls side effects, remains testable/recoverable, preserves provenance, and makes unsafe states difficult to represent.
+## 21. Completion standard
 
-A change MUST NOT be declared complete while a known material security defect, privacy violation, project-isolation breach, unauthorized retention condition, expired exception, required failing quality gate, or falsely claimed remote security control remains unresolved without an explicit authorized exception.
+The preferred solution is the smallest safe solution that preserves Marketplace semantic constraints, minimizes privilege and retained data, validates trust boundaries, controls side effects, remains testable/recoverable, preserves provenance, bounds resources, measures performance where material, optimizes demonstrated critical paths with evidence, and makes unsafe states difficult to represent.
+
+A change MUST NOT be declared complete while a known material security defect, privacy violation, project-isolation breach, unauthorized retention condition, expired exception, required failing quality gate, falsely claimed remote security control, or unsupported material performance claim remains unresolved without an explicit authorized exception applicable to that condition.
+
+For a performance-sensitive change, completion additionally requires either adequate evidence for the claimed result or an explicit statement that no material optimization claim is being made.
