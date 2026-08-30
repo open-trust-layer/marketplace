@@ -43,6 +43,7 @@ REQUIRED = {
     "marketplace/runtime/inbound_http_response_preparer_factory.py": b"# bounded inbound response-preparer composition factory\n",
     "marketplace/runtime/inbound_http_single_session_composition.py": b"# bounded inbound single-session composition root\n",
     "marketplace/runtime/inbound_http_end_to_end_composition.py": b"# bounded inbound end-to-end source composition root\n",
+    "marketplace/runtime/inbound_http_execution_gate.py": b"# explicit one-shot M62 execution gate\n",
     "marketplace/runtime/inbound_tcp_listener.py": b"# bounded inbound listener construction\n",
     "marketplace/runtime/inbound_tcp_socket_factory.py": b"# bounded Python TCP socket factory\n",
     "marketplace/reference/__init__.py": b"",
