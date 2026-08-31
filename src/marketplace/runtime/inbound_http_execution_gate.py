@@ -368,7 +368,10 @@ class BoundedInboundHttpLoopbackExecutionGate:
             _reviewed_fail("LOOPBACK_EXECUTION_EXHAUSTED", "M62 execution gate is already terminal")
         validate = self._validate_bindings_function
         gate_type = self._gate_type
-        if gate_type is None or validate is not gate_type.__dict__.get("_validate_bindings"):
+        actual_gate_type = type(self)
+        if gate_type is not actual_gate_type:
+            _reviewed_fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
+        if validate is not actual_gate_type.__dict__.get("_validate_bindings"):
             _reviewed_fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
         validate(self)
         self._used = True
