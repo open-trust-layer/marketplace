@@ -133,10 +133,10 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._m55_error_type = InboundHttpSingleSessionOrchestratorError
         self._source_root = source_composition_root
         self._source_root_type = BoundedInboundHttpEndToEndSourceCompositionRoot
-        self._compose_function = BoundedInboundHttpEndToEndSourceCompositionRoot.__call__
+        self._compose_function = BoundedInboundHttpEndToEndSourceCompositionRoot.__dict__["__call__"]
         self._m55_class = BoundedInboundHttpSingleSessionOrchestrator
-        self._run_once_function = BoundedInboundHttpSingleSessionOrchestrator.run_once
-        self._orchestrator_close_function = BoundedInboundHttpSingleSessionOrchestrator.close
+        self._run_once_function = BoundedInboundHttpSingleSessionOrchestrator.__dict__["run_once"]
+        self._orchestrator_close_function = BoundedInboundHttpSingleSessionOrchestrator.__dict__["close"]
         self._completed_class = CompletedInboundHttpSingleConnectionTransport
         self._class_snapshot_function = snapshot
         self._construction_graph = (
@@ -148,10 +148,10 @@ class BoundedInboundHttpLoopbackExecutionGate:
             self._completed_class,
             snapshot(self._completed_class),
         )
-        self._validate_bindings_function = BoundedInboundHttpLoopbackExecutionGate._validate_bindings
-        self._dry_run_function = BoundedInboundHttpLoopbackExecutionGate.dry_run
-        self._execute_once_function = BoundedInboundHttpLoopbackExecutionGate.execute_once
-        self._close_function = BoundedInboundHttpLoopbackExecutionGate.close
+        self._validate_bindings_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["_validate_bindings"]
+        self._dry_run_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["dry_run"]
+        self._execute_once_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["execute_once"]
+        self._close_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["close"]
         self._used = False
         self._closed = False
         self._binding_witness = (
@@ -268,13 +268,13 @@ class BoundedInboundHttpLoopbackExecutionGate:
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate policy witness changed")
         if (
             type(self) is not self._gate_type
-            or self._compose_function is not self._source_root_type.__call__
-            or self._run_once_function is not self._m55_class.run_once
-            or self._orchestrator_close_function is not self._m55_class.close
-            or self._validate_bindings_function is not self._gate_type._validate_bindings
-            or self._dry_run_function is not self._gate_type.dry_run
-            or self._execute_once_function is not self._gate_type.execute_once
-            or self._close_function is not self._gate_type.close
+            or self._compose_function is not self._source_root_type.__dict__.get("__call__")
+            or self._run_once_function is not self._m55_class.__dict__.get("run_once")
+            or self._orchestrator_close_function is not self._m55_class.__dict__.get("close")
+            or self._validate_bindings_function is not self._gate_type.__dict__.get("_validate_bindings")
+            or self._dry_run_function is not self._gate_type.__dict__.get("dry_run")
+            or self._execute_once_function is not self._gate_type.__dict__.get("execute_once")
+            or self._close_function is not self._gate_type.__dict__.get("close")
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate helper graph changed")
         graph = self._construction_graph
@@ -329,7 +329,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             _reviewed_fail("LOOPBACK_EXECUTION_EXHAUSTED", "M62 execution gate is already terminal")
         validate = self._validate_bindings_function
         gate_type = self._gate_type
-        if gate_type is None or validate is not gate_type._validate_bindings:
+        if gate_type is None or validate is not gate_type.__dict__.get("_validate_bindings"):
             _reviewed_fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
         validate(self)
         self._used = True
@@ -466,7 +466,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             validate = self._validate_bindings_function
             gate_type = self._gate_type
             error_type = self._error_type
-            if gate_type is not None and validate is gate_type._validate_bindings:
+            if gate_type is not None and validate is gate_type.__dict__.get("_validate_bindings"):
                 try:
                     validate(self)
                 except error_type:
