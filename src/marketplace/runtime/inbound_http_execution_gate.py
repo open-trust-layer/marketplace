@@ -105,6 +105,8 @@ class BoundedInboundHttpLoopbackExecutionGate:
         "_execute_once_function",
         "_close_function",
         "_release_function",
+        "_begin_once_function",
+        "_terminal_error_template",
         "_binding_witness",
         "_used",
         "_closed",
@@ -154,6 +156,11 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._execute_once_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["execute_once"]
         self._close_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["close"]
         self._release_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["_release"]
+        self._begin_once_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["_begin_once"]
+        self._terminal_error_template = InboundHttpLoopbackExecutionGateError(
+            "LOOPBACK_EXECUTION_EXHAUSTED",
+            "M62 execution gate is already terminal",
+        )
         self._used = False
         self._closed = False
         self._binding_witness = (
@@ -184,6 +191,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             self._composition_error_type,
             self._m55_error_type,
             self._release_function,
+            self._begin_once_function,
         )
         self._validate_bindings_function(self)
     @property
@@ -221,6 +229,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             or _class_identity_snapshot is not self._class_snapshot_function
             or InboundHttpEndToEndSourceCompositionError is not self._composition_error_type
             or InboundHttpSingleSessionOrchestratorError is not self._m55_error_type
+            or type(self._terminal_error_template) is not self._error_type
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 reviewed module authority changed")
         if (
@@ -230,7 +239,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 reviewed dependency binding changed")
         witness = self._binding_witness
-        if type(witness) is not tuple or len(witness) != 27:
+        if type(witness) is not tuple or len(witness) != 28:
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate binding witness changed")
         if type(witness[0]) is not str or witness[0] != self._binding_marker:
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate binding witness changed")
@@ -268,6 +277,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             or witness[24] is not self._composition_error_type
             or witness[25] is not self._m55_error_type
             or witness[26] is not self._release_function
+            or witness[27] is not self._begin_once_function
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate policy witness changed")
         if (
@@ -280,6 +290,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             or self._execute_once_function is not self._gate_type.__dict__.get("execute_once")
             or self._close_function is not self._gate_type.__dict__.get("close")
             or self._release_function is not self._gate_type.__dict__.get("_release")
+            or self._begin_once_function is not self._gate_type.__dict__.get("_begin_once")
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 execution-gate helper graph changed")
         graph = self._construction_graph
@@ -330,6 +341,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._execute_once_function = None
         self._close_function = None
         self._release_function = None
+        self._begin_once_function = None
         self._binding_witness = None
         self._closed = True
 
@@ -344,7 +356,21 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._used = True
 
     def dry_run(self) -> InboundHttpLoopbackReadiness:
-        self._begin_once()
+        if self._used or self._closed:
+            terminal_error_type = type(self._terminal_error_template)
+            terminal_error = BaseException.__new__(terminal_error_type)
+            BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
+            object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
+            object.__setattr__(terminal_error, "lower_code", None)
+            raise terminal_error from None
+        begin = self._begin_once_function
+        validate_begin = self._validate_bindings_function
+        gate_type = self._gate_type
+        fail_begin = self._fail_function
+        if gate_type is None or validate_begin is not gate_type.__dict__.get("_validate_bindings"):
+            fail_begin("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
+        validate_begin(self)
+        begin(self)
         release = self._release_function
         root = self._source_root
         compose = self._compose_function
@@ -393,7 +419,21 @@ class BoundedInboundHttpLoopbackExecutionGate:
         opt_in: object,
         constructor: object,
     ) -> CompletedInboundHttpSingleConnectionTransport:
-        self._begin_once()
+        if self._used or self._closed:
+            terminal_error_type = type(self._terminal_error_template)
+            terminal_error = BaseException.__new__(terminal_error_type)
+            BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
+            object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
+            object.__setattr__(terminal_error, "lower_code", None)
+            raise terminal_error from None
+        begin = self._begin_once_function
+        validate_begin = self._validate_bindings_function
+        gate_type = self._gate_type
+        fail_begin = self._fail_function
+        if gate_type is None or validate_begin is not gate_type.__dict__.get("_validate_bindings"):
+            fail_begin("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
+        validate_begin(self)
+        begin(self)
         release = self._release_function
         root = self._source_root
         compose = self._compose_function
@@ -478,7 +518,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
         class_release = type(self).__dict__.get("_release")
         witnessed_release = (
             witness[26]
-            if type(witness) is tuple and len(witness) == 27
+            if type(witness) is tuple and len(witness) == 28
             else None
         )
         if retained_release is not None and (
