@@ -124,5 +124,47 @@ class InboundHttpExecutionGateM63HardeningTests(unittest.TestCase):
         self.assertEqual(touched, [])
 
 
+    def test_gate_validator_descriptor_poisoning_never_executes(self):
+        gate = BoundedInboundHttpLoopbackExecutionGate(source_composition_root=_root())
+        touched: list[str] = []
+
+        class DescriptorTrap:
+            def __get__(self, instance: object, owner: object) -> object:
+                touched.append("descriptor")
+                raise AssertionError("poisoned descriptor MUST NOT execute")
+
+        gate_type = type(gate)
+        original = gate_type.__dict__["_validate_bindings"]
+        setattr(gate_type, "_validate_bindings", DescriptorTrap())
+        try:
+            self.assert_binding_drift(gate.dry_run)
+        finally:
+            setattr(gate_type, "_validate_bindings", original)
+        self.assertEqual(touched, [])
+
+    def test_downstream_class_descriptor_poisoning_never_executes(self):
+        targets = (
+            (m62.BoundedInboundHttpEndToEndSourceCompositionRoot, "__call__"),
+            (m62.BoundedInboundHttpSingleSessionOrchestrator, "run_once"),
+            (m62.BoundedInboundHttpSingleSessionOrchestrator, "close"),
+        )
+        for target_type, name in targets:
+            with self.subTest(target=target_type.__name__, name=name):
+                gate = BoundedInboundHttpLoopbackExecutionGate(source_composition_root=_root())
+                touched: list[str] = []
+
+                class DescriptorTrap:
+                    def __get__(self, instance: object, owner: object) -> object:
+                        touched.append("descriptor")
+                        raise AssertionError("poisoned downstream descriptor MUST NOT execute")
+
+                original = target_type.__dict__[name]
+                setattr(target_type, name, DescriptorTrap())
+                try:
+                    self.assert_binding_drift(gate.dry_run)
+                finally:
+                    setattr(target_type, name, original)
+                self.assertEqual(touched, [])
+
 if __name__ == "__main__":
     unittest.main()
