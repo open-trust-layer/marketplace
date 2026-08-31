@@ -473,7 +473,25 @@ class BoundedInboundHttpLoopbackExecutionGate:
     def close(self) -> None:
         if self._closed:
             return
-        release = self._release_function
+        retained_release = self._release_function
+        witness = self._binding_witness
+        class_release = type(self).__dict__.get("_release")
+        witnessed_release = (
+            witness[26]
+            if type(witness) is tuple and len(witness) == 27
+            else None
+        )
+        if retained_release is not None and (
+            retained_release is witnessed_release or retained_release is class_release
+        ):
+            release = retained_release
+        elif witnessed_release is not None and witnessed_release is class_release:
+            release = witnessed_release
+        else:
+            raise InboundHttpLoopbackExecutionGateError(
+                "LOOPBACK_EXECUTION_CLEANUP_UNCERTAIN",
+                "M65 reviewed terminal cleanup binding is unavailable",
+            ) from None
         if not self._used:
             validate = self._validate_bindings_function
             gate_type = self._gate_type
