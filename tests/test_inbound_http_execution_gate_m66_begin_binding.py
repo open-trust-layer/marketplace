@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+import marketplace.runtime.inbound_http_execution_gate as m62
 from marketplace.runtime.inbound_http_execution_gate import (
     LOOPBACK_EXECUTION_OPT_IN,
     BoundedInboundHttpLoopbackExecutionGate,
@@ -94,6 +95,26 @@ class InboundHttpExecutionGateM66BeginBindingTests(unittest.TestCase):
         self.assert_binding_drift(gate.dry_run)
         self.assertEqual(touched, [])
         self.assertFalse(getattr(root, "_used"))
+
+    def test_terminal_second_call_never_constructs_rebound_module_error_type(self):
+        gate = BoundedInboundHttpLoopbackExecutionGate(source_composition_root=_root())
+        gate.close()
+        touched: list[str] = []
+        original = m62.InboundHttpLoopbackExecutionGateError
+
+        class HostileError(RuntimeError):
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                touched.append("error")
+                raise AssertionError("rebound terminal error constructor MUST NOT execute")
+
+        m62.InboundHttpLoopbackExecutionGateError = HostileError  # type: ignore[assignment]
+        try:
+            with self.assertRaises(InboundHttpLoopbackExecutionGateError) as caught:
+                gate.dry_run()
+        finally:
+            m62.InboundHttpLoopbackExecutionGateError = original
+        self.assertEqual(caught.exception.code, "LOOPBACK_EXECUTION_EXHAUSTED")
+        self.assertEqual(touched, [])
 
 
 if __name__ == "__main__":
