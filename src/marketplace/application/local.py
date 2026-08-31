@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from ..runtime.contracts import StoreDisposition
+from ..runtime.node import IngestOutcome
 
 
 class MarketplaceApplicationError(RuntimeError):
@@ -74,14 +75,19 @@ class LocalMarketplaceApplication:
 
     def publish(self, record: Any) -> PublishedRecord:
         outcome = self._node.ingest(record)
-        record_id = getattr(outcome, "record_id", None)
-        disposition = getattr(outcome, "disposition", None)
+        if type(outcome) is not IngestOutcome:
+            raise MarketplaceApplicationError(
+                "PUBLISH_RESULT_INVALID",
+                "runtime publish result did not have the exact reviewed outcome type",
+            )
+        record_id = outcome.record_id
+        disposition = outcome.disposition
         if type(record_id) is not str or not record_id:
             raise MarketplaceApplicationError(
                 "PUBLISH_RESULT_INVALID",
                 "runtime publish result did not contain an exact Record Identity",
             )
-        if not isinstance(disposition, StoreDisposition):
+        if type(disposition) is not StoreDisposition:
             raise MarketplaceApplicationError(
                 "PUBLISH_RESULT_INVALID",
                 "runtime publish result contained an invalid disposition",
@@ -111,7 +117,7 @@ class LocalMarketplaceApplication:
         return self._materialize_search_result(result)
 
     def _materialize_search_result(self, result: Any) -> LocalSearchResult:
-        if not isinstance(result, Mapping):
+        if type(result) is not dict:
             self._invalid_search_result()
         source = result.get("source")
         completeness = result.get("completeness")
