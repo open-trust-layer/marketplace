@@ -405,9 +405,38 @@ class BoundedInboundHttpLoopbackExecutionGate:
         begin = self._begin_once_function
         validate_begin = self._validate_bindings_function
         gate_type = self._gate_type
-        fail_begin = self._fail_function
-        if gate_type is None or validate_begin is not gate_type.__dict__.get("_validate_bindings"):
-            fail_begin("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
+        actual_gate_type = type(self)
+        if (
+            gate_type is not actual_gate_type
+            or validate_begin is not actual_gate_type.__dict__.get("_validate_bindings")
+        ):
+            terminal_template = self._terminal_error_template
+            terminal_witness = self._terminal_error_witness
+            terminal_type_identity = self._terminal_error_type_identity
+            witnessed_template = (
+                terminal_witness[1]
+                if (
+                    type(terminal_witness) is tuple
+                    and len(terminal_witness) == 2
+                    and type(terminal_witness[0]) is str
+                    and terminal_witness[0] == "m67-terminal-error-artifact-v1"
+                )
+                else None
+            )
+            if terminal_template is witnessed_template:
+                trusted_template = terminal_template
+            elif id(type(terminal_template)) == terminal_type_identity:
+                trusted_template = terminal_template
+            elif witnessed_template is not None and id(type(witnessed_template)) == terminal_type_identity:
+                trusted_template = witnessed_template
+            else:
+                raise RuntimeError("M68 preflight error artifact integrity is uncertain") from None
+            error_type = type(trusted_template)
+            error = BaseException.__new__(error_type)
+            BaseException.__init__(error, "M62 validation authority changed")
+            object.__setattr__(error, "code", "LOOPBACK_EXECUTION_BINDING_DRIFT")
+            object.__setattr__(error, "lower_code", None)
+            raise error from None
         validate_begin(self)
         begin(self)
         release = self._release_function
@@ -489,9 +518,38 @@ class BoundedInboundHttpLoopbackExecutionGate:
         begin = self._begin_once_function
         validate_begin = self._validate_bindings_function
         gate_type = self._gate_type
-        fail_begin = self._fail_function
-        if gate_type is None or validate_begin is not gate_type.__dict__.get("_validate_bindings"):
-            fail_begin("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 validation authority changed")
+        actual_gate_type = type(self)
+        if (
+            gate_type is not actual_gate_type
+            or validate_begin is not actual_gate_type.__dict__.get("_validate_bindings")
+        ):
+            terminal_template = self._terminal_error_template
+            terminal_witness = self._terminal_error_witness
+            terminal_type_identity = self._terminal_error_type_identity
+            witnessed_template = (
+                terminal_witness[1]
+                if (
+                    type(terminal_witness) is tuple
+                    and len(terminal_witness) == 2
+                    and type(terminal_witness[0]) is str
+                    and terminal_witness[0] == "m67-terminal-error-artifact-v1"
+                )
+                else None
+            )
+            if terminal_template is witnessed_template:
+                trusted_template = terminal_template
+            elif id(type(terminal_template)) == terminal_type_identity:
+                trusted_template = terminal_template
+            elif witnessed_template is not None and id(type(witnessed_template)) == terminal_type_identity:
+                trusted_template = witnessed_template
+            else:
+                raise RuntimeError("M68 preflight error artifact integrity is uncertain") from None
+            error_type = type(trusted_template)
+            error = BaseException.__new__(error_type)
+            BaseException.__init__(error, "M62 validation authority changed")
+            object.__setattr__(error, "code", "LOOPBACK_EXECUTION_BINDING_DRIFT")
+            object.__setattr__(error, "lower_code", None)
+            raise error from None
         validate_begin(self)
         begin(self)
         release = self._release_function
