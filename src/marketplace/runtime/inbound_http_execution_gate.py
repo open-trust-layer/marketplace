@@ -307,8 +307,11 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._binding_marker = None
         self._graph_marker = None
         self._max_lower_code_length = None
+        self._error_type = None
         self._readiness_type = None
         self._offline_constructor_type = None
+        self._bounded_lower_code_function = None
+        self._fail_function = None
         self._composition_error_type = None
         self._m55_error_type = None
         self._m55_class = None
