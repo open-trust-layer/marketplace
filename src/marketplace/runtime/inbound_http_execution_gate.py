@@ -107,6 +107,8 @@ class BoundedInboundHttpLoopbackExecutionGate:
         "_release_function",
         "_begin_once_function",
         "_terminal_error_template",
+        "_terminal_error_witness",
+        "_terminal_error_type_identity",
         "_binding_witness",
         "_used",
         "_closed",
@@ -161,6 +163,11 @@ class BoundedInboundHttpLoopbackExecutionGate:
             "LOOPBACK_EXECUTION_EXHAUSTED",
             "M62 execution gate is already terminal",
         )
+        self._terminal_error_witness = (
+            "m67-terminal-error-artifact-v1",
+            self._terminal_error_template,
+        )
+        self._terminal_error_type_identity = id(self._error_type)
         self._used = False
         self._closed = False
         self._binding_witness = (
@@ -232,6 +239,17 @@ class BoundedInboundHttpLoopbackExecutionGate:
             or type(self._terminal_error_template) is not self._error_type
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 reviewed module authority changed")
+        terminal_witness = self._terminal_error_witness
+        if (
+            type(terminal_witness) is not tuple
+            or len(terminal_witness) != 2
+            or type(terminal_witness[0]) is not str
+            or terminal_witness[0] != "m67-terminal-error-artifact-v1"
+            or terminal_witness[1] is not self._terminal_error_template
+            or type(self._terminal_error_type_identity) is not int
+            or self._terminal_error_type_identity != id(self._error_type)
+        ):
+            fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M67 terminal error artifact changed")
         if (
             BoundedInboundHttpEndToEndSourceCompositionRoot is not self._source_root_type
             or BoundedInboundHttpSingleSessionOrchestrator is not self._m55_class
@@ -357,7 +375,28 @@ class BoundedInboundHttpLoopbackExecutionGate:
 
     def dry_run(self) -> InboundHttpLoopbackReadiness:
         if self._used or self._closed:
-            terminal_error_type = type(self._terminal_error_template)
+            terminal_template = self._terminal_error_template
+            terminal_witness = self._terminal_error_witness
+            terminal_type_identity = self._terminal_error_type_identity
+            witnessed_template = (
+                terminal_witness[1]
+                if (
+                    type(terminal_witness) is tuple
+                    and len(terminal_witness) == 2
+                    and type(terminal_witness[0]) is str
+                    and terminal_witness[0] == "m67-terminal-error-artifact-v1"
+                )
+                else None
+            )
+            if terminal_template is witnessed_template:
+                trusted_template = terminal_template
+            elif id(type(terminal_template)) == terminal_type_identity:
+                trusted_template = terminal_template
+            elif witnessed_template is not None and id(type(witnessed_template)) == terminal_type_identity:
+                trusted_template = witnessed_template
+            else:
+                raise RuntimeError("M67 terminal error artifact integrity is uncertain") from None
+            terminal_error_type = type(trusted_template)
             terminal_error = BaseException.__new__(terminal_error_type)
             BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
             object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
@@ -420,7 +459,28 @@ class BoundedInboundHttpLoopbackExecutionGate:
         constructor: object,
     ) -> CompletedInboundHttpSingleConnectionTransport:
         if self._used or self._closed:
-            terminal_error_type = type(self._terminal_error_template)
+            terminal_template = self._terminal_error_template
+            terminal_witness = self._terminal_error_witness
+            terminal_type_identity = self._terminal_error_type_identity
+            witnessed_template = (
+                terminal_witness[1]
+                if (
+                    type(terminal_witness) is tuple
+                    and len(terminal_witness) == 2
+                    and type(terminal_witness[0]) is str
+                    and terminal_witness[0] == "m67-terminal-error-artifact-v1"
+                )
+                else None
+            )
+            if terminal_template is witnessed_template:
+                trusted_template = terminal_template
+            elif id(type(terminal_template)) == terminal_type_identity:
+                trusted_template = terminal_template
+            elif witnessed_template is not None and id(type(witnessed_template)) == terminal_type_identity:
+                trusted_template = witnessed_template
+            else:
+                raise RuntimeError("M67 terminal error artifact integrity is uncertain") from None
+            terminal_error_type = type(trusted_template)
             terminal_error = BaseException.__new__(terminal_error_type)
             BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
             object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
