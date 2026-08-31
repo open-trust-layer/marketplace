@@ -110,5 +110,22 @@ class InboundHttpExecutionGateM65ReleaseBindingTests(unittest.TestCase):
         self.assertTrue(gate.closed)
 
 
+    def test_private_release_function_rebinding_never_executes_on_close(self):
+        root = _root()
+        gate = BoundedInboundHttpLoopbackExecutionGate(source_composition_root=root)
+        touched: list[str] = []
+
+        def hostile_release(_gate) -> None:
+            touched.append("release")
+            raise AssertionError("poisoned retained release MUST NOT execute")
+
+        object.__setattr__(gate, "_release_function", hostile_release)
+        gate.close()
+        self.assertEqual(touched, [])
+        self.assertFalse(getattr(root, "_used"))
+        self.assertTrue(gate.used)
+        self.assertTrue(gate.closed)
+
+
 if __name__ == "__main__":
     unittest.main()
