@@ -39,5 +39,12 @@ class M71ArtifactMembershipTests(unittest.TestCase):
         self.assertIn("dependencies = []", project)
 
 
+    def test_application_core_requires_exact_reviewed_result_shapes(self):
+        source = APPLICATION.read_text(encoding="utf-8")
+        self.assertIn("type(outcome) is not IngestOutcome", source)
+        self.assertIn("if type(result) is not dict:", source)
+
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -63,6 +63,17 @@ existing bounded discovery call followed by at most `max_records` exact local lo
 No quality, security, integration, governance, artifact, or semantic conformance gate is
 weakened, skipped, bypassed, removed, or renamed.
 
+## Post-implementation adversarial review
+
+A focused review after the initial implementation found two application-boundary seams:
+a non-reviewed publish outcome could execute attribute access, and a custom Mapping result
+could execute `.get()` during search materialization.
+
+Tests-only commit `cb8bf91f47462e2e489eb2111f91123fd46d8f8c` captured both as RED regressions.
+Fix commit `cf369602a45733d10a5e65f52c0b0dc00ee6bfa9` now requires the exact reviewed
+`IngestOutcome` type before reading publish fields and an exact built-in `dict` before
+reading discovery-result fields. No new authority or dependency was introduced.
+
 ## Product roadmap
 
 M71 is the first product-facing slice. The intended next steps are:
