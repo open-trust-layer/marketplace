@@ -106,6 +106,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
         "_close_function",
         "_release_function",
         "_begin_once_function",
+        "_terminal_error_template",
         "_binding_witness",
         "_used",
         "_closed",
@@ -156,6 +157,10 @@ class BoundedInboundHttpLoopbackExecutionGate:
         self._close_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["close"]
         self._release_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["_release"]
         self._begin_once_function = BoundedInboundHttpLoopbackExecutionGate.__dict__["_begin_once"]
+        self._terminal_error_template = InboundHttpLoopbackExecutionGateError(
+            "LOOPBACK_EXECUTION_EXHAUSTED",
+            "M62 execution gate is already terminal",
+        )
         self._used = False
         self._closed = False
         self._binding_witness = (
@@ -224,6 +229,7 @@ class BoundedInboundHttpLoopbackExecutionGate:
             or _class_identity_snapshot is not self._class_snapshot_function
             or InboundHttpEndToEndSourceCompositionError is not self._composition_error_type
             or InboundHttpSingleSessionOrchestratorError is not self._m55_error_type
+            or type(self._terminal_error_template) is not self._error_type
         ):
             fail("LOOPBACK_EXECUTION_BINDING_DRIFT", "M62 reviewed module authority changed")
         if (
@@ -351,10 +357,12 @@ class BoundedInboundHttpLoopbackExecutionGate:
 
     def dry_run(self) -> InboundHttpLoopbackReadiness:
         if self._used or self._closed:
-            raise InboundHttpLoopbackExecutionGateError(
-                "LOOPBACK_EXECUTION_EXHAUSTED",
-                "M62 execution gate is already terminal",
-            ) from None
+            terminal_error_type = type(self._terminal_error_template)
+            terminal_error = BaseException.__new__(terminal_error_type)
+            BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
+            object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
+            object.__setattr__(terminal_error, "lower_code", None)
+            raise terminal_error from None
         begin = self._begin_once_function
         validate_begin = self._validate_bindings_function
         gate_type = self._gate_type
@@ -412,10 +420,12 @@ class BoundedInboundHttpLoopbackExecutionGate:
         constructor: object,
     ) -> CompletedInboundHttpSingleConnectionTransport:
         if self._used or self._closed:
-            raise InboundHttpLoopbackExecutionGateError(
-                "LOOPBACK_EXECUTION_EXHAUSTED",
-                "M62 execution gate is already terminal",
-            ) from None
+            terminal_error_type = type(self._terminal_error_template)
+            terminal_error = BaseException.__new__(terminal_error_type)
+            BaseException.__init__(terminal_error, "M62 execution gate is already terminal")
+            object.__setattr__(terminal_error, "code", "LOOPBACK_EXECUTION_EXHAUSTED")
+            object.__setattr__(terminal_error, "lower_code", None)
+            raise terminal_error from None
         begin = self._begin_once_function
         validate_begin = self._validate_bindings_function
         gate_type = self._gate_type
