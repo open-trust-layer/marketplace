@@ -32,6 +32,13 @@ class M66ArtifactMembershipTests(unittest.TestCase):
         self.assertIn("len(witness) == 28", source)
         self.assertIn("witness[26]", source)
 
+    def test_m66_terminal_exhausted_error_does_not_use_rebound_module_constructor(self):
+        source = SOURCE.read_text(encoding="utf-8")
+        self.assertIn("self._terminal_error_template = InboundHttpLoopbackExecutionGateError(", source)
+        self.assertIn("type(self._terminal_error_template) is not self._error_type", source)
+        self.assertGreaterEqual(source.count("BaseException.__new__(terminal_error_type)"), 2)
+        self.assertGreaterEqual(source.count("raise terminal_error from None"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

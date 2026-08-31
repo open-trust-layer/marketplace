@@ -4,7 +4,7 @@
 
 M66 is a HIGH source/security hardening change for the existing M62-M65 `BoundedInboundHttpLoopbackExecutionGate`.
 
-It changes only the private begin-once dispatch binding. It does not alter the public constructor, `dry_run()`, `execute_once()`, `close()`, the exact opt-in token, the M59 -> M55 graph, one-shot limits, result semantics, or authorization boundaries.
+It hardens the private begin-once dispatch binding and the already-established terminal `LOOPBACK_EXECUTION_EXHAUSTED` error construction. It does not alter the public constructor, `dry_run()`, `execute_once()`, `close()`, the exact opt-in token, the M59 -> M55 graph, one-shot limits, result semantics, or authorization boundaries.
 
 M66 does not construct a real socket, bind/listen/accept/connect, perform DNS/TLS, contact a peer, deploy a service, access credentials, or broaden Marketplace semantic authority.
 
@@ -25,7 +25,7 @@ Before either public entrypoint invokes begin-once, it first verifies and runs t
 
 The reviewed `_release()` implementation clears `_begin_once_function` together with the other retained authorities. M65 close recovery continues to use release witness index 26 and now recognizes the 28-entry witness.
 
-Terminal second calls still fail with stable `LOOPBACK_EXECUTION_EXHAUSTED` after retained authority has been released.
+Terminal second calls still fail with stable `LOOPBACK_EXECUTION_EXHAUSTED` after retained callable authority has been released. A bounded non-callable error template anchors the original reviewed error type, and a fresh terminal exception is allocated through `BaseException` primitives rather than consulting the mutable module error-class name. The M64 `_error_type`, `_bounded_lower_code_function`, and `_fail_function` fields still release to `None`.
 
 ## Tests-first provenance
 
@@ -40,7 +40,9 @@ Against unchanged merged M65 source it produced three failures and one error:
 
 The implementation commit is `568006b45c125a0ef025ff3bb4c9701504929ec4`. The first focused regression run exposed two compatibility regressions before commit acceptance: M65 close recovery still required witness length 27, and post-release second calls attempted to read cleared retained validation state before producing the established exhausted error. Both were corrected in the same implementation before it was committed.
 
-The final M62-M66 execution-gate regression set passes 35/35, and broad inbound coverage passes 677/677.
+The initial M62-M66 execution-gate regression set passed 35/35, and broad inbound coverage passed 677/677 before the late terminal-rebinding review.
+
+A later tests-only security commit, `6c7f8d8f1f1ff9792d229bdb731682e8a979b01e`, added a fifth M66 adversarial case proving that a post-terminal call could still consult a rebound module `InboundHttpLoopbackExecutionGateError` constructor. The follow-up source fix is `40babe6e68ff356dc39b5b5e8666ffc496e42ad8`; it preserves M64 terminal callable release while recovering the stable exhausted error from a non-callable type anchor. Final post-fix regression and conformance counts are recorded only after self-hosted CI.
 
 ## Security and semantic boundaries
 
@@ -51,7 +53,7 @@ No raw request, response, Record identity, credential, cursor, or peer content i
 
 ## Performance / optimization
 
-No throughput or latency improvement is claimed. M66 adds one constant-size retained function identity, one witness entry, and a constant-size pre-dispatch validation step. It removes two dynamic begin-method lookups from public execution paths.
+No throughput or latency improvement is claimed. M66 adds one constant-size retained function identity, one witness entry, one bounded non-callable terminal error template, and constant-size validation/allocation steps. It removes two dynamic begin-method lookups from public execution paths and avoids mutable module constructor lookup on terminal second calls.
 
 The optimization evidence is therefore limited to reduced dynamic dispatch ambiguity and deterministic begin-authority selection; no quality, security, integration, package, or conformance gate is weakened or renamed.
 
