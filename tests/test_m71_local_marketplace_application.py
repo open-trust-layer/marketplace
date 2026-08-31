@@ -7,7 +7,7 @@ from marketplace.application import (
     MarketplaceApplicationError,
     PublishedRecord,
 )
-from marketplace.runtime import StoreDisposition
+from marketplace.runtime import IngestOutcome, StoreDisposition
 
 
 class FakeNode:
@@ -16,15 +16,15 @@ class FakeNode:
         self.get_calls: list[str] = []
         self.records: dict[str, object] = {}
         self.ingest_error: Exception | None = None
+        self.outcome: object = IngestOutcome(
+            record_id="r1_listing", disposition=StoreDisposition.STORED
+        )
 
     def ingest(self, record: object):
         self.ingest_calls.append(record)
         if self.ingest_error is not None:
             raise self.ingest_error
-        return type("Outcome", (), {
-            "record_id": "r1_listing",
-            "disposition": StoreDisposition.STORED,
-        })()
+        return self.outcome
 
     def get(self, record_id: str):
         self.get_calls.append(record_id)
@@ -85,6 +85,23 @@ class M71LocalMarketplaceApplicationTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "invalid marketplace record"):
             app.publish({"invalid": True})
+
+    def test_publish_rejects_hostile_outcome_without_attribute_execution(self):
+        app, node, _ = self.app()
+        touched: list[str] = []
+
+        class HostileOutcome:
+            def __getattribute__(self, name: str) -> object:
+                if name in {"record_id", "disposition"}:
+                    touched.append(name)
+                    raise AssertionError("unreviewed outcome attribute MUST NOT execute")
+                return object.__getattribute__(self, name)
+
+        node.outcome = HostileOutcome()
+        with self.assertRaises(MarketplaceApplicationError) as caught:
+            app.publish({"kind": "market-intent"})
+        self.assertEqual(caught.exception.code, "PUBLISH_RESULT_INVALID")
+        self.assertEqual(touched, [])
 
     def test_get_uses_exact_record_identity_without_fallback(self):
         app, node, _ = self.app()
@@ -153,6 +170,21 @@ class M71LocalMarketplaceApplicationTests(unittest.TestCase):
             app.search({"version": 1}, max_records=8)
 
         self.assertEqual(caught.exception.code, "LOCAL_SEARCH_RESULT_MISSING_RECORD")
+
+    def test_search_rejects_mapping_subclass_without_get_execution(self):
+        app, _, discovery = self.app()
+        touched: list[str] = []
+
+        class HostileMapping(dict):
+            def get(self, key: object, default: object = None) -> object:
+                touched.append(str(key))
+                raise AssertionError("unreviewed mapping access MUST NOT execute")
+
+        discovery.result = HostileMapping()
+        with self.assertRaises(MarketplaceApplicationError) as caught:
+            app.search({"version": 1}, max_records=8)
+        self.assertEqual(caught.exception.code, "LOCAL_SEARCH_RESULT_INVALID")
+        self.assertEqual(touched, [])
 
     def test_search_rejects_malformed_or_cross_source_result(self):
         app, _, discovery = self.app()
