@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "src" / "marketplace" / "application" / "postgres_state.py"
 PYPROJECT = ROOT / "pyproject.toml"
 DOC = ROOT / "docs" / "m17-1a-postgres-application-state.md"
+RETENTION_POLICY = ROOT / "docs" / "RETENTION_POLICY.md"
 
 
 class M17PostgresArtifactTests(unittest.TestCase):
@@ -86,6 +87,17 @@ class M17PostgresArtifactTests(unittest.TestCase):
             "APPLICATION_STATE_RETENTION_CLASS",
         ):
             self.assertTrue(hasattr(application, name), name)
+
+    def test_retention_policy_records_authorized_mvp_application_profile(self):
+        text = RETENTION_POLICY.read_text(encoding="utf-8")
+        for marker in (
+            "MARKETPLACE_APPLICATION_STATE_MVP",
+            "30 days",
+            "PostgreSQL",
+            "source-level",
+            "no production deployment",
+        ):
+            self.assertIn(marker, text)
 
     def test_product_persistence_document_is_required(self):
         self.assertTrue(DOC.is_file())
