@@ -11,6 +11,11 @@ from .inbound_http_v1 import (
     decode_inbound_control_envelope_json,
     encode_prepared_inbound_response_json,
 )
+from .local_demo_v1 import (
+    LocalBuySellDemoError,
+    LocalBuySellDemoResult,
+    run_local_buy_sell_demo,
+)
 from .matching_v1 import (
     DEFAULT_MATCH_METHOD,
     DISCOVERY_SERVICE_TYPE,
@@ -70,6 +75,8 @@ __all__ = [
     "DEFAULT_MATCH_METHOD",
     "DISCOVERY_SERVICE_TYPE",
     "MAX_DISCOVERY_RECORDS",
+    "LocalBuySellDemoError",
+    "LocalBuySellDemoResult",
     "MarketplaceConformanceError",
     "MarketplaceDiscoveryError",
     "MarketplaceTransportJsonError",
@@ -99,6 +106,7 @@ __all__ = [
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
+    "run_local_buy_sell_demo",
     "render_product_listing_record_page",
     "validate_cursor_binding",
     "validate_discovery_query",
