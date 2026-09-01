@@ -253,6 +253,18 @@ class M79LocalUiLoopbackClientTests(unittest.TestCase):
                 )
                 self.assertEqual(sock.closed, 1)
 
+    def test_trailing_bytes_in_later_segment_are_rejected(self):
+        sock = FakeSocket([response_wire(), b"TRAILING"])
+        with self.assertRaises(LocalUiLoopbackClientError) as raised:
+            run_local_ui_loopback_client_once(
+                port=8785,
+                request=get_request(),
+                execution_opt_in=LOCAL_UI_LOOPBACK_CLIENT_EXECUTION_OPT_IN,
+                socket_constructor=FakeConstructor(sock),
+            )
+        self.assertEqual(raised.exception.code, "RESPONSE_TRAILING_BYTES")
+        self.assertEqual(sock.closed, 1)
+
     def test_cleanup_failure_is_stable(self):
         sock = FakeSocket([response_wire()], close_error=True)
         with self.assertRaises(LocalUiLoopbackClientError) as raised:
