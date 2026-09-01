@@ -80,7 +80,19 @@ class ExactDecimal:
         return cls(value, scale)
 
     def as_mapping(self) -> dict[str, int]:
-        return {"coefficient": self.coefficient, "scale": self.scale}
+        reviewed = _review_exact_decimal(self, name="decimal")
+        return {"coefficient": reviewed.coefficient, "scale": reviewed.scale}
+
+
+def _review_exact_decimal(value: object, *, name: str) -> ExactDecimal:
+    if type(value) is not ExactDecimal:
+        raise ValueError(f"{name} MUST be ExactDecimal")
+    coefficient = _exact_int(value.coefficient, name=f"{name}.coefficient")
+    scale = _exact_int(value.scale, name=f"{name}.scale")
+    reviewed = ExactDecimal(coefficient, scale)
+    if reviewed.coefficient != coefficient or reviewed.scale != scale:
+        raise ValueError(f"{name} MUST use canonical DecimalV1 form")
+    return reviewed
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,13 +113,13 @@ class ProductListingDraft:
         _absolute_uri(self.subject_uri, name="subject_uri")
         _bounded_text(self.title, name="title", max_bytes=_MAX_TITLE_BYTES)
         _bounded_text(self.description, name="description", max_bytes=_MAX_DESCRIPTION_BYTES)
-        if type(self.consideration) is not ExactDecimal:
-            raise ValueError("consideration MUST be ExactDecimal")
-        if self.consideration.coefficient < 0:
+        consideration = _review_exact_decimal(self.consideration, name="consideration")
+        if consideration.coefficient < 0:
             raise ValueError("consideration MUST NOT be negative")
         if type(self.currency_code) is not str or _CURRENCY_RE.fullmatch(self.currency_code) is None:
             raise ValueError("currency_code MUST be three uppercase ASCII letters")
-        if type(self.quantity) is not ExactDecimal or self.quantity.coefficient <= 0:
+        quantity = _review_exact_decimal(self.quantity, name="quantity")
+        if quantity.coefficient <= 0:
             raise ValueError("quantity MUST be a positive ExactDecimal")
         _absolute_uri(self.unit_uri, name="unit_uri")
         latitude = _exact_int(self.latitude_e6, name="latitude_e6")
@@ -116,29 +128,47 @@ class ProductListingDraft:
             raise ValueError("latitude_e6 MUST be in WGS84 range")
         if longitude < -180_000_000 or longitude > 180_000_000:
             raise ValueError("longitude_e6 MUST be in WGS84 range")
+        object.__setattr__(self, "consideration", consideration)
+        object.__setattr__(self, "quantity", quantity)
+
+
+def _review_draft(draft: object) -> ProductListingDraft:
+    if type(draft) is not ProductListingDraft:
+        raise TypeError("draft MUST be exact ProductListingDraft")
+    return ProductListingDraft(
+        seller_principal=draft.seller_principal,
+        subject_uri=draft.subject_uri,
+        title=draft.title,
+        description=draft.description,
+        consideration=draft.consideration,
+        currency_code=draft.currency_code,
+        quantity=draft.quantity,
+        unit_uri=draft.unit_uri,
+        latitude_e6=draft.latitude_e6,
+        longitude_e6=draft.longitude_e6,
+    )
 
 
 def build_product_listing_mapping(draft: ProductListingDraft) -> dict[str, object]:
     """Build one detached MarketIntentV1 mapping for the product-listing profile."""
-    if type(draft) is not ProductListingDraft:
-        raise TypeError("draft MUST be exact ProductListingDraft")
+    reviewed = _review_draft(draft)
     terms: dict[str, object] = {
-        TERM_TITLE: draft.title,
-        TERM_DESCRIPTION: draft.description,
+        TERM_TITLE: reviewed.title,
+        TERM_DESCRIPTION: reviewed.description,
         TERM_CONSIDERATION: {
             "kind": "monetary",
-            "amount": draft.consideration.as_mapping(),
-            "currency_code": draft.currency_code,
+            "amount": reviewed.consideration.as_mapping(),
+            "currency_code": reviewed.currency_code,
         },
         TERM_QUANTITY: {
-            "value": draft.quantity.as_mapping(),
-            "unit": draft.unit_uri,
+            "value": reviewed.quantity.as_mapping(),
+            "unit": reviewed.unit_uri,
         },
         TERM_LOCATION: {
             "scheme": LOCATION_WGS84_E6,
             "value": {
-                "latitude_e6": draft.latitude_e6,
-                "longitude_e6": draft.longitude_e6,
+                "latitude_e6": reviewed.latitude_e6,
+                "longitude_e6": reviewed.longitude_e6,
             },
         },
     }
@@ -147,8 +177,8 @@ def build_product_listing_mapping(draft: ProductListingDraft) -> dict[str, objec
         "type": TYPE_INTENT,
         "content": {
             "version": 1,
-            "issuer": {"principal": draft.seller_principal},
-            "subjects": [{"uri": draft.subject_uri}],
+            "issuer": {"principal": reviewed.seller_principal},
+            "subjects": [{"uri": reviewed.subject_uri}],
             "action": {"id": ACTION_SELL},
             "terms": terms,
         },
