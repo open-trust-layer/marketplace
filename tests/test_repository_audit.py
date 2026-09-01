@@ -29,6 +29,9 @@ requires-python = \">=3.11\"
 license = \"Apache-2.0\"
 dependencies = []
 
+[project.optional-dependencies]
+postgres = ["psycopg[binary]==3.3.5"]
+
 [tool.setuptools.packages.find]
 where = [\"src\"]
 include = [\"marketplace*\"]
@@ -169,18 +172,18 @@ class RepositoryAuditTests(unittest.TestCase):
                 findings,
             )
 
-    def test_packaging_audit_rejects_public_index_optional_dependency(self):
+    def test_packaging_audit_rejects_unreviewed_optional_dependency(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             text = _VALID_PYPROJECT.replace(
-                "dependencies = []\n",
-                "dependencies = []\n\n[project.optional-dependencies]\nreference = [\"open-layer-protocol==0.0.6.dev0\"]\n",
+                "psycopg[binary]==3.3.5",
+                "requests>=2",
             )
             (root / "pyproject.toml").write_text(text, encoding="utf-8")
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertIn(
-                "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted",
+                "PYPROJECT_OPTIONAL_DEPENDENCIES MUST equal {'postgres': ['psycopg[binary]==3.3.5']}",
                 findings,
             )
 
