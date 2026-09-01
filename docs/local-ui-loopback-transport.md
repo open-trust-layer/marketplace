@@ -50,7 +50,7 @@ Reviewed bounds:
 - read chunk: max 4,096 bytes;
 - listener/connection socket timeout: 5 seconds.
 
-The wire parser requires exact HTTP/1.1 framing, exact CRLF line endings, a single `Host` header equal to `127.0.0.1:<port>`, canonical bounded decimal `Content-Length` when present, unique bounded ASCII header names, and bounded printable ASCII header values.
+The wire parser requires exact HTTP/1.1 framing, exact CRLF line endings, a single `Host` header equal to `127.0.0.1:<port>`, canonical bounded decimal `Content-Length` when present, unique bounded ASCII header names, and bounded printable ASCII header values. Header lines are split only at the first colon delimiter so valid bounded header values may themselves contain colons; the header-name grammar and exact Host authority remain independently enforced.
 
 Credential/session or ambiguous transport headers are rejected, including `Authorization`, `Proxy-Authorization`, `Cookie`, `Set-Cookie`, `Transfer-Encoding`, `Expect`, `Upgrade`, `TE`, `Trailer`, and proxy-connection headers.
 
@@ -128,7 +128,11 @@ Branch history preserves the required order:
 - `7a40038796893c9b1281a08a7a4b90efb187bae7` — packaged one-shot transport implementation;
 - `62fff6d39be824d20d06baf1710672291b453206` — artifact/authority contract committed while the manual tool, export, and this document were still absent;
 - `e4dfedad996d36e4cf80017f92660e078c44ba92` — repository-only explicit manual socket-provider tool;
-- `4e53216245e8cd92196da00593fdd7a84d45c56a` — reviewed public reference export.
+- `4e53216245e8cd92196da00593fdd7a84d45c56a` — reviewed public reference export;
+- `bc9af3a7bdcb194a4da75b2402140ed61d8fd65c` — initial security/retention/optimization documentation and first PR CI head;
+- PR CI run `33541001598` failed three valid GET/POST/result tests because the initial parser incorrectly required exactly one colon in the entire header line, rejecting the required `Host: 127.0.0.1:<port>` value; all cleanup hooks still passed;
+- `23fed0d54cd8b9786343d979928ae92a0ff8cc64` — focused regression test allowing bounded header values containing additional colons while preserving the header-name boundary;
+- `e2c22a9f69dde3f799608727dd9a3a56911ea28d` — minimal parser fix: require a colon delimiter and split once, without weakening name, spacing, Host, sensitive-header, Content-Length, or resource-bound checks.
 
 ## Optimization evidence
 
