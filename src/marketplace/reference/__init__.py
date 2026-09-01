@@ -20,6 +20,13 @@ from .local_demo_v1 import (
     LocalBuySellDemoResult,
     run_local_buy_sell_demo,
 )
+from .local_ui_http_v1 import (
+    MAX_LOCAL_UI_HTTP_BODY_BYTES,
+    LocalUiHttpError,
+    LocalUiHttpRequest,
+    LocalUiHttpResponse,
+    handle_local_ui_http_request,
+)
 from .local_visual_v1 import (
     LocalVisualInteractionError,
     LocalVisualSubmission,
@@ -85,9 +92,13 @@ __all__ = [
     "DEFAULT_MATCH_METHOD",
     "DISCOVERY_SERVICE_TYPE",
     "MAX_DISCOVERY_RECORDS",
+    "MAX_LOCAL_UI_HTTP_BODY_BYTES",
     "LocalBuySellDemoError",
     "LocalBuySellDemoResult",
     "LocalConsoleInteractionError",
+    "LocalUiHttpError",
+    "LocalUiHttpRequest",
+    "LocalUiHttpResponse",
     "LocalVisualInteractionError",
     "LocalVisualSubmission",
     "MarketplaceConformanceError",
@@ -114,6 +125,7 @@ __all__ = [
     "evaluate_match",
     "extract_product_listing",
     "federation_v1",
+    "handle_local_ui_http_request",
     "make_record_transport_envelope",
     "market_record_transport_payload",
     "merge_federated_views",
