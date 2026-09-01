@@ -12,6 +12,9 @@ license = "Apache-2.0"
 authors = [{name = "Open Trust Foundation"}]
 dependencies = []
 
+[project.optional-dependencies]
+postgres = ["psycopg[binary]==3.3.5"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["marketplace*"]

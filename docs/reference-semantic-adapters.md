@@ -87,7 +87,7 @@ The reference adapters require OLP types and canonical operations. The Marketpla
 
 Milestone 22 deliberately does **not** declare `open-layer-protocol` as a mandatory or optional public-index dependency. Until OLP publication ownership and release provenance are separately established, adding that dependency name would create an unnecessary dependency-confusion / package-resolution trust path.
 
-Repository audit therefore rejects non-empty `project.dependencies` and non-empty `project.optional-dependencies` during this milestone.
+At the M22 baseline, repository audit rejected non-empty `project.dependencies` and non-empty `project.optional-dependencies`. Product M17.1A later preserves empty mandatory `project.dependencies` while allowlisting only the exact reviewed PostgreSQL application extra documented in `docs/m17-1a-postgres-application-state.md`; the OLP package name remains neither a mandatory nor optional public-index dependency.
 
 ## Isolated installed-reference smoke
 

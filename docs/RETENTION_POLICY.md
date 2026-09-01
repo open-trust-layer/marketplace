@@ -153,6 +153,17 @@ Therefore:
 3. longer provider retention MUST NOT be used as justification to emit content-bearing logs;
 4. inability to enforce a provider-side retention setting MUST be reported as an external-control limitation rather than misrepresented as locally guaranteed.
 
+## 7.1 Authorized Marketplace application-state MVP profile
+
+The owner-authorized Product M17.1A source-level persistence profile is `MARKETPLACE_APPLICATION_STATE_MVP`.
+
+It applies only to validated user-authored Marketplace records and the minimum local coordination state needed to browse, respond, and synchronize through the shared Marketplace application backend. PostgreSQL is the authoritative store for this profile.
+
+The default and maximum content retention is **30 days** after last legitimate application use. Retention refresh is allowed only for a successful semantically valid operation that actually uses the record. Automatic startup and transaction-triggered expiry/deletion are required. Expired sync metadata MUST advance a local synchronization floor so stale cursors fail closed rather than silently missing history.
+
+Deletion failure remains a security/privacy event and MUST be surfaced. Deleting a local application copy MUST NOT be represented as deleting an immutable protocol record from the wider world. Payload content remains prohibited from long-lived operational logs and telemetry.
+
+This is a **source-level** authorization recorded in Issue #175. It grants **no production deployment**, no live database provisioning or administration, no migration of real-user databases, no credential issuance, and no payment, settlement, fulfillment, or other protected external side effect. A later production/deployment profile requires separate authorization and operational controls.
 ## 8. Future runtime requirement
 
 Marketplace currently has no production message/conversation runtime. Before a future reference runtime accepts or persists transient content, it MUST define and test:

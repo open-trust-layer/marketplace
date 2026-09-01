@@ -105,6 +105,76 @@ class ExpiryResult:
     tombstone_sequences: tuple[int, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class PostgresMigration:
+    version: int
+    statements: tuple[str, ...]
+
+
+POSTGRES_APPLICATION_STATE_MIGRATIONS = (
+    PostgresMigration(
+        version=1,
+        statements=(
+            """
+CREATE TABLE IF NOT EXISTS marketplace_app_schema_migrations (
+    version INTEGER PRIMARY KEY CHECK (version > 0),
+    applied_at TIMESTAMPTZ NOT NULL
+)
+""",
+            """
+CREATE TABLE IF NOT EXISTS marketplace_app_records (
+    record_id TEXT PRIMARY KEY,
+    canonical_record BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    last_used_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    CHECK (octet_length(canonical_record) > 0)
+)
+""",
+            """
+CREATE TABLE IF NOT EXISTS marketplace_app_response_links (
+    parent_record_id TEXT NOT NULL,
+    response_record_id TEXT NOT NULL REFERENCES marketplace_app_records(record_id) ON DELETE CASCADE,
+    PRIMARY KEY (parent_record_id, response_record_id)
+)
+""",
+            """
+CREATE TABLE IF NOT EXISTS marketplace_app_changes (
+    seq BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    record_id TEXT NOT NULL,
+    change_kind TEXT NOT NULL CHECK (change_kind IN ('UPSERT', 'DELETE')),
+    changed_at TIMESTAMPTZ NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL
+)
+""",
+            """
+CREATE TABLE IF NOT EXISTS marketplace_app_sync_state (
+    singleton BOOLEAN PRIMARY KEY DEFAULT TRUE CHECK (singleton),
+    floor_seq BIGINT NOT NULL CHECK (floor_seq >= 0)
+)
+""",
+            """
+INSERT INTO marketplace_app_sync_state (singleton, floor_seq)
+VALUES (TRUE, 0)
+ON CONFLICT (singleton) DO NOTHING
+""",
+            """
+CREATE INDEX IF NOT EXISTS marketplace_app_records_expires_idx
+ON marketplace_app_records (expires_at, record_id)
+""",
+            """
+CREATE INDEX IF NOT EXISTS marketplace_app_response_parent_idx
+ON marketplace_app_response_links (parent_record_id, response_record_id)
+""",
+            """
+CREATE INDEX IF NOT EXISTS marketplace_app_changes_expires_idx
+ON marketplace_app_changes (expires_at, seq)
+""",
+        ),
+    ),
+)
+
+
 class Cursor(Protocol):
     def execute(self, sql: str, params: object = None) -> None: ...
     def fetchall(self): ...
@@ -121,6 +191,10 @@ class Connection(Protocol):
 
 ConnectionFactory = Callable[[], Connection]
 Clock = Callable[[], datetime]
+
+
+_SELECT_SCHEMA_VERSIONS = "SELECT version FROM marketplace_app_schema_migrations ORDER BY version"
+_INSERT_SCHEMA_VERSION = "INSERT INTO marketplace_app_schema_migrations (version, applied_at) VALUES (%s, %s)"
 
 
 _SELECT_RECORD_FOR_UPDATE = """
@@ -185,6 +259,20 @@ ORDER BY seq
 LIMIT %s
 """
 
+_DELETE_EXPIRED_RECORDS_MAINTENANCE = """
+/* M17_RETENTION_MAINTENANCE */
+DELETE FROM marketplace_app_records
+WHERE record_id IN (
+    SELECT record_id
+    FROM marketplace_app_records
+    WHERE expires_at <= %s
+    ORDER BY record_id
+    LIMIT %s
+    FOR UPDATE SKIP LOCKED
+)
+RETURNING record_id
+"""
+
 _DELETE_EXPIRED_RECORDS = """
 DELETE FROM marketplace_app_records
 WHERE record_id IN (
@@ -196,6 +284,26 @@ WHERE record_id IN (
     FOR UPDATE SKIP LOCKED
 )
 RETURNING record_id
+"""
+
+_DELETE_EXPIRED_CHANGES_MAINTENANCE = """
+/* M17_CHANGE_RETENTION_MAINTENANCE */
+DELETE FROM marketplace_app_changes
+WHERE seq IN (
+    SELECT seq
+    FROM marketplace_app_changes
+    WHERE expires_at <= %s
+    ORDER BY seq
+    LIMIT %s
+    FOR UPDATE SKIP LOCKED
+)
+RETURNING seq
+"""
+
+_ADVANCE_SYNC_FLOOR = """
+UPDATE marketplace_app_sync_state
+SET floor_seq = GREATEST(floor_seq, %s)
+WHERE singleton = TRUE
 """
 
 
@@ -263,6 +371,113 @@ class PostgresApplicationStateStore:
             except Exception:
                 pass
 
+    def apply_migrations(self) -> tuple[int, ...]:
+        """Apply the exact reviewed PostgreSQL schema in one bounded transaction."""
+        connection: Connection | None = None
+        cursor: Cursor | None = None
+        try:
+            connection, cursor = self._open()
+            first = POSTGRES_APPLICATION_STATE_MIGRATIONS[0]
+            cursor.execute(first.statements[0])
+            cursor.execute(_SELECT_SCHEMA_VERSIONS)
+            rows = cursor.fetchall()
+            versions = tuple(row[0] for row in rows)
+            if any(type(value) is not int or value <= 0 for value in versions):
+                raise ApplicationStateStoreError(
+                    "SCHEMA_VERSION_INVALID",
+                    "application database returned an invalid schema version",
+                )
+            supported = {migration.version for migration in POSTGRES_APPLICATION_STATE_MIGRATIONS}
+            if any(version not in supported for version in versions):
+                raise ApplicationStateStoreError(
+                    "SCHEMA_VERSION_UNSUPPORTED",
+                    "application database contains an unsupported schema version",
+                )
+            applied = set(versions)
+            now = self._now()
+            for migration_index, migration in enumerate(POSTGRES_APPLICATION_STATE_MIGRATIONS):
+                if migration.version in applied:
+                    continue
+                statements = migration.statements[1:] if migration_index == 0 else migration.statements
+                for statement in statements:
+                    cursor.execute(statement)
+                cursor.execute(_INSERT_SCHEMA_VERSION, (migration.version, now))
+                applied.add(migration.version)
+            connection.commit()
+            return tuple(sorted(applied))
+        except ApplicationStateStoreError:
+            if connection is not None:
+                try:
+                    connection.rollback()
+                except Exception:
+                    pass
+            raise
+        except Exception as exc:
+            if connection is not None:
+                try:
+                    connection.rollback()
+                except Exception:
+                    pass
+            raise ApplicationStateStoreError(
+                "MIGRATION_FAILED",
+                "application database migration failed",
+            ) from exc
+        finally:
+            self._close(cursor, connection)
+
+    def initialize(self) -> ExpiryResult:
+        """Apply schema then perform mandatory startup expiry cleanup."""
+        self.apply_migrations()
+        return self.expire_due()
+
+    def _expire_sync_metadata_cursor(self, cursor: Cursor, now: datetime) -> None:
+        try:
+            cursor.execute(
+                _DELETE_EXPIRED_CHANGES_MAINTENANCE,
+                (now, MAX_EXPIRY_BATCH),
+            )
+            rows = cursor.fetchall()
+            sequences = tuple(row[0] for row in rows)
+            if any(type(value) is not int or value <= 0 for value in sequences):
+                raise ApplicationStateRetentionError()
+            if sequences:
+                cursor.execute(_ADVANCE_SYNC_FLOOR, (max(sequences),))
+        except ApplicationStateRetentionError:
+            raise
+        except Exception as exc:
+            raise ApplicationStateRetentionError() from exc
+
+    def _expire_due_cursor(
+        self,
+        cursor: Cursor,
+        now: datetime,
+        *,
+        automatic: bool,
+    ) -> ExpiryResult:
+        sql = _DELETE_EXPIRED_RECORDS_MAINTENANCE if automatic else _DELETE_EXPIRED_RECORDS
+        try:
+            cursor.execute(sql, (now, MAX_EXPIRY_BATCH))
+            deleted = tuple(row[0] for row in cursor.fetchall())
+            if any(type(value) is not str or not value for value in deleted):
+                raise ApplicationStateRetentionError()
+            sequences: list[int] = []
+            tombstone_expiry = self._expiry(now)
+            for record_id in deleted:
+                cursor.execute(
+                    _INSERT_CHANGE,
+                    (record_id, "DELETE", now, tombstone_expiry),
+                )
+                row = cursor.fetchone()
+                if type(row) not in (tuple, list) or len(row) != 1 or type(row[0]) is not int:
+                    raise ApplicationStateRetentionError()
+                sequences.append(row[0])
+            self._expire_sync_metadata_cursor(cursor, now)
+            return ExpiryResult(deleted, tuple(sequences))
+        except ApplicationStateRetentionError:
+            raise
+        except Exception as exc:
+            raise ApplicationStateRetentionError() from exc
+
     def put(self, prepared: PreparedApplicationRecord) -> ApplicationStatePutResult:
         if type(prepared) is not PreparedApplicationRecord:
             raise TypeError("prepared MUST be exact PreparedApplicationRecord")
@@ -272,6 +487,7 @@ class PostgresApplicationStateStore:
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
+            self._expire_due_cursor(cursor, now, automatic=True)
             cursor.execute(_SELECT_RECORD_FOR_UPDATE, (prepared.record_id,))
             existing = cursor.fetchone()
             if existing is not None:
@@ -293,6 +509,7 @@ class PostgresApplicationStateStore:
                         "canonical record and application response index disagree",
                     )
                 cursor.execute(_REFRESH_RECORD, (now, expires, prepared.record_id))
+                self._expire_due_cursor(cursor, now, automatic=True)
                 connection.commit()
                 return ApplicationStatePutResult(StoreDisposition.DUPLICATE, None)
 
@@ -312,8 +529,10 @@ class PostgresApplicationStateStore:
                     "DATABASE_RESULT_INVALID",
                     "application database returned an invalid change sequence",
                 )
+            change_seq = row[0]
+            self._expire_due_cursor(cursor, now, automatic=True)
             connection.commit()
-            return ApplicationStatePutResult(StoreDisposition.STORED, row[0])
+            return ApplicationStatePutResult(StoreDisposition.STORED, change_seq)
         except ApplicationStateStoreError:
             if connection is not None:
                 try:
@@ -477,24 +696,13 @@ class PostgresApplicationStateStore:
 
     def expire_due(self) -> ExpiryResult:
         now = self._now()
-        expires = self._expiry(now)
         connection: Connection | None = None
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
-            cursor.execute(_DELETE_EXPIRED_RECORDS, (now, MAX_EXPIRY_BATCH))
-            deleted = tuple(row[0] for row in cursor.fetchall())
-            if any(type(value) is not str or not value for value in deleted):
-                raise ApplicationStateRetentionError()
-            sequences: list[int] = []
-            for record_id in deleted:
-                cursor.execute(_INSERT_CHANGE, (record_id, "DELETE", now, expires))
-                row = cursor.fetchone()
-                if type(row) not in (tuple, list) or len(row) != 1 or type(row[0]) is not int:
-                    raise ApplicationStateRetentionError()
-                sequences.append(row[0])
+            result = self._expire_due_cursor(cursor, now, automatic=False)
             connection.commit()
-            return ExpiryResult(deleted, tuple(sequences))
+            return result
         except ApplicationStateRetentionError:
             if connection is not None:
                 try:
@@ -517,6 +725,7 @@ __all__ = [
     "APPLICATION_STATE_RETENTION_CLASS",
     "DEFAULT_APPLICATION_STATE_RETENTION_SECONDS",
     "MAX_APPLICATION_STATE_RETENTION_SECONDS",
+    "POSTGRES_APPLICATION_STATE_MIGRATIONS",
     "ApplicationStateCollisionError",
     "ApplicationStatePutResult",
     "ApplicationStateRetentionError",
@@ -524,6 +733,7 @@ __all__ = [
     "ExpiryResult",
     "PreparedApplicationRecord",
     "PostgresApplicationStateStore",
+    "PostgresMigration",
     "StoreDisposition",
     "SyncChange",
     "SyncPage",

@@ -20,6 +20,19 @@ from .local import (
     MarketplaceApplicationError,
     PublishedRecord,
 )
+from .postgres_state import (
+    APPLICATION_STATE_RETENTION_CLASS,
+    ApplicationStateCollisionError,
+    ApplicationStatePutResult,
+    ApplicationStateRetentionError,
+    ApplicationStateStoreError,
+    ExpiryResult,
+    PreparedApplicationRecord,
+    PostgresApplicationStateStore,
+    SyncChange,
+    SyncPage,
+)
+from .state import MarketplaceApplicationStateService
 from .web_map import (
     DEFAULT_OFFLINE_MAP_FIXTURE,
     MAX_RENDERED_LISTINGS,
@@ -29,6 +42,17 @@ from .web_map import (
 )
 
 __all__ = [
+    "APPLICATION_STATE_RETENTION_CLASS",
+    "ApplicationStateCollisionError",
+    "ApplicationStatePutResult",
+    "ApplicationStateRetentionError",
+    "ApplicationStateStoreError",
+    "ExpiryResult",
+    "MarketplaceApplicationStateService",
+    "PostgresApplicationStateStore",
+    "PreparedApplicationRecord",
+    "SyncChange",
+    "SyncPage",
     "ACTION_SELL",
     "DEFAULT_OFFLINE_MAP_FIXTURE",
     "ExactDecimal",
