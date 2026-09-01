@@ -247,6 +247,14 @@ def _read_response(sock: object) -> tuple[int, int]:
 
     for _call in range(MAX_LOCAL_UI_LOOPBACK_CLIENT_READ_CALLS):
         if expected_total is not None and len(buffer) == expected_total:
+            try:
+                trailing = recv(1)
+            except Exception:
+                _fail("READ_FAILED", "local UI loopback response read failed")
+            if type(trailing) is not bytes:
+                _fail("READ_FAILED", "local UI loopback response read returned an invalid result")
+            if trailing:
+                _fail("RESPONSE_TRAILING_BYTES", "local UI loopback response contained trailing bytes")
             break
         remaining = _MAX_RESPONSE_WIRE_BYTES - len(buffer)
         if remaining <= 0:
