@@ -58,13 +58,15 @@ class M72ArtifactMembershipTests(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, source)
 
-    def test_reference_extractor_preflights_reviewed_frozen_envelope(self):
+    def test_reference_extractor_detaches_reviewed_frozen_graph_before_validation(self):
         source = REFERENCE.read_text(encoding="utf-8")
-        self.assertIn("type(record.content) is not MappingProxyType", source)
-        self.assertIn("type(record.semantic_bindings) is not MappingProxyType", source)
-        self.assertIn("type(record.relationships) is not tuple", source)
-        self.assertIn("type(record.extensions) is not MappingProxyType", source)
-        self.assertIn("set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}", source)
+        self.assertIn("_FROZEN_MAX_DEPTH = 16", source)
+        self.assertIn("_FROZEN_MAX_COLLECTION_ITEMS = 64", source)
+        self.assertIn("gc.get_referents(value)", source)
+        self.assertIn("type(referents[0]) is not dict", source)
+        self.assertIn("type(content_value) is not MappingProxyType", source)
+        self.assertIn("reviewed_record = RecordV1(", source)
+        self.assertIn("validate_market_record(reviewed_record)", source)
 
 
 if __name__ == "__main__":
