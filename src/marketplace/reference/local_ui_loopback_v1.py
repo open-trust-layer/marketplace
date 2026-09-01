@@ -144,7 +144,7 @@ def _parse_request_head(head: bytes, *, port: int) -> tuple[str, str, str | None
         _fail("REQUEST_TOO_LARGE", "local UI loopback request has too many headers")
     headers: dict[str, str] = {}
     for line in header_lines:
-        if not line or line.startswith((" ", "\t")) or line.count(":") != 1:
+        if not line or line.startswith((" ", "\t")) or ":" not in line:
             _fail("REQUEST_INVALID", "local UI loopback request header is invalid")
         raw_name, raw_value = line.split(":", 1)
         if not raw_name or len(raw_name) > 64:
