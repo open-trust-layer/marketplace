@@ -182,6 +182,24 @@ class M78LocalUiLoopbackTransportTests(unittest.TestCase):
         self.assertIn(b"Connection: close\r\n", connection.sent)
         self.assertIn(b"Marketplace local buy/sell", connection.sent)
 
+    def test_header_value_may_contain_colons_without_changing_header_name_boundary(self):
+        port = 8773
+        wire = get_wire(port).replace(
+            b"User-Agent: deterministic-test\r\n",
+            f"Referer: http://127.0.0.1:{port}/\r\n".encode("ascii"),
+        )
+        connection = FakeConnection([wire])
+
+        result = serve_local_ui_loopback_once(
+            port=port,
+            execution_opt_in=LOCAL_UI_LOOPBACK_EXECUTION_OPT_IN,
+            socket_constructor=FakeConstructor(FakeListener(connection)),
+        )
+
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.request_method, "GET")
+        self.assertEqual(result.request_target, "/")
+
     def test_post_delegates_to_m77_and_does_not_return_human_content(self):
         port = 8768
         wire = post_wire(port)
