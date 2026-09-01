@@ -76,6 +76,17 @@ class M17PostgresArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, lowered)
 
+    def test_application_public_surface_exports_shared_state_api(self):
+        from marketplace import application
+
+        for name in (
+            "MarketplaceApplicationStateService",
+            "PostgresApplicationStateStore",
+            "PreparedApplicationRecord",
+            "APPLICATION_STATE_RETENTION_CLASS",
+        ):
+            self.assertTrue(hasattr(application, name), name)
+
     def test_product_persistence_document_is_required(self):
         self.assertTrue(DOC.is_file())
         text = DOC.read_text(encoding="utf-8")
