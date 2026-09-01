@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from types import MappingProxyType
 
 from olp import RecordV1
 
@@ -68,6 +69,22 @@ def _decimal(value: object, *, name: str) -> ExactDecimal:
 def _validated_draft(record: object) -> ProductListingDraft:
     if type(record) is not RecordV1:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "record MUST be exact OLP RecordV1")
+    if type(record.type) is not str or record.type != TYPE_INTENT:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "product listing MUST be a MarketIntentV1")
+    if type(record.content) is not MappingProxyType:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record content container changed")
+    if type(record.semantic_bindings) is not MappingProxyType or record.semantic_bindings:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record semantic bindings changed")
+    if type(record.relationships) is not tuple or record.relationships:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record relationships changed")
+    if type(record.extensions) is not MappingProxyType or record.extensions:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record extensions changed")
+    if type(record.profiles) is not tuple or len(record.profiles) != 2:
+        _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
+    if any(type(profile) is not str for profile in record.profiles):
+        _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
+    if set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}:
+        _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
     try:
         validate_market_record(record)
     except Exception as exc:
@@ -75,12 +92,6 @@ def _validated_draft(record: object) -> ProductListingDraft:
             "PRODUCT_LISTING_RECORD_INVALID",
             "record is not a valid Marketplace record",
         ) from exc
-    if record.type != TYPE_INTENT:
-        _fail("PRODUCT_LISTING_RECORD_INVALID", "product listing MUST be a MarketIntentV1")
-    if PRODUCT_LISTING_PROFILE not in record.profiles:
-        _fail("PRODUCT_LISTING_PROFILE_REQUIRED", "product-listing-v1 profile is required")
-    if record.profiles != (CORE_PROFILE, PRODUCT_LISTING_PROFILE):
-        _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
 
     content = _mapping(record.content, name="content")
     _exact_keys(content, {"version", "issuer", "subjects", "action", "terms"}, name="content")
