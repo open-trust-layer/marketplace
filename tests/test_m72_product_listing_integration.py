@@ -122,6 +122,32 @@ class M72ProductListingIntegrationTests(unittest.TestCase):
             extract_product_listing(record)
         self.assertEqual(caught.exception.code, "PRODUCT_LISTING_SHAPE_INVALID")
 
+    def test_extractor_accepts_equivalent_profile_ordering(self):
+        mapping = build_product_listing_mapping(self._draft())
+        mapping["profiles"] = [PRODUCT_LISTING_PROFILE, CORE_PROFILE]
+        record = RecordV1.from_mapping(mapping)
+        validate_market_record(record)
+        self.assertEqual(extract_product_listing(record), self._draft())
+
+    def test_extractor_rejects_hostile_rebound_content_before_mapping_execution(self):
+        record = build_product_listing_record(self._draft())
+        touched: list[str] = []
+
+        class HostileMapping(dict):
+            def items(self):
+                touched.append("items")
+                raise AssertionError("hostile mapping MUST NOT execute")
+
+            def __iter__(self):
+                touched.append("iter")
+                raise AssertionError("hostile mapping MUST NOT execute")
+
+        object.__setattr__(record, "content", HostileMapping())
+        with self.assertRaises(ProductListingProfileError) as caught:
+            extract_product_listing(record)
+        self.assertEqual(caught.exception.code, "PRODUCT_LISTING_RECORD_INVALID")
+        self.assertEqual(touched, [])
+
     def test_extractor_rejects_unreviewed_additional_profile(self):
         mapping = build_product_listing_mapping(self._draft())
         mapping["profiles"].append("https://example.test/profile/extra")
