@@ -84,10 +84,13 @@ runtime actions.
 A valid listing remains attributable data, not truth, ownership, availability, legality,
 fair value, authority, agreement, settlement, or permission for a protected side effect.
 
-The extractor requires the exact reviewed OLP `RecordV1` type and exact frozen envelope
-container classes before any general Marketplace validation. It then detaches a bounded,
-trusted snapshot of the OLP-frozen value graph and reconstructs a fresh `RecordV1`; only
-that detached record is passed to the general Marketplace validator and profile parser.
+The application builder revalidates the complete `ProductListingDraft` immediately before
+projection, including exact nested `ExactDecimal` scalar types, and builds from a fresh
+reviewed draft. The reference extractor requires the exact reviewed OLP `RecordV1` type and
+exact frozen envelope container classes before any general Marketplace validation. It then
+detaches a bounded trusted snapshot of the OLP-frozen value graph and reconstructs a fresh
+`RecordV1`; only that detached record is passed to the general Marketplace validator and
+profile parser.
 
 ## Privacy and retention
 
@@ -138,8 +141,24 @@ reconstructed trusted `RecordV1`.
 
 Artifact commit `8bb677972039412f21c5430d5d1e099f6d87ab0e` binds those bounds, inert
 backing-object inspection, detached reconstruction, and reviewed-record validation into the
-repository acceptance contract. No new external capability, dependency, network surface,
-persistence path, settlement authority, or protocol semantic was introduced.
+repository acceptance contract.
+
+## Post-implementation draft review
+
+The same private-rebinding threat was then checked on the application input side. A frozen
+`ProductListingDraft` can still be deliberately modified with `object.__setattr__`; the old
+builder would call `.as_mapping()` on a rebound `consideration` field, and the old draft
+validator could compare a tampered `ExactDecimal.coefficient` subclass before proving that
+the nested scalar was an exact integer.
+
+Tests-only commit `c232531a90a64399b703daa04d8c4cb8193eac79` reproduces both cases without
+OLP or external I/O. Fix commit `f3384a1f360147ef17f67432436a05388b82e690` revalidates exact decimal
+scalars, rebuilds a fresh reviewed `ProductListingDraft`, and projects only from that fresh
+snapshot. Artifact commit `c77732ed6cb3ef275b3e6494aba2e41dbe2b6fe1` binds both the reviewed-draft
+and detached-record guards into acceptance.
+
+No new external capability, dependency, network surface, persistence path, settlement
+authority, or protocol semantic was introduced by any of these hardening steps.
 
 ## Optimization evidence
 
@@ -150,6 +169,7 @@ introduced. Decimal canonicalization performs at most 18 trailing-zero reduction
 The map-ready location representation uses two integers and avoids floating-point parsing,
 geocoding, or normalization. Extraction traverses only the bounded M72 frozen record graph,
 creates one detached trusted snapshot, and validates that snapshot before rendering fields.
+The builder performs one bounded draft revalidation and one fresh deterministic projection.
 
 No existing quality, security, integration, governance, artifact, or semantic-conformance
 gate is weakened, bypassed, skipped, removed, or renamed.
