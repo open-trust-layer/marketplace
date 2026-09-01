@@ -79,11 +79,13 @@ def _validated_draft(record: object) -> ProductListingDraft:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "record relationships changed")
     if type(record.extensions) is not MappingProxyType or record.extensions:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "record extensions changed")
-    if type(record.profiles) is not tuple or len(record.profiles) != 2:
+    if type(record.profiles) is not tuple:
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
     if any(type(profile) is not str for profile in record.profiles):
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
-    if set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}:
+    if PRODUCT_LISTING_PROFILE not in record.profiles:
+        _fail("PRODUCT_LISTING_PROFILE_REQUIRED", "product-listing-v1 profile is required")
+    if len(record.profiles) != 2 or set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}:
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
     try:
         validate_market_record(record)
