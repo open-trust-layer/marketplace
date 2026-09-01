@@ -58,6 +58,13 @@ class M72ArtifactMembershipTests(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, source)
 
+    def test_application_builder_revalidates_exact_draft_and_decimal_state(self):
+        source = APPLICATION.read_text(encoding="utf-8")
+        self.assertIn("def _review_exact_decimal", source)
+        self.assertIn("type(value) is not ExactDecimal", source)
+        self.assertIn("def _review_draft", source)
+        self.assertIn("reviewed = _review_draft(draft)", source)
+
     def test_reference_extractor_detaches_reviewed_frozen_graph_before_validation(self):
         source = REFERENCE.read_text(encoding="utf-8")
         self.assertIn("_FROZEN_MAX_DEPTH = 16", source)
