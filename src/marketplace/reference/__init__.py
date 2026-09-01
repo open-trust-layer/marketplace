@@ -11,6 +11,10 @@ from .inbound_http_v1 import (
     decode_inbound_control_envelope_json,
     encode_prepared_inbound_response_json,
 )
+from .local_console_v1 import (
+    LocalConsoleInteractionError,
+    run_local_buy_sell_console,
+)
 from .local_demo_v1 import (
     LocalBuySellDemoError,
     LocalBuySellDemoResult,
@@ -77,6 +81,7 @@ __all__ = [
     "MAX_DISCOVERY_RECORDS",
     "LocalBuySellDemoError",
     "LocalBuySellDemoResult",
+    "LocalConsoleInteractionError",
     "MarketplaceConformanceError",
     "MarketplaceDiscoveryError",
     "MarketplaceTransportJsonError",
@@ -106,6 +111,7 @@ __all__ = [
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
+    "run_local_buy_sell_console",
     "run_local_buy_sell_demo",
     "render_product_listing_record_page",
     "validate_cursor_binding",
