@@ -82,6 +82,7 @@ class M72ProductListingTests(unittest.TestCase):
                 "value": {"latitude_e6": 52_520_000, "longitude_e6": 13_405_000},
             },
         )
+
     def test_builder_rejects_invalid_human_listing_inputs(self):
         invalid = (
             {"title": "x" * 121},
@@ -97,6 +98,34 @@ class M72ProductListingTests(unittest.TestCase):
             with self.subTest(changes=changes):
                 with self.assertRaises(ValueError):
                     build_product_listing_mapping(self._draft(**changes))
+
+    def test_builder_rejects_rebound_hostile_draft_field_without_execution(self):
+        draft = self._draft()
+        touched: list[str] = []
+
+        class Hostile:
+            def __getattribute__(self, name: str):
+                touched.append(name)
+                raise AssertionError("rebound draft field MUST NOT execute")
+
+        object.__setattr__(draft, "consideration", Hostile())
+        with self.assertRaises(ValueError):
+            build_product_listing_mapping(draft)
+        self.assertEqual(touched, [])
+
+    def test_draft_revalidation_rejects_tampered_decimal_scalar_without_execution(self):
+        decimal = ExactDecimal(1, 0)
+        touched: list[str] = []
+
+        class HostileInt(int):
+            def __lt__(self, other):
+                touched.append("lt")
+                raise AssertionError("tampered decimal comparison MUST NOT execute")
+
+        object.__setattr__(decimal, "coefficient", HostileInt(1))
+        with self.assertRaises(ValueError):
+            self._draft(consideration=decimal)
+        self.assertEqual(touched, [])
 
     def test_builder_returns_detached_fresh_container_graph(self):
         draft = self._draft()
