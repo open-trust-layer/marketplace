@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import MappingProxyType
 import unittest
 
 from olp import RecordV1
@@ -143,6 +144,51 @@ class M72ProductListingIntegrationTests(unittest.TestCase):
                 raise AssertionError("hostile mapping MUST NOT execute")
 
         object.__setattr__(record, "content", HostileMapping())
+        with self.assertRaises(ProductListingProfileError) as caught:
+            extract_product_listing(record)
+        self.assertEqual(caught.exception.code, "PRODUCT_LISTING_RECORD_INVALID")
+        self.assertEqual(touched, [])
+
+    def test_extractor_rejects_mappingproxy_wrapped_hostile_content_without_execution(self):
+        record = build_product_listing_record(self._draft())
+        touched: list[str] = []
+
+        class HostileMapping(dict):
+            def __len__(self):
+                touched.append("len")
+                raise AssertionError("wrapped hostile mapping MUST NOT execute")
+
+            def __iter__(self):
+                touched.append("iter")
+                raise AssertionError("wrapped hostile mapping MUST NOT execute")
+
+            def items(self):
+                touched.append("items")
+                raise AssertionError("wrapped hostile mapping MUST NOT execute")
+
+        content = build_product_listing_mapping(self._draft())["content"]
+        object.__setattr__(record, "content", MappingProxyType(HostileMapping(content)))
+        with self.assertRaises(ProductListingProfileError) as caught:
+            extract_product_listing(record)
+        self.assertEqual(caught.exception.code, "PRODUCT_LISTING_RECORD_INVALID")
+        self.assertEqual(touched, [])
+
+    def test_extractor_rejects_nested_hostile_mapping_in_frozen_content_without_execution(self):
+        record = build_product_listing_record(self._draft())
+        touched: list[str] = []
+
+        class HostileMapping(dict):
+            def __len__(self):
+                touched.append("len")
+                raise AssertionError("nested hostile mapping MUST NOT execute")
+
+            def items(self):
+                touched.append("items")
+                raise AssertionError("nested hostile mapping MUST NOT execute")
+
+        content = build_product_listing_mapping(self._draft())["content"]
+        content["terms"] = HostileMapping(content["terms"])
+        object.__setattr__(record, "content", MappingProxyType(content))
         with self.assertRaises(ProductListingProfileError) as caught:
             extract_product_listing(record)
         self.assertEqual(caught.exception.code, "PRODUCT_LISTING_RECORD_INVALID")
