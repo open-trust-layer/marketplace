@@ -108,6 +108,21 @@ The bare developer Python intentionally does not contain the pinned OLP dependen
 application and artifact tests run locally; OLP-backed behavioral integration is verified
 by the repository's isolated self-hosted CI using the exact reviewed OLP pin.
 
+## Post-implementation extraction review
+
+A focused exact-head review found two issues before M72 acceptance was finalized:
+
+- OLP `profiles` are identity-equivalent regardless of tuple ordering, so the product-listing
+  extractor must validate the exact profile set rather than one incidental order.
+- an exact frozen `RecordV1` can be privately rebound after construction; the extractor must
+  reject changed envelope container types before the general Marketplace validator can touch
+  attacker-controlled mapping or sequence behavior.
+
+Tests-only commit `1a54893fa3b460a956adfb52c49c9f108d4aeb4e` captures both regressions.
+Fix commit `c7885fdfea82c2ef5fd4b0b8fa7cfb3d0781def1` preflights the reviewed frozen OLP
+envelope shape and treats the two required profiles as a set. No new capability, dependency,
+network surface, persistence path, or protocol semantic was introduced.
+
 ## Optimization evidence
 
 Construction is constant-size work over one bounded draft: no scan, retry, pagination,

@@ -58,6 +58,14 @@ class M72ArtifactMembershipTests(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, source)
 
+    def test_reference_extractor_preflights_reviewed_frozen_envelope(self):
+        source = REFERENCE.read_text(encoding="utf-8")
+        self.assertIn("type(record.content) is not MappingProxyType", source)
+        self.assertIn("type(record.semantic_bindings) is not MappingProxyType", source)
+        self.assertIn("type(record.relationships) is not tuple", source)
+        self.assertIn("type(record.extensions) is not MappingProxyType", source)
+        self.assertIn("set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}", source)
+
 
 if __name__ == "__main__":
     unittest.main()
