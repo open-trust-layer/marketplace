@@ -145,3 +145,9 @@ This intentionally optimizes for small authority surface, deterministic cleanup,
 ## Next boundary
 
 After M78 is merged-green, reassess whether a separately governed **live local visual acceptance milestone** is justified. Such a milestone may exercise the repository-only one-shot loopback tool on a workstation and validate the GET/POST wire path with an explicit local client, but browser launch/automation, multi-request service lifetime, deployment, external networking, credentials, persistence, payments, and settlement remain separate authority decisions.
+
+## CI regression follow-up
+
+- PR CI run `33541794314` (run #337) exercised head `1f9cd771a626bb9e2f9fddf46c201ca2ed36be70` and reached 1,205 tests; 1 test failed and 15 were skipped. Repository audit, artifact gate, whitespace checks, isolated package smokes, disposable-state cleanup, both checkout cleanups, and final runner cleanup passed.
+- The sole failure was a stale GET test assertion looking for `Marketplace local buy/sell`, while the reviewed M76 form correctly emits `Local Marketplace Buy/Sell`; the transport itself returned HTTP 200 with the exact reviewed M76 HTML.
+- `060ece51654a1be26733748b50afa68fdad9d184` changes only that assertion to the exact reviewed M76 heading. No production source, parser rule, transport authority, or quality/security/conformance gate changed.
