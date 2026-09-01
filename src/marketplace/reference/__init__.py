@@ -57,6 +57,7 @@ from .record_v1 import (
     MarketplaceConformanceError,
     validate_market_record,
 )
+from .web_map_v1 import render_product_listing_record_page
 from .transport_json_v1 import (
     MarketplaceTransportJsonError,
     decode_transport_envelope_json,
@@ -98,6 +99,7 @@ __all__ = [
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
+    "render_product_listing_record_page",
     "validate_cursor_binding",
     "validate_discovery_query",
     "validate_market_record",
