@@ -33,6 +33,10 @@ class ScriptedCursor:
         if "M17_RETENTION_MAINTENANCE" in normalized:
             self.rows = []
             return
+        if "M17_CHANGE_RETENTION_MAINTENANCE" in normalized:
+            if not self.steps or self.steps[0][0] not in normalized:
+                self.rows = []
+                return
         if not self.steps:
             raise AssertionError(f"unexpected SQL: {normalized}")
         fragment, result = self.steps.pop(0)
@@ -163,7 +167,10 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertEqual(result.disposition, StoreDisposition.DUPLICATE)
         self.assertIsNone(result.change_seq)
         self.assertEqual(connection.commits, 1)
-        update_params = connection.cursor_obj.calls[-1][1]
+        update_params = next(
+            params for sql, params in connection.cursor_obj.calls
+            if "UPDATE marketplace_app_records" in sql
+        )
         self.assertIn(expires, update_params)
 
     def test_identity_collision_rolls_back_without_reflecting_database_content(self):
@@ -241,6 +248,21 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         result = store.expire_due()
         self.assertEqual(result.deleted_record_ids, ("r1_old",))
         self.assertEqual(result.tombstone_sequences, (52,))
+        self.assertEqual(connection.commits, 1)
+
+    def test_expiry_removes_old_sync_metadata_and_advances_fail_closed_floor(self):
+        steps = [
+            ("DELETE FROM marketplace_app_records", []),
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (7,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+        ]
+        store, connection, _ = self.store(steps)
+        store.expire_due()
+        floor_call = next(
+            (sql, params) for sql, params in connection.cursor_obj.calls
+            if "UPDATE marketplace_app_sync_state" in sql
+        )
+        self.assertEqual(floor_call[1], (7,))
         self.assertEqual(connection.commits, 1)
 
     def test_database_errors_are_stable_and_transaction_rolls_back(self):
