@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import gc
 from types import MappingProxyType
 
 from olp import RecordV1
@@ -28,6 +29,9 @@ from .record_v1 import (
     validate_value_expression,
 )
 
+_FROZEN_MAX_DEPTH = 16
+_FROZEN_MAX_COLLECTION_ITEMS = 64
+
 
 class ProductListingProfileError(ValueError):
     """Stable product-listing profile validation failure."""
@@ -41,9 +45,51 @@ def _fail(code: str, message: str) -> None:
     raise ProductListingProfileError(code, message)
 
 
+def _snapshot_frozen_value(value: object, *, name: str, depth: int = 0) -> object:
+    """Detach one bounded OLP-frozen value graph without invoking mapping overrides."""
+    if depth > _FROZEN_MAX_DEPTH:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} exceeds the frozen depth bound")
+    value_type = type(value)
+    if value_type in (type(None), bool, int, bytes, str):
+        return value
+    if value_type is tuple:
+        if len(value) > _FROZEN_MAX_COLLECTION_ITEMS:
+            _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} exceeds the frozen item bound")
+        return tuple(
+            _snapshot_frozen_value(item, name=f"{name}[{index}]", depth=depth + 1)
+            for index, item in enumerate(value)
+        )
+    if value_type is MappingProxyType:
+        referents = gc.get_referents(value)
+        if len(referents) != 1 or type(referents[0]) is not dict:
+            _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} has an unreviewed mapping backing")
+        backing = referents[0]
+        if len(backing) > _FROZEN_MAX_COLLECTION_ITEMS:
+            _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} exceeds the frozen item bound")
+        detached: dict[str, object] = {}
+        try:
+            for index, (key, item) in enumerate(dict.items(backing)):
+                if index >= _FROZEN_MAX_COLLECTION_ITEMS:
+                    _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} exceeds the frozen item bound")
+                if type(key) is not str:
+                    _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} has a non-text key")
+                detached[key] = _snapshot_frozen_value(
+                    item,
+                    name=f"{name}.value[{index}]",
+                    depth=depth + 1,
+                )
+        except RuntimeError as exc:
+            raise ProductListingProfileError(
+                "PRODUCT_LISTING_RECORD_INVALID",
+                f"{name} changed while being detached",
+            ) from exc
+        return detached
+    _fail("PRODUCT_LISTING_RECORD_INVALID", f"{name} contains an unreviewed frozen value type")
+
+
 def _mapping(value: object, *, name: str) -> Mapping[str, object]:
-    if not isinstance(value, Mapping):
-        _fail("PRODUCT_LISTING_SHAPE_INVALID", f"{name} MUST be a mapping")
+    if type(value) is not MappingProxyType:
+        _fail("PRODUCT_LISTING_SHAPE_INVALID", f"{name} MUST be a reviewed frozen mapping")
     if any(type(key) is not str for key in value):
         _fail("PRODUCT_LISTING_SHAPE_INVALID", f"{name} keys MUST be exact text")
     return value
@@ -69,54 +115,91 @@ def _decimal(value: object, *, name: str) -> ExactDecimal:
 def _validated_draft(record: object) -> ProductListingDraft:
     if type(record) is not RecordV1:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "record MUST be exact OLP RecordV1")
-    if type(record.type) is not str or record.type != TYPE_INTENT:
+
+    envelope_version = record.envelope_version
+    record_type = record.type
+    content_value = record.content
+    semantic_bindings_value = record.semantic_bindings
+    profiles = record.profiles
+    relationships_value = record.relationships
+    extensions_value = record.extensions
+
+    if type(envelope_version) is not int or envelope_version != 1:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record envelope version changed")
+    if type(record_type) is not str or record_type != TYPE_INTENT:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "product listing MUST be a MarketIntentV1")
-    if type(record.content) is not MappingProxyType:
+    if type(content_value) is not MappingProxyType:
         _fail("PRODUCT_LISTING_RECORD_INVALID", "record content container changed")
-    if type(record.semantic_bindings) is not MappingProxyType or record.semantic_bindings:
-        _fail("PRODUCT_LISTING_RECORD_INVALID", "record semantic bindings changed")
-    if type(record.relationships) is not tuple or record.relationships:
-        _fail("PRODUCT_LISTING_RECORD_INVALID", "record relationships changed")
-    if type(record.extensions) is not MappingProxyType or record.extensions:
-        _fail("PRODUCT_LISTING_RECORD_INVALID", "record extensions changed")
-    if type(record.profiles) is not tuple:
+    if type(semantic_bindings_value) is not MappingProxyType:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record semantic bindings container changed")
+    if type(relationships_value) is not tuple:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record relationships container changed")
+    if type(extensions_value) is not MappingProxyType:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record extensions container changed")
+    if type(profiles) is not tuple:
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
-    if any(type(profile) is not str for profile in record.profiles):
+    if any(type(profile) is not str for profile in profiles):
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
-    if PRODUCT_LISTING_PROFILE not in record.profiles:
+    if PRODUCT_LISTING_PROFILE not in profiles:
         _fail("PRODUCT_LISTING_PROFILE_REQUIRED", "product-listing-v1 profile is required")
-    if len(record.profiles) != 2 or set(record.profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}:
+    if len(profiles) != 2 or set(profiles) != {CORE_PROFILE, PRODUCT_LISTING_PROFILE}:
         _fail("PRODUCT_LISTING_PROFILE_SET_INVALID", "product listing profile set changed")
+
+    content = _snapshot_frozen_value(content_value, name="record.content")
+    semantic_bindings = _snapshot_frozen_value(
+        semantic_bindings_value,
+        name="record.semantic_bindings",
+    )
+    relationships = _snapshot_frozen_value(relationships_value, name="record.relationships")
+    extensions = _snapshot_frozen_value(extensions_value, name="record.extensions")
+    if type(content) is not dict:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record content snapshot is invalid")
+    if type(semantic_bindings) is not dict or semantic_bindings:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record semantic bindings changed")
+    if type(relationships) is not tuple or relationships:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record relationships changed")
+    if type(extensions) is not dict or extensions:
+        _fail("PRODUCT_LISTING_RECORD_INVALID", "record extensions changed")
+
     try:
-        validate_market_record(record)
+        reviewed_record = RecordV1(
+            envelope_version=envelope_version,
+            type=record_type,
+            content=content,
+            semantic_bindings=semantic_bindings,
+            profiles=profiles,
+            relationships=relationships,
+            extensions=extensions,
+        )
+        validate_market_record(reviewed_record)
     except Exception as exc:
         raise ProductListingProfileError(
             "PRODUCT_LISTING_RECORD_INVALID",
             "record is not a valid Marketplace record",
         ) from exc
 
-    content = _mapping(record.content, name="content")
-    _exact_keys(content, {"version", "issuer", "subjects", "action", "terms"}, name="content")
-    if type(content["version"]) is not int or content["version"] != 1:
+    content_map = _mapping(reviewed_record.content, name="content")
+    _exact_keys(content_map, {"version", "issuer", "subjects", "action", "terms"}, name="content")
+    if type(content_map["version"]) is not int or content_map["version"] != 1:
         _fail("PRODUCT_LISTING_SHAPE_INVALID", "content.version MUST equal integer 1")
 
-    issuer = _mapping(content["issuer"], name="content.issuer")
+    issuer = _mapping(content_map["issuer"], name="content.issuer")
     _exact_keys(issuer, {"principal"}, name="content.issuer")
     seller_principal = issuer["principal"]
 
-    subjects = content["subjects"]
+    subjects = content_map["subjects"]
     if type(subjects) is not tuple or len(subjects) != 1:
         _fail("PRODUCT_LISTING_SHAPE_INVALID", "content.subjects MUST contain one subject")
     subject = _mapping(subjects[0], name="content.subjects[0]")
     _exact_keys(subject, {"uri"}, name="content.subjects[0]")
     subject_uri = subject["uri"]
 
-    action = _mapping(content["action"], name="content.action")
+    action = _mapping(content_map["action"], name="content.action")
     _exact_keys(action, {"id"}, name="content.action")
     if action["id"] != ACTION_SELL:
         _fail("PRODUCT_LISTING_SHAPE_INVALID", "product listing action changed")
 
-    terms = _mapping(content["terms"], name="content.terms")
+    terms = _mapping(content_map["terms"], name="content.terms")
     _exact_keys(
         terms,
         {TERM_TITLE, TERM_DESCRIPTION, TERM_CONSIDERATION, TERM_QUANTITY, TERM_LOCATION},
