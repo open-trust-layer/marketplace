@@ -91,7 +91,7 @@ class M76ArtifactMembershipTests(unittest.TestCase):
             "target=",
         ):
             self.assertNotIn(forbidden, source)
-        self.assertIn('action=\\"{_form_action}\\"', source)
+        self.assertIn('action="{_form_action}"', source)
         self.assertIn('_form_action = "/local-buy-sell"', source)
 
     def test_reference_exports_visual_contract_without_application_or_runtime_dependency(self):
