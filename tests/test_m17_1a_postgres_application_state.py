@@ -30,6 +30,9 @@ class ScriptedCursor:
     def execute(self, sql: str, params: object = None) -> None:
         normalized = " ".join(sql.split())
         self.calls.append((normalized, params))
+        if "M17_RETENTION_MAINTENANCE" in normalized:
+            self.rows = []
+            return
         if not self.steps:
             raise AssertionError(f"unexpected SQL: {normalized}")
         fragment, result = self.steps.pop(0)
@@ -133,6 +136,20 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertEqual(connection.rollbacks, 0)
         self.assertEqual(connection.closes, 1)
         self.assertEqual(connection.cursor_obj.steps, [])
+
+    def test_put_runs_bounded_retention_maintenance_before_and_after_write(self):
+        steps = [
+            ("SELECT record_id, canonical_record", []),
+            ("INSERT INTO marketplace_app_records", []),
+            ("INSERT INTO marketplace_app_changes", [(40,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        store.put(record())
+        maintenance = [
+            sql for sql, _ in connection.cursor_obj.calls
+            if "M17_RETENTION_MAINTENANCE" in sql
+        ]
+        self.assertEqual(len(maintenance), 2)
 
     def test_duplicate_record_refreshes_retention_without_new_sync_change(self):
         expires = NOW + timedelta(days=30)
