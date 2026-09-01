@@ -180,7 +180,7 @@ class M78LocalUiLoopbackTransportTests(unittest.TestCase):
         self.assertFalse(result.deployment_authorized)
         self.assertIn(b"HTTP/1.1 200 OK\r\n", connection.sent)
         self.assertIn(b"Connection: close\r\n", connection.sent)
-        self.assertIn(b"Marketplace local buy/sell", connection.sent)
+        self.assertIn(b"Local Marketplace Buy/Sell", connection.sent)
 
     def test_header_value_may_contain_colons_without_changing_header_name_boundary(self):
         port = 8773
