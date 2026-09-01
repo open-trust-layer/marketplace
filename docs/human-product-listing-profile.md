@@ -84,10 +84,10 @@ runtime actions.
 A valid listing remains attributable data, not truth, ownership, availability, legality,
 fair value, authority, agreement, settlement, or permission for a protected side effect.
 
-The extractor first requires the exact reviewed OLP `RecordV1` type before reading record
-attributes. It then requires the exact M72 profile set and exact profile term shapes. A
-hostile non-record object therefore cannot gain execution through attribute access at the
-M72 extraction boundary.
+The extractor requires the exact reviewed OLP `RecordV1` type and exact frozen envelope
+container classes before any general Marketplace validation. It then detaches a bounded,
+trusted snapshot of the OLP-frozen value graph and reconstructs a fresh `RecordV1`; only
+that detached record is passed to the general Marketplace validator and profile parser.
 
 ## Privacy and retention
 
@@ -110,18 +110,36 @@ by the repository's isolated self-hosted CI using the exact reviewed OLP pin.
 
 ## Post-implementation extraction review
 
-A focused exact-head review found two issues before M72 acceptance was finalized:
+The first focused review found two issues before M72 acceptance was finalized:
 
 - OLP `profiles` are identity-equivalent regardless of tuple ordering, so the product-listing
   extractor must validate the exact profile set rather than one incidental order.
-- an exact frozen `RecordV1` can be privately rebound after construction; the extractor must
-  reject changed envelope container types before the general Marketplace validator can touch
-  attacker-controlled mapping or sequence behavior.
+- a frozen `RecordV1` can be privately rebound after construction, so changed envelope
+  containers must be rejected before a general validator touches them.
 
-Tests-only commit `1a54893fa3b460a956adfb52c49c9f108d4aeb4e` captures both regressions.
-Fix commit `c7885fdfea82c2ef5fd4b0b8fa7cfb3d0781def1` preflights the reviewed frozen OLP
-envelope shape and treats the two required profiles as a set. No new capability, dependency,
-network surface, persistence path, or protocol semantic was introduced.
+Tests-only commit `1a54893fa3b460a956adfb52c49c9f108d4aeb4e` captures those regressions.
+Fix commit `c7885fdfea82c2ef5fd4b0b8fa7cfb3d0781def1` added exact-container/profile-set
+preflight, and commit `11eb411c66a94ef87936b584726ad6a5e6dfaa55` preserved the established
+`PRODUCT_LISTING_PROFILE_REQUIRED` failure contract.
+
+A second deterministic standard-library probe then established that exact
+`MappingProxyType` alone is not an inert trust marker: when it wraps a hostile `dict`
+subclass, boolean/length/iteration/items operations can dispatch overridden methods.
+`gc.get_referents()` exposed the proxy's backing object without executing those methods,
+allowing the adapter to distinguish an exact built-in `dict` backing from a hostile subclass.
+
+Tests-only commit `8d4104a44ff16c15da33bbea7688405372caea00` captures both the hostile
+mappingproxy-backing case and a hostile nested mapping inside an otherwise exact backing
+`dict`. Fix commit `5c9ae037ce9e8827d817137118a20f5df6b57d48` replaces trust-by-proxy-type
+with a bounded detached snapshot. The walker accepts only exact immutable/scalar built-ins,
+exact tuples, and mappingproxies whose direct backing is an exact built-in `dict`; it caps
+nesting depth at 16 and each collection at 64 members, then validates only a freshly
+reconstructed trusted `RecordV1`.
+
+Artifact commit `8bb677972039412f21c5430d5d1e099f6d87ab0e` binds those bounds, inert
+backing-object inspection, detached reconstruction, and reviewed-record validation into the
+repository acceptance contract. No new external capability, dependency, network surface,
+persistence path, settlement authority, or protocol semantic was introduced.
 
 ## Optimization evidence
 
@@ -130,8 +148,8 @@ network call, persistence write, scheduler, background task, or unbounded iterab
 introduced. Decimal canonicalization performs at most 18 trailing-zero reductions.
 
 The map-ready location representation uses two integers and avoids floating-point parsing,
-geocoding, or normalization. The builder allocates one small detached container graph and
-the extractor validates one already-bounded immutable `RecordV1`.
+geocoding, or normalization. Extraction traverses only the bounded M72 frozen record graph,
+creates one detached trusted snapshot, and validates that snapshot before rendering fields.
 
 No existing quality, security, integration, governance, artifact, or semantic-conformance
 gate is weakened, bypassed, skipped, removed, or renamed.
