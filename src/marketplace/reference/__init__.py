@@ -20,6 +20,12 @@ from .local_demo_v1 import (
     LocalBuySellDemoResult,
     run_local_buy_sell_demo,
 )
+from .local_visual_v1 import (
+    LocalVisualInteractionError,
+    LocalVisualSubmission,
+    render_local_buy_sell_form,
+    submit_local_buy_sell_form,
+)
 from .matching_v1 import (
     DEFAULT_MATCH_METHOD,
     DISCOVERY_SERVICE_TYPE,
@@ -82,6 +88,8 @@ __all__ = [
     "LocalBuySellDemoError",
     "LocalBuySellDemoResult",
     "LocalConsoleInteractionError",
+    "LocalVisualInteractionError",
+    "LocalVisualSubmission",
     "MarketplaceConformanceError",
     "MarketplaceDiscoveryError",
     "MarketplaceTransportJsonError",
@@ -111,9 +119,11 @@ __all__ = [
     "merge_federated_views",
     "query_fingerprint",
     "record_identity_text",
+    "render_local_buy_sell_form",
+    "render_product_listing_record_page",
     "run_local_buy_sell_console",
     "run_local_buy_sell_demo",
-    "render_product_listing_record_page",
+    "submit_local_buy_sell_form",
     "validate_cursor_binding",
     "validate_discovery_query",
     "validate_market_record",
