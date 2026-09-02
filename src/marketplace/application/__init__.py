@@ -7,6 +7,12 @@ from .api import (
     IntentRecordPredicate,
     MarketplaceApplicationApiService,
 )
+from .http import (
+    ApplicationHttpError,
+    ApplicationHttpRequest,
+    ApplicationHttpResponse,
+    MarketplaceApplicationHttpAdapter,
+)
 from .listing import (
     ACTION_SELL,
     LOCATION_WGS84_E6,
@@ -51,6 +57,9 @@ from .web_map import (
 __all__ = [
     "APPLICATION_STATE_RETENTION_CLASS",
     "ApplicationApiError",
+    "ApplicationHttpError",
+    "ApplicationHttpRequest",
+    "ApplicationHttpResponse",
     "ApplicationStateCollisionError",
     "ApplicationStatePutResult",
     "ApplicationStateRetentionError",
@@ -61,6 +70,7 @@ __all__ = [
     "IntentQueryPort",
     "IntentRecordPredicate",
     "MarketplaceApplicationApiService",
+    "MarketplaceApplicationHttpAdapter",
     "MarketplaceApplicationStateService",
     "PostgresApplicationStateStore",
     "PreparedApplicationRecord",

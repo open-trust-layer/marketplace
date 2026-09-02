@@ -4,6 +4,7 @@ import unittest
 
 from marketplace.application.postgres_state import (
     ApplicationStatePutResult,
+    ApplicationStateStoreError,
     ExpiryResult,
     StoreDisposition,
     SyncChange,
@@ -19,6 +20,7 @@ class FakeStateService:
         self.peek_calls = []
         self.response_calls = []
         self.sync_calls = []
+        self.watermark_calls = 0
         self.records = {}
 
     def initialize(self):
@@ -44,6 +46,10 @@ class FakeStateService:
     def sync_since(self, cursor, *, limit=128):
         self.sync_calls.append((cursor, limit))
         return SyncPage((SyncChange(8, "r-root", "UPSERT"),), 8, False)
+
+    def sync_watermark(self):
+        self.watermark_calls += 1
+        return 11
 
 
 class FakeIntentQuery:
@@ -237,6 +243,31 @@ class M17ApplicationApiTests(unittest.TestCase):
         self.assertEqual(state.get_calls, [])
         self.assertEqual(state.publish_calls, [])
 
+
+
+    def test_sync_normalizes_expired_cursor_for_transport_clients(self):
+        api, state, _, _ = self.make_service()
+        api.initialize()
+
+        def fail_sync(cursor, *, limit=128):
+            raise ApplicationStateStoreError("SYNC_CURSOR_EXPIRED", "hostile storage detail")
+
+        state.sync_since = fail_sync
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.sync(cursor=3, limit=16)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertNotIn("hostile storage detail", str(caught.exception))
+
+
+    def test_sync_watermark_is_reviewed_for_transport_snapshot_recovery(self):
+        api, state, _, _ = self.make_service()
+        api.initialize()
+        self.assertEqual(api.sync_watermark(), 11)
+        self.assertEqual(state.watermark_calls, 1)
+        state.sync_watermark = lambda: -1
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.sync_watermark()
+        self.assertEqual(caught.exception.code, "SYNC_WATERMARK_INVALID")
 
 if __name__ == "__main__":
     unittest.main()

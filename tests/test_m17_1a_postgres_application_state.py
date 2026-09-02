@@ -431,5 +431,18 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertIsNone(caught.exception.__cause__)
 
 
+
+    def test_sync_watermark_captures_head_after_bounded_retention_cleanup(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+            ("SELECT COALESCE(MAX(seq), 0)", [(9,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        self.assertEqual(store.sync_watermark(), 9)
+        self.assertEqual(connection.commits, 1)
+        self.assertEqual(connection.rollbacks, 0)
+
 if __name__ == "__main__":
     unittest.main()

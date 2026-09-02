@@ -9,7 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
-from .postgres_state import ApplicationStatePutResult, ExpiryResult, SyncChange, SyncPage
+from .postgres_state import (
+    ApplicationStatePutResult,
+    ApplicationStateStoreError,
+    ExpiryResult,
+    SyncChange,
+    SyncPage,
+)
 from .state import MarketplaceApplicationStateService
 
 DEFAULT_INTENT_PAGE_SIZE = 64
@@ -340,6 +346,16 @@ class MarketplaceApplicationApiService:
         values = self._state.response_ids(parent_id, limit=reviewed_limit)
         return _review_response_ids(values, limit=reviewed_limit)
 
+    def sync_watermark(self) -> int:
+        self._require_initialized()
+        value = self._state.sync_watermark()
+        if type(value) is not int or value < 0:
+            raise ApplicationApiError(
+                "SYNC_WATERMARK_INVALID",
+                "application sync watermark is invalid",
+            )
+        return value
+
     def sync(
         self,
         *,
@@ -353,7 +369,15 @@ class MarketplaceApplicationApiService:
             name="limit",
             maximum=MAX_SYNC_PAGE_SIZE,
         )
-        page = self._state.sync_since(reviewed_cursor, limit=reviewed_limit)
+        try:
+            page = self._state.sync_since(reviewed_cursor, limit=reviewed_limit)
+        except ApplicationStateStoreError as exc:
+            if exc.code == "SYNC_CURSOR_EXPIRED":
+                raise ApplicationApiError(
+                    "SYNC_CURSOR_EXPIRED",
+                    "sync cursor expired; full resynchronization is required",
+                ) from None
+            raise
         return _review_sync_page(page, cursor=reviewed_cursor, limit=reviewed_limit)
 
 
