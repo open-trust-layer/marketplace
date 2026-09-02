@@ -63,7 +63,7 @@ def urlsafe_sha256(data: bytes) -> str:
 def write_wheel(
     path: Path,
     *,
-    metadata_extra: str = "",
+    metadata_extra: str = "Requires-Dist: psycopg[binary]==3.3.5; extra == \"postgres\"\nProvides-Extra: postgres\n",
     wheel_extra: str = "",
     extra_members: dict[str, bytes] | None = None,
     tamper_record_for: str | None = None,
@@ -226,7 +226,7 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_runtime_dependency_metadata_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = self.wheel_path(temp_dir)
-            write_wheel(path, metadata_extra="Requires-Dist: requests>=2\n")
+            write_wheel(path, metadata_extra="Requires-Dist: psycopg[binary]==3.3.5; extra == \"postgres\"\nProvides-Extra: postgres\nRequires-Dist: requests>=2\n")
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_METADATA_DEPENDENCY")

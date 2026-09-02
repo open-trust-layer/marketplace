@@ -55,6 +55,7 @@ _REFERENCE_WRAPPERS = (
 _EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
 _EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
 _EXPECTED_LICENSE = "Apache-2.0"
+_EXPECTED_OPTIONAL_DEPENDENCIES = {"postgres": ["psycopg[binary]==3.3.5"]}
 
 
 @dataclass(frozen=True)
@@ -200,9 +201,9 @@ def _audit_packaging(repo_root: Path, findings: list[str]) -> None:
         findings.append(f"PYPROJECT_LICENSE MUST equal {_EXPECTED_LICENSE!r}")
     if project.get("dependencies") != []:
         findings.append("PYPROJECT_RUNTIME_DEPENDENCIES base runtime dependencies MUST remain an empty array")
-    if project.get("optional-dependencies") not in (None, {}):
+    if project.get("optional-dependencies") != _EXPECTED_OPTIONAL_DEPENDENCIES:
         findings.append(
-            "PYPROJECT_OPTIONAL_DEPENDENCIES public-index optional dependencies are not permitted"
+            "PYPROJECT_OPTIONAL_DEPENDENCIES MUST equal " + repr(_EXPECTED_OPTIONAL_DEPENDENCIES)
         )
     if project.get("scripts") not in (None, {}):
         findings.append("PYPROJECT_SCRIPTS runtime console scripts are not permitted")

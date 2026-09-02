@@ -31,6 +31,9 @@ REVIEWED_BUILD_BACKEND_VERSION = "80.9.0"
 SOURCE_DATE_EPOCH = 946684800  # 2000-01-01T00:00:00Z; stable archive timestamp.
 DEFAULT_TIMEOUT_SECONDS = 90.0
 EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
+EXPECTED_OPTIONAL_DEPENDENCIES = {"postgres": ["psycopg[binary]==3.3.5"]}
+EXPECTED_REQUIRES_DIST = ['psycopg[binary]==3.3.5; extra == "postgres"']
+EXPECTED_PROVIDES_EXTRA = ["postgres"]
 _DEV_VERSION_RE = re.compile(r"^0\.0\.\d+\.dev\d+$")
 _HEX_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _HEX_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
@@ -147,8 +150,8 @@ def _project_metadata(repo_root: Path) -> tuple[str, str, int]:
         _fail("PACKAGE_VERSION", "package version MUST remain experimental 0.0.N.devN")
     if dependencies != []:
         _fail("RUNTIME_DEPENDENCIES", "base runtime dependency list MUST remain empty")
-    if project.get("optional-dependencies") not in (None, {}):
-        _fail("OPTIONAL_DEPENDENCIES", "public-index optional dependencies are not permitted")
+    if project.get("optional-dependencies") != EXPECTED_OPTIONAL_DEPENDENCIES:
+        _fail("OPTIONAL_DEPENDENCIES", "optional dependency set does not match the reviewed PostgreSQL provider")
     return name, version, 0
 
 
@@ -418,10 +421,12 @@ def audit_wheel(path: Path, *, expected_name: str, expected_version: str) -> Whe
             _fail("WHEEL_METADATA_NAME", f"wheel Name mismatch: {metadata.get('Name')!r}")
         if metadata.get("Version") != expected_version:
             _fail("WHEEL_METADATA_VERSION", f"wheel Version mismatch: {metadata.get('Version')!r}")
-        if metadata.get_all("Requires-Dist"):
-            _fail("WHEEL_METADATA_DEPENDENCY", "wheel MUST NOT declare Requires-Dist")
-        if metadata.get_all("Provides-Extra"):
-            _fail("WHEEL_METADATA_EXTRA", "wheel MUST NOT declare package extras")
+        requires_dist = metadata.get_all("Requires-Dist") or []
+        if requires_dist != EXPECTED_REQUIRES_DIST:
+            _fail("WHEEL_METADATA_DEPENDENCY", "wheel dependency metadata does not match the reviewed PostgreSQL provider")
+        provides_extra = metadata.get_all("Provides-Extra") or []
+        if provides_extra != EXPECTED_PROVIDES_EXTRA:
+            _fail("WHEEL_METADATA_EXTRA", "wheel package extras do not match the reviewed PostgreSQL provider")
 
         wheel_metadata = _metadata_message(archive.read(wheel_name), "WHEEL")
         if wheel_metadata.get("Root-Is-Purelib", "").lower() != "true":
