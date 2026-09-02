@@ -45,6 +45,10 @@ class FakeApi:
         self.calls.append(("sync", cursor, limit))
         return SyncPage((SyncChange(cursor + 1, "r-root", "UPSERT"),), cursor + 1, False)
 
+    def sync_watermark(self):
+        self.calls.append(("sync_watermark",))
+        return 21
+
 
 def decode_record(body: bytes):
     return json.loads(body.decode("utf-8"))
@@ -167,6 +171,18 @@ class M17ApplicationHttpTests(unittest.TestCase):
         self.assertEqual(headers["Referrer-Policy"], "no-referrer")
         self.assertEqual(int(headers["Content-Length"]), len(response.body))
 
+
+
+    def test_sync_without_cursor_returns_snapshot_watermark_for_full_resync(self):
+        adapter, api = self.make_adapter()
+        response = adapter.handle(self.request("GET", "/api/sync", query=(("limit", "16"),)))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self.document(response),
+            {"changes": [], "has_more": False, "next_cursor": 21},
+        )
+        self.assertIn(("sync_watermark",), api.calls)
+        self.assertNotIn(("sync", 0, 16), api.calls)
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,6 +23,7 @@ class FakeStore:
         self.peek_calls = []
         self.response_calls = []
         self.sync_calls = []
+        self.watermark_calls = 0
         self.initialize_calls = 0
         self.prepared = None
 
@@ -49,6 +50,10 @@ class FakeStore:
     def sync_since(self, cursor, *, limit):
         self.sync_calls.append((cursor, limit))
         return SyncPage((SyncChange(12, "r1", "UPSERT"),), 12, False)
+
+    def sync_watermark(self):
+        self.watermark_calls += 1
+        return 14
 
 
 class M17ApplicationStateServiceTests(unittest.TestCase):
@@ -141,6 +146,16 @@ class M17ApplicationStateServiceTests(unittest.TestCase):
         self.assertFalse(hasattr(page, "agreement"))
         self.assertFalse(hasattr(page, "global_truth"))
 
+
+
+    def test_sync_watermark_delegates_after_initialization(self):
+        store = FakeStore()
+        service = MarketplaceApplicationStateService(
+            store=store, prepare_record=lambda value: value, decode_record=lambda value: value
+        )
+        service.initialize()
+        self.assertEqual(service.sync_watermark(), 14)
+        self.assertEqual(store.watermark_calls, 1)
 
 if __name__ == "__main__":
     unittest.main()
