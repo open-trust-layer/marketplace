@@ -81,6 +81,18 @@ class M17ApplicationApiBoundaryHardeningTests(unittest.TestCase):
                     api.sync(cursor=0, limit=2)
                 self.assertEqual(caught.exception.code, "SYNC_PAGE_INVALID")
 
+    def test_sync_change_kind_rejects_hostile_equality_without_execution(self):
+        class HostileKind:
+            def __eq__(self, other):
+                raise AssertionError("hostile equality executed")
+
+        state = BoundaryState()
+        api = self.make_api(state)
+        state.sync_page = SyncPage((SyncChange(1, "r1", HostileKind()),), 1, False)
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.sync(cursor=0, limit=1)
+        self.assertEqual(caught.exception.code, "SYNC_PAGE_INVALID")
+
     def test_module_all_exports_intent_record_predicate(self):
         from marketplace.application import api as api_module
 
