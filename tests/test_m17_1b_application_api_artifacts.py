@@ -49,6 +49,7 @@ class M17ApplicationApiArtifactTests(unittest.TestCase):
             "ApplicationApiError",
             "IntentIndexPage",
             "IntentQueryPort",
+            "IntentRecordPredicate",
             "MarketplaceApplicationApiService",
         ):
             self.assertTrue(hasattr(application, name), name)

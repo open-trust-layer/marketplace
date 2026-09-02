@@ -66,6 +66,7 @@ class M17ApplicationApiTests(unittest.TestCase):
             state=state,
             intent_query=query,
             response_parent_ids=lambda record: tuple(parent_map.get(id(record), ())),
+            is_intent_record=lambda record: True,
         )
         return api, state, query, parent_map
 
@@ -157,6 +158,40 @@ class M17ApplicationApiTests(unittest.TestCase):
         with self.assertRaises(ApplicationApiError) as caught:
             api.list_intents(limit=1)
         self.assertEqual(caught.exception.code, "INTENT_QUERY_LIMIT_EXCEEDED")
+
+
+    def test_create_rejects_non_intent_record_before_publish(self):
+        state = FakeStateService()
+        query = FakeIntentQuery()
+        api = MarketplaceApplicationApiService(
+            state=state,
+            intent_query=query,
+            response_parent_ids=lambda record: (),
+            is_intent_record=lambda record: False,
+        )
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.create_intent(object())
+        self.assertEqual(caught.exception.code, "INTENT_RECORD_REQUIRED")
+        self.assertEqual(state.publish_calls, [])
+
+    def test_response_parent_must_resolve_to_intent_record(self):
+        response = object()
+        parent = object()
+        state = FakeStateService()
+        state.records["r-parent"] = parent
+        query = FakeIntentQuery()
+        api = MarketplaceApplicationApiService(
+            state=state,
+            intent_query=query,
+            response_parent_ids=lambda record: ("r-parent",) if record is response else (),
+            is_intent_record=lambda record: record is response,
+        )
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.respond_to_intent("r-parent", response)
+        self.assertEqual(caught.exception.code, "PARENT_RECORD_NOT_INTENT")
+        self.assertEqual(state.publish_calls, [])
 
 
 if __name__ == "__main__":
