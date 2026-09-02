@@ -62,6 +62,7 @@ class ScriptedConnection:
         self.cursor_obj = ScriptedCursor(steps)
         self.commits = 0
         self.rollbacks = 0
+        self.rollback_error = None
         self.closes = 0
 
     def cursor(self):
@@ -72,6 +73,8 @@ class ScriptedConnection:
 
     def rollback(self) -> None:
         self.rollbacks += 1
+        if self.rollback_error is not None:
+            raise self.rollback_error
 
     def close(self) -> None:
         self.closes += 1
@@ -281,6 +284,19 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         )
         self.assertEqual(floor_call[1], (7,))
         self.assertEqual(connection.commits, 1)
+
+    def test_rollback_failure_is_observable_and_suppresses_provider_details(self):
+        store, connection, _ = self.store(
+            [("SELECT canonical_record", RuntimeError("primary provider detail"))]
+        )
+        connection.rollback_error = RuntimeError("rollback provider secret")
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.get("r1_intent")
+        self.assertEqual(caught.exception.code, "TRANSACTION_ROLLBACK_FAILED")
+        self.assertEqual(connection.rollbacks, 1)
+        rendered = "".join(traceback.format_exception(caught.exception))
+        self.assertNotIn("primary provider detail", rendered)
+        self.assertNotIn("rollback provider secret", rendered)
 
     def test_database_errors_are_stable_and_transaction_rolls_back(self):
         store, connection, _ = self.store(
