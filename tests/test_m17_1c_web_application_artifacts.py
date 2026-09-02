@@ -82,6 +82,19 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         hydrate = text.index("await hydrateCurrentIntents")
         self.assertLess(capture, hydrate)
 
+    def test_full_resync_traverses_bounded_intent_pages_before_advancing_cursor(self):
+        text = APP.read_text(encoding="utf-8")
+        for marker in (
+            "MAX_LIST_PAGES",
+            "encodeURIComponent(cursor)",
+            "INTENT_LIST_TRUNCATED",
+            "seenCursors",
+        ):
+            self.assertIn(marker, text)
+        hydrate = text.index("await hydrateCurrentIntents")
+        advance = text.index("state.syncCursor = watermark", hydrate)
+        self.assertLess(hydrate, advance)
+
     def test_authoring_remains_raw_reviewed_record_json_boundary(self):
         text = APP.read_text(encoding="utf-8")
         self.assertIn("create-record-json", INDEX.read_text(encoding="utf-8"))
