@@ -4,7 +4,7 @@
 
 M17.1A introduces the first durable Marketplace application-state boundary above the existing OLP and Marketplace semantic layers. PostgreSQL is the authoritative shared application database for Web, Android, and future agent clients. This milestone does not redesign OLP, invent a second MarketIntent model, or turn database rows into protocol truth.
 
-The implementation remains connection-injected and source-level only. It does not open a live database connection, choose a database host, provision PostgreSQL, deploy a server, or migrate real-user data.
+The implementation remains connection-injected and source-level only. It does not open a live database connection, choose a database host, provision PostgreSQL, deploy a server, or migrate real-user data. The shared `MarketplaceApplicationStateService` must complete `initialize()` successfully before publish/get/response/sync operations are enabled, making migration plus startup expiry cleanup a product-service precondition rather than caller convention.
 
 ## Retention profile
 

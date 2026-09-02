@@ -32,7 +32,7 @@ from .postgres_state import (
     SyncChange,
     SyncPage,
 )
-from .state import MarketplaceApplicationStateService
+from .state import ApplicationStateServiceError, MarketplaceApplicationStateService
 from .web_map import (
     DEFAULT_OFFLINE_MAP_FIXTURE,
     MAX_RENDERED_LISTINGS,
@@ -47,6 +47,7 @@ __all__ = [
     "ApplicationStatePutResult",
     "ApplicationStateRetentionError",
     "ApplicationStateStoreError",
+    "ApplicationStateServiceError",
     "ExpiryResult",
     "MarketplaceApplicationStateService",
     "PostgresApplicationStateStore",
