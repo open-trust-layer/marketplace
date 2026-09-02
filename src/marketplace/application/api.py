@@ -156,6 +156,11 @@ class MarketplaceApplicationApiService:
         )
         if type(page) is not IntentIndexPage:
             raise TypeError("intent query MUST return exact IntentIndexPage")
+        if len(page.record_ids) > reviewed_limit:
+            raise ApplicationApiError(
+                "INTENT_QUERY_LIMIT_EXCEEDED",
+                "intent query returned more identities than the requested page limit",
+            )
         return page
 
     def respond_to_intent(
@@ -165,16 +170,16 @@ class MarketplaceApplicationApiService:
     ) -> ApplicationStatePutResult:
         self._require_initialized()
         parent_id = _record_id(parent_record_id, name="parent_record_id")
-        if self._state.get(parent_id) is None:
-            raise ApplicationApiError(
-                "PARENT_INTENT_NOT_FOUND",
-                "response parent intent is not present in local application state",
-            )
         parents = _parent_ids(self._response_parent_ids, response_record)
         if parent_id not in parents:
             raise ApplicationApiError(
                 "RESPONSE_PARENT_MISMATCH",
                 "response record is not bound to the requested parent intent",
+            )
+        if self._state.get(parent_id) is None:
+            raise ApplicationApiError(
+                "PARENT_INTENT_NOT_FOUND",
+                "response parent intent is not present in local application state",
             )
         return self._state.publish(response_record)
 

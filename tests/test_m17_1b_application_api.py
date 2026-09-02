@@ -98,11 +98,13 @@ class M17ApplicationApiTests(unittest.TestCase):
     def test_respond_requires_existing_parent_and_exact_response_binding(self):
         response = object()
         api, state, _, parents = self.make_service()
+        parents[id(response)] = ("r-parent",)
         api.initialize()
         with self.assertRaises(ApplicationApiError) as missing:
             api.respond_to_intent("r-parent", response)
         self.assertEqual(missing.exception.code, "PARENT_INTENT_NOT_FOUND")
         state.records["r-parent"] = object()
+        parents[id(response)] = ()
         with self.assertRaises(ApplicationApiError) as mismatch:
             api.respond_to_intent("r-parent", response)
         self.assertEqual(mismatch.exception.code, "RESPONSE_PARENT_MISMATCH")
