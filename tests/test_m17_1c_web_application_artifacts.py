@@ -95,6 +95,27 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         advance = text.index("state.syncCursor = watermark", hydrate)
         self.assertLess(hydrate, advance)
 
+    def test_sync_changes_refresh_root_index_without_classifying_records(self):
+        text = APP.read_text(encoding="utf-8")
+        apply_start = text.index("async function applySyncPage")
+        sync_start = text.index("async function incrementalSync", apply_start)
+        apply_block = text[apply_start:sync_start]
+        self.assertNotIn("state.records.set(", apply_block)
+        self.assertNotIn("state.records.delete(", apply_block)
+        sync_end = text.index("function reviewedRecordJsonBody", sync_start)
+        sync_block = text[sync_start:sync_end]
+        self.assertIn("browseDirty", sync_block)
+        self.assertIn("await hydrateCurrentIntents()", sync_block)
+
+    def test_response_identity_uses_separate_exact_detail_hydration(self):
+        text = APP.read_text(encoding="utf-8")
+        self.assertIn("selectedRecord", text)
+        self.assertIn("async function inspectIntent", text)
+        self.assertIn('item.addEventListener("click", () => void inspectIntent(id));', text)
+        inspect_start = text.index("async function inspectIntent")
+        inspect_end = text.index("async function captureSyncWatermark", inspect_start)
+        self.assertNotIn("state.records.set(", text[inspect_start:inspect_end])
+
     def test_authoring_remains_raw_reviewed_record_json_boundary(self):
         text = APP.read_text(encoding="utf-8")
         self.assertIn("create-record-json", INDEX.read_text(encoding="utf-8"))
