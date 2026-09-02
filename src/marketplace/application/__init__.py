@@ -1,5 +1,12 @@
 """Product-facing, transport-neutral Marketplace application services."""
 
+from .api import (
+    ApplicationApiError,
+    IntentIndexPage,
+    IntentQueryPort,
+    IntentRecordPredicate,
+    MarketplaceApplicationApiService,
+)
 from .listing import (
     ACTION_SELL,
     LOCATION_WGS84_E6,
@@ -43,12 +50,17 @@ from .web_map import (
 
 __all__ = [
     "APPLICATION_STATE_RETENTION_CLASS",
+    "ApplicationApiError",
     "ApplicationStateCollisionError",
     "ApplicationStatePutResult",
     "ApplicationStateRetentionError",
     "ApplicationStateStoreError",
     "ApplicationStateServiceError",
     "ExpiryResult",
+    "IntentIndexPage",
+    "IntentQueryPort",
+    "IntentRecordPredicate",
+    "MarketplaceApplicationApiService",
     "MarketplaceApplicationStateService",
     "PostgresApplicationStateStore",
     "PreparedApplicationRecord",

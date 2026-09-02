@@ -20,6 +20,7 @@ class FakeStore:
     def __init__(self) -> None:
         self.put_calls = []
         self.get_calls = []
+        self.peek_calls = []
         self.response_calls = []
         self.sync_calls = []
         self.initialize_calls = 0
@@ -35,6 +36,10 @@ class FakeStore:
 
     def get(self, record_id):
         self.get_calls.append(record_id)
+        return self.prepared
+
+    def peek(self, record_id):
+        self.peek_calls.append(record_id)
         return self.prepared
 
     def list_response_ids(self, record_id, *, limit):
@@ -55,6 +60,7 @@ class M17ApplicationStateServiceTests(unittest.TestCase):
         operations = (
             lambda: service.publish(PreparedApplicationRecord("r1", b"canonical")),
             lambda: service.get("r1"),
+            lambda: service.peek("r1"),
             lambda: service.response_ids("r1", limit=8),
             lambda: service.sync_since(0, limit=8),
         )
@@ -65,6 +71,7 @@ class M17ApplicationStateServiceTests(unittest.TestCase):
         self.assertEqual(store.initialize_calls, 0)
         self.assertEqual(store.put_calls, [])
         self.assertEqual(store.get_calls, [])
+        self.assertEqual(store.peek_calls, [])
         self.assertEqual(store.response_calls, [])
         self.assertEqual(store.sync_calls, [])
 
@@ -107,6 +114,18 @@ class M17ApplicationStateServiceTests(unittest.TestCase):
         self.assertIs(service.get("r1"), decoded)
         self.assertEqual(store.get_calls, ["r1"])
         self.assertEqual(decode_calls, [b"canonical"])
+
+    def test_peek_decodes_without_using_retention_refresh_get(self):
+        store = FakeStore()
+        store.prepared = PreparedApplicationRecord("r1", b"canonical")
+        decoded = object()
+        service = MarketplaceApplicationStateService(
+            store=store, prepare_record=lambda value: value, decode_record=lambda value: decoded
+        )
+        service.initialize()
+        self.assertIs(service.peek("r1"), decoded)
+        self.assertEqual(store.peek_calls, ["r1"])
+        self.assertEqual(store.get_calls, [])
 
     def test_response_and_sync_queries_delegate_without_semantic_promotion(self):
         store = FakeStore()

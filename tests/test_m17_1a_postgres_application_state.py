@@ -16,6 +16,7 @@ from marketplace.application.postgres_state import (
     PostgresApplicationStateStore,
     StoreDisposition,
     SyncChange,
+    SyncPage,
 )
 
 
@@ -251,16 +252,95 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         update_params = connection.cursor_obj.calls[1][1]
         self.assertEqual(update_params[-1], "r1_intent")
 
+    def test_peek_returns_canonical_record_without_refreshing_retention(self):
+        steps = [
+            ("SELECT canonical_record", [(b'{"kind":"intent"}',)]),
+            ("SELECT parent_record_id", [("r1_parent",)]),
+        ]
+        store, connection, _ = self.store(steps)
+        result = store.peek("r1_intent")
+        self.assertEqual(result, record(response_to=("r1_parent",)))
+        self.assertFalse(any("UPDATE marketplace_app_records" in sql for sql, _ in connection.cursor_obj.calls))
+        self.assertEqual(connection.commits, 1)
+
+    def test_record_reads_exclude_expired_rows_before_any_retention_refresh(self):
+        for method_name in ("get", "peek"):
+            with self.subTest(method=method_name):
+                store, connection, _ = self.store([("SELECT canonical_record", [])])
+                result = getattr(store, method_name)("r1_intent")
+                self.assertIsNone(result)
+                sql, params = connection.cursor_obj.calls[0]
+                self.assertIn("expires_at > %s", sql)
+                self.assertEqual(params, ("r1_intent", NOW))
+                self.assertFalse(any("UPDATE marketplace_app_records" in call_sql for call_sql, _ in connection.cursor_obj.calls))
+                self.assertEqual(connection.commits, 1)
+
     def test_response_index_is_application_coordination_not_protocol_promotion(self):
         store, connection, _ = self.store(
-            [("SELECT response_record_id", [("r1_b",), ("r1_a",)])]
+            [("SELECT links.response_record_id", [("r1_b",), ("r1_a",)])]
         )
         result = store.list_response_ids("r1_parent", limit=8)
         self.assertEqual(result, ("r1_b", "r1_a"))
-        sql = connection.cursor_obj.calls[0][0]
+        sql, params = connection.cursor_obj.calls[0]
         self.assertIn("marketplace_app_response_links", sql)
+        self.assertIn("marketplace_app_records", sql)
+        self.assertIn("expires_at > %s", sql)
+        self.assertEqual(params, ("r1_parent", NOW, 8))
         self.assertNotIn("current_response", sql.lower())
         self.assertNotIn("accepted", sql.lower())
+
+    def test_sync_expires_change_metadata_before_reading_retained_floor(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+            ("M17_SYNC_RETENTION_GUARD", []),
+            ("SELECT seq, record_id, change_kind", []),
+        ]
+        store, connection, _ = self.store(steps)
+        page = store.sync_since(5, limit=8)
+        self.assertEqual(page, SyncPage((), 5, False))
+        self.assertIn("M17_CHANGE_RETENTION_MAINTENANCE", connection.cursor_obj.calls[0][0])
+        self.assertEqual(connection.cursor_obj.calls[0][1], (NOW, 256))
+
+    def test_sync_commits_retention_progress_before_stale_cursor_error(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.sync_since(0, limit=8)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertEqual(connection.commits, 1)
+        self.assertEqual(connection.rollbacks, 0)
+
+    def test_sync_commits_partial_retention_progress_before_backlog_error(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+            ("M17_SYNC_RETENTION_GUARD", [(301,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.sync_since(300, limit=8)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertEqual(connection.commits, 1)
+        self.assertEqual(connection.rollbacks, 0)
+
+    def test_sync_fails_closed_if_expired_change_remains_after_bounded_cleanup(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", []),
+            ("SELECT floor_seq", [(250,)]),
+            ("M17_SYNC_RETENTION_GUARD", [(301,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.sync_since(300, limit=8)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertEqual(connection.rollbacks, 1)
 
     def test_sync_cursor_below_retained_floor_fails_closed(self):
         store, connection, _ = self.store(
@@ -274,6 +354,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
     def test_sync_is_monotonic_bounded_and_makes_no_completeness_claim(self):
         steps = [
             ("SELECT floor_seq", [(5,)]),
+            ("M17_SYNC_RETENTION_GUARD", []),
             ("SELECT seq, record_id, change_kind", [(6, "r1_a", "UPSERT"), (7, "r1_b", "DELETE"), (8, "r1_c", "UPSERT")]),
         ]
         store, _, _ = self.store(steps)

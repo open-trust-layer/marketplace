@@ -10,7 +10,7 @@ The implementation remains connection-injected and source-level only. It does no
 
 The authorized content-retention class is `MARKETPLACE_APPLICATION_STATE_MVP`.
 
-Validated user-authored Marketplace records and the minimum coordination rows needed to browse, respond, and synchronize may remain for at most **30 days** after their last legitimate application use. Reads or writes refresh retention only for records actually used by the operation. Expired local copies are deleted through explicit retention maintenance; deletion failure is surfaced as a stable retention/security error and must never silently become indefinite retention.
+Validated user-authored Marketplace records and the minimum coordination rows needed to browse, respond, and synchronize may remain for at most **30 days** after their last legitimate application use. Reads or writes refresh retention only for records actually used by the operation. Exact record reads exclude rows whose `expires_at` deadline has already passed before any refresh can occur, so a late lookup cannot revive expired content. Response-index reads join against the live response record and do not expose expired response identities. Expired local copies are deleted through explicit retention maintenance; deletion failure is surfaced as a stable retention/security error and must never silently become indefinite retention.
 
 Removing a local application copy is not deletion of the underlying protocol record from the world. Operational logs and telemetry must remain content-free under the existing metadata policy.
 
@@ -30,7 +30,7 @@ Proposal compatibility, indexing, display order, or local discovery does not cre
 
 `marketplace_app_changes` provides a monotonic local application sync cursor for future `/api/sync` clients. The cursor orders local coordination changes only. It is **not protocol truth**, does not claim global completeness, and does not replace OLP/federation lifecycle or discovery semantics.
 
-When retained sync metadata eventually expires, the application sync floor must advance so stale cursors fail closed and clients can perform a bounded full resynchronization rather than silently missing history.
+When retained sync metadata eventually expires, the application sync floor must advance so stale cursors fail closed and clients can perform a bounded full resynchronization rather than silently missing history. A sync read performs one bounded expired-change maintenance batch before reading the floor and then checks for any still-expired change beyond the requested cursor; remaining stale history fails closed instead of being returned. When that bounded maintenance actually removes expired change metadata, its deletion/floor progress is committed before the stale-cursor error is surfaced so repeated sync attempts cannot undo retention cleanup.
 
 ## PostgreSQL schema and migrations
 
@@ -60,3 +60,11 @@ The existing 10-second EPHEMERAL runtime remains unchanged for runtime component
 ## Acceptance
 
 M17.1A is acceptable only when existing Marketplace conformance remains green, PostgreSQL migration/repository/service contracts are deterministic, collision and transaction failures fail closed, rollback uncertainty is surfaced instead of swallowed, retention expiry/deletion is observable, Proposal `response_to` semantics are preserved, the application sync cursor makes no global-truth claim, and dependency/artifact gates allow only the reviewed PostgreSQL provider rather than arbitrary package-index dependencies.
+
+## M17.1B no-refresh validation read
+
+The later M17.1B application API adds `peek(record_id)` to the existing injected state
+store/service contract. `peek` returns the same canonical local record shape as `get` but
+does not update `last_used_at` or `expires_at`. It exists so an application endpoint can
+validate record type before deciding whether the request is legitimate retention-refreshing
+use. No schema, retention maximum, database authority, or protocol semantics are changed.
