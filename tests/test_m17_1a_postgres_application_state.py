@@ -251,6 +251,17 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         update_params = connection.cursor_obj.calls[1][1]
         self.assertEqual(update_params[-1], "r1_intent")
 
+    def test_peek_returns_canonical_record_without_refreshing_retention(self):
+        steps = [
+            ("SELECT canonical_record", [(b'{"kind":"intent"}',)]),
+            ("SELECT parent_record_id", [("r1_parent",)]),
+        ]
+        store, connection, _ = self.store(steps)
+        result = store.peek("r1_intent")
+        self.assertEqual(result, record(response_to=("r1_parent",)))
+        self.assertFalse(any("UPDATE marketplace_app_records" in sql for sql, _ in connection.cursor_obj.calls))
+        self.assertEqual(connection.commits, 1)
+
     def test_response_index_is_application_coordination_not_protocol_promotion(self):
         store, connection, _ = self.store(
             [("SELECT response_record_id", [("r1_b",), ("r1_a",)])]

@@ -16,6 +16,7 @@ class FakeStateService:
         self.initialize_calls = 0
         self.publish_calls = []
         self.get_calls = []
+        self.peek_calls = []
         self.response_calls = []
         self.sync_calls = []
         self.records = {}
@@ -30,6 +31,10 @@ class FakeStateService:
 
     def get(self, record_id):
         self.get_calls.append(record_id)
+        return self.records.get(record_id)
+
+    def peek(self, record_id):
+        self.peek_calls.append(record_id)
         return self.records.get(record_id)
 
     def response_ids(self, record_id, *, limit=64):
@@ -94,6 +99,7 @@ class M17ApplicationApiTests(unittest.TestCase):
         self.assertEqual(created.change_seq, 7)
         self.assertIs(api.get_intent("r-root"), record)
         self.assertEqual(state.publish_calls, [record])
+        self.assertEqual(state.peek_calls, ["r-root"])
         self.assertEqual(state.get_calls, ["r-root"])
 
     def test_respond_requires_existing_parent_and_exact_response_binding(self):
@@ -175,6 +181,23 @@ class M17ApplicationApiTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "INTENT_RECORD_REQUIRED")
         self.assertEqual(state.publish_calls, [])
 
+    def test_get_non_intent_does_not_refresh_retention(self):
+        record = object()
+        state = FakeStateService()
+        state.records["r-not-intent"] = record
+        api = MarketplaceApplicationApiService(
+            state=state,
+            intent_query=FakeIntentQuery(),
+            response_parent_ids=lambda value: (),
+            is_intent_record=lambda value: False,
+        )
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.get_intent("r-not-intent")
+        self.assertEqual(caught.exception.code, "INTENT_RECORD_REQUIRED")
+        self.assertEqual(state.peek_calls, ["r-not-intent"])
+        self.assertEqual(state.get_calls, [])
+
     def test_response_parent_must_resolve_to_intent_record(self):
         response = object()
         parent = object()
@@ -191,6 +214,8 @@ class M17ApplicationApiTests(unittest.TestCase):
         with self.assertRaises(ApplicationApiError) as caught:
             api.respond_to_intent("r-parent", response)
         self.assertEqual(caught.exception.code, "PARENT_RECORD_NOT_INTENT")
+        self.assertEqual(state.peek_calls, ["r-parent"])
+        self.assertEqual(state.get_calls, [])
         self.assertEqual(state.publish_calls, [])
 
 
