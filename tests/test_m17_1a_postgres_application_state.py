@@ -125,6 +125,19 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             PreparedApplicationRecord("r1", b"x", ("r1_parent", "r1_parent"))
 
+    def test_migration_rejects_recorded_version_with_missing_schema_relation(self):
+        steps = [
+            ("CREATE TABLE IF NOT EXISTS marketplace_app_schema_migrations", []),
+            ("SELECT version FROM marketplace_app_schema_migrations", [(1,)]),
+            ("to_regclass", [(True, False, True, True, True, True, True, True, True)]),
+        ]
+        store, connection, _ = self.store(steps)
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.apply_migrations()
+        self.assertEqual(caught.exception.code, "SCHEMA_INTEGRITY_INVALID")
+        self.assertEqual(connection.commits, 0)
+        self.assertEqual(connection.rollbacks, 1)
+
     def test_put_new_record_is_transactional_and_indexes_response_to(self):
         steps = [
             ("SELECT record_id, canonical_record", []),
