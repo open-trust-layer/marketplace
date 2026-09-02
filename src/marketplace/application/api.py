@@ -50,6 +50,7 @@ class IntentQueryPort(Protocol):
     def list_intent_ids(self, *, cursor: str | None, limit: int) -> IntentIndexPage: ...
 
 
+IntentRecordPredicate = Callable[[Any], bool]
 ResponseParentExtractor = Callable[[Any], tuple[str, ...]]
 
 
@@ -90,6 +91,20 @@ def _parent_ids(extractor: ResponseParentExtractor, record: Any) -> tuple[str, .
     return values
 
 
+def _require_intent_record(
+    predicate: IntentRecordPredicate,
+    record: Any,
+    *,
+    code: str,
+    message: str,
+) -> None:
+    result = predicate(record)
+    if type(result) is not bool:
+        raise TypeError("is_intent_record MUST return exact bool")
+    if not result:
+        raise ApplicationApiError(code, message)
+
+
 class MarketplaceApplicationApiService:
     """Pure application API facade for future transport adapters."""
 
@@ -99,14 +114,18 @@ class MarketplaceApplicationApiService:
         state: MarketplaceApplicationStateService,
         intent_query: IntentQueryPort,
         response_parent_ids: ResponseParentExtractor,
+        is_intent_record: IntentRecordPredicate,
     ) -> None:
         if not callable(response_parent_ids):
             raise TypeError("response_parent_ids MUST be callable")
+        if not callable(is_intent_record):
+            raise TypeError("is_intent_record MUST be callable")
         if not hasattr(intent_query, "list_intent_ids"):
             raise TypeError("intent_query MUST provide list_intent_ids")
         self._state = state
         self._intent_query = intent_query
         self._response_parent_ids = response_parent_ids
+        self._is_intent_record = is_intent_record
         self._initialized = False
 
     def initialize(self) -> ExpiryResult:
@@ -126,6 +145,12 @@ class MarketplaceApplicationApiService:
 
     def create_intent(self, record: Any) -> ApplicationStatePutResult:
         self._require_initialized()
+        _require_intent_record(
+            self._is_intent_record,
+            record,
+            code="INTENT_RECORD_REQUIRED",
+            message="intent creation requires a Marketplace intent record",
+        )
         if _parent_ids(self._response_parent_ids, record):
             raise ApplicationApiError(
                 "ROOT_INTENT_RESPONSE_FORBIDDEN",
@@ -135,7 +160,16 @@ class MarketplaceApplicationApiService:
 
     def get_intent(self, record_id: str) -> Any | None:
         self._require_initialized()
-        return self._state.get(_record_id(record_id, name="record_id"))
+        record = self._state.get(_record_id(record_id, name="record_id"))
+        if record is None:
+            return None
+        _require_intent_record(
+            self._is_intent_record,
+            record,
+            code="INTENT_RECORD_REQUIRED",
+            message="intent lookup resolved to a non-intent Marketplace record",
+        )
+        return record
 
     def list_intents(
         self,
@@ -170,17 +204,30 @@ class MarketplaceApplicationApiService:
     ) -> ApplicationStatePutResult:
         self._require_initialized()
         parent_id = _record_id(parent_record_id, name="parent_record_id")
+        _require_intent_record(
+            self._is_intent_record,
+            response_record,
+            code="RESPONSE_RECORD_NOT_INTENT",
+            message="response publication requires a Marketplace intent record",
+        )
         parents = _parent_ids(self._response_parent_ids, response_record)
         if parent_id not in parents:
             raise ApplicationApiError(
                 "RESPONSE_PARENT_MISMATCH",
                 "response record is not bound to the requested parent intent",
             )
-        if self._state.get(parent_id) is None:
+        parent = self._state.get(parent_id)
+        if parent is None:
             raise ApplicationApiError(
                 "PARENT_INTENT_NOT_FOUND",
                 "response parent intent is not present in local application state",
             )
+        _require_intent_record(
+            self._is_intent_record,
+            parent,
+            code="PARENT_RECORD_NOT_INTENT",
+            message="response parent identity resolved to a non-intent Marketplace record",
+        )
         return self._state.publish(response_record)
 
     def list_responses(
