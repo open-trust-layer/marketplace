@@ -60,12 +60,16 @@ class ScriptedCursor:
 class ScriptedConnection:
     def __init__(self, steps: list[tuple[str, object]]) -> None:
         self.cursor_obj = ScriptedCursor(steps)
+        self.cursor_error = None
         self.commits = 0
         self.rollbacks = 0
         self.rollback_error = None
+        self.close_error = None
         self.closes = 0
 
     def cursor(self):
+        if self.cursor_error is not None:
+            raise self.cursor_error
         return self.cursor_obj
 
     def commit(self) -> None:
@@ -78,6 +82,8 @@ class ScriptedConnection:
 
     def close(self) -> None:
         self.closes += 1
+        if self.close_error is not None:
+            raise self.close_error
 
 
 class Factory:
@@ -108,6 +114,38 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
             **kwargs,
         )
         return store, connection, factory
+
+    def test_cursor_creation_failure_closes_partially_opened_connection(self):
+        connection = ScriptedConnection([])
+        connection.cursor_error = RuntimeError("postgres://user:secret@host/db")
+        store = PostgresApplicationStateStore(
+            connection_factory=Factory(connection),
+            clock=lambda: NOW,
+        )
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.apply_migrations()
+        self.assertEqual(caught.exception.code, "DATABASE_CONNECTION_FAILED")
+        self.assertEqual(connection.commits, 0)
+        self.assertEqual(connection.rollbacks, 0)
+        self.assertEqual(connection.closes, 1)
+        rendered = "".join(traceback.format_exception(caught.exception))
+        self.assertNotIn("user:secret", rendered)
+
+    def test_cursor_creation_cleanup_failure_is_observable_without_provider_reflection(self):
+        connection = ScriptedConnection([])
+        connection.cursor_error = RuntimeError("cursor secret")
+        connection.close_error = RuntimeError("close secret")
+        store = PostgresApplicationStateStore(
+            connection_factory=Factory(connection),
+            clock=lambda: NOW,
+        )
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.apply_migrations()
+        self.assertEqual(caught.exception.code, "DATABASE_CONNECTION_CLEANUP_FAILED")
+        self.assertEqual(connection.closes, 1)
+        rendered = "".join(traceback.format_exception(caught.exception))
+        self.assertNotIn("cursor secret", rendered)
+        self.assertNotIn("close secret", rendered)
 
     def test_retention_profile_is_bounded_to_thirty_days(self):
         self.assertEqual(APPLICATION_STATE_RETENTION_CLASS, "MARKETPLACE_APPLICATION_STATE_MVP")
