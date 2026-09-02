@@ -2,14 +2,30 @@
 
 **Status:** Project engineering policy
 **Applies to:** repository development, coding agents, maintainers, CI, conformance tooling, future runtime code, adapters, deployment work, and project governance
-**Policy basis:** portable provisions adapted from Coding Agent Development Principles v1.4
-**Source SHA-256:** `ab39374e010a931d5122c28bc3a97612cbeb41f1079c67f0f90863d01641e1cc`
-**Adoption record:** `docs/POLICY_V1_4_ADOPTION.md`
+**Policy basis:** portable Marketplace projection of Coding Agent Constitution v1.2, Coding Agent Policy v1.2, Repository Governance v1.1, and Coding Agent Development Principles v1.5
+**Source SHA-256 (Constitution v1.2):** `50f6c00a195fd7cc2d02878d9dd2e9640299db71c42d097ffd60a309ac96cd94`
+**Source SHA-256 (Policy v1.2):** `b25dbc67897240e2a20a43982578ad253a547dc7050a2c00b637bcbbd19c41a5`
+**Source SHA-256 (Governance v1.1 input):** `97c5826e24a70de5c47ff8cf469c0c936bc1b8976d77f05bd3080fd580c3c9ba`
+**Source SHA-256 (Handbook v1.5):** `97ba608c1c29a1c630469b5f877efcdf8c47d403ff332abc0a6236410e0996d9`
+**Adoption record:** `docs/POLICY_V1_5_ADOPTION.md`
 **Semantic authority:** `PRINCIPLES.md` remains authoritative for Marketplace protocol/semantic constraints
 
 This policy governs **how Marketplace is developed**. It does not redefine Marketplace protocol semantics and MUST NOT weaken `PRINCIPLES.md`, the numbered Marketplace specifications, or applicable Open Layer Protocol requirements.
 
-Repository-specific controls from another project are not imported as facts. Source-handbook statements specific to `ai-automation-department` or companion files absent from Marketplace are treated as source examples/history unless Marketplace explicitly adopts an equivalent rule here.
+Repository-specific controls from another project are not imported as facts. Source-handbook statements specific to `ai-automation-department` are treated as source examples/history unless Marketplace explicitly adopts an equivalent rule here.
+
+The Marketplace engineering-policy stack is:
+
+```text
+1. applicable law / contractual obligation / authorized incident hold
+2. Coding Agent Constitution v1.2 as adopted by docs/POLICY_V1_5_ADOPTION.md
+3. portable Coding Agent Policy v1.2 requirements adopted into this Marketplace policy
+4. docs/REPOSITORY_GOVERNANCE.md for Marketplace repository controls
+5. this DEVELOPMENT_POLICY.md Marketplace projection of the v1.5 handbook
+6. project-specific conventions and implementation details
+```
+
+A lower layer may be stricter but MUST NOT silently weaken a higher layer. `PRINCIPLES.md` and the numbered Marketplace specifications remain authoritative for Marketplace semantic constraints; the engineering-policy stack governs how those semantics are implemented and changed.
 
 ## 1. SAFETY FIRST
 
@@ -53,7 +69,7 @@ The following invariants apply to current tooling and future runtime code:
 7. Security failures fail closed where authorization or protected side effects are involved.
 8. Dependencies do not gain trust merely because they are convenient or fast.
 9. Green tests do not override a known material security defect.
-10. Deletion, encryption, isolation, authorization, CI, branch-protection, reproducibility, or performance guarantees are never claimed without appropriate verification.
+10. Deletion, encryption, isolation, authorization, CI, branch-protection, reproducibility, or performance guarantees are never claimed without appropriate verification. A reproducible-build claim specifically requires an independently repeated build with matching declared inputs and artifact integrity; one successful or source-pinned build is only provenance/integrity evidence.
 11. Content-bearing logs do not silently inherit metadata-only long retention.
 12. Repository policy files do not prove provider-side branch/ruleset enforcement.
 13. Optimization, caching, precomputation, batching, concurrency, or fast paths do not bypass authentication, authorization, capability checks, validation, project isolation, provenance, retention, or destructive-target re-verification.
@@ -162,6 +178,18 @@ Secrets MUST NOT be hard-coded or printed to prove they exist. Prefer scoped sho
 A new dependency, benchmark tool, profiler, native extension, or build accelerator is executable trust. Admission requires a concrete need and review of maintenance, provenance/publisher, transitive footprint, vulnerabilities, permissions/install scripts, license/policy fit, portability, and safer alternatives. Reproducible resolution and official registries are preferred.
 
 Unreviewed remote scripts MUST NOT be piped directly to a shell.
+
+### 9.1 Cryptography, transport, and key separation
+
+Custom cryptographic algorithms, password hashing, signatures, key exchange, or encryption protocols are prohibited. Use maintained, reviewed implementations and current standards.
+
+Cross-trust-boundary traffic carrying non-public project data MUST use authenticated encrypted transport. TLS certificate and hostname verification MUST remain enabled. Prefer TLS 1.3 for new boundaries; older compatibility requires an explicit reason. Privileged or non-idempotent operations MUST NOT use TLS 0-RTT.
+
+When durable sensitive project data requires confidentiality beyond access control, use maintained authenticated encryption such as AES-256-GCM or XChaCha20-Poly1305 as appropriate to the platform and threat model. Keys MUST be generated with cryptographically secure randomness, kept separate from ciphertext, scoped to minimum use, versioned, and stored through an appropriate managed KMS/HSM/vault/OS secure store where available. Signing, encryption, HMAC, token, and password purposes MUST NOT silently share one key.
+
+Passwords are normally hashed, not reversibly encrypted. Prefer Argon2id with a current reviewed parameter baseline; use an explicitly approved compatibility profile when platform/compliance constraints require another standard construction.
+
+Encryption does not extend retention, authorization, or project boundaries. Encrypted EPHEMERAL content still expires under the normal post-use deadline, and production private keys MUST NOT enter PR jobs or ordinary repository artifacts.
 
 ## 10. Retention and data minimization
 
@@ -354,7 +382,19 @@ CI optimization MUST NOT:
 - suppress flaky failures instead of repairing their cause;
 - run privileged reusable workers without required isolation/cleanup.
 
-Measure queue time, setup time, execution time, cache effectiveness, critical path, and failure/retry waste separately where useful.
+Measure queue time, setup time, execution time, cache effectiveness, critical path, failure/retry waste, PR count per milestone, full-CI runs per merged change, and branch-update retest waste separately where useful.
+
+Marketplace MAY use three validation lanes while preserving one acceptance meaning:
+
+- `FAST` — intermediate deterministic feedback when a versioned tested impact map proves a smaller lane is sufficient; ambiguous relevance falls back to FULL.
+- `FULL` — required for the final review head, security/policy/governance-sensitive changes, dependency/lockfile changes, HIGH/CRITICAL risk, and ambiguous impact.
+- `RELEASE` — FULL plus packaging/distribution/provenance/acceptance required at a release or deployment boundary.
+
+A successful validation result MAY be reused only when it is immutably bound to the same relevant source/tree, dependency/toolchain inputs, policy/governance version, and reused artifact digest. A relevant source, dependency, toolchain, policy, governance, or artifact change invalidates that evidence. Cache misses and full revalidation remain correct supported paths.
+
+For a plausibly transient failure with unchanged source, rerun only failed jobs when practical and bounded. Repeated identical failure requires root-cause investigation rather than indefinite retry. Superseded non-deployment runs may be cancelled.
+
+A provider merge queue is preferred when supported and verified. Post-merge FULL duplication may be replaced by provenance verification plus bounded smoke only when the exact merged tree is proven identical to the already FULL-validated merge-group tree; otherwise merged state is revalidated normally.
 
 ## 17. Development method
 
@@ -370,7 +410,7 @@ For each meaningful increment:
 8. if performance-sensitive, identify the demonstrated bottleneck/critical path and state an optimization hypothesis;
 9. place responsibility in the correct architectural layer;
 10. add/update deterministic, regression, negative-security, retention, and stable performance tests/benchmarks as applicable;
-11. implement the smallest coherent safe change, preferring removal of unnecessary work and algorithm/data-movement improvements before added concurrency/specialized machinery;
+11. implement the smallest coherent safe work unit, using small reversible commits inside one pull request when they share one project boundary, delivery objective, authorization boundary, and rollback/recovery semantics; split unrelated objectives or independent privileged/destructive boundaries;
 12. apply the destructive-action protocol when relevant;
 13. run focused tests;
 14. if performance-sensitive, repeat equivalent measurements and compare baseline vs candidate, including tail/resource/failure effects where relevant;
@@ -385,23 +425,22 @@ The established milestone workflow remains preferred:
 
 ```text
 issue/scope
--> milestone branch
--> specification or implementation
--> deterministic vectors/tests
--> documentation
--> performance baseline/evidence when applicable
--> unified acceptance gate
--> pull request with objective evidence
--> review
--> exact-head guarded merge
--> verify merged-main CI
+-> one branch for one coherent milestone slice
+-> small reversible commits with focused/local checks
+-> draft PR while the work unit is still changing materially
+-> FAST validation only when a proven impact map permits it
+-> documentation and performance evidence when applicable
+-> FULL acceptance on the final review head
+-> exact-head review/authorization
+-> exact-head guarded merge or verified merge queue
+-> reuse exact-tree evidence only when integrity-bound; otherwise verify merged-main normally
 ```
 
 ## 18. Small coherent changes and read-before-edit
 
 Inspect code and policy before editing unfamiliar areas. Do not claim files/functions/controls/tests/benchmarks exist or pass unless verified.
 
-Prefer small coherent changes with one architectural purpose, relevant tests, stable unrelated behavior, easy review/revert, and no silent privilege, retention, or resource expansion.
+Prefer coherent work-unit pull requests with one delivery purpose, relevant tests, stable unrelated behavior, easy review/revert, and no silent privilege, retention, or resource expansion. A pull request is a review/merge boundary, not a one-commit boundary; avoid micro-PR churn that duplicates setup, review, merge, and CI without adding a real safety or authorization boundary. Mixed-risk work units use the highest included risk.
 
 Existing architecture SHOULD be followed unless it is demonstrably unsafe or a measured critical bottleneck justifies a documented change.
 

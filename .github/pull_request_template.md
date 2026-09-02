@@ -43,11 +43,16 @@ Notes:
 
 Notes:
 
-## Dependencies and provenance
+## Dependencies, cryptography, and provenance
 
 - New/changed dependencies or benchmark/profiling tools:
 - Dependency admission review:
 - Provenance/integrity impact:
+- Cryptographic/transport/key-management impact:
+- [ ] no custom cryptography or ad-hoc key derivation/protocol design
+- [ ] authenticated encryption / TLS / key separation requirements are satisfied where applicable
+- [ ] encryption does not extend retention or authorization
+- Reproducible-build claim: `NONE` / `INDEPENDENT MATCHING REPRODUCTION ATTACHED`
 
 ## Marketplace semantics and conformance
 
@@ -80,6 +85,18 @@ Notes:
 - [ ] required quality/security/integration/governance/conformance gates were not renamed, removed, skipped, bypassed, weakened, or short-circuited for speed
 - [ ] benchmark/profile evidence contains no disallowed project payload or secrets
 
+## Validation lane and evidence reuse
+
+- Selected lane: `FAST` / `FULL` / `RELEASE`
+- Why this lane is sufficient:
+- Exact source/tree identity:
+- Dependency/toolchain identity:
+- Policy/governance version:
+- Reused artifact digest(s), if any:
+- [ ] ambiguous relevance falls back to FULL
+- [ ] final review head uses FULL when policy/security/dependency/HIGH/CRITICAL/ambiguous scope applies
+- [ ] reused validation is integrity-bound to the same relevant inputs; otherwise it is not reused
+
 ## Verification
 
 Focused checks:
@@ -100,6 +117,7 @@ python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 - [ ] deterministic generator replay passes where applicable
 - [ ] Git whitespace checks pass
 - [ ] material performance claims have evidence adequate to the claim
+- [ ] reproducible-build wording is used only when independent matching reproduction evidence exists
 
 ## Governance / external controls
 
