@@ -4,6 +4,7 @@ from .api import (
     ApplicationApiError,
     IntentIndexPage,
     IntentQueryPort,
+    IntentRecordPredicate,
     MarketplaceApplicationApiService,
 )
 from .listing import (
@@ -58,6 +59,7 @@ __all__ = [
     "ExpiryResult",
     "IntentIndexPage",
     "IntentQueryPort",
+    "IntentRecordPredicate",
     "MarketplaceApplicationApiService",
     "MarketplaceApplicationStateService",
     "PostgresApplicationStateStore",
