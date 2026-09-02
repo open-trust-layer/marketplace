@@ -1,6 +1,6 @@
 # M17.1B — Transport-Independent Marketplace Application API Contract
 
-Status: source-level staging work; no HTTP runtime is authorized or implemented here.
+Status: source-level implementation candidate on the merged M17.1A base; no HTTP runtime is authorized or implemented here.
 
 ## Purpose
 
@@ -45,10 +45,12 @@ or an HTTP server. It performs no bind/listen/accept/connect operation.
 parents is rejected from that operation so a response cannot be mislabeled as a root
 creation by the transport path.
 
-`respond_to_intent` first requires the path parent to exist in local application state.
-The supplied response record must then include that exact parent identity in its existing
-Marketplace `response_to` relation. Multiple reviewed proposal parents remain possible;
-the application endpoint does not replace or reinterpret protocol negotiation semantics.
+`respond_to_intent` first verifies that the supplied response is an intent record and
+that its existing Marketplace `response_to` relation includes the exact path parent. Only
+then does it retrieve the parent, require local existence, and verify that the parent is
+also an intent record. Invalid response binding therefore cannot refresh parent retention.
+Multiple reviewed proposal parents remain possible; the application endpoint does not
+replace or reinterpret protocol negotiation semantics.
 
 ## Browse/query separation
 
@@ -68,9 +70,11 @@ source completeness, canonical ordering, or protocol truth.
 
 ## Bounds and failure behavior
 
-Intent, response, and sync page sizes are bounded to at most 256 entries. Invalid IDs,
-cursors, limits, query result shapes, and parent bindings fail closed before protected
-state mutation. Error messages are stable and do not reflect submitted payload bodies.
+Intent, response, and sync page sizes are bounded to at most 256 entries. The facade
+independently rejects downstream response/sync result overruns and malformed sync cursor
+progression. Invalid IDs, cursors, limits, query result shapes, and parent bindings fail
+closed before protected state mutation. Error messages are stable and do not reflect
+submitted payload bodies.
 
 Initialization is explicit. The API facade calls the shared state-service startup path,
 which in M17.1A performs schema validation/migration and required retention cleanup
@@ -87,8 +91,9 @@ of M17.1A; this API facade does not extend retention or create a new data class.
 
 ## Next integration step
 
-After Policy v1.5 is merged and M17.1A is refreshed/validated on that governance base,
-this staged contract can be replayed onto the accepted base. A later transport PR may
-bind these operations to HTTP routes, but only after framework/dependency admission and
-separate capability review. Web and Android clients should consume the same application
-contract rather than duplicating Marketplace business logic.
+Policy v1.5 and M17.1A are merged and merged-main validated, and this contract has been
+replayed onto that accepted base. The next step is exact-head FULL validation and review
+of this work-unit PR. A later transport PR may bind these operations to HTTP routes, but
+only after framework/dependency admission and separate capability review. Web and Android
+clients should consume the same application contract rather than duplicating Marketplace
+business logic.

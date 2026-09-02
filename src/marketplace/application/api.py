@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
-from .postgres_state import ApplicationStatePutResult, ExpiryResult, SyncPage
+from .postgres_state import ApplicationStatePutResult, ExpiryResult, SyncChange, SyncPage
 from .state import MarketplaceApplicationStateService
 
 DEFAULT_INTENT_PAGE_SIZE = 64
@@ -103,6 +103,54 @@ def _require_intent_record(
         raise TypeError("is_intent_record MUST return exact bool")
     if not result:
         raise ApplicationApiError(code, message)
+
+
+def _review_response_ids(values: object, *, limit: int) -> tuple[str, ...]:
+    if type(values) is not tuple:
+        raise TypeError("state response_ids MUST return an exact tuple")
+    if len(values) > limit:
+        raise ApplicationApiError(
+            "RESPONSE_QUERY_LIMIT_EXCEEDED",
+            "response query returned more identities than the requested page limit",
+        )
+    if any(type(value) is not str or not value for value in values):
+        raise ValueError("response identities MUST be non-empty exact text")
+    if len(set(values)) != len(values):
+        raise ApplicationApiError(
+            "RESPONSE_QUERY_DUPLICATE_ID",
+            "response query returned duplicate record identities",
+        )
+    return values
+
+
+def _review_sync_page(page: object, *, cursor: int, limit: int) -> SyncPage:
+    if type(page) is not SyncPage:
+        raise TypeError("state sync_since MUST return exact SyncPage")
+    if type(page.changes) is not tuple:
+        raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+    if len(page.changes) > limit:
+        raise ApplicationApiError(
+            "SYNC_QUERY_LIMIT_EXCEEDED",
+            "sync query returned more changes than the requested page limit",
+        )
+    if type(page.next_cursor) is not int or page.next_cursor < cursor:
+        raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+    if type(page.has_more) is not bool:
+        raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+    prior = cursor
+    for change in page.changes:
+        if type(change) is not SyncChange:
+            raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+        if type(change.seq) is not int or change.seq <= prior:
+            raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+        if type(change.record_id) is not str or not change.record_id:
+            raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+        if type(change.change_kind) is not str or change.change_kind not in ("UPSERT", "DELETE"):
+            raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+        prior = change.seq
+    if page.next_cursor != prior or (page.has_more and not page.changes):
+        raise ApplicationApiError("SYNC_PAGE_INVALID", "sync page shape is invalid")
+    return page
 
 
 class MarketplaceApplicationApiService:
@@ -244,11 +292,7 @@ class MarketplaceApplicationApiService:
             maximum=MAX_RESPONSE_PAGE_SIZE,
         )
         values = self._state.response_ids(parent_id, limit=reviewed_limit)
-        if type(values) is not tuple:
-            raise TypeError("state response_ids MUST return an exact tuple")
-        if any(type(value) is not str or not value for value in values):
-            raise ValueError("response identities MUST be non-empty exact text")
-        return values
+        return _review_response_ids(values, limit=reviewed_limit)
 
     def sync(
         self,
@@ -264,9 +308,7 @@ class MarketplaceApplicationApiService:
             maximum=MAX_SYNC_PAGE_SIZE,
         )
         page = self._state.sync_since(reviewed_cursor, limit=reviewed_limit)
-        if type(page) is not SyncPage:
-            raise TypeError("state sync_since MUST return exact SyncPage")
-        return page
+        return _review_sync_page(page, cursor=reviewed_cursor, limit=reviewed_limit)
 
 
 __all__ = [
@@ -276,6 +318,7 @@ __all__ = [
     "DEFAULT_SYNC_PAGE_SIZE",
     "IntentIndexPage",
     "IntentQueryPort",
+    "IntentRecordPredicate",
     "MAX_INTENT_PAGE_SIZE",
     "MAX_RESPONSE_PAGE_SIZE",
     "MAX_SYNC_PAGE_SIZE",
