@@ -137,5 +137,25 @@ class M17ApplicationApiTests(unittest.TestCase):
             api.list_intents()
 
 
+    def test_response_parent_mismatch_does_not_touch_parent_retention(self):
+        response = object()
+        api, state, _, _ = self.make_service()
+        state.records["r-parent"] = object()
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.respond_to_intent("r-parent", response)
+        self.assertEqual(caught.exception.code, "RESPONSE_PARENT_MISMATCH")
+        self.assertEqual(state.get_calls, [])
+        self.assertEqual(state.publish_calls, [])
+
+    def test_query_port_cannot_exceed_requested_page_limit(self):
+        api, _, query, _ = self.make_service()
+        query.list_intent_ids = lambda **kwargs: IntentIndexPage(("r1", "r2"), None)  # type: ignore[method-assign]
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.list_intents(limit=1)
+        self.assertEqual(caught.exception.code, "INTENT_QUERY_LIMIT_EXCEEDED")
+
+
 if __name__ == "__main__":
     unittest.main()
