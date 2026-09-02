@@ -262,6 +262,18 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertFalse(any("UPDATE marketplace_app_records" in sql for sql, _ in connection.cursor_obj.calls))
         self.assertEqual(connection.commits, 1)
 
+    def test_record_reads_exclude_expired_rows_before_any_retention_refresh(self):
+        for method_name in ("get", "peek"):
+            with self.subTest(method=method_name):
+                store, connection, _ = self.store([("SELECT canonical_record", [])])
+                result = getattr(store, method_name)("r1_intent")
+                self.assertIsNone(result)
+                sql, params = connection.cursor_obj.calls[0]
+                self.assertIn("expires_at > %s", sql)
+                self.assertEqual(params, ("r1_intent", NOW))
+                self.assertFalse(any("UPDATE marketplace_app_records" in call_sql for call_sql, _ in connection.cursor_obj.calls))
+                self.assertEqual(connection.commits, 1)
+
     def test_response_index_is_application_coordination_not_protocol_promotion(self):
         store, connection, _ = self.store(
             [("SELECT response_record_id", [("r1_b",), ("r1_a",)])]
