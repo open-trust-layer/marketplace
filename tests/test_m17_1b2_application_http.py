@@ -141,6 +141,22 @@ class M17ApplicationHttpTests(unittest.TestCase):
         self.assertIn("RESPONSE_PARENT_MISMATCH", text)
         self.assertNotIn(hostile, text)
 
+
+    def test_expired_sync_cursor_is_client_recoverable_without_storage_reflection(self):
+        adapter, api = self.make_adapter()
+        hostile = "hostile-storage-detail"
+
+        def fail_sync(*, cursor=0, limit=128):
+            raise ApplicationApiError("SYNC_CURSOR_EXPIRED", hostile)
+
+        api.sync = fail_sync
+        failed = adapter.handle(self.request("GET", "/api/sync", query=(("cursor", "3"),)))
+        self.assertEqual(failed.status_code, 409)
+        document = self.document(failed)
+        self.assertEqual(document["error"]["code"], "SYNC_CURSOR_EXPIRED")
+        self.assertIn("full resynchronization", document["error"]["message"])
+        self.assertNotIn(hostile, failed.body.decode("utf-8"))
+
     def test_security_headers_and_response_bounds_are_always_applied(self):
         adapter, _ = self.make_adapter()
         response = adapter.handle(self.request("GET", "/api/intents"))

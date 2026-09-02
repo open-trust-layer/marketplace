@@ -4,6 +4,7 @@ import unittest
 
 from marketplace.application.postgres_state import (
     ApplicationStatePutResult,
+    ApplicationStateStoreError,
     ExpiryResult,
     StoreDisposition,
     SyncChange,
@@ -237,6 +238,20 @@ class M17ApplicationApiTests(unittest.TestCase):
         self.assertEqual(state.get_calls, [])
         self.assertEqual(state.publish_calls, [])
 
+
+
+    def test_sync_normalizes_expired_cursor_for_transport_clients(self):
+        api, state, _, _ = self.make_service()
+        api.initialize()
+
+        def fail_sync(cursor, *, limit=128):
+            raise ApplicationStateStoreError("SYNC_CURSOR_EXPIRED", "hostile storage detail")
+
+        state.sync_since = fail_sync
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.sync(cursor=3, limit=16)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertNotIn("hostile storage detail", str(caught.exception))
 
 if __name__ == "__main__":
     unittest.main()
