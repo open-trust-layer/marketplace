@@ -370,6 +370,16 @@ class PostgresApplicationStateStore:
             ) from None
 
     @staticmethod
+    def _rollback(connection: Connection) -> None:
+        try:
+            connection.rollback()
+        except Exception:
+            raise ApplicationStateStoreError(
+                "TRANSACTION_ROLLBACK_FAILED",
+                "application database transaction rollback failed",
+            ) from None
+
+    @staticmethod
     def _close(cursor: Cursor | None, connection: Connection | None) -> None:
         if cursor is not None:
             try:
@@ -429,17 +439,11 @@ class PostgresApplicationStateStore:
             return tuple(sorted(applied))
         except ApplicationStateStoreError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateStoreError(
                 "MIGRATION_FAILED",
                 "application database migration failed",
@@ -557,17 +561,11 @@ class PostgresApplicationStateStore:
             return ApplicationStatePutResult(StoreDisposition.STORED, change_seq)
         except ApplicationStateStoreError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED",
                 "application database operation failed",
@@ -604,17 +602,11 @@ class PostgresApplicationStateStore:
             return result
         except ApplicationStateStoreError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
             ) from None
@@ -641,17 +633,11 @@ class PostgresApplicationStateStore:
             return values
         except ApplicationStateStoreError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
             ) from None
@@ -699,17 +685,11 @@ class PostgresApplicationStateStore:
             return SyncPage(selected, next_cursor, has_more)
         except ApplicationStateStoreError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
             ) from None
@@ -727,17 +707,11 @@ class PostgresApplicationStateStore:
             return result
         except ApplicationStateRetentionError:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
-                try:
-                    connection.rollback()
-                except Exception:
-                    pass
+                self._rollback(connection)
             raise ApplicationStateRetentionError() from None
         finally:
             self._close(cursor, connection)

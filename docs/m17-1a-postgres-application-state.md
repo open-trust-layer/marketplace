@@ -59,4 +59,4 @@ The existing 10-second EPHEMERAL runtime remains unchanged for runtime component
 
 ## Acceptance
 
-M17.1A is acceptable only when existing Marketplace conformance remains green, PostgreSQL migration/repository/service contracts are deterministic, collision and transaction failures fail closed, retention expiry/deletion is observable, Proposal `response_to` semantics are preserved, the application sync cursor makes no global-truth claim, and dependency/artifact gates allow only the reviewed PostgreSQL provider rather than arbitrary package-index dependencies.
+M17.1A is acceptable only when existing Marketplace conformance remains green, PostgreSQL migration/repository/service contracts are deterministic, collision and transaction failures fail closed, rollback uncertainty is surfaced instead of swallowed, retention expiry/deletion is observable, Proposal `response_to` semantics are preserved, the application sync cursor makes no global-truth claim, and dependency/artifact gates allow only the reviewed PostgreSQL provider rather than arbitrary package-index dependencies.
