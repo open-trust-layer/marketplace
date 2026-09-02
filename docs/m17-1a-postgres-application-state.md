@@ -43,7 +43,7 @@ Migration v1 creates:
 - `marketplace_app_sync_state` for the retained sync floor; and
 - bounded indexes for expiry and response lookup.
 
-Migrations run inside one transaction and fail closed on unknown schema versions or database errors. No migration is executed automatically by importing the package.
+Migrations run inside one transaction and fail closed on unknown schema versions or database errors. Before commit, the store verifies the exact reviewed PostgreSQL table/index footprint so a recorded migration version cannot silently mask a missing relation. No migration is executed automatically by importing the package.
 
 ## Dependency boundary
 

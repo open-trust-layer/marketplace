@@ -195,6 +195,17 @@ Clock = Callable[[], datetime]
 
 _SELECT_SCHEMA_VERSIONS = "SELECT version FROM marketplace_app_schema_migrations ORDER BY version"
 _INSERT_SCHEMA_VERSION = "INSERT INTO marketplace_app_schema_migrations (version, applied_at) VALUES (%s, %s)"
+_SCHEMA_FOOTPRINT_CHECK = """
+SELECT
+    to_regclass('marketplace_app_schema_migrations') IS NOT NULL,
+    to_regclass('marketplace_app_records') IS NOT NULL,
+    to_regclass('marketplace_app_response_links') IS NOT NULL,
+    to_regclass('marketplace_app_changes') IS NOT NULL,
+    to_regclass('marketplace_app_sync_state') IS NOT NULL,
+    to_regclass('marketplace_app_records_expires_idx') IS NOT NULL,
+    to_regclass('marketplace_app_response_parent_idx') IS NOT NULL,
+    to_regclass('marketplace_app_changes_expires_idx') IS NOT NULL
+"""
 
 
 _SELECT_RECORD_FOR_UPDATE = """
@@ -403,6 +414,17 @@ class PostgresApplicationStateStore:
                     cursor.execute(statement)
                 cursor.execute(_INSERT_SCHEMA_VERSION, (migration.version, now))
                 applied.add(migration.version)
+            cursor.execute(_SCHEMA_FOOTPRINT_CHECK)
+            footprint = cursor.fetchone()
+            if (
+                type(footprint) not in (tuple, list)
+                or len(footprint) != 8
+                or any(value is not True for value in footprint)
+            ):
+                raise ApplicationStateStoreError(
+                    "SCHEMA_INTEGRITY_INVALID",
+                    "application database schema footprint is incomplete or inconsistent",
+                )
             connection.commit()
             return tuple(sorted(applied))
         except ApplicationStateStoreError:
