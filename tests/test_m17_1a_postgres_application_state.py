@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta, timezone
+import traceback
 import unittest
 
 from marketplace.application.postgres_state import (
@@ -251,6 +252,9 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "RETENTION_DELETE_FAILED")
         self.assertEqual(connection.rollbacks, 1)
         self.assertNotIn("db payload", str(caught.exception))
+        rendered = "".join(traceback.format_exception(caught.exception))
+        self.assertNotIn("db payload", rendered)
+        self.assertIsNone(caught.exception.__cause__)
 
     def test_expiry_deletes_local_copies_and_emits_tombstone_metadata(self):
         steps = [
@@ -287,6 +291,9 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "DATABASE_OPERATION_FAILED")
         self.assertEqual(connection.rollbacks, 1)
         self.assertNotIn("secret dsn", str(caught.exception))
+        rendered = "".join(traceback.format_exception(caught.exception))
+        self.assertNotIn("secret dsn", rendered)
+        self.assertIsNone(caught.exception.__cause__)
 
 
 if __name__ == "__main__":

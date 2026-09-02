@@ -43,6 +43,7 @@ class M17PostgresArtifactTests(unittest.TestCase):
         self.assertNotIn("create_pool", lowered)
         self.assertNotIn("database_url", lowered)
         self.assertNotIn("dsn=", lowered)
+        self.assertNotIn("from exc", text)
 
     def test_migration_schema_is_postgres_native_and_does_not_promote_application_state_to_truth(self):
         from marketplace.application.postgres_state import POSTGRES_APPLICATION_STATE_MIGRATIONS
