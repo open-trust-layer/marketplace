@@ -66,15 +66,20 @@ must not add hidden ranking, ownership, legitimacy, or global-completeness seman
 
 ## Sync
 
-`GET /api/sync` delegates to the M17.1A monotonic local application cursor. The cursor
-is source-local application coordination metadata. It does not claim global history,
-source completeness, canonical ordering, or protocol truth.
+`GET /api/sync` delegates to the M17.1A monotonic local application cursor. Before the
+page is read, the store performs one bounded expired-change maintenance batch and checks
+that no still-expired change lies beyond the caller cursor; an unsafe cursor fails closed
+rather than receiving stale coordination metadata. The cursor is source-local application
+coordination metadata. It does not claim global history, source completeness, canonical
+ordering, or protocol truth.
 
 ## Bounds and failure behavior
 
 Intent, response, and sync page sizes are bounded to at most 256 entries. The facade
 independently rejects downstream response/sync result overruns and malformed sync cursor
-progression. Invalid IDs, cursors, limits, query result shapes, and parent bindings fail
+progression. Response listing first verifies a live intent parent through the no-refresh/read
+sequence, and the persistence query returns only response identities whose local record is
+still inside its retention deadline. Invalid IDs, cursors, limits, query result shapes, and parent bindings fail
 closed before protected state mutation. Error messages are stable and do not reflect
 submitted payload bodies.
 

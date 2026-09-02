@@ -131,6 +131,7 @@ class M17ApplicationApiTests(unittest.TestCase):
 
     def test_response_listing_and_sync_remain_bounded_delegations(self):
         api, state, _, _ = self.make_service()
+        state.records["r-root"] = object()
         api.initialize()
         self.assertEqual(api.list_responses("r-root", limit=8), ("r-response",))
         page = api.sync(cursor=3, limit=16)

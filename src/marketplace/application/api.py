@@ -313,6 +313,30 @@ class MarketplaceApplicationApiService:
             name="limit",
             maximum=MAX_RESPONSE_PAGE_SIZE,
         )
+        candidate = self._state.peek(parent_id)
+        if candidate is None:
+            raise ApplicationApiError(
+                "PARENT_INTENT_NOT_FOUND",
+                "response parent intent is not present in local application state",
+            )
+        _require_intent_record(
+            self._is_intent_record,
+            candidate,
+            code="PARENT_RECORD_NOT_INTENT",
+            message="response parent identity resolved to a non-intent Marketplace record",
+        )
+        parent = self._state.get(parent_id)
+        if parent is None:
+            raise ApplicationApiError(
+                "PARENT_INTENT_NOT_FOUND",
+                "response parent intent is not present in local application state",
+            )
+        _require_intent_record(
+            self._is_intent_record,
+            parent,
+            code="PARENT_RECORD_NOT_INTENT",
+            message="response parent identity resolved to a non-intent Marketplace record",
+        )
         values = self._state.response_ids(parent_id, limit=reviewed_limit)
         return _review_response_ids(values, limit=reviewed_limit)
 

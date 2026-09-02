@@ -18,6 +18,12 @@ class BoundaryState:
     def initialize(self):
         return ExpiryResult((), ())
 
+    def peek(self, record_id):
+        return object()
+
+    def get(self, record_id):
+        return object()
+
     def response_ids(self, record_id, *, limit):
         return self.response_values
 

@@ -255,14 +255,24 @@ WHERE record_id = %s
 """
 
 _SELECT_RESPONSES = """
-SELECT response_record_id
-FROM marketplace_app_response_links
-WHERE parent_record_id = %s
-ORDER BY response_record_id
+SELECT links.response_record_id
+FROM marketplace_app_response_links AS links
+JOIN marketplace_app_records AS response
+  ON response.record_id = links.response_record_id
+WHERE links.parent_record_id = %s
+  AND response.expires_at > %s
+ORDER BY links.response_record_id
 LIMIT %s
 """
 
 _SELECT_SYNC_FLOOR = "SELECT floor_seq FROM marketplace_app_sync_state WHERE singleton = TRUE"
+_SELECT_EXPIRED_SYNC_AFTER_CURSOR = """
+/* M17_SYNC_RETENTION_GUARD */
+SELECT seq FROM marketplace_app_changes
+WHERE seq > %s AND expires_at <= %s
+ORDER BY seq
+LIMIT 1
+"""
 _SELECT_SYNC_CHANGES = """
 SELECT seq, record_id, change_kind
 FROM marketplace_app_changes
@@ -673,11 +683,12 @@ class PostgresApplicationStateStore:
             raise ValueError("parent_record_id MUST be non-empty exact text")
         if type(limit) is not int or isinstance(limit, bool) or not 1 <= limit <= MAX_RESPONSE_PAGE_SIZE:
             raise ValueError("limit is outside the reviewed response-page bound")
+        now = self._now()
         connection: Connection | None = None
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
-            cursor.execute(_SELECT_RESPONSES, (parent_record_id, limit))
+            cursor.execute(_SELECT_RESPONSES, (parent_record_id, now, limit))
             rows = cursor.fetchall()
             values = tuple(row[0] for row in rows)
             if any(type(value) is not str or not value for value in values):
@@ -704,10 +715,12 @@ class PostgresApplicationStateStore:
             raise ValueError("sync cursor MUST be a non-negative exact integer")
         if type(limit) is not int or isinstance(limit, bool) or not 1 <= limit <= MAX_SYNC_PAGE_SIZE:
             raise ValueError("limit is outside the reviewed sync-page bound")
+        now = self._now()
         connection: Connection | None = None
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
+            self._expire_sync_metadata_cursor(cursor, now)
             cursor.execute(_SELECT_SYNC_FLOOR)
             floor_row = cursor.fetchone()
             if type(floor_row) not in (tuple, list) or len(floor_row) != 1 or type(floor_row[0]) is not int:
@@ -715,6 +728,23 @@ class PostgresApplicationStateStore:
                     "DATABASE_RESULT_INVALID", "application database returned an invalid sync floor"
                 )
             if cursor_value < floor_row[0]:
+                raise ApplicationStateStoreError(
+                    "SYNC_CURSOR_EXPIRED",
+                    "sync cursor predates retained application coordination metadata",
+                )
+            cursor.execute(_SELECT_EXPIRED_SYNC_AFTER_CURSOR, (cursor_value, now))
+            expired_row = cursor.fetchone()
+            if expired_row is not None:
+                if (
+                    type(expired_row) not in (tuple, list)
+                    or len(expired_row) != 1
+                    or type(expired_row[0]) is not int
+                    or expired_row[0] <= cursor_value
+                ):
+                    raise ApplicationStateStoreError(
+                        "DATABASE_RESULT_INVALID",
+                        "application database returned an invalid expired sync row",
+                    )
                 raise ApplicationStateStoreError(
                     "SYNC_CURSOR_EXPIRED",
                     "sync cursor predates retained application coordination metadata",

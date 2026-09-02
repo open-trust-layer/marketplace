@@ -16,6 +16,7 @@ from marketplace.application.postgres_state import (
     PostgresApplicationStateStore,
     StoreDisposition,
     SyncChange,
+    SyncPage,
 )
 
 
@@ -276,7 +277,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
 
     def test_response_index_is_application_coordination_not_protocol_promotion(self):
         store, connection, _ = self.store(
-            [("SELECT response_record_id", [("r1_b",), ("r1_a",)])]
+            [("SELECT links.response_record_id", [("r1_b",), ("r1_a",)])]
         )
         result = store.list_response_ids("r1_parent", limit=8)
         self.assertEqual(result, ("r1_b", "r1_a"))
@@ -293,6 +294,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
             ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
             ("UPDATE marketplace_app_sync_state", []),
             ("SELECT floor_seq", [(5,)]),
+            ("M17_SYNC_RETENTION_GUARD", []),
             ("SELECT seq, record_id, change_kind", []),
         ]
         store, connection, _ = self.store(steps)
@@ -305,7 +307,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         steps = [
             ("M17_CHANGE_RETENTION_MAINTENANCE", []),
             ("SELECT floor_seq", [(250,)]),
-            ("SELECT seq FROM marketplace_app_changes", [(301,)]),
+            ("M17_SYNC_RETENTION_GUARD", [(301,)]),
         ]
         store, connection, _ = self.store(steps)
         with self.assertRaises(ApplicationStateStoreError) as caught:
@@ -325,6 +327,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
     def test_sync_is_monotonic_bounded_and_makes_no_completeness_claim(self):
         steps = [
             ("SELECT floor_seq", [(5,)]),
+            ("M17_SYNC_RETENTION_GUARD", []),
             ("SELECT seq, record_id, change_kind", [(6, "r1_a", "UPSERT"), (7, "r1_b", "DELETE"), (8, "r1_c", "UPSERT")]),
         ]
         store, _, _ = self.store(steps)
