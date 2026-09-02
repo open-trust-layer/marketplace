@@ -354,15 +354,20 @@ async function incrementalSync() {
   setStatus(`Syncing from local cursor ${state.syncCursor}…`);
   try {
     let browseDirty = false;
+    let hasMore = false;
     for (let pageNumber = 0; pageNumber < MAX_SYNC_PAGES; pageNumber += 1) {
       const documentValue = await apiFetch(`${API_SYNC}?cursor=${state.syncCursor}&limit=${SYNC_LIMIT}`);
-      const hasMore = await applySyncPage(documentValue);
+      hasMore = await applySyncPage(documentValue);
       if (documentValue.changes.length > 0) browseDirty = true;
       if (!hasMore) break;
     }
     if (browseDirty) await hydrateCurrentIntents();
     renderList();
     renderDetail();
+    if (hasMore) {
+      setStatus(`Sync paused at local cursor ${state.syncCursor}; more changes remain`, "warning");
+      return;
+    }
     setStatus(`Synchronized at local cursor ${state.syncCursor}`, "success");
   } catch (error) {
     if (error.code === "SYNC_CURSOR_EXPIRED") return fullResync();

@@ -16,7 +16,7 @@ Full-resync hydration follows the opaque `/api/intents` cursor across at most fo
 
 The watermark is application coordination metadata only. It does not claim protocol truth, global completeness, ownership, agreement, ranking, or legitimacy.
 
-The sync stream is not treated as the root browse projection. Any validated sync change marks the bounded browse view dirty; the client then refreshes root intent identities through `/api/intents`. Exact response identities are hydrated separately through `/api/intents/{id}` for detail display and are never inserted into the root list by browser-side semantic inference.
+The sync stream is not treated as the root browse projection. Incremental sync consumes at most four pages per explicit sync action; if the final page still reports `has_more=true`, the client refreshes the bounded root view but reports that more changes remain instead of claiming synchronization is complete. Any validated sync change marks the bounded browse view dirty; the client then refreshes root intent identities through `/api/intents`. Exact response identities are hydrated separately through `/api/intents/{id}` for detail display and are never inserted into the root list by browser-side semantic inference.
 
 ## Authority boundary
 
