@@ -303,6 +303,19 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         self.assertIn("M17_CHANGE_RETENTION_MAINTENANCE", connection.cursor_obj.calls[0][0])
         self.assertEqual(connection.cursor_obj.calls[0][1], (NOW, 256))
 
+    def test_sync_commits_retention_progress_before_stale_cursor_error(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+        ]
+        store, connection, _ = self.store(steps)
+        with self.assertRaises(ApplicationStateStoreError) as caught:
+            store.sync_since(0, limit=8)
+        self.assertEqual(caught.exception.code, "SYNC_CURSOR_EXPIRED")
+        self.assertEqual(connection.commits, 1)
+        self.assertEqual(connection.rollbacks, 0)
+
     def test_sync_fails_closed_if_expired_change_remains_after_bounded_cleanup(self):
         steps = [
             ("M17_CHANGE_RETENTION_MAINTENANCE", []),
