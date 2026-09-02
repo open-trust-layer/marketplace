@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Open Layer Marketplace</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Open Layer Marketplace</p>
+      <h1>Marketplace</h1>
+    </div>
+    <div class="sync-box">
+      <span id="sync-status" role="status">Not synchronized</span>
+      <button id="sync-now" type="button">Sync now</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="toolbar" aria-label="Marketplace controls">
+      <label for="intent-filter">Filter current bounded view</label>
+      <input id="intent-filter" type="search" autocomplete="off" maxlength="160" placeholder="Record id or visible text">
+      <span id="view-count" class="muted">0 intents</span>
+    </section>
+    <section class="workspace" aria-label="Marketplace browser">
+      <article class="panel map-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Presentation-only projection</p>
+            <h2>Map</h2>
+          </div>
+          <span class="muted">WGS84 · offline grid</span>
+        </div>
+        <svg id="market-map" viewBox="0 0 720 360" role="img" aria-label="Marketplace intent coordinate map"></svg>
+        <p class="muted small">Locations are issuer-attributed presentation data, not verified position or protocol truth.</p>
+      </article>
+
+      <article class="panel list-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Bounded current view</p>
+            <h2>Intents</h2>
+          </div>
+        </div>
+        <div id="intent-list" class="intent-list" aria-live="polite"></div>
+      </article>
+    </section>
+
+    <section id="intent-detail" class="panel detail-panel" aria-labelledby="detail-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Selected record</p>
+          <h2 id="detail-heading">Intent detail</h2>
+        </div>
+        <button id="clear-selection" type="button" class="secondary">Clear</button>
+      </div>
+      <p id="selected-record-id" class="record-id muted">No intent selected.</p>
+      <pre id="selected-record-json" class="record-json" tabindex="0">Select an intent to inspect its reviewed record JSON.</pre>
+      <div>
+        <h3>Responses</h3>
+        <div id="response-list" class="response-list"></div>
+      </div>
+    </section>
+
+    <section class="authoring-grid" aria-label="Record authoring boundaries">
+      <form id="create-form" class="panel author-panel">
+        <p class="eyebrow">Shared API boundary</p>
+        <h2>Create intent</h2>
+        <p class="muted">Submit reviewed Marketplace record JSON. The Web client does not invent or validate Marketplace semantics.</p>
+        <label for="create-record-json">Record JSON</label>
+        <textarea id="create-record-json" spellcheck="false" maxlength="262144" required></textarea>
+        <button type="submit">Create intent</button>
+        <p id="create-status" role="status" class="muted"></p>
+      </form>
+
+      <form id="response-form" class="panel author-panel">
+        <p class="eyebrow">Exact selected parent</p>
+        <h2>Respond to intent</h2>
+        <p class="muted">The submitted record must already carry the reviewed response binding for the selected parent.</p>
+        <label for="response-record-json">Response record JSON</label>
+        <textarea id="response-record-json" spellcheck="false" maxlength="262144" required></textarea>
+        <button id="submit-response" type="submit" disabled>Respond</button>
+        <p id="response-status" role="status" class="muted"></p>
+      </form>
+    </section>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
