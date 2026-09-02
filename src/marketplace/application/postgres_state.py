@@ -251,6 +251,7 @@ _SELECT_RECORD = """
 SELECT canonical_record
 FROM marketplace_app_records
 WHERE record_id = %s
+  AND expires_at > %s
 """
 
 _SELECT_RESPONSES = """
@@ -590,11 +591,12 @@ class PostgresApplicationStateStore:
         """Read one exact local record without refreshing its retention deadline."""
         if type(record_id) is not str or not record_id:
             raise ValueError("record_id MUST be non-empty exact text")
+        now = self._now()
         connection: Connection | None = None
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
-            cursor.execute(_SELECT_RECORD, (record_id,))
+            cursor.execute(_SELECT_RECORD, (record_id, now))
             row = cursor.fetchone()
             if row is None:
                 connection.commit()
@@ -635,7 +637,7 @@ class PostgresApplicationStateStore:
         cursor: Cursor | None = None
         try:
             connection, cursor = self._open()
-            cursor.execute(_SELECT_RECORD, (record_id,))
+            cursor.execute(_SELECT_RECORD, (record_id, now))
             row = cursor.fetchone()
             if row is None:
                 connection.commit()
