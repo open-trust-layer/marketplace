@@ -129,7 +129,7 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         steps = [
             ("CREATE TABLE IF NOT EXISTS marketplace_app_schema_migrations", []),
             ("SELECT version FROM marketplace_app_schema_migrations", [(1,)]),
-            ("to_regclass", [(True, False, True, True, True, True, True, True, True)]),
+            ("to_regclass", [(True, False, True, True, True, True, True, True)]),
         ]
         store, connection, _ = self.store(steps)
         with self.assertRaises(ApplicationStateStoreError) as caught:
