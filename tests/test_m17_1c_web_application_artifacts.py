@@ -116,6 +116,18 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         inspect_end = text.index("async function captureSyncWatermark", inspect_start)
         self.assertNotIn("state.records.set(", text[inspect_start:inspect_end])
 
+    def test_incremental_sync_does_not_claim_complete_when_page_budget_is_exhausted(self):
+        text = APP.read_text(encoding="utf-8")
+        start = text.index("async function incrementalSync")
+        end = text.index("function reviewedRecordJsonBody", start)
+        block = text[start:end]
+        self.assertIn("let hasMore", block)
+        self.assertIn("if (hasMore)", block)
+        self.assertIn("more changes remain", block)
+        bounded = block.index("if (hasMore)")
+        success = block.index("Synchronized at local cursor")
+        self.assertLess(bounded, success)
+
     def test_authoring_remains_raw_reviewed_record_json_boundary(self):
         text = APP.read_text(encoding="utf-8")
         self.assertIn("create-record-json", INDEX.read_text(encoding="utf-8"))
