@@ -49,7 +49,7 @@ Migrations run inside one transaction and fail closed on unknown schema versions
 
 The base `open-layer-marketplace` package keeps `dependencies = []`. PostgreSQL support is explicitly allowlisted as the optional extra `postgres = ["psycopg[binary]==3.3.5"]` so protocol/runtime consumers do not inherit database authority or native client dependencies merely by importing Marketplace.
 
-The packaged M17.1A source itself does not import Psycopg, open sockets, parse DSNs, choose hosts, create pools, or provision a database. Wrapped driver/database failures suppress raw exception chaining so ordinary tracebacks do not re-expose DSN or payload-bearing provider details. A future composition/deployment layer may supply a reviewed DB-API connection factory after separate runtime/deployment authorization.
+The packaged M17.1A source itself does not import Psycopg, open sockets, parse DSNs, choose hosts, create pools, or provision a database. Wrapped driver/database failures suppress raw exception chaining so ordinary tracebacks do not re-expose DSN or payload-bearing provider details. If cursor acquisition fails after a connection was created, the partial connection is closed exactly once; failure of that emergency cleanup is surfaced as stable `DATABASE_CONNECTION_CLEANUP_FAILED` rather than hidden. A future composition/deployment layer may supply a reviewed DB-API connection factory after separate runtime/deployment authorization.
 
 ## Safety and authority boundaries
 

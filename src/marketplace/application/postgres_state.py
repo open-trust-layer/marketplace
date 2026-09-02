@@ -361,13 +361,26 @@ class PostgresApplicationStateStore:
     def _open(self) -> tuple[Connection, Cursor]:
         try:
             connection = self._connection_factory()
-            cursor = connection.cursor()
-            return connection, cursor
         except Exception:
             raise ApplicationStateStoreError(
                 "DATABASE_CONNECTION_FAILED",
                 "application database connection could not be established",
             ) from None
+        try:
+            cursor = connection.cursor()
+        except Exception:
+            try:
+                connection.close()
+            except Exception:
+                raise ApplicationStateStoreError(
+                    "DATABASE_CONNECTION_CLEANUP_FAILED",
+                    "partial application database connection cleanup failed",
+                ) from None
+            raise ApplicationStateStoreError(
+                "DATABASE_CONNECTION_FAILED",
+                "application database connection could not be established",
+            ) from None
+        return connection, cursor
 
     @staticmethod
     def _rollback(connection: Connection) -> None:
