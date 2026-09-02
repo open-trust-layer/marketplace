@@ -586,6 +586,46 @@ class PostgresApplicationStateStore:
         finally:
             self._close(cursor, connection)
 
+    def peek(self, record_id: str) -> PreparedApplicationRecord | None:
+        """Read one exact local record without refreshing its retention deadline."""
+        if type(record_id) is not str or not record_id:
+            raise ValueError("record_id MUST be non-empty exact text")
+        connection: Connection | None = None
+        cursor: Cursor | None = None
+        try:
+            connection, cursor = self._open()
+            cursor.execute(_SELECT_RECORD, (record_id,))
+            row = cursor.fetchone()
+            if row is None:
+                connection.commit()
+                return None
+            if type(row) not in (tuple, list) or len(row) != 1:
+                raise ApplicationStateStoreError(
+                    "DATABASE_RESULT_INVALID",
+                    "application database returned an invalid record row",
+                )
+            canonical = row[0]
+            if type(canonical) is not bytes:
+                canonical = bytes(canonical)
+            cursor.execute(_SELECT_RESPONSE_PARENTS, (record_id,))
+            parents = tuple(row[0] for row in cursor.fetchall())
+            result = PreparedApplicationRecord(record_id, canonical, parents)
+            connection.commit()
+            return result
+        except ApplicationStateStoreError:
+            if connection is not None:
+                self._rollback(connection)
+            raise
+        except Exception:
+            if connection is not None:
+                self._rollback(connection)
+            raise ApplicationStateStoreError(
+                "DATABASE_OPERATION_FAILED",
+                "application database operation failed",
+            ) from None
+        finally:
+            self._close(cursor, connection)
+
     def get(self, record_id: str) -> PreparedApplicationRecord | None:
         if type(record_id) is not str or not record_id:
             raise ValueError("record_id MUST be non-empty exact text")

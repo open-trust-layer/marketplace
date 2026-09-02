@@ -47,10 +47,12 @@ creation by the transport path.
 
 `respond_to_intent` first verifies that the supplied response is an intent record and
 that its existing Marketplace `response_to` relation includes the exact path parent. Only
-then does it retrieve the parent, require local existence, and verify that the parent is
-also an intent record. Invalid response binding therefore cannot refresh parent retention.
-Multiple reviewed proposal parents remain possible; the application endpoint does not
-replace or reinterpret protocol negotiation semantics.
+then it performs a no-refresh `peek` of the parent, requires local existence, and verifies
+that the parent is also an intent record. Only a successfully classified intent is read
+again through the normal retention-refreshing `get`. Invalid response binding or a
+wrong-type parent therefore cannot extend parent retention. Multiple reviewed proposal
+parents remain possible; the application endpoint does not replace or reinterpret protocol
+negotiation semantics.
 
 ## Browse/query separation
 
@@ -79,6 +81,11 @@ submitted payload bodies.
 Initialization is explicit. The API facade calls the shared state-service startup path,
 which in M17.1A performs schema validation/migration and required retention cleanup
 before product operations become available.
+
+Exact intent lookup uses the same two-phase retention rule: a no-refresh `peek` is used
+for type validation, then `get` refreshes retention only for a valid intent. This adds one
+bounded local persistence read on successful get/respond paths in exchange for preventing
+invalid endpoint use from becoming a retention-extension mechanism.
 
 ## Explicit exclusions
 

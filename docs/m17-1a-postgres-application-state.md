@@ -60,3 +60,11 @@ The existing 10-second EPHEMERAL runtime remains unchanged for runtime component
 ## Acceptance
 
 M17.1A is acceptable only when existing Marketplace conformance remains green, PostgreSQL migration/repository/service contracts are deterministic, collision and transaction failures fail closed, rollback uncertainty is surfaced instead of swallowed, retention expiry/deletion is observable, Proposal `response_to` semantics are preserved, the application sync cursor makes no global-truth claim, and dependency/artifact gates allow only the reviewed PostgreSQL provider rather than arbitrary package-index dependencies.
+
+## M17.1B no-refresh validation read
+
+The later M17.1B application API adds `peek(record_id)` to the existing injected state
+store/service contract. `peek` returns the same canonical local record shape as `get` but
+does not update `last_used_at` or `expires_at`. It exists so an application endpoint can
+validate record type before deciding whether the request is legitimate retention-refreshing
+use. No schema, retention maximum, database authority, or protocol semantics are changed.

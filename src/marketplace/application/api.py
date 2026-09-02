@@ -208,7 +208,17 @@ class MarketplaceApplicationApiService:
 
     def get_intent(self, record_id: str) -> Any | None:
         self._require_initialized()
-        record = self._state.get(_record_id(record_id, name="record_id"))
+        reviewed_id = _record_id(record_id, name="record_id")
+        candidate = self._state.peek(reviewed_id)
+        if candidate is None:
+            return None
+        _require_intent_record(
+            self._is_intent_record,
+            candidate,
+            code="INTENT_RECORD_REQUIRED",
+            message="intent lookup resolved to a non-intent Marketplace record",
+        )
+        record = self._state.get(reviewed_id)
         if record is None:
             return None
         _require_intent_record(
@@ -264,6 +274,18 @@ class MarketplaceApplicationApiService:
                 "RESPONSE_PARENT_MISMATCH",
                 "response record is not bound to the requested parent intent",
             )
+        candidate = self._state.peek(parent_id)
+        if candidate is None:
+            raise ApplicationApiError(
+                "PARENT_INTENT_NOT_FOUND",
+                "response parent intent is not present in local application state",
+            )
+        _require_intent_record(
+            self._is_intent_record,
+            candidate,
+            code="PARENT_RECORD_NOT_INTENT",
+            message="response parent identity resolved to a non-intent Marketplace record",
+        )
         parent = self._state.get(parent_id)
         if parent is None:
             raise ApplicationApiError(

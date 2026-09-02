@@ -15,6 +15,7 @@ class ApplicationStateStore(Protocol):
     def initialize(self) -> ExpiryResult: ...
     def put(self, prepared: PreparedApplicationRecord) -> ApplicationStatePutResult: ...
     def get(self, record_id: str) -> PreparedApplicationRecord | None: ...
+    def peek(self, record_id: str) -> PreparedApplicationRecord | None: ...
     def list_response_ids(self, parent_record_id: str, *, limit: int) -> tuple[str, ...]: ...
     def sync_since(self, cursor_value: int, *, limit: int) -> SyncPage: ...
 
@@ -75,6 +76,18 @@ class MarketplaceApplicationStateService:
         if type(record_id) is not str or not record_id:
             raise ValueError("record_id MUST be non-empty exact text")
         prepared = self._store.get(record_id)
+        if prepared is None:
+            return None
+        if type(prepared) is not PreparedApplicationRecord:
+            raise TypeError("state store MUST return exact PreparedApplicationRecord")
+        return self._decode_record(prepared.canonical_record)
+
+    def peek(self, record_id: str) -> Any | None:
+        """Read canonical application state without extending retention."""
+        self._require_initialized()
+        if type(record_id) is not str or not record_id:
+            raise ValueError("record_id MUST be non-empty exact text")
+        prepared = self._store.peek(record_id)
         if prepared is None:
             return None
         if type(prepared) is not PreparedApplicationRecord:
