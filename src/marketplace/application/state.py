@@ -18,6 +18,7 @@ class ApplicationStateStore(Protocol):
     def peek(self, record_id: str) -> PreparedApplicationRecord | None: ...
     def list_response_ids(self, parent_record_id: str, *, limit: int) -> tuple[str, ...]: ...
     def sync_since(self, cursor_value: int, *, limit: int) -> SyncPage: ...
+    def sync_watermark(self) -> int: ...
 
 
 RecordPreparer = Callable[[Any], PreparedApplicationRecord]
@@ -101,6 +102,13 @@ class MarketplaceApplicationStateService:
     def sync_since(self, cursor_value: int, *, limit: int = 128) -> SyncPage:
         self._require_initialized()
         return self._store.sync_since(cursor_value, limit=limit)
+
+    def sync_watermark(self) -> int:
+        self._require_initialized()
+        value = self._store.sync_watermark()
+        if type(value) is not int or value < 0:
+            raise TypeError("state store sync_watermark MUST return a non-negative exact integer")
+        return value
 
 
 __all__ = [

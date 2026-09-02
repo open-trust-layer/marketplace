@@ -266,6 +266,7 @@ LIMIT %s
 """
 
 _SELECT_SYNC_FLOOR = "SELECT floor_seq FROM marketplace_app_sync_state WHERE singleton = TRUE"
+_SELECT_SYNC_HEAD = "SELECT COALESCE(MAX(seq), 0) FROM marketplace_app_changes"
 _SELECT_EXPIRED_SYNC_AFTER_CURSOR = """
 /* M17_SYNC_RETENTION_GUARD */
 SELECT seq FROM marketplace_app_changes
@@ -698,6 +699,39 @@ class PostgresApplicationStateStore:
                 )
             connection.commit()
             return values
+        except ApplicationStateStoreError:
+            if connection is not None:
+                self._rollback(connection)
+            raise
+        except Exception:
+            if connection is not None:
+                self._rollback(connection)
+            raise ApplicationStateStoreError(
+                "DATABASE_OPERATION_FAILED", "application database operation failed"
+            ) from None
+        finally:
+            self._close(cursor, connection)
+
+    def sync_watermark(self) -> int:
+        """Capture a bounded local sync watermark for snapshot/full-resync clients."""
+        now = self._now()
+        connection: Connection | None = None
+        cursor: Cursor | None = None
+        try:
+            connection, cursor = self._open()
+            self._expire_sync_metadata_cursor(cursor, now)
+            cursor.execute(_SELECT_SYNC_FLOOR)
+            floor_row = cursor.fetchone()
+            cursor.execute(_SELECT_SYNC_HEAD)
+            head_row = cursor.fetchone()
+            for row in (floor_row, head_row):
+                if type(row) not in (tuple, list) or len(row) != 1 or type(row[0]) is not int or row[0] < 0:
+                    raise ApplicationStateStoreError(
+                        "DATABASE_RESULT_INVALID", "application database returned an invalid sync watermark"
+                    )
+            watermark = max(floor_row[0], head_row[0])
+            connection.commit()
+            return watermark
         except ApplicationStateStoreError:
             if connection is not None:
                 self._rollback(connection)

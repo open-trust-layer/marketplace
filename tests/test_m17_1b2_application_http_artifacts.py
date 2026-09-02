@@ -44,6 +44,7 @@ class M17ApplicationHttpArtifactTests(unittest.TestCase):
             "POST /api/intents/{id}/responses",
             "GET /api/intents/{id}/responses",
             "GET /api/sync",
+            "snapshot watermark",
             "framework-neutral",
             "no live HTTP server",
             "no socket",

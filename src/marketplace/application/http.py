@@ -426,9 +426,13 @@ class MarketplaceApplicationHttpAdapter:
             return _bad_request()
         try:
             query = _query_map(request.query, allowed=("cursor", "limit"))
-            cursor = 0 if "cursor" not in query else _nonnegative_int(query["cursor"])
             limit = 128 if "limit" not in query else _positive_int(query["limit"], maximum=256)
-            page = self._api.sync(cursor=cursor, limit=limit)
+            if "cursor" in query:
+                cursor = _nonnegative_int(query["cursor"])
+                page = self._api.sync(cursor=cursor, limit=limit)
+            else:
+                watermark = self._api.sync_watermark()
+                page = SyncPage((), watermark, False)
             if type(page) is not SyncPage or type(page.changes) is not tuple:
                 raise ApplicationHttpError("APPLICATION_API_RESULT_INVALID", "sync result is invalid")
             changes: list[dict[str, object]] = []

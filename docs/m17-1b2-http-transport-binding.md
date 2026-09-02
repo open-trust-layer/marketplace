@@ -17,7 +17,7 @@ Web, Android, and future agents consume the same application facade. The HTTP la
 - `GET /api/intents/{id}` -> exact `get_intent`
 - `POST /api/intents/{id}/responses` -> `respond_to_intent`
 - `GET /api/intents/{id}/responses` -> bounded `list_responses`
-- `GET /api/sync` -> bounded local application `sync`
+- `GET /api/sync` -> snapshot watermark when `cursor` is omitted, or bounded incremental local application `sync` when `cursor=N` is supplied
 
 ## Boundary
 
@@ -33,7 +33,7 @@ Request and response bodies are finite and checked before materialization or emi
 
 Errors use stable JSON codes/messages and never include submitted payload content or downstream exception text. Responses use `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a restrictive CSP. No CORS widening, cookies, sessions, redirects, or credential surfaces are added.
 
-The sync cursor remains local application coordination metadata and is not protocol truth, ownership, ranking, agreement, or global completeness. An expired retained-history cursor is normalized to stable `SYNC_CURSOR_EXPIRED` and HTTP `409 Conflict`, allowing Web/Android clients to perform the documented bounded full resynchronization instead of treating retention expiry as an opaque server failure.
+The sync cursor remains local application coordination metadata and is not protocol truth, ownership, ranking, agreement, or global completeness. `GET /api/sync` without a cursor captures a current bounded snapshot watermark; a client can capture that watermark, perform bounded list/detail hydration, and then resume incremental sync from that watermark. An expired retained-history cursor is normalized to stable `SYNC_CURSOR_EXPIRED` and HTTP `409 Conflict`, so clients can restart this snapshot/full-resynchronization sequence without storage-detail reflection.
 
 ## Explicit exclusions
 

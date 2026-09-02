@@ -346,6 +346,16 @@ class MarketplaceApplicationApiService:
         values = self._state.response_ids(parent_id, limit=reviewed_limit)
         return _review_response_ids(values, limit=reviewed_limit)
 
+    def sync_watermark(self) -> int:
+        self._require_initialized()
+        value = self._state.sync_watermark()
+        if type(value) is not int or value < 0:
+            raise ApplicationApiError(
+                "SYNC_WATERMARK_INVALID",
+                "application sync watermark is invalid",
+            )
+        return value
+
     def sync(
         self,
         *,
