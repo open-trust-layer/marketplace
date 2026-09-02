@@ -363,11 +363,11 @@ class PostgresApplicationStateStore:
             connection = self._connection_factory()
             cursor = connection.cursor()
             return connection, cursor
-        except Exception as exc:
+        except Exception:
             raise ApplicationStateStoreError(
                 "DATABASE_CONNECTION_FAILED",
                 "application database connection could not be established",
-            ) from exc
+            ) from None
 
     @staticmethod
     def _close(cursor: Cursor | None, connection: Connection | None) -> None:
@@ -434,7 +434,7 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
@@ -443,7 +443,7 @@ class PostgresApplicationStateStore:
             raise ApplicationStateStoreError(
                 "MIGRATION_FAILED",
                 "application database migration failed",
-            ) from exc
+            ) from None
         finally:
             self._close(cursor, connection)
 
@@ -466,8 +466,8 @@ class PostgresApplicationStateStore:
                 cursor.execute(_ADVANCE_SYNC_FLOOR, (max(sequences),))
         except ApplicationStateRetentionError:
             raise
-        except Exception as exc:
-            raise ApplicationStateRetentionError() from exc
+        except Exception:
+            raise ApplicationStateRetentionError() from None
 
     def _expire_due_cursor(
         self,
@@ -497,8 +497,8 @@ class PostgresApplicationStateStore:
             return ExpiryResult(deleted, tuple(sequences))
         except ApplicationStateRetentionError:
             raise
-        except Exception as exc:
-            raise ApplicationStateRetentionError() from exc
+        except Exception:
+            raise ApplicationStateRetentionError() from None
 
     def put(self, prepared: PreparedApplicationRecord) -> ApplicationStatePutResult:
         if type(prepared) is not PreparedApplicationRecord:
@@ -562,7 +562,7 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
@@ -571,7 +571,7 @@ class PostgresApplicationStateStore:
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED",
                 "application database operation failed",
-            ) from exc
+            ) from None
         finally:
             self._close(cursor, connection)
 
@@ -609,7 +609,7 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
@@ -617,7 +617,7 @@ class PostgresApplicationStateStore:
                     pass
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
-            ) from exc
+            ) from None
         finally:
             self._close(cursor, connection)
 
@@ -646,7 +646,7 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
@@ -654,7 +654,7 @@ class PostgresApplicationStateStore:
                     pass
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
-            ) from exc
+            ) from None
         finally:
             self._close(cursor, connection)
 
@@ -704,7 +704,7 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
@@ -712,7 +712,7 @@ class PostgresApplicationStateStore:
                     pass
             raise ApplicationStateStoreError(
                 "DATABASE_OPERATION_FAILED", "application database operation failed"
-            ) from exc
+            ) from None
         finally:
             self._close(cursor, connection)
 
@@ -732,13 +732,13 @@ class PostgresApplicationStateStore:
                 except Exception:
                     pass
             raise
-        except Exception as exc:
+        except Exception:
             if connection is not None:
                 try:
                     connection.rollback()
                 except Exception:
                     pass
-            raise ApplicationStateRetentionError() from exc
+            raise ApplicationStateRetentionError() from None
         finally:
             self._close(cursor, connection)
 
