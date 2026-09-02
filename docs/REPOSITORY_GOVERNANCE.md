@@ -33,7 +33,7 @@ The repository contains:
 - `.github/pull_request_template.md` for risk/capability/retention/security and performance-evidence review;
 - `.github/workflows/conformance.yml` for provider-neutral acceptance invocation;
 - `tools/repository_audit.py` and `tools/conformance_gate.py` for local/CI acceptance;
-- `DEVELOPMENT_POLICY.md`, `docs/POLICY_V1_4_ADOPTION.md`, and `docs/RETENTION_POLICY.md` for engineering policy/provenance/retention.
+- `DEVELOPMENT_POLICY.md`, `docs/POLICY_V1_5_ADOPTION.md`, and `docs/RETENTION_POLICY.md` for engineering policy/provenance/retention.
 
 These controls are reviewable source artifacts. They do **not** equal GitHub branch protection.
 
@@ -50,6 +50,7 @@ The following paths are policy/security-sensitive and SHOULD receive explicit ow
 ```text
 PRINCIPLES.md
 DEVELOPMENT_POLICY.md
+docs/POLICY_V1_5_ADOPTION.md
 docs/POLICY_V1_4_ADOPTION.md
 docs/RETENTION_POLICY.md
 docs/REPOSITORY_GOVERNANCE.md
@@ -211,7 +212,7 @@ Before merge under this procedure:
 1. the PR MUST be open, review-ready, and mergeable;
 2. the exact accepted head SHA MUST be recorded;
 3. the complete applicable Marketplace acceptance/conformance gate MUST be green for that exact candidate, or for the exact GitHub synthetic merge candidate formed from that head and unchanged base with the relation recorded;
-4. all applicable deterministic unit, adversarial/security, repository-audit, reproducible-artifact, package-smoke, vector, generator-replay, whitespace, and stable performance-regression checks MUST be green;
+4. all applicable deterministic unit, adversarial/security, repository-audit, artifact-integrity, package-smoke, vector, generator-replay, whitespace, and stable performance-regression checks MUST be green; any reproducible-build claim additionally requires an independent matching reproduction;
 5. there MUST be no unresolved review threads;
 6. the PR MUST explicitly state that automated acceptance and maintainer self-review are not independent human review;
 7. known material security, privacy, retention, project-isolation, or governance defects MUST be absent or separately tracked with a fail-closed scope that does not invalidate the change;
@@ -253,16 +254,15 @@ The preferred Marketplace milestone/change flow remains:
 
 ```text
 issue/scope
--> dedicated branch
--> smallest coherent implementation
--> focused tests
--> performance baseline/evidence when applicable
--> repository audit
--> full conformance gate when applicable
--> PR with objective evidence
+-> one branch for one coherent milestone/work unit
+-> small reversible commits + focused/local checks
+-> draft PR while materially changing
+-> FAST CI only when a tested impact map proves it sufficient
+-> repository audit / performance evidence when applicable
+-> FULL acceptance on the final review head
 -> independent review or eligible solo-maintainer procedure
--> exact-head guarded merge
--> verify merged-main CI
+-> exact-head guarded merge or verified merge queue
+-> exact-tree validation reuse only when integrity-bound; otherwise verify merged-main normally
 ```
 
 For performance-sensitive work, measurement should occur before and after the smallest safe candidate under equivalent conditions. Do not make the first implementation more complex merely to produce an impressive benchmark.
