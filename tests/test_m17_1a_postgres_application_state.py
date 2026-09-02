@@ -280,10 +280,26 @@ class M17PostgresApplicationStateTests(unittest.TestCase):
         )
         result = store.list_response_ids("r1_parent", limit=8)
         self.assertEqual(result, ("r1_b", "r1_a"))
-        sql = connection.cursor_obj.calls[0][0]
+        sql, params = connection.cursor_obj.calls[0]
         self.assertIn("marketplace_app_response_links", sql)
+        self.assertIn("marketplace_app_records", sql)
+        self.assertIn("expires_at > %s", sql)
+        self.assertEqual(params, ("r1_parent", NOW, 8))
         self.assertNotIn("current_response", sql.lower())
         self.assertNotIn("accepted", sql.lower())
+
+    def test_sync_expires_change_metadata_before_reading_retained_floor(self):
+        steps = [
+            ("M17_CHANGE_RETENTION_MAINTENANCE", [(4,), (5,)]),
+            ("UPDATE marketplace_app_sync_state", []),
+            ("SELECT floor_seq", [(5,)]),
+            ("SELECT seq, record_id, change_kind", []),
+        ]
+        store, connection, _ = self.store(steps)
+        page = store.sync_since(5, limit=8)
+        self.assertEqual(page, SyncPage((), 5, False))
+        self.assertIn("M17_CHANGE_RETENTION_MAINTENANCE", connection.cursor_obj.calls[0][0])
+        self.assertEqual(connection.cursor_obj.calls[0][1], (NOW, 256))
 
     def test_sync_cursor_below_retained_floor_fails_closed(self):
         store, connection, _ = self.store(

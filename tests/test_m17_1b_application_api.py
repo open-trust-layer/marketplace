@@ -157,6 +157,24 @@ class M17ApplicationApiTests(unittest.TestCase):
         self.assertEqual(state.get_calls, [])
         self.assertEqual(state.publish_calls, [])
 
+    def test_list_responses_requires_live_intent_parent_before_query_or_refresh(self):
+        parent = object()
+        state = FakeStateService()
+        state.records["r-parent"] = parent
+        api = MarketplaceApplicationApiService(
+            state=state,
+            intent_query=FakeIntentQuery(),
+            response_parent_ids=lambda record: (),
+            is_intent_record=lambda record: False,
+        )
+        api.initialize()
+        with self.assertRaises(ApplicationApiError) as caught:
+            api.list_responses("r-parent", limit=8)
+        self.assertEqual(caught.exception.code, "PARENT_RECORD_NOT_INTENT")
+        self.assertEqual(state.peek_calls, ["r-parent"])
+        self.assertEqual(state.get_calls, [])
+        self.assertEqual(state.response_calls, [])
+
     def test_query_port_cannot_exceed_requested_page_limit(self):
         api, _, query, _ = self.make_service()
         query.list_intent_ids = lambda **kwargs: IntentIndexPage(("r1", "r2"), None)  # type: ignore[method-assign]
