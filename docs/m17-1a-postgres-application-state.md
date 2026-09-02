@@ -30,7 +30,7 @@ Proposal compatibility, indexing, display order, or local discovery does not cre
 
 `marketplace_app_changes` provides a monotonic local application sync cursor for future `/api/sync` clients. The cursor orders local coordination changes only. It is **not protocol truth**, does not claim global completeness, and does not replace OLP/federation lifecycle or discovery semantics.
 
-When retained sync metadata eventually expires, the application sync floor must advance so stale cursors fail closed and clients can perform a bounded full resynchronization rather than silently missing history. A sync read performs one bounded expired-change maintenance batch before reading the floor and then checks for any still-expired change beyond the requested cursor; remaining stale history fails closed instead of being returned.
+When retained sync metadata eventually expires, the application sync floor must advance so stale cursors fail closed and clients can perform a bounded full resynchronization rather than silently missing history. A sync read performs one bounded expired-change maintenance batch before reading the floor and then checks for any still-expired change beyond the requested cursor; remaining stale history fails closed instead of being returned. When that bounded maintenance actually removes expired change metadata, its deletion/floor progress is committed before the stale-cursor error is surfaced so repeated sync attempts cannot undo retention cleanup.
 
 ## PostgreSQL schema and migrations
 

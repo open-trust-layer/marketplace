@@ -480,7 +480,7 @@ class PostgresApplicationStateStore:
         self.apply_migrations()
         return self.expire_due()
 
-    def _expire_sync_metadata_cursor(self, cursor: Cursor, now: datetime) -> None:
+    def _expire_sync_metadata_cursor(self, cursor: Cursor, now: datetime) -> bool:
         try:
             cursor.execute(
                 _DELETE_EXPIRED_CHANGES_MAINTENANCE,
@@ -492,6 +492,7 @@ class PostgresApplicationStateStore:
                 raise ApplicationStateRetentionError()
             if sequences:
                 cursor.execute(_ADVANCE_SYNC_FLOOR, (max(sequences),))
+            return bool(sequences)
         except ApplicationStateRetentionError:
             raise
         except Exception:
@@ -718,9 +719,10 @@ class PostgresApplicationStateStore:
         now = self._now()
         connection: Connection | None = None
         cursor: Cursor | None = None
+        cleanup_progress = False
         try:
             connection, cursor = self._open()
-            self._expire_sync_metadata_cursor(cursor, now)
+            cleanup_progress = self._expire_sync_metadata_cursor(cursor, now)
             cursor.execute(_SELECT_SYNC_FLOOR)
             floor_row = cursor.fetchone()
             if type(floor_row) not in (tuple, list) or len(floor_row) != 1 or type(floor_row[0]) is not int:
@@ -768,9 +770,19 @@ class PostgresApplicationStateStore:
             next_cursor = selected[-1].seq if selected else cursor_value
             connection.commit()
             return SyncPage(selected, next_cursor, has_more)
-        except ApplicationStateStoreError:
+        except ApplicationStateStoreError as error:
             if connection is not None:
-                self._rollback(connection)
+                if error.code == "SYNC_CURSOR_EXPIRED" and cleanup_progress:
+                    try:
+                        connection.commit()
+                    except Exception:
+                        self._rollback(connection)
+                        raise ApplicationStateStoreError(
+                            "DATABASE_OPERATION_FAILED",
+                            "application database operation failed",
+                        ) from None
+                else:
+                    self._rollback(connection)
             raise
         except Exception:
             if connection is not None:
