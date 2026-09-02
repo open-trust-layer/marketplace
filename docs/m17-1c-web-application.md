@@ -12,6 +12,8 @@ The initial surface combines bounded intent list, presentation-only WGS84 map pr
 
 The client captures a snapshot watermark before bounded full list/detail hydration. It then resumes incremental `/api/sync?cursor=N` polling semantics from that local application watermark. `SYNC_CURSOR_EXPIRED` restarts the same bounded snapshot/full-resync sequence.
 
+Full-resync hydration follows the opaque `/api/intents` cursor across at most four bounded pages. Invalid or repeated cursors, duplicate identities across pages, or exhaustion of that page budget fail closed before the captured snapshot watermark is promoted to the active incremental sync cursor.
+
 The watermark is application coordination metadata only. It does not claim protocol truth, global completeness, ownership, agreement, ranking, or legitimacy.
 
 ## Authority boundary

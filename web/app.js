@@ -6,6 +6,7 @@ const RESPONSES_SUFFIX = "/responses";
 const PAGE_LIMIT = 64;
 const SYNC_LIMIT = 64;
 const MAX_SYNC_PAGES = 4;
+const MAX_LIST_PAGES = 4;
 const MAX_RECORD_JSON_BYTES = 256 * 1024;
 const MAP_WIDTH = 720;
 const MAP_HEIGHT = 360;
@@ -259,19 +260,37 @@ async function captureSyncWatermark() {
 }
 
 async function hydrateCurrentIntents() {
-  const page = await apiFetch(`${API_INTENTS}?limit=${PAGE_LIMIT}`);
-  if (!Array.isArray(page.record_ids) || page.record_ids.length > PAGE_LIMIT) {
-    throw stableClientError("INTENT_LIST_INVALID");
-  }
   const next = new Map();
-  for (const rawId of page.record_ids) {
-    const recordId = requireRecordId(rawId);
-    const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}`);
-    next.set(recordId, record);
+  const seenCursors = new Set();
+  let cursor = null;
+  for (let pageNumber = 0; pageNumber < MAX_LIST_PAGES; pageNumber += 1) {
+    const suffix = cursor === null
+      ? `?limit=${PAGE_LIMIT}`
+      : `?cursor=${encodeURIComponent(cursor)}&limit=${PAGE_LIMIT}`;
+    const page = await apiFetch(`${API_INTENTS}${suffix}`);
+    if (!Array.isArray(page.record_ids) || page.record_ids.length > PAGE_LIMIT) {
+      throw stableClientError("INTENT_LIST_INVALID");
+    }
+    for (const rawId of page.record_ids) {
+      const recordId = requireRecordId(rawId);
+      if (next.has(recordId)) throw stableClientError("INTENT_LIST_INVALID");
+      const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}`);
+      next.set(recordId, record);
+    }
+    if (page.next_cursor === null) {
+      state.records = next;
+      state.truncated = false;
+      if (state.selectedId !== null && !state.records.has(state.selectedId)) state.selectedId = null;
+      return;
+    }
+    if (typeof page.next_cursor !== "string" || page.next_cursor.length === 0 || page.next_cursor.length > 512) {
+      throw stableClientError("INTENT_LIST_INVALID");
+    }
+    if (seenCursors.has(page.next_cursor)) throw stableClientError("INTENT_LIST_INVALID");
+    seenCursors.add(page.next_cursor);
+    cursor = page.next_cursor;
   }
-  state.records = next;
-  state.truncated = typeof page.next_cursor === "string" && page.next_cursor.length > 0;
-  if (state.selectedId !== null && !state.records.has(state.selectedId)) state.selectedId = null;
+  throw stableClientError("INTENT_LIST_TRUNCATED");
 }
 
 async function fullResync() {
