@@ -69,7 +69,7 @@ must not add hidden ranking, ownership, legitimacy, or global-completeness seman
 `GET /api/sync` delegates to the M17.1A monotonic local application cursor. Before the
 page is read, the store performs one bounded expired-change maintenance batch and checks
 that no still-expired change lies beyond the caller cursor; an unsafe cursor fails closed
-rather than receiving stale coordination metadata. If that bounded maintenance made retention progress, the cleanup/floor update is committed before the stale-cursor error is returned; errors with no cleanup progress still roll back. The cursor is source-local application
+rather than receiving stale coordination metadata. If that bounded maintenance made retention progress, the cleanup/floor update is committed before the stale-cursor error is returned; errors with no cleanup progress still roll back. The facade normalizes that expected retention condition to stable `ApplicationApiError` code `SYNC_CURSOR_EXPIRED` so later transports can signal bounded full-resynchronization recovery without exposing storage details. The cursor is source-local application
 coordination metadata. It does not claim global history, source completeness, canonical
 ordering, or protocol truth.
 

@@ -33,7 +33,7 @@ Request and response bodies are finite and checked before materialization or emi
 
 Errors use stable JSON codes/messages and never include submitted payload content or downstream exception text. Responses use `Cache-Control: no-store`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, and a restrictive CSP. No CORS widening, cookies, sessions, redirects, or credential surfaces are added.
 
-The sync cursor remains local application coordination metadata and is not protocol truth, ownership, ranking, agreement, or global completeness.
+The sync cursor remains local application coordination metadata and is not protocol truth, ownership, ranking, agreement, or global completeness. An expired retained-history cursor is normalized to stable `SYNC_CURSOR_EXPIRED` and HTTP `409 Conflict`, allowing Web/Android clients to perform the documented bounded full resynchronization instead of treating retention expiry as an opaque server failure.
 
 ## Explicit exclusions
 

@@ -9,7 +9,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Protocol
 
-from .postgres_state import ApplicationStatePutResult, ExpiryResult, SyncChange, SyncPage
+from .postgres_state import (
+    ApplicationStatePutResult,
+    ApplicationStateStoreError,
+    ExpiryResult,
+    SyncChange,
+    SyncPage,
+)
 from .state import MarketplaceApplicationStateService
 
 DEFAULT_INTENT_PAGE_SIZE = 64
@@ -353,7 +359,15 @@ class MarketplaceApplicationApiService:
             name="limit",
             maximum=MAX_SYNC_PAGE_SIZE,
         )
-        page = self._state.sync_since(reviewed_cursor, limit=reviewed_limit)
+        try:
+            page = self._state.sync_since(reviewed_cursor, limit=reviewed_limit)
+        except ApplicationStateStoreError as exc:
+            if exc.code == "SYNC_CURSOR_EXPIRED":
+                raise ApplicationApiError(
+                    "SYNC_CURSOR_EXPIRED",
+                    "sync cursor expired; full resynchronization is required",
+                ) from None
+            raise
         return _review_sync_page(page, cursor=reviewed_cursor, limit=reviewed_limit)
 
 

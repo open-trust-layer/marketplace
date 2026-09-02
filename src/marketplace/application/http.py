@@ -254,6 +254,7 @@ def _application_failure(exc: ApplicationApiError) -> ApplicationHttpResponse:
         "RESPONSE_PARENT_MISMATCH": (400, "Bad Request", "response is not bound to the requested parent"),
         "PARENT_INTENT_NOT_FOUND": (404, "Not Found", "parent intent was not found"),
         "PARENT_RECORD_NOT_INTENT": (400, "Bad Request", "parent record is not an intent"),
+        "SYNC_CURSOR_EXPIRED": (409, "Conflict", "sync cursor expired; full resynchronization is required"),
     }
     reviewed = mapping.get(exc.code)
     if reviewed is None:
