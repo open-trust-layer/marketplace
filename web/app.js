@@ -14,6 +14,7 @@ const MAP_HEIGHT = 360;
 const state = {
   records: new Map(),
   selectedId: null,
+  selectedRecord: null,
   syncCursor: null,
   truncated: false,
 };
@@ -206,7 +207,7 @@ function renderList() {
 }
 
 function renderDetail() {
-  const record = state.selectedId === null ? null : state.records.get(state.selectedId);
+  const record = state.selectedRecord;
   selectedRecordId.textContent = state.selectedId ?? "No intent selected.";
   selectedRecordJson.textContent = record === undefined || record === null
     ? "Select an intent to inspect its reviewed record JSON."
@@ -232,7 +233,7 @@ async function renderResponses(recordId) {
       item.type = "button";
       item.className = "response-card record-id";
       item.textContent = id;
-      item.addEventListener("click", () => selectIntent(id));
+      item.addEventListener("click", () => void inspectIntent(id));
       responseList.append(item);
     }
   } catch (error) {
@@ -245,10 +246,31 @@ async function renderResponses(recordId) {
 
 function selectIntent(recordId) {
   const reviewed = requireRecordId(recordId);
-  state.selectedId = state.records.has(reviewed) ? reviewed : null;
+  const record = state.records.get(reviewed);
+  state.selectedId = record === undefined ? null : reviewed;
+  state.selectedRecord = record ?? null;
   renderList();
   renderDetail();
   if (state.selectedId !== null) void renderResponses(state.selectedId);
+}
+
+async function inspectIntent(recordId) {
+  const reviewed = requireRecordId(recordId);
+  try {
+    const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(reviewed)}`);
+    state.selectedId = reviewed;
+    state.selectedRecord = record;
+    renderList();
+    renderDetail();
+    await renderResponses(reviewed);
+  } catch (error) {
+    state.selectedId = null;
+    state.selectedRecord = null;
+    responseList.replaceChildren();
+    renderList();
+    renderDetail();
+    setStatus(`Detail failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+  }
 }
 async function captureSyncWatermark() {
   const documentValue = await apiFetch(`${API_SYNC}?limit=${SYNC_LIMIT}`);
@@ -280,7 +302,12 @@ async function hydrateCurrentIntents() {
     if (page.next_cursor === null) {
       state.records = next;
       state.truncated = false;
-      if (state.selectedId !== null && !state.records.has(state.selectedId)) state.selectedId = null;
+      if (state.selectedId !== null) {
+        const selected = state.records.get(state.selectedId);
+        state.selectedId = selected === undefined ? null : state.selectedId;
+        state.selectedRecord = selected ?? null;
+        if (state.selectedId === null) responseList.replaceChildren();
+      }
       return;
     }
     if (typeof page.next_cursor !== "string" || page.next_cursor.length === 0 || page.next_cursor.length > 512) {
@@ -310,13 +337,7 @@ async function applySyncPage(documentValue) {
     if (change === null || typeof change !== "object") throw stableClientError("SYNC_PAGE_INVALID");
     const recordId = requireRecordId(change.record_id);
     if (!Number.isSafeInteger(change.seq) || change.seq <= state.syncCursor) throw stableClientError("SYNC_PAGE_INVALID");
-    if (change.change_kind === "DELETE") {
-      state.records.delete(recordId);
-      if (state.selectedId === recordId) state.selectedId = null;
-    } else if (change.change_kind === "UPSERT") {
-      const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}`);
-      state.records.set(recordId, record);
-    } else {
+    if (change.change_kind !== "DELETE" && change.change_kind !== "UPSERT") {
       throw stableClientError("SYNC_PAGE_INVALID");
     }
     state.syncCursor = change.seq;
@@ -332,11 +353,14 @@ async function incrementalSync() {
   if (state.syncCursor === null) return fullResync();
   setStatus(`Syncing from local cursor ${state.syncCursor}…`);
   try {
+    let browseDirty = false;
     for (let pageNumber = 0; pageNumber < MAX_SYNC_PAGES; pageNumber += 1) {
       const documentValue = await apiFetch(`${API_SYNC}?cursor=${state.syncCursor}&limit=${SYNC_LIMIT}`);
       const hasMore = await applySyncPage(documentValue);
+      if (documentValue.changes.length > 0) browseDirty = true;
       if (!hasMore) break;
     }
+    if (browseDirty) await hydrateCurrentIntents();
     renderList();
     renderDetail();
     setStatus(`Synchronized at local cursor ${state.syncCursor}`, "success");
@@ -411,6 +435,7 @@ filterInput.addEventListener("input", renderList);
 byId("sync-now").addEventListener("click", () => void runSyncAction());
 byId("clear-selection").addEventListener("click", () => {
   state.selectedId = null;
+  state.selectedRecord = null;
   responseList.replaceChildren();
   renderList();
   renderDetail();

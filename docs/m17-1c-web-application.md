@@ -16,6 +16,8 @@ Full-resync hydration follows the opaque `/api/intents` cursor across at most fo
 
 The watermark is application coordination metadata only. It does not claim protocol truth, global completeness, ownership, agreement, ranking, or legitimacy.
 
+The sync stream is not treated as the root browse projection. Any validated sync change marks the bounded browse view dirty; the client then refreshes root intent identities through `/api/intents`. Exact response identities are hydrated separately through `/api/intents/{id}` for detail display and are never inserted into the root list by browser-side semantic inference.
+
 ## Authority boundary
 
 The Web client uses no local persistent storage, credentials, cookies, service workers, background workers, CDN dependencies, external map providers, or cross-origin API targets. Human/record text is rendered with safe DOM text primitives rather than HTML injection.
