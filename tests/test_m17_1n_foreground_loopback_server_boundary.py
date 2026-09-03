@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from dataclasses import replace
+import json
 from pathlib import Path
 import unittest
 
-from marketplace.application.launch import MarketplaceApplicationLaunchPlan
+from marketplace.application.api import IntentIndexPage
+from marketplace.application.launch import (
+    MarketplaceApplicationLaunchPlan,
+    build_marketplace_application_launch_plan,
+)
+from marketplace.application.postgres_state import ExpiryResult
 from marketplace.application.runtime_server import (
     EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER,
     MarketplaceLocalRuntimeError,
@@ -14,6 +21,16 @@ from marketplace.application.runtime_server import (
 ROOT = Path(__file__).resolve().parents[1]
 DOC = ROOT / "docs" / "m17-1n-foreground-loopback-server-boundary.md"
 SOURCE = ROOT / "src" / "marketplace" / "application" / "runtime_server.py"
+
+
+class MinimalStore:
+    def initialize(self):
+        return ExpiryResult((), ())
+
+
+class StaticIntentQuery:
+    def list_intent_ids(self, *, cursor=None, limit=64):
+        return IntentIndexPage(("r-root",), None)
 
 
 class FakeServerProvider:
@@ -27,12 +44,29 @@ class FakeServerProvider:
             raise self.failure
 
 
-def make_plan(*, host: object = "127.0.0.1", port: object = 8080) -> MarketplaceApplicationLaunchPlan:
-    return MarketplaceApplicationLaunchPlan(
-        host=host,  # type: ignore[arg-type]
-        port=port,  # type: ignore[arg-type]
-        composition=object(),  # type: ignore[arg-type]
-        asgi=object(),  # type: ignore[arg-type]
+def decode_json(body: bytes):
+    return json.loads(body.decode("utf-8"))
+
+
+def encode_json(record: object) -> bytes:
+    return json.dumps(record, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
+def make_plan() -> MarketplaceApplicationLaunchPlan:
+    return build_marketplace_application_launch_plan(
+        host="127.0.0.1",
+        port=8080,
+        store=MinimalStore(),
+        intent_query=StaticIntentQuery(),
+        prepare_record=lambda record: record,
+        decode_record=lambda payload: payload,
+        response_parent_ids=lambda record: (),
+        is_intent_record=lambda record: True,
+        decode_record_json=decode_json,
+        encode_record_json=encode_json,
+        index_html=b"<!doctype html><title>Marketplace</title>",
+        app_js=b"console.log('marketplace');\n",
+        styles_css=b"body { margin: 0; }\n",
     )
 
 
@@ -71,6 +105,7 @@ class M17ForegroundLoopbackServerBoundaryTests(unittest.TestCase):
                 self.assertEqual(provider.calls, [])
 
     def test_runtime_boundary_revalidates_exact_plan_loopback_host_and_port(self):
+        plan = make_plan()
         invalid_cases = (
             {"host": "0.0.0.0"},
             {"host": "localhost"},
@@ -83,9 +118,10 @@ class M17ForegroundLoopbackServerBoundaryTests(unittest.TestCase):
         for kwargs in invalid_cases:
             with self.subTest(kwargs=kwargs):
                 provider = FakeServerProvider()
+                forged = replace(plan, **kwargs)
                 with self.assertRaises((TypeError, ValueError)):
                     run_marketplace_application_foreground(
-                        plan=make_plan(**kwargs),
+                        plan=forged,
                         provider=provider,
                         execute_token=EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER,
                     )
