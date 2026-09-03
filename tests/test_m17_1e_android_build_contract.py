@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import runpy
 import subprocess
 import sys
 import tomllib
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -60,6 +62,28 @@ class M17AndroidBuildContractTests(unittest.TestCase):
             "future compile CI", "no signing or distribution authority",
         ):
             self.assertIn(marker, text)
+
+    def test_command_probe_failures_are_normalized(self):
+        namespace = runpy.run_path(str(VALIDATOR), run_name="android_validator_test")
+        command_text = namespace["command_text"]
+        for failure in (
+            OSError("probe failed"),
+            subprocess.TimeoutExpired(cmd=["java", "-version"], timeout=5),
+        ):
+            with patch.object(namespace["subprocess"], "run", side_effect=failure):
+                self.assertIsNone(command_text("java", "-version"))
+
+    def test_missing_probe_text_fails_closed_without_exception(self):
+        namespace = runpy.run_path(str(VALIDATOR), run_name="android_validator_test")
+        validator_globals = namespace["validate_environment"].__globals__
+        original = validator_globals["command_text"]
+        validator_globals["command_text"] = lambda *args: None
+        try:
+            with patch.object(namespace["shutil"], "which", side_effect=["java", "gradle"]):
+                with patch.dict(namespace["os"].environ, {"ANDROID_SDK_ROOT": str(ROOT)}):
+                    self.assertEqual(namespace["validate_environment"](namespace["EXPECTED"]), 3)
+        finally:
+            validator_globals["command_text"] = original
 
 
 if __name__ == "__main__":
