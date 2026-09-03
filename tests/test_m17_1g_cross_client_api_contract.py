@@ -34,7 +34,7 @@ class M17CrossClientApiContractTests(unittest.TestCase):
         self.assertEqual(
             routes,
             {
-                "list_intents": {"method": "GET", "path": "/api/intents?limit={limit}", "response_keys": ["record_ids", "next_cursor"]},
+                "list_intents": {"method": "GET", "path": "/api/intents?limit={limit}", "cursor_path": "/api/intents?cursor={cursor}&limit={limit}", "response_keys": ["record_ids", "next_cursor"]},
                 "create_intent": {"method": "POST", "path": "/api/intents", "response_keys": ["change_seq", "disposition"]},
                 "get_intent": {"method": "GET", "path": "/api/intents/{record_id}"},
                 "list_responses": {"method": "GET", "path": "/api/intents/{record_id}/responses?limit={limit}", "response_keys": ["record_ids"], "cursor": False},
