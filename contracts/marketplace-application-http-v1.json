@@ -4,9 +4,20 @@
   "max_request_json_bytes": 262144,
   "max_response_json_bytes": 307200,
   "sync_cursor_scope": "local-application-coordination-only",
-  "write_dispositions": ["STORED", "DUPLICATE"],
-  "sync_change_keys": ["change_kind", "record_id", "seq"],
-  "sync_page_keys": ["changes", "next_cursor", "has_more"],
+  "write_dispositions": [
+    "STORED",
+    "DUPLICATE"
+  ],
+  "sync_change_keys": [
+    "change_kind",
+    "record_id",
+    "seq"
+  ],
+  "sync_page_keys": [
+    "changes",
+    "next_cursor",
+    "has_more"
+  ],
   "sync_expired": {
     "status": 409,
     "error_code": "SYNC_CURSOR_EXPIRED"
@@ -15,12 +26,19 @@
     "list_intents": {
       "method": "GET",
       "path": "/api/intents?limit={limit}",
-      "response_keys": ["record_ids", "next_cursor"]
+      "response_keys": [
+        "record_ids",
+        "next_cursor"
+      ],
+      "cursor_path": "/api/intents?cursor={cursor}&limit={limit}"
     },
     "create_intent": {
       "method": "POST",
       "path": "/api/intents",
-      "response_keys": ["change_seq", "disposition"]
+      "response_keys": [
+        "change_seq",
+        "disposition"
+      ]
     },
     "get_intent": {
       "method": "GET",
@@ -29,13 +47,18 @@
     "list_responses": {
       "method": "GET",
       "path": "/api/intents/{record_id}/responses?limit={limit}",
-      "response_keys": ["record_ids"],
+      "response_keys": [
+        "record_ids"
+      ],
       "cursor": false
     },
     "respond": {
       "method": "POST",
       "path": "/api/intents/{record_id}/responses",
-      "response_keys": ["change_seq", "disposition"]
+      "response_keys": [
+        "change_seq",
+        "disposition"
+      ]
     },
     "sync_watermark": {
       "method": "GET",
