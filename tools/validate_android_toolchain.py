@@ -32,15 +32,18 @@ def load_manifest() -> dict[str, object]:
     return data
 
 
-def command_text(executable: str, *args: str) -> str:
-    completed = subprocess.run(
-        [executable, *args],
-        cwd=ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=5,
-    )
+def command_text(executable: str, *args: str) -> str | None:
+    try:
+        completed = subprocess.run(
+            [executable, *args],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
     return (completed.stdout + "\n" + completed.stderr).strip()
 
 
@@ -68,9 +71,11 @@ def validate_environment(data: dict[str, object]) -> int:
     build_tools_dir = sdk_root / "build-tools" / str(data["build_tools"])
 
     mismatches = []
-    if f'"{expected_java}' not in java_text and f" {expected_java}." not in java_text:
+    if java_text is None or (
+        f'"{expected_java}' not in java_text and f" {expected_java}." not in java_text
+    ):
         mismatches.append("jdk")
-    if f"Gradle {expected_gradle}" not in gradle_text:
+    if gradle_text is None or f"Gradle {expected_gradle}" not in gradle_text:
         mismatches.append("gradle")
     if not platform_dir.is_dir():
         mismatches.append("platform")
