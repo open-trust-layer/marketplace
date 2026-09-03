@@ -18,6 +18,17 @@ This checkpoint contains:
 
 The transport port is deliberately abstract. No concrete socket, HTTP stack, DNS, TLS, or remote-origin selection is introduced by this checkpoint.
 
+
+## Exact M17.1B2 HTTP parity
+
+The Android client follows the already-merged HTTP contract exactly:
+- `POST /api/intents` returns a bounded write receipt with `change_seq` and `disposition`; it does not return a record;
+- `POST /api/intents/{id}/responses` returns the same write-receipt shape;
+- write dispositions are limited to `STORED` and `DUPLICATE`;
+- `GET /api/intents/{id}/responses` currently returns one bounded `record_ids` list and exposes no continuation cursor.
+
+Android therefore does not invent response pagination. The response panel is explicitly a bounded view and completeness is not claimed. Exact response records are hydrated only from the identities returned by that reviewed route.
+
 ## Sync model
 
 Full resynchronization follows the same client-safe sequence as M17.1C:

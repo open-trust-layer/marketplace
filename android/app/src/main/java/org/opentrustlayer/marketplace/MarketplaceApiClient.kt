@@ -33,6 +33,15 @@ data class IntentPage(
     val nextCursor: String?,
 )
 
+data class ResponseList(
+    val recordIds: List<String>,
+)
+
+data class WriteReceipt(
+    val changeSeq: Long?,
+    val disposition: String,
+)
+
 data class SyncChange(
     val cursor: Long,
     val kind: String,
@@ -47,6 +56,8 @@ data class SyncPage(
 
 interface MarketplaceJsonCodec {
     fun decodeIntentPage(rawJson: String): IntentPage
+    fun decodeResponseList(rawJson: String): ResponseList
+    fun decodeWriteReceipt(rawJson: String): WriteReceipt
     fun decodeRecord(rawJson: String): RawRecord
     fun decodeSyncPage(rawJson: String): SyncPage
     fun decodeErrorCode(rawJson: String): String?
@@ -73,22 +84,21 @@ class MarketplaceApiClient(
         return record
     }
 
-    suspend fun listResponses(parentId: String, cursor: String? = null): IntentPage {
-        val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$RESPONSES_SUFFIX" +
-            querySuffix(cursor)
-        return validateIntentPage(codec.decodeIntentPage(expectOk(transport.execute(ApiRequest("GET", path)))))
+    suspend fun listResponses(parentId: String): ResponseList {
+        val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$RESPONSES_SUFFIX?limit=$PAGE_LIMIT"
+        return validateResponseList(codec.decodeResponseList(expectOk(transport.execute(ApiRequest("GET", path)))))
     }
 
-    suspend fun createIntent(rawRecordJson: String): RawRecord =
-        validateRecord(codec.decodeRecord(
+    suspend fun createIntent(rawRecordJson: String): WriteReceipt =
+        validateWriteReceipt(codec.decodeWriteReceipt(
             expectOk(
                 transport.execute(ApiRequest("POST", API_INTENTS, boundedRawJson(rawRecordJson)))
             )
         ))
 
-    suspend fun respondToIntent(parentId: String, rawRecordJson: String): RawRecord {
+    suspend fun respondToIntent(parentId: String, rawRecordJson: String): WriteReceipt {
         val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$RESPONSES_SUFFIX"
-        return validateRecord(codec.decodeRecord(
+        return validateWriteReceipt(codec.decodeWriteReceipt(
             expectOk(
                 transport.execute(ApiRequest("POST", path, boundedRawJson(rawRecordJson)))
             )
@@ -131,6 +141,30 @@ class MarketplaceApiClient(
         }
         if (page.nextCursor < cursor) throw MarketplaceClientException("SYNC_PAGE_INVALID", "sync cursor regressed")
         return page
+    }
+
+    private fun validateResponseList(responseList: ResponseList): ResponseList {
+        if (responseList.recordIds.size > PAGE_LIMIT) {
+            throw MarketplaceClientException("RESPONSE_LIST_INVALID", "response list exceeds limit")
+        }
+        val seen = mutableSetOf<String>()
+        for (recordId in responseList.recordIds) {
+            requireBoundedId(recordId)
+            if (!seen.add(recordId)) {
+                throw MarketplaceClientException("RESPONSE_LIST_INVALID", "duplicate response id")
+            }
+        }
+        return responseList
+    }
+
+    private fun validateWriteReceipt(receipt: WriteReceipt): WriteReceipt {
+        if (receipt.changeSeq != null && receipt.changeSeq < 1) {
+            throw MarketplaceClientException("WRITE_RECEIPT_INVALID", "invalid change sequence")
+        }
+        if (receipt.disposition != "STORED" && receipt.disposition != "DUPLICATE") {
+            throw MarketplaceClientException("WRITE_RECEIPT_INVALID", "invalid write disposition")
+        }
+        return receipt
     }
 
     private fun validateIntentPage(page: IntentPage): IntentPage {

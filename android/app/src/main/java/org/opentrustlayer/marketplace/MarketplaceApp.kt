@@ -67,11 +67,10 @@ fun MarketplaceScreen(
                 uiState.selectedRecord?.rawJson ?: "Select an intent to inspect exact record JSON.",
                 style = MaterialTheme.typography.bodySmall,
             )
-            if (uiState.responses.isNotEmpty()) {
-                Text("Responses", style = MaterialTheme.typography.titleSmall)
-                uiState.responses.forEach { response ->
-                    Text(response.id, style = MaterialTheme.typography.bodySmall)
-                }
+            Text("Responses", style = MaterialTheme.typography.titleSmall)
+            Text(uiState.responseStatus, style = MaterialTheme.typography.bodySmall)
+            uiState.responses.forEach { response ->
+                Text(response.id, style = MaterialTheme.typography.bodySmall)
             }
 
             Text("Create intent", style = MaterialTheme.typography.titleMedium)

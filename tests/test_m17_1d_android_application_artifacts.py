@@ -114,17 +114,20 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
         self.assertIn("boundedResponseBody(response)", block)
         self.assertLess(block.index("boundedResponseBody(response)"), block.index("codec.decodeErrorCode"))
 
-    def test_create_and_respond_revalidate_decoded_records(self):
+    def test_create_and_respond_revalidate_write_receipts(self):
         text = CLIENT.read_text(encoding="utf-8")
         create = text[text.index("suspend fun createIntent"):text.index("suspend fun respondToIntent")]
         respond = text[text.index("suspend fun respondToIntent"):text.index("suspend fun captureSyncWatermark")]
-        self.assertIn("validateRecord(codec.decodeRecord", create)
-        self.assertIn("validateRecord(codec.decodeRecord", respond)
+        self.assertIn("validateWriteReceipt(codec.decodeWriteReceipt", create)
+        self.assertIn("validateWriteReceipt(codec.decodeWriteReceipt", respond)
 
-    def test_response_hydration_is_bounded(self):
+    def test_response_hydration_matches_bounded_non_cursor_backend(self):
         text = STATE.read_text(encoding="utf-8")
-        for marker in ("MAX_RESPONSE_PAGES", "hydrateResponses", "seenResponseCursors", "RESPONSE_LIST_TRUNCATED"):
+        for marker in ("hydrateBoundedResponses", "client.listResponses(parentId)", "responseList.recordIds.map"):
             self.assertIn(marker, text)
+        for forbidden in ("MAX_RESPONSE_PAGES", "seenResponseCursors", "RESPONSE_LIST_TRUNCATED"):
+            self.assertNotIn(forbidden, text)
+        self.assertIn("completeness is not claimed", text)
 
 
     def test_write_routes_match_http_receipt_contract(self):

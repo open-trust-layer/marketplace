@@ -2,12 +2,12 @@ package org.opentrustlayer.marketplace
 
 internal const val MAX_LIST_PAGES = 4
 internal const val MAX_SYNC_PAGES = 4
-internal const val MAX_RESPONSE_PAGES = 4
 
 data class MarketplaceUiState(
     val rootRecords: List<RawRecord> = emptyList(),
     val selectedRecord: RawRecord? = null,
     val responses: List<RawRecord> = emptyList(),
+    val responseStatus: String = "Bounded response view; completeness is not claimed",
     val syncCursor: Long? = null,
     val syncStatus: String = "Not synchronized",
 )
@@ -32,7 +32,7 @@ class MarketplaceState(
 
     suspend fun selectRootIntent(recordId: String) {
         val record = client.getIntent(recordId)
-        val responses = hydrateResponses(recordId)
+        val responses = hydrateBoundedResponses(recordId)
         uiState = uiState.copy(
             selectedRecord = record,
             responses = responses,
@@ -50,26 +50,9 @@ class MarketplaceState(
         selectRootIntent(parentId)
     }
 
-    private suspend fun hydrateResponses(parentId: String): List<RawRecord> {
-        val responses = LinkedHashMap<String, RawRecord>()
-        val seenResponseCursors = mutableSetOf<String>()
-        var cursor: String? = null
-        repeat(MAX_RESPONSE_PAGES) {
-            val page = client.listResponses(parentId, cursor)
-            for (recordId in page.recordIds) {
-                if (responses.containsKey(recordId)) {
-                    throw MarketplaceClientException("RESPONSE_LIST_INVALID", "duplicate response id")
-                }
-                responses[recordId] = client.getIntent(recordId)
-            }
-            val nextCursor = page.nextCursor
-            if (nextCursor == null) return responses.values.toList()
-            if (!seenResponseCursors.add(nextCursor)) {
-                throw MarketplaceClientException("RESPONSE_LIST_INVALID", "repeated response cursor")
-            }
-            cursor = nextCursor
-        }
-        throw MarketplaceClientException("RESPONSE_LIST_TRUNCATED", "bounded response hydration incomplete")
+    private suspend fun hydrateBoundedResponses(parentId: String): List<RawRecord> {
+        val responseList = client.listResponses(parentId)
+        return responseList.recordIds.map { client.getIntent(it) }
     }
 
     private suspend fun captureSyncWatermark(): Long = client.captureSyncWatermark()
