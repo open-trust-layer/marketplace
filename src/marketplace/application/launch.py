@@ -75,7 +75,7 @@ def build_marketplace_application_launch_plan(
         app_js=app_js,
         styles_css=styles_css,
     )
-    asgi = MarketplaceAsgiHttpAdapter(composition.site)
+    asgi = MarketplaceAsgiHttpAdapter(site=composition.site)
     return MarketplaceApplicationLaunchPlan(
         host=validated_host,
         port=validated_port,
