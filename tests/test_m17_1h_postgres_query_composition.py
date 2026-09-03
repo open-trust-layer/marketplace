@@ -157,6 +157,7 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
             store=store, intent_query=StaticIntentQuery(), prepare_record=lambda record: record,
             decode_record=lambda payload: payload, response_parent_ids=lambda record: (),
             is_intent_record=lambda record: True, decode_record_json=decode_json, encode_record_json=encode_json,
+            index_html=b"<html></html>", app_js=b"console.log(1)", styles_css=b"body{}",
         )
         composition.initialize()
         with self.assertRaises(ValueError):
@@ -185,6 +186,9 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
             is_intent_record=lambda record: True,
             decode_record_json=decode_json,
             encode_record_json=encode_json,
+            index_html=b"<html></html>",
+            app_js=b"console.log(1)",
+            styles_css=b"body{}",
         )
         request = ApplicationHttpRequest("GET", "/api/intents", (), None, b"")
         before = composition.http.handle(request)
