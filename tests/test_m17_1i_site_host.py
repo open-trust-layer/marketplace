@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import unittest
@@ -147,6 +147,11 @@ class M17SameOriginSiteHostTests(unittest.TestCase):
                 styles_css=b"x",
             )
 
+    def test_public_application_surface_exports_site_host(self):
+        import marketplace.application as application
+
+        self.assertIs(application.MarketplaceSiteHostAdapter, MarketplaceSiteHostAdapter)
+        self.assertTrue(hasattr(application, "ApplicationHttpPort"))
     def test_source_has_no_runtime_file_network_process_or_cors_authority(self):
         text = SOURCE.read_text(encoding="utf-8").lower()
         for forbidden in (
