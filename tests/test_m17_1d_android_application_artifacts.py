@@ -106,5 +106,26 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
             self.assertIn(marker, text)
 
 
+    def test_error_body_is_bounded_before_error_codec(self):
+        text = CLIENT.read_text(encoding="utf-8")
+        sync_start = text.index("suspend fun sync")
+        sync_end = text.index("private fun validateSyncPage", sync_start)
+        block = text[sync_start:sync_end]
+        self.assertIn("boundedResponseBody(response)", block)
+        self.assertLess(block.index("boundedResponseBody(response)"), block.index("codec.decodeErrorCode"))
+
+    def test_create_and_respond_revalidate_decoded_records(self):
+        text = CLIENT.read_text(encoding="utf-8")
+        create = text[text.index("suspend fun createIntent"):text.index("suspend fun respondToIntent")]
+        respond = text[text.index("suspend fun respondToIntent"):text.index("suspend fun captureSyncWatermark")]
+        self.assertIn("validateRecord(codec.decodeRecord", create)
+        self.assertIn("validateRecord(codec.decodeRecord", respond)
+
+    def test_response_hydration_is_bounded(self):
+        text = STATE.read_text(encoding="utf-8")
+        for marker in ("MAX_RESPONSE_PAGES", "hydrateResponses", "seenResponseCursors", "RESPONSE_LIST_TRUNCATED"):
+            self.assertIn(marker, text)
+
+
 if __name__ == "__main__":
     unittest.main()
