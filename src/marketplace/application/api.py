@@ -20,6 +20,7 @@ from .state import MarketplaceApplicationStateService
 
 DEFAULT_INTENT_PAGE_SIZE = 64
 MAX_INTENT_PAGE_SIZE = 256
+MAX_INTENT_CURSOR_CHARS = 512
 DEFAULT_RESPONSE_PAGE_SIZE = 64
 MAX_RESPONSE_PAGE_SIZE = 256
 DEFAULT_SYNC_PAGE_SIZE = 128
@@ -77,6 +78,8 @@ def _cursor(value: object) -> str | None:
         return None
     if type(value) is not str or not value:
         raise ValueError("cursor MUST be non-empty exact text when present")
+    if len(value) > MAX_INTENT_CURSOR_CHARS:
+        raise ValueError(f"cursor MUST be at most {MAX_INTENT_CURSOR_CHARS} characters")
     return value
 
 
@@ -389,6 +392,7 @@ __all__ = [
     "IntentIndexPage",
     "IntentQueryPort",
     "IntentRecordPredicate",
+    "MAX_INTENT_CURSOR_CHARS",
     "MAX_INTENT_PAGE_SIZE",
     "MAX_RESPONSE_PAGE_SIZE",
     "MAX_SYNC_PAGE_SIZE",
