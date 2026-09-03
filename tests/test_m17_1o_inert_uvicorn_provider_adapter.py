@@ -6,6 +6,8 @@ import unittest
 from unittest.mock import patch
 
 from marketplace.application.uvicorn_provider import (
+    CLICK_VERSION,
+    H11_VERSION,
     UVICORN_DISTRIBUTION,
     UVICORN_VERSION,
     UvicornLoopbackServerProvider,
@@ -33,17 +35,24 @@ async def fake_asgi(scope, receive, send):
 
 
 class M17InertUvicornProviderAdapterTests(unittest.TestCase):
-    def test_optional_dependency_is_exact_minimal_uvicorn_pin(self):
+    def test_optional_dependency_is_exact_reviewed_minimal_uvicorn_closure(self):
         parsed = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
         project = parsed["project"]
         self.assertEqual(project["dependencies"], [])
         self.assertEqual(
             project["optional-dependencies"]["local-server"],
-            ["uvicorn==0.52.4"],
+            [
+                "uvicorn==0.52.4",
+                "click==8.5.0",
+                "h11==0.16.0",
+            ],
         )
-        self.assertNotIn("uvicorn[standard]", PYPROJECT.read_text(encoding="utf-8").lower())
+        pyproject_text = PYPROJECT.read_text(encoding="utf-8").lower()
+        self.assertNotIn("uvicorn[standard]", pyproject_text)
         self.assertEqual(UVICORN_DISTRIBUTION, "uvicorn")
         self.assertEqual(UVICORN_VERSION, "0.52.4")
+        self.assertEqual(CLICK_VERSION, "8.5.0")
+        self.assertEqual(H11_VERSION, "0.16.0")
 
     def test_provider_import_is_lazy_and_delegates_once_with_locked_surface(self):
         fake = FakeUvicornModule()
@@ -82,6 +91,8 @@ class M17InertUvicornProviderAdapterTests(unittest.TestCase):
                 "limit_concurrency": 32,
                 "backlog": 64,
                 "timeout_keep_alive": 5,
+                "timeout_graceful_shutdown": 10,
+                "h11_max_incomplete_event_size": 16384,
                 "ssl_keyfile": None,
                 "ssl_certfile": None,
                 "ssl_keyfile_password": None,
