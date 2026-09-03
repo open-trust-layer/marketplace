@@ -47,6 +47,7 @@ from .postgres_state import (
     SyncChange,
     SyncPage,
 )
+from .site_host import ApplicationHttpPort, MarketplaceSiteHostAdapter
 from .state import ApplicationStateServiceError, MarketplaceApplicationStateService
 from .web_map import (
     DEFAULT_OFFLINE_MAP_FIXTURE,
@@ -62,6 +63,7 @@ __all__ = [
     "ApplicationHttpError",
     "ApplicationHttpRequest",
     "ApplicationHttpResponse",
+    "ApplicationHttpPort",
     "ApplicationIntentQueryError",
     "ApplicationStateCollisionError",
     "ApplicationStatePutResult",
@@ -76,6 +78,7 @@ __all__ = [
     "MarketplaceApplicationComposition",
     "MarketplaceApplicationHttpAdapter",
     "MarketplaceApplicationStateService",
+    "MarketplaceSiteHostAdapter",
     "PostgresApplicationStateStore",
     "PostgresIntentQuery",
     "PreparedApplicationRecord",
