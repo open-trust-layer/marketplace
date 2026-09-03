@@ -6,7 +6,7 @@ The new `PostgresIntentQuery` is a bounded read-only adapter over the existing `
 
 Pagination is deterministic by exact Record Identity. A continuation cursor is only a **local application coordination** cursor. It is not federation completeness, global truth, ranking, ownership, lifecycle authority, or protocol state.
 
-Continuation cursors fail closed when they no longer identify a live root intent. Provider/database exceptions are normalized to stable application-query errors without reflecting DSNs, credentials, payloads, or provider diagnostics.
+Continuation cursors are bounded to 512 characters at both the transport-independent application API and PostgreSQL adapter boundaries, and fail closed before database access when oversized. Continuation cursors also fail closed when they no longer identify a live root intent. Provider/database exceptions are normalized to stable application-query errors without reflecting DSNs, credentials, payloads, or provider diagnostics.
 
 ## Source-only application composition
 

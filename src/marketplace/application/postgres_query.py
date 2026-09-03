@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from .api import ApplicationApiError, IntentIndexPage, MAX_INTENT_PAGE_SIZE
+from .api import ApplicationApiError, IntentIndexPage, MAX_INTENT_CURSOR_CHARS, MAX_INTENT_PAGE_SIZE
 from .postgres_state import Clock, Connection, ConnectionFactory, Cursor
 
 
@@ -113,6 +113,8 @@ class PostgresIntentQuery:
             return None
         if type(cursor) is not str or not cursor:
             raise ValueError("cursor MUST be non-empty exact text when present")
+        if len(cursor) > MAX_INTENT_CURSOR_CHARS:
+            raise ValueError(f"cursor MUST be at most {MAX_INTENT_CURSOR_CHARS} characters")
         return cursor
 
     @staticmethod
