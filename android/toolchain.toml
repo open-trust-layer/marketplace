@@ -1,0 +1,11 @@
+schema_version = 1
+jdk_major = 17
+gradle = "9.6.0"
+android_gradle_plugin = "9.4.0"
+kotlin = "2.4.10"
+compile_sdk = 37
+target_sdk = 37
+build_tools = "36.0.0"
+compose = "1.12.0"
+material3 = "1.4.0"
+activity_compose = "1.13.0"
