@@ -21,6 +21,10 @@ class M17ProductStatusReconciliationTests(unittest.TestCase):
         for marker in ("not a production deployment", "no live PostgreSQL activation", "no network/server activation", "Android build remains unproven"):
             self.assertIn(marker, text)
 
+    def test_historical_preimplementation_claim_is_time_scoped(self):
+        text = README.read_text(encoding="utf-8-sig")
+        self.assertIn("At Milestone 12, the Marketplace remained experimental/pre-implementation:", text)
+
     def test_reconciliation_document_preserves_historical_context(self):
         self.assertTrue(DOC.is_file())
         text = DOC.read_text(encoding="utf-8-sig")
