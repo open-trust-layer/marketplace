@@ -15,6 +15,7 @@ from .http import (
     RecordJsonEncoder,
 )
 from .postgres_state import ExpiryResult
+from .site_host import MarketplaceSiteHostAdapter
 from .state import (
     ApplicationStateStore,
     MarketplaceApplicationStateService,
@@ -30,6 +31,7 @@ class MarketplaceApplicationComposition:
     state: MarketplaceApplicationStateService
     api: MarketplaceApplicationApiService
     http: MarketplaceApplicationHttpAdapter
+    site: MarketplaceSiteHostAdapter
 
     def initialize(self) -> ExpiryResult:
         return self.api.initialize()
@@ -45,6 +47,9 @@ def compose_marketplace_application(
     is_intent_record: IntentRecordPredicate,
     decode_record_json: RecordJsonDecoder,
     encode_record_json: RecordJsonEncoder,
+    index_html: bytes,
+    app_js: bytes,
+    styles_css: bytes,
 ) -> MarketplaceApplicationComposition:
     """Wire reviewed application layers from injected dependencies only."""
 
@@ -64,7 +69,13 @@ def compose_marketplace_application(
         decode_record_json=decode_record_json,
         encode_record_json=encode_record_json,
     )
-    return MarketplaceApplicationComposition(state=state, api=api, http=http)
+    site = MarketplaceSiteHostAdapter(
+        application_http=http,
+        index_html=index_html,
+        app_js=app_js,
+        styles_css=styles_css,
+    )
+    return MarketplaceApplicationComposition(state=state, api=api, http=http, site=site)
 
 
 __all__ = [
