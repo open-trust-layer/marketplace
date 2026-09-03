@@ -8,6 +8,7 @@ const SYNC_LIMIT = 64;
 const MAX_SYNC_PAGES = 4;
 const MAX_LIST_PAGES = 4;
 const MAX_RECORD_JSON_BYTES = 256 * 1024;
+const MAX_RESPONSE_JSON_BYTES = 300 * 1024;
 const MAP_WIDTH = 720;
 const MAP_HEIGHT = 360;
 
@@ -58,6 +59,9 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
   }
   const response = await fetch(reviewedApiPath(path), init);
   const text = await response.text();
+  if (new TextEncoder().encode(text).length > MAX_RESPONSE_JSON_BYTES) {
+    throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
+  }
   let documentValue = {};
   if (text) {
     try {
