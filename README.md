@@ -249,7 +249,7 @@ python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 
 GitHub Actions is only an infrastructure adapter around that same local command. Every subprocess has a finite timeout, suite order is deterministic, generator replay cannot rewrite the developer worktree, and CI requires no privileged secret for ordinary pull-request validation.
 
-The Marketplace remains experimental/pre-implementation: M12 improves the reliability of the specification/conformance foundation; it does not introduce a hosted marketplace, application runtime, payment rail, trust authority, or new protocol truth.
+At Milestone 12, the Marketplace remained experimental/pre-implementation: M12 improves the reliability of the specification/conformance foundation; it does not introduce a hosted marketplace, application runtime, payment rail, trust authority, or new protocol truth.
 
 ### Dispute resolution profiles
 
