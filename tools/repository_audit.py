@@ -55,7 +55,10 @@ _REFERENCE_WRAPPERS = (
 _EXPECTED_BUILD_REQUIRES = ["setuptools==80.9.0"]
 _EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
 _EXPECTED_LICENSE = "Apache-2.0"
-_EXPECTED_OPTIONAL_DEPENDENCIES = {"postgres": ["psycopg[binary]==3.3.5"]}
+_EXPECTED_OPTIONAL_DEPENDENCIES = {
+    "postgres": ["psycopg[binary]==3.3.5"],
+    "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+}
 
 
 @dataclass(frozen=True)

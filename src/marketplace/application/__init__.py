@@ -62,6 +62,7 @@ from .runtime_server import (
 )
 from .site_host import ApplicationHttpPort, MarketplaceSiteHostAdapter
 from .state import ApplicationStateServiceError, MarketplaceApplicationStateService
+from .uvicorn_provider import MarketplaceUvicornProviderError, UvicornLoopbackServerProvider
 from .web_map import (
     DEFAULT_OFFLINE_MAP_FIXTURE,
     MAX_RENDERED_LISTINGS,
@@ -107,6 +108,7 @@ __all__ = [
     "MarketplaceAsgiServerProvider",
     "MarketplaceLocalRuntimeError",
     "MarketplaceSiteHostAdapter",
+    "MarketplaceUvicornProviderError",
     "OfflineMapFixture",
     "PRODUCT_LISTING_PROFILE",
     "PostgresApplicationStateStore",
@@ -122,6 +124,7 @@ __all__ = [
     "TERM_QUANTITY",
     "TERM_TITLE",
     "UNIT_ITEM",
+    "UvicornLoopbackServerProvider",
     "build_marketplace_application_launch_plan",
     "build_product_listing_mapping",
     "compose_marketplace_application",
