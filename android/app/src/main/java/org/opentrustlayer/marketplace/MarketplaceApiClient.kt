@@ -80,19 +80,19 @@ class MarketplaceApiClient(
     }
 
     suspend fun createIntent(rawRecordJson: String): RawRecord =
-        codec.decodeRecord(
+        validateRecord(codec.decodeRecord(
             expectOk(
                 transport.execute(ApiRequest("POST", API_INTENTS, boundedRawJson(rawRecordJson)))
             )
-        )
+        ))
 
     suspend fun respondToIntent(parentId: String, rawRecordJson: String): RawRecord {
         val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$RESPONSES_SUFFIX"
-        return codec.decodeRecord(
+        return validateRecord(codec.decodeRecord(
             expectOk(
                 transport.execute(ApiRequest("POST", path, boundedRawJson(rawRecordJson)))
             )
-        )
+        ))
     }
 
     suspend fun captureSyncWatermark(): Long {
@@ -110,7 +110,8 @@ class MarketplaceApiClient(
         require(cursor >= 0) { "cursor must be nonnegative" }
         val path = "$API_SYNC?cursor=$cursor&limit=$PAGE_LIMIT"
         val response = transport.execute(ApiRequest("GET", path))
-        if (response.status == 409 && codec.decodeErrorCode(response.body) == "SYNC_CURSOR_EXPIRED") {
+        val boundedBody = boundedResponseBody(response)
+        if (response.status == 409 && codec.decodeErrorCode(boundedBody) == "SYNC_CURSOR_EXPIRED") {
             throw MarketplaceClientException("SYNC_CURSOR_EXPIRED", "full resynchronization is required")
         }
         return validateSyncPage(codec.decodeSyncPage(expectOk(response)), cursor)
@@ -173,15 +174,20 @@ class MarketplaceApiClient(
         return rawRecordJson
     }
 
-    private fun expectOk(response: ApiResponse): String {
+    private fun boundedResponseBody(response: ApiResponse): String {
         if (response.body.encodeToByteArray().size > MAX_RESPONSE_JSON_BYTES) {
             throw MarketplaceClientException("APPLICATION_HTTP_RESPONSE_TOO_LARGE", "Marketplace API response too large")
         }
+        return response.body
+    }
+
+    private fun expectOk(response: ApiResponse): String {
+        val boundedBody = boundedResponseBody(response)
         if (response.status !in 200..299) {
-            val code = codec.decodeErrorCode(response.body) ?: "APPLICATION_HTTP_ERROR"
+            val code = codec.decodeErrorCode(boundedBody) ?: "APPLICATION_HTTP_ERROR"
             throw MarketplaceClientException(code, "Marketplace API request failed")
         }
-        return response.body
+        return boundedBody
     }
 }
 
