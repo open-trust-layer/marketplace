@@ -145,6 +145,23 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
                     query.list_intent_ids(cursor=cursor, limit=limit)
         self.assertEqual(factory.calls, 0)
 
+    def test_oversized_cursor_fails_before_database_open(self):
+        query, _, factory = make_query([])
+        with self.assertRaises(ValueError):
+            query.list_intent_ids(cursor="x" * 513, limit=2)
+        self.assertEqual(factory.calls, 0)
+
+    def test_application_api_rejects_oversized_cursor_before_query_port(self):
+        store = MinimalStore()
+        composition = compose_marketplace_application(
+            store=store, intent_query=StaticIntentQuery(), prepare_record=lambda record: record,
+            decode_record=lambda payload: payload, response_parent_ids=lambda record: (),
+            is_intent_record=lambda record: True, decode_record_json=decode_json, encode_record_json=encode_json,
+        )
+        composition.initialize()
+        with self.assertRaises(ValueError):
+            composition.api.list_intents(cursor="x" * 513, limit=2)
+
     def test_provider_failure_is_stable_and_non_reflective(self):
         query, connection, _ = make_query([
             ("SELECT record_id", RuntimeError("postgres://user:secret@host/db")),
