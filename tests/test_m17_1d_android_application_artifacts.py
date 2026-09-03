@@ -127,5 +127,34 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
             self.assertIn(marker, text)
 
 
+    def test_write_routes_match_http_receipt_contract(self):
+        text = CLIENT.read_text(encoding="utf-8")
+        self.assertIn("data class WriteReceipt", text)
+        self.assertIn("fun decodeWriteReceipt", text)
+        create = text[text.index("suspend fun createIntent"):text.index("suspend fun respondToIntent")]
+        respond = text[text.index("suspend fun respondToIntent"):text.index("suspend fun captureSyncWatermark")]
+        for block in (create, respond):
+            self.assertIn("WriteReceipt", block)
+            self.assertIn("decodeWriteReceipt", block)
+            self.assertNotIn("decodeRecord", block)
+
+    def test_response_route_matches_bounded_non_cursor_http_contract(self):
+        text = CLIENT.read_text(encoding="utf-8")
+        self.assertIn("data class ResponseList", text)
+        self.assertIn("fun decodeResponseList", text)
+        start = text.index("suspend fun listResponses")
+        end = text.index("suspend fun createIntent", start)
+        block = text[start:end]
+        self.assertIn("ResponseList", block)
+        self.assertIn("?limit=$PAGE_LIMIT", block)
+        self.assertNotIn("cursor:", block)
+        self.assertNotIn("nextCursor", block)
+
+    def test_response_view_does_not_claim_completeness(self):
+        text = STATE.read_text(encoding="utf-8") + APP.read_text(encoding="utf-8")
+        self.assertIn("completeness is not claimed", text)
+        self.assertNotIn("MAX_RESPONSE_PAGES", text)
+
+
 if __name__ == "__main__":
     unittest.main()
