@@ -64,6 +64,8 @@ class M17AndroidGradleWiringTests(unittest.TestCase):
         expected = (
             f'implementation("androidx.activity:activity-compose:{self.pins["activity_compose"]}")',
             f'implementation("androidx.compose.ui:ui:{self.pins["compose"]}")',
+            f'implementation("androidx.compose.foundation:foundation:{self.pins["compose"]}")',
+            f'implementation("androidx.compose.runtime:runtime:{self.pins["compose"]}")',
             f'implementation("androidx.compose.material3:material3:{self.pins["material3"]}")',
         )
         for marker in expected:
