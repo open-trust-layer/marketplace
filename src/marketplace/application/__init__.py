@@ -14,6 +14,13 @@ from .http import (
     ApplicationHttpResponse,
     MarketplaceApplicationHttpAdapter,
 )
+from .launch import (
+    LOOPBACK_LAUNCH_HOST,
+    MAX_LAUNCH_PORT,
+    MIN_LAUNCH_PORT,
+    MarketplaceApplicationLaunchPlan,
+    build_marketplace_application_launch_plan,
+)
 from .listing import (
     ACTION_SELL,
     LOCATION_WGS84_E6,
@@ -74,9 +81,13 @@ __all__ = [
     "IntentIndexPage",
     "IntentQueryPort",
     "IntentRecordPredicate",
+    "LOOPBACK_LAUNCH_HOST",
+    "MAX_LAUNCH_PORT",
+    "MIN_LAUNCH_PORT",
     "MarketplaceApplicationApiService",
     "MarketplaceApplicationComposition",
     "MarketplaceApplicationHttpAdapter",
+    "MarketplaceApplicationLaunchPlan",
     "MarketplaceApplicationStateService",
     "MarketplaceSiteHostAdapter",
     "PostgresApplicationStateStore",
@@ -102,6 +113,7 @@ __all__ = [
     "TERM_QUANTITY",
     "TERM_TITLE",
     "UNIT_ITEM",
+    "build_marketplace_application_launch_plan",
     "build_product_listing_mapping",
     "compose_marketplace_application",
     "project_wgs84_e6",
