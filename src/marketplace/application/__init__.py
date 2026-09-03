@@ -7,6 +7,7 @@ from .api import (
     IntentRecordPredicate,
     MarketplaceApplicationApiService,
 )
+from .composition import MarketplaceApplicationComposition, compose_marketplace_application
 from .http import (
     ApplicationHttpError,
     ApplicationHttpRequest,
@@ -33,6 +34,7 @@ from .local import (
     MarketplaceApplicationError,
     PublishedRecord,
 )
+from .postgres_query import ApplicationIntentQueryError, PostgresIntentQuery
 from .postgres_state import (
     APPLICATION_STATE_RETENTION_CLASS,
     ApplicationStateCollisionError,
@@ -60,6 +62,7 @@ __all__ = [
     "ApplicationHttpError",
     "ApplicationHttpRequest",
     "ApplicationHttpResponse",
+    "ApplicationIntentQueryError",
     "ApplicationStateCollisionError",
     "ApplicationStatePutResult",
     "ApplicationStateRetentionError",
@@ -70,9 +73,11 @@ __all__ = [
     "IntentQueryPort",
     "IntentRecordPredicate",
     "MarketplaceApplicationApiService",
+    "MarketplaceApplicationComposition",
     "MarketplaceApplicationHttpAdapter",
     "MarketplaceApplicationStateService",
     "PostgresApplicationStateStore",
+    "PostgresIntentQuery",
     "PreparedApplicationRecord",
     "SyncChange",
     "SyncPage",
@@ -95,6 +100,7 @@ __all__ = [
     "TERM_TITLE",
     "UNIT_ITEM",
     "build_product_listing_mapping",
+    "compose_marketplace_application",
     "project_wgs84_e6",
     "render_product_listing_page",
 ]
