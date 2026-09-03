@@ -4,7 +4,23 @@
 
 > Coordinate exchange around anything that can be referenced, without making ownership, legality, truth, value, or trust centrally owned.
 
-**Project status:** experimental / pre-implementation
+**Project status:** experimental / application-foundation implementation in progress
+**Application foundation status:** Product M17.1A–J source-level foundation — implemented and conformance-validated
+
+Product M17.1 currently includes:
+
+- **M17.1A** — PostgreSQL-first application state and bounded retention profile;
+- **M17.1B / M17.1B2** — shared application API and deterministic HTTP binding;
+- **M17.1C** — same-contract Web client source;
+- **M17.1D** — Android Kotlin/Jetpack Compose client source;
+- **M17.1E** — reviewed Android toolchain contract;
+- **M17.1F** — source-only Android Gradle wiring;
+- **M17.1G** — cross-client API contract parity;
+- **M17.1H** — PostgreSQL root-intent query and inert application composition;
+- **M17.1I** — inert same-origin Web/API site host; and
+- **M17.1J** — inert full-site application composition.
+
+This is **not a production deployment**: there is **no live PostgreSQL activation**, **no network/server activation**, and **Android build remains unproven** until the reviewed toolchain is actually available and a separately authorized compiled lane succeeds. Runtime filesystem asset loading, production hosting, authentication/session infrastructure, signing, installation, distribution, and deployment remain separate reviewed capabilities.
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
 **Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
 **Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
