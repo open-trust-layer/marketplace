@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Final, Protocol
 
+from .asgi import MarketplaceAsgiHttpAdapter
+from .composition import MarketplaceApplicationComposition
 from .launch import (
     LOOPBACK_LAUNCH_HOST,
     MAX_LAUNCH_PORT,
@@ -41,6 +43,12 @@ def _validate_plan(plan: MarketplaceApplicationLaunchPlan) -> None:
         raise TypeError("launch port must be an exact integer")
     if plan.port < MIN_LAUNCH_PORT or plan.port > MAX_LAUNCH_PORT:
         raise ValueError("launch port is outside the reviewed TCP range")
+    if type(plan.composition) is not MarketplaceApplicationComposition:
+        raise TypeError("launch composition must be exact MarketplaceApplicationComposition")
+    if type(plan.asgi) is not MarketplaceAsgiHttpAdapter:
+        raise TypeError("launch ASGI adapter must be exact MarketplaceAsgiHttpAdapter")
+    if plan.asgi._site is not plan.composition.site:
+        raise ValueError("launch ASGI adapter is not bound to launch composition")
 
 
 def _provider_run(provider: MarketplaceAsgiServerProvider):

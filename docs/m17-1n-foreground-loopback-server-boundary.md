@@ -16,6 +16,8 @@ The execution function accepts only:
 
 The token is a source/runtime safety gate. It is not repository governance approval, deployment authorization, or permission to select or activate a real networking provider.
 
+Before provider lookup, the execution seam revalidates the exact M17.1J `MarketplaceApplicationComposition`, exact M17.1L `MarketplaceAsgiHttpAdapter`, and identity binding of the adapter to `composition.site`. Manually forged or cross-bound launch plans fail closed before provider invocation.
+
 After all validation succeeds, the boundary delegates exactly once to the injected provider with the existing M17.1L ASGI object plus the reviewed host and port metadata. There is no retry, polling, worker, thread, task, process, or background lifecycle in this slice.
 
 Provider exceptions are normalized to one stable non-reflective local runtime error. Provider exception text is not promoted through the Marketplace boundary.
