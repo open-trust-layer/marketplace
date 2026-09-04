@@ -3,6 +3,7 @@
 
 /PRINCIPLES.md @tehki
 /DEVELOPMENT_POLICY.md @tehki
+/docs/POLICY_V1_6_ADOPTION.md @tehki
 /docs/POLICY_V1_5_ADOPTION.md @tehki
 /docs/POLICY_V1_4_ADOPTION.md @tehki
 /docs/RETENTION_POLICY.md @tehki
@@ -10,6 +11,10 @@
 /.github/ @tehki
 /specification/ @tehki
 /conformance/olp-source-pin.txt @tehki
+/src/marketplace/application/ @tehki
+/src/marketplace/runtime/ @tehki
+/src/marketplace/reference/ @tehki
 /tools/conformance_gate.py @tehki
 /tools/conformance_manifest.py @tehki
 /tools/repository_audit.py @tehki
+/tools/package_artifact_gate.py @tehki
