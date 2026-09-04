@@ -656,8 +656,12 @@ class BoundedInboundHttpLoopbackExecutionGate:
         if not self._used:
             validate = self._validate_bindings_function
             gate_type = self._gate_type
+            actual_gate_type = type(self)
             error_type = self._error_type
-            if gate_type is not None and validate is gate_type.__dict__.get("_validate_bindings"):
+            if (
+                gate_type is actual_gate_type
+                and validate is actual_gate_type.__dict__.get("_validate_bindings")
+            ):
                 try:
                     validate(self)
                 except error_type:
