@@ -36,12 +36,12 @@ class PolicyV16AdoptionTests(unittest.TestCase):
             "Evidence Ledger",
             "bounded authorization reuse",
             "preauthorized rollback",
-            "merge authorization",
             "runtime activation",
         )
         for fragment in required:
             with self.subTest(fragment=fragment):
                 self.assertIn(fragment, text)
+        self.assertIn("merge authorization", text.lower())
 
     def test_agents_instructions_adopt_v1_6_fast_execution_method(self):
         text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")

@@ -16,54 +16,70 @@ def _read(relative_path: str) -> str:
 
 
 class PolicyV15AdoptionTests(unittest.TestCase):
-    def test_agent_baseline_is_v15_and_bound_to_source_digest(self):
+    def test_v15_history_is_retained_while_agent_baseline_advances_to_v16(self):
         agents = _read("AGENTS.md")
-        self.assertIn("Constitution v1.2", agents)
-        self.assertIn("Coding Agent Policy v1.2", agents)
-        self.assertIn("Development Principles v1.5", agents)
-        self.assertIn(_HANDBOOK_SHA256, agents)
-        self.assertIn("docs/POLICY_V1_5_ADOPTION.md", agents)
+        record = _read("docs/POLICY_V1_5_ADOPTION.md")
+        self.assertIn("Constitution v1.3", agents)
+        self.assertIn("Coding Agent Policy v1.3", agents)
+        self.assertIn("Development Principles v1.6", agents)
+        self.assertIn("docs/POLICY_V1_6_ADOPTION.md", agents)
+        self.assertIn(_HANDBOOK_SHA256, record)
         self.assertIn("one coherent work-unit PR", agents)
-        self.assertIn("FAST validation", agents)
-        self.assertIn("FULL validation", agents)
-        self.assertIn("independent matching reproduction", agents)
+        self.assertIn("delta-first validation", agents)
+        self.assertIn("FULL once on final review head when required", agents)
         self.assertIn("Never invent cryptography", agents)
-        self.assertIn("measure -> identify -> hypothesize -> change -> measure again", agents)
-
-    def test_development_policy_preserves_optimization_and_gate_semantics_at_v15(self):
-        policy = _read("DEVELOPMENT_POLICY.md")
-        self.assertIn("Coding Agent Constitution v1.2", policy)
-        self.assertIn("Coding Agent Policy v1.2", policy)
-        self.assertIn("Coding Agent Development Principles v1.5", policy)
-        self.assertIn(_CONSTITUTION_SHA256, policy)
-        self.assertIn(_POLICY_SHA256, policy)
-        self.assertIn(_GOVERNANCE_INPUT_SHA256, policy)
-        self.assertIn(_HANDBOOK_SHA256, policy)
-        self.assertIn("## 13. Evidence-driven optimization", policy)
-        self.assertIn("## 16. CI, build, and test acceleration without gate reduction", policy)
-        self.assertIn("KEEP | REVISE | REVERT", policy)
-        self.assertIn("Caching is a performance mechanism, not a trust mechanism", policy)
-        self.assertIn("`FAST`", policy)
-        self.assertIn("`FULL`", policy)
-        self.assertIn("`RELEASE`", policy)
-        self.assertIn("final review head", policy)
-        self.assertIn("immutably bound to the same relevant source/tree", policy)
         self.assertIn(
-            "Required quality/security/integration/governance/conformance gates are not renamed, removed, skipped, bypassed, weakened, or short-circuited merely to reduce CI duration.",
+            "measure -> identify bottleneck -> hypothesize -> smallest safe change",
+            agents,
+        )
+        self.assertIn("without adequate evidence", agents)
+
+    def test_v15_history_and_optimization_gate_semantics_survive_v16(self):
+        policy = _read("DEVELOPMENT_POLICY.md")
+        record = _read("docs/POLICY_V1_5_ADOPTION.md")
+        self.assertIn("Coding Agent Constitution v1.3", policy)
+        self.assertIn("Coding Agent Policy v1.3", policy)
+        self.assertIn("Development Principles v1.6", policy)
+        for digest in (
+            _CONSTITUTION_SHA256,
+            _POLICY_SHA256,
+            _GOVERNANCE_INPUT_SHA256,
+            _HANDBOOK_SHA256,
+        ):
+            self.assertIn(digest, record)
+        self.assertIn("## 14. Optimization and performance discipline", policy)
+        self.assertIn("## 10. Testing, conformance, and CI lanes", policy)
+        self.assertIn("KEEP | REVISE | REVERT", policy)
+        self.assertIn("A cache is not authorization", policy)
+        self.assertIn("FAST", policy)
+        self.assertIn("FULL", policy)
+        self.assertIn("RELEASE", policy)
+        self.assertIn("final review head", policy)
+        self.assertIn("integrity-bound", policy)
+        self.assertIn(
+            "Required quality/security/integration/governance/conformance gates are not renamed, removed, skipped, bypassed, weakened",
             policy,
         )
-        self.assertIn("CI optimization MUST NOT:", policy)
+        self.assertIn("CI/performance pressure does not authorize governance bypass", policy)
 
-    def test_development_policy_requires_standard_crypto_and_truthful_reproducibility(self):
+    def test_v15_crypto_and_reproducibility_guards_survive_v16_compression(self):
         policy = _read("DEVELOPMENT_POLICY.md")
-        self.assertIn("### 9.1 Cryptography, transport, and key separation", policy)
+        adoption = _read("docs/POLICY_V1_6_ADOPTION.md")
+        self.assertIn("## 8. Dependencies, transport security, cryptography, and keys", policy)
         self.assertIn("Custom cryptographic algorithms", policy)
-        self.assertIn("TLS certificate and hostname verification MUST remain enabled", policy)
-        self.assertIn("AES-256-GCM", policy)
-        self.assertIn("XChaCha20-Poly1305", policy)
-        self.assertIn("Argon2id", policy)
+        self.assertIn("TLS certificate and hostname verification remain enabled", policy)
+        for fragment in (
+            "Prefer TLS 1.3 for new trust boundaries",
+            "Privileged or non-idempotent operations MUST NOT use TLS 0-RTT",
+            "AES-256-GCM",
+            "XChaCha20-Poly1305",
+            "Argon2id",
+            "Signing, encryption, HMAC, token, and password purposes MUST NOT silently share one key",
+        ):
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, adoption)
         self.assertIn("independently repeated build", policy)
-        self.assertIn("one successful or source-pinned build is only provenance/integrity evidence", policy)
+        self.assertIn("source pinning/provenance alone is not reproducibility proof", policy)
 
     def test_pr_template_requires_optimization_crypto_and_validation_reuse_evidence(self):
         template = _read(".github/pull_request_template.md")
@@ -83,15 +99,15 @@ class PolicyV15AdoptionTests(unittest.TestCase):
         governance = _read("docs/REPOSITORY_GOVERNANCE.md")
         self.assertIn("docs/POLICY_V1_5_ADOPTION.md", governance)
         self.assertIn("material performance/resource claim", governance)
-        self.assertIn("KEEP`, `REVISE`, or `REVERT", governance)
+        self.assertIn("KEEP | REVISE | REVERT", governance)
         self.assertIn("No self-approval fiction", governance)
-        self.assertIn("FULL acceptance on the final review head", governance)
+        self.assertIn("FULL once on final review head when required", governance)
         self.assertIn("exact-head guarded merge", governance)
         self.assertIn(
-            "the resulting merged `main` commit MUST independently pass the applicable push acceptance workflow",
+            "resulting merged `main` state receives required push acceptance/provenance verification",
             governance,
         )
-        self.assertIn("any reproducible-build claim additionally requires an independent matching reproduction", governance)
+        self.assertIn("reproducibility claims have evidence adequate to the claim", governance)
 
     def test_adoption_record_maps_foreign_governance_without_importing_authority(self):
         record = _read("docs/POLICY_V1_5_ADOPTION.md")

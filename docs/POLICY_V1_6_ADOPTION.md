@@ -133,6 +133,16 @@ Dependencies remain executable trust relationships. New dependencies require con
 
 Marketplace continues to prohibit custom cryptographic algorithms/protocols, requires maintained standard implementations, accurate transport-security claims, TLS certificate/hostname verification, authenticated encryption where required by the threat model, key-purpose separation, and production-key isolation from ordinary PR jobs/artifacts. Encryption does not extend retention or authorization.
 
+The stricter v1.5 project-approved cryptographic profile is explicitly retained under v1.6 compression:
+
+- Prefer TLS 1.3 for new trust boundaries; older compatibility requires an explicit reason.
+- Privileged or non-idempotent operations MUST NOT use TLS 0-RTT.
+- When durable sensitive project data requires confidentiality beyond access control, use maintained authenticated encryption such as AES-256-GCM or XChaCha20-Poly1305 as appropriate to the platform and threat model.
+- Passwords are normally hashed, not reversibly encrypted; prefer Argon2id with a current reviewed parameter baseline, with another standard construction only under an explicitly approved compatibility profile.
+- Signing, encryption, HMAC, token, and password purposes MUST NOT silently share one key.
+
+These retained profile requirements are engineering constraints, not claims that Marketplace currently deploys or activates any such transport, storage, key, or password runtime.
+
 ## Historical record
 
 `docs/POLICY_V1_5_ADOPTION.md` and `docs/POLICY_V1_4_ADOPTION.md` remain durable historical provenance. New engineering work should cite this v1.6 adoption record and `DEVELOPMENT_POLICY.md`.
