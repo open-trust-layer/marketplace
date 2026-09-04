@@ -62,6 +62,7 @@ def build_plan(*, host=LOOPBACK_LAUNCH_HOST, port=8080, index_html=INDEX, app_js
         is_intent_record=lambda record: True,
         decode_record_json=decode_json,
         encode_record_json=encode_json,
+        build_product_listing_record=lambda draft: object(),
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,

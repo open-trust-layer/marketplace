@@ -6,6 +6,7 @@ from typing import Final
 
 from .api import IntentQueryPort, IntentRecordPredicate, ResponseParentExtractor
 from .asgi import MarketplaceAsgiHttpAdapter
+from .authoring import ProductListingRecordBuilder
 from .composition import MarketplaceApplicationComposition, compose_marketplace_application
 from .http import RecordJsonDecoder, RecordJsonEncoder
 from .state import ApplicationStateStore, RecordDecoder, RecordPreparer
@@ -54,6 +55,7 @@ def build_marketplace_application_launch_plan(
     is_intent_record: IntentRecordPredicate,
     decode_record_json: RecordJsonDecoder,
     encode_record_json: RecordJsonEncoder,
+    build_product_listing_record: ProductListingRecordBuilder,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -71,6 +73,7 @@ def build_marketplace_application_launch_plan(
         is_intent_record=is_intent_record,
         decode_record_json=decode_record_json,
         encode_record_json=encode_record_json,
+        build_product_listing_record=build_product_listing_record,
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,

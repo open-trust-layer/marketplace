@@ -9,6 +9,10 @@ from .api import (
     MarketplaceApplicationApiService,
     ResponseParentExtractor,
 )
+from .authoring import (
+    MarketplaceProductListingAuthoringService,
+    ProductListingRecordBuilder,
+)
 from .http import (
     MarketplaceApplicationHttpAdapter,
     RecordJsonDecoder,
@@ -30,6 +34,7 @@ class MarketplaceApplicationComposition:
 
     state: MarketplaceApplicationStateService
     api: MarketplaceApplicationApiService
+    authoring: MarketplaceProductListingAuthoringService
     http: MarketplaceApplicationHttpAdapter
     site: MarketplaceSiteHostAdapter
 
@@ -47,6 +52,7 @@ def compose_marketplace_application(
     is_intent_record: IntentRecordPredicate,
     decode_record_json: RecordJsonDecoder,
     encode_record_json: RecordJsonEncoder,
+    build_product_listing_record: ProductListingRecordBuilder,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -64,10 +70,15 @@ def compose_marketplace_application(
         response_parent_ids=response_parent_ids,
         is_intent_record=is_intent_record,
     )
+    authoring = MarketplaceProductListingAuthoringService(
+        api=api,
+        build_record=build_product_listing_record,
+    )
     http = MarketplaceApplicationHttpAdapter(
         api=api,
         decode_record_json=decode_record_json,
         encode_record_json=encode_record_json,
+        create_product_listing=authoring.create_product_listing,
     )
     site = MarketplaceSiteHostAdapter(
         application_http=http,
@@ -75,7 +86,13 @@ def compose_marketplace_application(
         app_js=app_js,
         styles_css=styles_css,
     )
-    return MarketplaceApplicationComposition(state=state, api=api, http=http, site=site)
+    return MarketplaceApplicationComposition(
+        state=state,
+        api=api,
+        authoring=authoring,
+        http=http,
+        site=site,
+    )
 
 
 __all__ = [

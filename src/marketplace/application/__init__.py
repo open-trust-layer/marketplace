@@ -19,6 +19,7 @@ from .http import (
     ApplicationHttpRequest,
     ApplicationHttpResponse,
     MarketplaceApplicationHttpAdapter,
+    ProductListingCreator,
 )
 from .launch import (
     LOOPBACK_LAUNCH_HOST,
@@ -123,6 +124,7 @@ __all__ = [
     "PreparedApplicationRecord",
     "ProductListingAuthoringError",
     "ProductListingAuthoringFields",
+    "ProductListingCreator",
     "ProductListingDraft",
     "ProductListingRecordBuilder",
     "PublishedRecord",

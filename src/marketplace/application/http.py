@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from .api import ApplicationApiError, IntentIndexPage, MarketplaceApplicationApiService
+from .authoring import ProductListingAuthoringError, ProductListingAuthoringFields
 from .postgres_state import ApplicationStatePutResult, StoreDisposition, SyncChange, SyncPage
 
 MAX_APPLICATION_HTTP_BODY_BYTES = 256 * 1024
@@ -24,6 +25,25 @@ _CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 
 RecordJsonDecoder = Callable[[bytes], Any]
 RecordJsonEncoder = Callable[[Any], bytes]
+ProductListingCreator = Callable[[ProductListingAuthoringFields], ApplicationStatePutResult]
+
+_PRODUCT_LISTING_STRING_FIELDS = (
+    "seller_principal",
+    "subject_uri",
+    "title",
+    "description",
+    "currency_code",
+    "unit_uri",
+)
+_PRODUCT_LISTING_INTEGER_FIELDS = (
+    "consideration_coefficient",
+    "consideration_scale",
+    "quantity_coefficient",
+    "quantity_scale",
+    "latitude_e6",
+    "longitude_e6",
+)
+_PRODUCT_LISTING_FIELDS = frozenset(_PRODUCT_LISTING_STRING_FIELDS + _PRODUCT_LISTING_INTEGER_FIELDS)
 
 
 class ApplicationHttpError(RuntimeError):
@@ -64,7 +84,7 @@ def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _validate_json_object_bytes(body: bytes) -> None:
+def _decode_json_object_bytes(body: bytes) -> dict[str, Any]:
     if type(body) is not bytes or not body or len(body) > MAX_APPLICATION_HTTP_BODY_BYTES:
         raise ValueError("invalid JSON body bytes")
     if body.startswith(b"\xef\xbb\xbf"):
@@ -80,6 +100,21 @@ def _validate_json_object_bytes(body: bytes) -> None:
         raise ValueError("invalid JSON object") from None
     if type(document) is not dict:
         raise ValueError("JSON top level must be an object")
+    return document
+
+
+def _validate_json_object_bytes(body: bytes) -> None:
+    _decode_json_object_bytes(body)
+
+
+def _product_listing_fields(document: dict[str, Any]) -> ProductListingAuthoringFields:
+    if frozenset(document) != _PRODUCT_LISTING_FIELDS or len(document) != len(_PRODUCT_LISTING_FIELDS):
+        raise ValueError("structured product-listing member set is invalid")
+    if any(type(document[name]) is not str for name in _PRODUCT_LISTING_STRING_FIELDS):
+        raise ValueError("structured product-listing string field type is invalid")
+    if any(type(document[name]) is not int for name in _PRODUCT_LISTING_INTEGER_FIELDS):
+        raise ValueError("structured product-listing integer field type is invalid")
+    return ProductListingAuthoringFields(**document)
 
 
 def _control_json(document: object) -> bytes:
@@ -272,12 +307,16 @@ class MarketplaceApplicationHttpAdapter:
         api: MarketplaceApplicationApiService,
         decode_record_json: RecordJsonDecoder,
         encode_record_json: RecordJsonEncoder,
+        create_product_listing: ProductListingCreator,
     ) -> None:
         if not callable(decode_record_json) or not callable(encode_record_json):
             raise TypeError("record JSON codecs MUST be callable")
+        if not callable(create_product_listing):
+            raise TypeError("create_product_listing MUST be callable")
         self._api = api
         self._decode_record_json = decode_record_json
         self._encode_record_json = encode_record_json
+        self._create_product_listing = create_product_listing
 
     def _decode_record(self, body: bytes) -> Any:
         _validate_json_object_bytes(body)
@@ -309,6 +348,8 @@ class MarketplaceApplicationHttpAdapter:
 
         if request.path == "/api/intents":
             return self._intents(request)
+        if request.path == "/api/product-listings":
+            return self._product_listings(request)
         if request.path == "/api/sync":
             return self._sync(request)
         parent_id = _response_parent_path(request.path)
@@ -318,6 +359,72 @@ class MarketplaceApplicationHttpAdapter:
         if record_id is not None:
             return self._intent(request, record_id)
         return _error_response(404, "Not Found", "ROUTE_NOT_FOUND", "route does not exist")
+
+    def _product_listings(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
+        if request.method != "POST":
+            return _error_response(
+                405,
+                "Method Not Allowed",
+                "METHOD_NOT_ALLOWED",
+                "route does not accept this method",
+                allow="POST",
+            )
+        if request.query:
+            return _bad_request("QUERY_INVALID")
+        if request.content_type != _JSON_CONTENT_TYPE:
+            return _error_response(
+                415,
+                "Unsupported Media Type",
+                "UNSUPPORTED_MEDIA_TYPE",
+                "application/json is required",
+            )
+        try:
+            document = _decode_json_object_bytes(request.body)
+        except ValueError:
+            return _bad_request("INVALID_JSON_BODY")
+        try:
+            fields = _product_listing_fields(document)
+        except (TypeError, ValueError):
+            return _bad_request("PRODUCT_LISTING_REQUEST_INVALID")
+        try:
+            return _json_response(201, "Created", _put_document(self._create_product_listing(fields)))
+        except ProductListingAuthoringError as exc:
+            if exc.code == "PRODUCT_LISTING_FIELDS_INVALID":
+                return _error_response(
+                    400,
+                    "Bad Request",
+                    exc.code,
+                    "structured product-listing fields are invalid",
+                )
+            if exc.code == "PRODUCT_LISTING_BUILD_FAILED":
+                return _error_response(
+                    500,
+                    "Internal Server Error",
+                    exc.code,
+                    "product listing record could not be built",
+                )
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PRODUCT_LISTING_AUTHORING_FAILED",
+                "product listing could not be authored safely",
+            )
+        except ApplicationApiError as exc:
+            return _application_failure(exc)
+        except ApplicationHttpError:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "APPLICATION_API_RESULT_INVALID",
+                "application API returned an invalid result",
+            )
+        except Exception:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PRODUCT_LISTING_AUTHORING_FAILED",
+                "product listing could not be authored safely",
+            )
 
     def _intents(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
         if request.method == "GET":
@@ -462,6 +569,7 @@ __all__ = [
     "MAX_APPLICATION_HTTP_BODY_BYTES",
     "MAX_APPLICATION_HTTP_RESPONSE_BYTES",
     "MarketplaceApplicationHttpAdapter",
+    "ProductListingCreator",
     "RecordJsonDecoder",
     "RecordJsonEncoder",
 ]
