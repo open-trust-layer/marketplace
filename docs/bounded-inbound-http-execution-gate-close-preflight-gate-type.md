@@ -66,3 +66,22 @@ Recovery is an ordinary source-control revert of the M70 source, test, and docum
 commits. The blast radius is limited to explicit-close validation ordering for one
 execution-gate instance; M70 creates no listener, connection, deployment, durable state,
 or protected external effect.
+
+## 2026-09-04 Policy v1.6 requalification
+
+The original M70 tests-first history and five-line security fix remain unchanged. Before
+requesting any merge authority, the open PR is being requalified against exact current
+merged-green Marketplace `main`
+`0c356ce8ffde629f38fda9fc0fafa49f02791821` (M17.1O / Policy v1.6).
+
+Read-only forensic review of that exact `main` confirmed the M70 seam is still present:
+`close()` still dereferences retained `gate_type.__dict__` before independently proving
+that retained object is the actual runtime class. The M70 regression files are also not
+present on `main`.
+
+This documentation-only commit intentionally does not rebase, rewrite, or weaken the
+original RED→GREEN provenance. Its purpose is to trigger a fresh PR merge-ref FULL against
+the current `main` while preserving the reviewed source patch and tests exactly. Merge
+remains separately governed by current Policy v1.6 exact-head review/authorization and
+post-merge provenance requirements. No runtime, dependency, socket, network, deployment,
+service/configuration, database, secret, or repository-administration authority is added.
