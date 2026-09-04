@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 import unittest
 
-from repository_audit import _REQUIRED_GOVERNANCE_FILES
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -72,11 +70,15 @@ class PolicyV16AdoptionTests(unittest.TestCase):
         self.assertIn("runtime activation", text)
         self.assertNotIn("required check `quality`", text)
 
-    def test_codeowners_and_repository_audit_require_v1_6_adoption_record(self):
-        path = Path("docs/POLICY_V1_6_ADOPTION.md")
+    def test_codeowners_protects_current_v1_6_adoption_record(self):
         codeowners = (ROOT / ".github" / "CODEOWNERS").read_text(encoding="utf-8")
         self.assertIn("/docs/POLICY_V1_6_ADOPTION.md @tehki", codeowners)
-        self.assertIn(path, _REQUIRED_GOVERNANCE_FILES)
+
+    def test_required_governance_files_link_to_current_adoption_record(self):
+        development = (ROOT / "DEVELOPMENT_POLICY.md").read_text(encoding="utf-8")
+        governance = (ROOT / "docs" / "REPOSITORY_GOVERNANCE.md").read_text(encoding="utf-8")
+        self.assertIn("docs/POLICY_V1_6_ADOPTION.md", development)
+        self.assertIn("docs/POLICY_V1_6_ADOPTION.md", governance)
 
 
 if __name__ == "__main__":
