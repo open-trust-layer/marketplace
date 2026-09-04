@@ -6,7 +6,7 @@ Status: source-level Web client staging. No browser launch or live HTTP server i
 
 M17.1C Web provides the first interactive Web surface above the shared Marketplace application API introduced by M17.1B/M17.1B2. It consumes only same-origin `/api/...` routes and does not define a second Marketplace model.
 
-The initial surface combines bounded intent list, presentation-only WGS84 map projection, exact record detail, raw reviewed-record JSON create/respond forms, and client-side sync recovery.
+The current surface combines bounded intent list, presentation-only WGS84 map projection, exact record detail, structured root product-listing creation through M17.1R, raw reviewed-record JSON response authoring, and client-side sync recovery.
 
 ## Sync recovery
 
@@ -26,7 +26,7 @@ The Web client uses no local persistent storage, credentials, cookies, service w
 
 This staging slice performs no browser launch and starts no live HTTP server. It adds no socket listener, DNS/TLS provider, live PostgreSQL connection or migration, credential/session authority, Android runtime, production deployment, payment, settlement, fulfillment, or provider-administration capability.
 
-The create/respond forms remain at the raw reviewed record JSON boundary. JavaScript does not build, sign, validate, or derive canonical record identity; the shared application/API boundary remains authoritative for admission.
+Root product-listing creation now serializes only the 12 reviewed primitive M17.1R transport fields to `/api/product-listings`; M17.1Q/M72 remains authoritative for semantic validation and record construction. Response authoring remains raw reviewed record JSON. JavaScript does not build, sign, validate, or derive canonical record identity.
 
 ## Next slice
 

@@ -21,14 +21,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
+private fun ListingField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
 fun MarketplaceScreen(
     uiState: MarketplaceUiState,
     onSync: () -> Unit,
     onSelectIntent: (String) -> Unit,
-    onCreateIntent: (String) -> Unit,
+    onCreateProductListing: (ProductListingInput) -> Unit,
     onRespondToIntent: (String, String) -> Unit,
 ) {
-    var createJson by remember { mutableStateOf("") }
+    var createFields by remember { mutableStateOf(ProductListingInput()) }
     var responseJson by remember { mutableStateOf("") }
 
     MaterialTheme {
@@ -73,17 +87,74 @@ fun MarketplaceScreen(
                 Text(response.id, style = MaterialTheme.typography.bodySmall)
             }
 
-            Text("Create intent", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(
-                value = createJson,
-                onValueChange = { createJson = it },
-                label = { Text("Reviewed raw record JSON") },
-                modifier = Modifier.fillMaxWidth(),
+            Text("Create product listing", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Transport fields only; M17.1Q/M72 owns Marketplace semantics.",
+                style = MaterialTheme.typography.bodySmall,
             )
-            Button(onClick = { onCreateIntent(createJson) }) {
-                Text("Submit intent")
+            ListingField(
+                label = "Seller principal URI",
+                value = createFields.seller_principal,
+                onValueChange = { createFields = createFields.copy(seller_principal = it) },
+            )
+            ListingField(
+                label = "Subject URI",
+                value = createFields.subject_uri,
+                onValueChange = { createFields = createFields.copy(subject_uri = it) },
+            )
+            ListingField(
+                label = "Title",
+                value = createFields.title,
+                onValueChange = { createFields = createFields.copy(title = it) },
+            )
+            ListingField(
+                label = "Description",
+                value = createFields.description,
+                onValueChange = { createFields = createFields.copy(description = it) },
+            )
+            ListingField(
+                label = "Price coefficient (integer)",
+                value = createFields.consideration_coefficient,
+                onValueChange = { createFields = createFields.copy(consideration_coefficient = it) },
+            )
+            ListingField(
+                label = "Price scale (integer)",
+                value = createFields.consideration_scale,
+                onValueChange = { createFields = createFields.copy(consideration_scale = it) },
+            )
+            ListingField(
+                label = "Currency code",
+                value = createFields.currency_code,
+                onValueChange = { createFields = createFields.copy(currency_code = it) },
+            )
+            ListingField(
+                label = "Quantity coefficient (integer)",
+                value = createFields.quantity_coefficient,
+                onValueChange = { createFields = createFields.copy(quantity_coefficient = it) },
+            )
+            ListingField(
+                label = "Quantity scale (integer)",
+                value = createFields.quantity_scale,
+                onValueChange = { createFields = createFields.copy(quantity_scale = it) },
+            )
+            ListingField(
+                label = "Unit URI",
+                value = createFields.unit_uri,
+                onValueChange = { createFields = createFields.copy(unit_uri = it) },
+            )
+            ListingField(
+                label = "Latitude E6 (integer)",
+                value = createFields.latitude_e6,
+                onValueChange = { createFields = createFields.copy(latitude_e6 = it) },
+            )
+            ListingField(
+                label = "Longitude E6 (integer)",
+                value = createFields.longitude_e6,
+                onValueChange = { createFields = createFields.copy(longitude_e6 = it) },
+            )
+            Button(onClick = { onCreateProductListing(createFields) }) {
+                Text("Submit product listing")
             }
-
             Text("Respond to intent", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
                 value = responseJson,

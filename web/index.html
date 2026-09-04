@@ -67,15 +67,36 @@
 
     <section class="authoring-grid" aria-label="Record authoring boundaries">
       <form id="create-form" class="panel author-panel">
-        <p class="eyebrow">Shared API boundary</p>
-        <h2>Create intent</h2>
-        <p class="muted">Submit reviewed Marketplace record JSON. The Web client does not invent or validate Marketplace semantics.</p>
-        <label for="create-record-json">Record JSON</label>
-        <textarea id="create-record-json" spellcheck="false" maxlength="262144" required></textarea>
-        <button type="submit">Create intent</button>
+        <p class="eyebrow">Shared structured authoring</p>
+        <h2>Create product listing</h2>
+        <p class="muted">Enter transport fields only. M17.1Q/M72 remains authoritative for Marketplace semantics.</p>
+        <label for="create-seller-principal">Seller principal URI</label>
+        <input id="create-seller-principal" type="text" autocomplete="off">
+        <label for="create-subject-uri">Subject URI</label>
+        <input id="create-subject-uri" type="text" autocomplete="off">
+        <label for="create-title">Title</label>
+        <input id="create-title" type="text" autocomplete="off">
+        <label for="create-description">Description</label>
+        <textarea id="create-description" spellcheck="true"></textarea>
+        <label for="create-consideration-coefficient">Price coefficient (integer)</label>
+        <input id="create-consideration-coefficient" type="text" autocomplete="off" inputmode="numeric">
+        <label for="create-consideration-scale">Price scale (integer)</label>
+        <input id="create-consideration-scale" type="text" autocomplete="off" inputmode="numeric">
+        <label for="create-currency-code">Currency code</label>
+        <input id="create-currency-code" type="text" autocomplete="off">
+        <label for="create-quantity-coefficient">Quantity coefficient (integer)</label>
+        <input id="create-quantity-coefficient" type="text" autocomplete="off" inputmode="numeric">
+        <label for="create-quantity-scale">Quantity scale (integer)</label>
+        <input id="create-quantity-scale" type="text" autocomplete="off" inputmode="numeric">
+        <label for="create-unit-uri">Unit URI</label>
+        <input id="create-unit-uri" type="text" autocomplete="off">
+        <label for="create-latitude-e6">Latitude E6 (integer)</label>
+        <input id="create-latitude-e6" type="text" autocomplete="off" inputmode="numeric">
+        <label for="create-longitude-e6">Longitude E6 (integer)</label>
+        <input id="create-longitude-e6" type="text" autocomplete="off" inputmode="numeric">
+        <button type="submit">Create product listing</button>
         <p id="create-status" role="status" class="muted"></p>
       </form>
-
       <form id="response-form" class="panel author-panel">
         <p class="eyebrow">Exact selected parent</p>
         <h2>Respond to intent</h2>

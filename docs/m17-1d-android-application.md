@@ -12,7 +12,7 @@ This checkpoint contains:
 - a bounded application API client for `/api/intents`, `/responses`, and `/api/sync`;
 - root browse state separated from exact hydrated intent/response detail;
 - snapshot-watermark full-resync recovery and bounded incremental sync;
-- raw reviewed record JSON create/respond inputs;
+- structured root product-listing creation plus raw reviewed response JSON input;
 - presentation-only WGS84 map text/surface;
 - in-memory only application state.
 
@@ -43,9 +43,7 @@ Sync history is coordination evidence only. It does not classify a record as a r
 
 ## Authoring boundary
 
-Create/respond accepts raw reviewed record JSON and forwards that raw body through the shared application API boundary. Android source does not build, sign, validate, or derive canonical Record Identity for Marketplace/OLP records.
-
-Human-friendly structured authoring remains a shared backend/application concern so Web and Android do not drift into competing semantic implementations.
+Root product-listing creation serializes only the 12 reviewed primitive M17.1R transport fields to `/api/product-listings`; M17.1Q/M72 remains authoritative for semantic validation and record construction. Response authoring still forwards raw reviewed record JSON. Android source does not build, sign, validate, or derive canonical Record Identity for Marketplace/OLP records.
 
 ## Authority boundary
 

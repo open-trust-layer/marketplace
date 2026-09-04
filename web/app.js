@@ -1,6 +1,7 @@
 "use strict";
 
 const API_INTENTS = "/api/intents";
+const API_PRODUCT_LISTINGS = "/api/product-listings";
 const API_SYNC = "/api/sync";
 const RESPONSES_SUFFIX = "/responses";
 const PAGE_LIMIT = 64;
@@ -11,6 +12,13 @@ const MAX_RECORD_JSON_BYTES = 256 * 1024;
 const MAX_RESPONSE_JSON_BYTES = 300 * 1024;
 const MAP_WIDTH = 720;
 const MAP_HEIGHT = 360;
+const PRODUCT_LISTING_STRING_FIELDS = [
+  "seller_principal", "subject_uri", "title", "description", "currency_code", "unit_uri",
+];
+const PRODUCT_LISTING_INTEGER_FIELDS = [
+  "consideration_coefficient", "consideration_scale", "quantity_coefficient",
+  "quantity_scale", "latitude_e6", "longitude_e6",
+];
 
 const state = {
   records: new Map(),
@@ -392,19 +400,43 @@ function reviewedRecordJsonBody(text) {
   return text;
 }
 
+function canonicalIntegerJsonToken(value) {
+  if (typeof value !== "string" || !/^(0|-?[1-9][0-9]*)$/.test(value)) {
+    throw stableClientError("PRODUCT_LISTING_INTEGER_INVALID");
+  }
+  return value;
+}
+
+function productListingJsonBody() {
+  const parts = [];
+  for (const name of PRODUCT_LISTING_STRING_FIELDS) {
+    const value = byId(`create-${name.replaceAll("_", "-")}`).value;
+    parts.push(`${JSON.stringify(name)}:${JSON.stringify(value)}`);
+  }
+  for (const name of PRODUCT_LISTING_INTEGER_FIELDS) {
+    const value = byId(`create-${name.replaceAll("_", "-")}`).value;
+    parts.push(`${JSON.stringify(name)}:${canonicalIntegerJsonToken(value)}`);
+  }
+  const body = `{${parts.join(",")}}`;
+  if (new TextEncoder().encode(body).length > MAX_RECORD_JSON_BYTES) {
+    throw stableClientError("PRODUCT_LISTING_JSON_TOO_LARGE");
+  }
+  return body;
+}
+
 function setFormStatus(id, message, kind = "") {
   const target = byId(id);
   target.textContent = message;
   target.className = kind || "muted";
 }
 
-async function createIntent(event) {
+async function createProductListing(event) {
   event.preventDefault();
   try {
-    const body = reviewedRecordJsonBody(byId("create-record-json").value);
-    setFormStatus("create-status", "Submitting reviewed record JSON…");
-    await apiFetch(API_INTENTS, { method: "POST", body });
-    setFormStatus("create-status", "Intent accepted by the shared application API.", "success");
+    const body = productListingJsonBody();
+    setFormStatus("create-status", "Submitting structured product listing…");
+    await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
+    setFormStatus("create-status", "Product listing accepted by the shared application API.", "success");
     await fullResync();
   } catch (error) {
     setFormStatus("create-status", `Create failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
@@ -449,7 +481,7 @@ byId("clear-selection").addEventListener("click", () => {
   renderList();
   renderDetail();
 });
-byId("create-form").addEventListener("submit", (event) => void createIntent(event));
+byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
 byId("response-form").addEventListener("submit", (event) => void respondToIntent(event));
 
 renderList();

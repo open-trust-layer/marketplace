@@ -47,6 +47,7 @@ class M17StructuredClientAuthoringArtifactTests(unittest.TestCase):
         for field in FIELDS:
             self.assertIn(f'"{field}"', text)
         self.assertIn("canonicalIntegerJsonToken", text)
+        self.assertIn(r"/^(0|-?[1-9][0-9]*)$/", text)
         self.assertIn("JSON.stringify", text)
         self.assertNotIn("Number.parseInt", text)
         self.assertNotIn("parseFloat", text)
@@ -77,6 +78,7 @@ class M17StructuredClientAuthoringArtifactTests(unittest.TestCase):
         text = ANDROID_CLIENT.read_text(encoding="utf-8")
         self.assertIn("structuredProductListingJson", text)
         self.assertIn("canonicalIntegerJsonToken", text)
+        self.assertIn('Regex("0|-?[1-9][0-9]*")', text)
         self.assertIn("jsonString", text)
         self.assertNotIn("toDouble()", text)
         self.assertNotIn("toFloat()", text)
@@ -87,7 +89,7 @@ class M17StructuredClientAuthoringArtifactTests(unittest.TestCase):
         for marker in (
             "POST /api/product-listings", "Web", "Android",
             "raw response", "M17.1Q/M72", "no browser launch",
-            "no Android build", "no runtime activation",
+            "no Android build", "No runtime activation",
         ):
             self.assertIn(marker, text)
 

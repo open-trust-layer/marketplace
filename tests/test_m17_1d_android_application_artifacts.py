@@ -26,7 +26,7 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
             "MarketplaceScreen",
             "Intent list",
             "Intent detail",
-            "Create intent",
+            "Create product listing",
             "Respond to intent",
         ):
             self.assertIn(marker, text)
@@ -35,6 +35,7 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
         text = CLIENT.read_text(encoding="utf-8")
         for marker in (
             '"/api/intents"',
+            '"/api/product-listings"',
             '"/api/sync"',
             '"/responses"',
             "MarketplaceTransport",
@@ -68,15 +69,12 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, combined)
 
-    def test_authoring_remains_raw_reviewed_record_json_boundary(self):
+    def test_root_create_is_structured_while_response_remains_raw(self):
         text = CLIENT.read_text(encoding="utf-8") + STATE.read_text(encoding="utf-8")
-        for marker in ("rawRecordJson", "createIntent", "respondToIntent"):
+        for marker in ("ProductListingInput", "createProductListing", "respondToIntent", "rawRecordJson"):
             self.assertIn(marker, text)
         for forbidden in (
-            "buildMarketIntent",
-            "validateMarketIntent",
-            "recordIdentity",
-            "signRecord",
+            "buildMarketIntent", "validateMarketIntent", "recordIdentity", "signRecord",
         ):
             self.assertNotIn(forbidden, text)
 
