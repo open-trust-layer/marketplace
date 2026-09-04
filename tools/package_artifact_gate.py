@@ -31,14 +31,23 @@ REVIEWED_BUILD_BACKEND_VERSION = "80.9.0"
 SOURCE_DATE_EPOCH = 946684800  # 2000-01-01T00:00:00Z; stable archive timestamp.
 DEFAULT_TIMEOUT_SECONDS = 90.0
 EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
-EXPECTED_OPTIONAL_DEPENDENCIES = {"postgres": ["psycopg[binary]==3.3.5"]}
-EXPECTED_REQUIRES_DIST = ['psycopg[binary]==3.3.5; extra == "postgres"']
-EXPECTED_PROVIDES_EXTRA = ["postgres"]
+EXPECTED_OPTIONAL_DEPENDENCIES = {
+    "postgres": ["psycopg[binary]==3.3.5"],
+    "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+}
+EXPECTED_REQUIRES_DIST = [
+    'psycopg[binary]==3.3.5; extra == "postgres"',
+    'uvicorn==0.52.4; extra == "local-server"',
+    'click==8.5.0; extra == "local-server"',
+    'h11==0.16.0; extra == "local-server"',
+]
+EXPECTED_PROVIDES_EXTRA = ["postgres", "local-server"]
 _DEV_VERSION_RE = re.compile(r"^0\.0\.\d+\.dev\d+$")
 _HEX_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _HEX_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/__init__.py",
+    "marketplace/application/uvicorn_provider.py",
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",
     "marketplace/runtime/federation.py",
@@ -151,7 +160,7 @@ def _project_metadata(repo_root: Path) -> tuple[str, str, int]:
     if dependencies != []:
         _fail("RUNTIME_DEPENDENCIES", "base runtime dependency list MUST remain empty")
     if project.get("optional-dependencies") != EXPECTED_OPTIONAL_DEPENDENCIES:
-        _fail("OPTIONAL_DEPENDENCIES", "optional dependency set does not match the reviewed PostgreSQL provider")
+        _fail("OPTIONAL_DEPENDENCIES", "optional dependency set does not match reviewed providers")
     return name, version, 0
 
 
@@ -235,8 +244,6 @@ def _normalize_source_mtime(path: Path) -> None:
         os.utime(path, timestamp, follow_symlinks=False)
         return
     except NotImplementedError:
-        # Windows does not implement follow_symlinks=False for os.utime.
-        # Falling back is safe only after an explicit no-symlink check.
         if path.is_symlink():
             _fail("SOURCE_SYMLINK", f"copied source path MUST NOT be a symlink: {path}")
     except OSError as exc:
@@ -263,8 +270,6 @@ def _copy_source(repo_root: Path, destination: Path) -> None:
             "*.whl",
         ),
     )
-    # Normalize copied-source mtimes as an additional defense against archive
-    # metadata variance. The developer worktree is never mutated.
     for path in sorted(destination.rglob("*"), key=lambda item: len(item.parts), reverse=True):
         _normalize_source_mtime(path)
     _normalize_source_mtime(destination)
@@ -309,7 +314,7 @@ def _validate_member_path(name: str) -> None:
 def _metadata_message(data: bytes, label: str):
     try:
         return BytesParser(policy=email_policy).parsebytes(data)
-    except Exception as exc:  # email parser errors vary by malformed input.
+    except Exception as exc:
         _fail("WHEEL_METADATA_PARSE", f"could not parse {label}: {exc}")
 
 
@@ -423,10 +428,10 @@ def audit_wheel(path: Path, *, expected_name: str, expected_version: str) -> Whe
             _fail("WHEEL_METADATA_VERSION", f"wheel Version mismatch: {metadata.get('Version')!r}")
         requires_dist = metadata.get_all("Requires-Dist") or []
         if requires_dist != EXPECTED_REQUIRES_DIST:
-            _fail("WHEEL_METADATA_DEPENDENCY", "wheel dependency metadata does not match the reviewed PostgreSQL provider")
+            _fail("WHEEL_METADATA_DEPENDENCY", "wheel dependency metadata does not match reviewed providers")
         provides_extra = metadata.get_all("Provides-Extra") or []
         if provides_extra != EXPECTED_PROVIDES_EXTRA:
-            _fail("WHEEL_METADATA_EXTRA", "wheel package extras do not match the reviewed PostgreSQL provider")
+            _fail("WHEEL_METADATA_EXTRA", "wheel package extras do not match reviewed providers")
 
         wheel_metadata = _metadata_message(archive.read(wheel_name), "WHEEL")
         if wheel_metadata.get("Root-Is-Purelib", "").lower() != "true":

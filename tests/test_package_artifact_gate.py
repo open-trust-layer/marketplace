@@ -27,8 +27,17 @@ PACKAGE = "open-layer-marketplace"
 VERSION = "0.0.1.dev0"
 WHEEL_FILENAME = "open_layer_marketplace-0.0.1.dev0-py3-none-any.whl"
 DIST_INFO = "open_layer_marketplace-0.0.1.dev0.dist-info"
+REVIEWED_METADATA = (
+    "Requires-Dist: psycopg[binary]==3.3.5; extra == \"postgres\"\n"
+    "Provides-Extra: postgres\n"
+    "Requires-Dist: uvicorn==0.52.4; extra == \"local-server\"\n"
+    "Requires-Dist: click==8.5.0; extra == \"local-server\"\n"
+    "Requires-Dist: h11==0.16.0; extra == \"local-server\"\n"
+    "Provides-Extra: local-server\n"
+)
 REQUIRED = {
     "marketplace/__init__.py": b"",
+    "marketplace/application/uvicorn_provider.py": b"# inert reviewed provider adapter\n",
     "marketplace/runtime/__init__.py": b"",
     "marketplace/runtime/composition.py": b"# runtime\n",
     "marketplace/runtime/federation.py": b"# offline federation runtime\n",
@@ -63,7 +72,7 @@ def urlsafe_sha256(data: bytes) -> str:
 def write_wheel(
     path: Path,
     *,
-    metadata_extra: str = "Requires-Dist: psycopg[binary]==3.3.5; extra == \"postgres\"\nProvides-Extra: postgres\n",
+    metadata_extra: str = REVIEWED_METADATA,
     wheel_extra: str = "",
     extra_members: dict[str, bytes] | None = None,
     tamper_record_for: str | None = None,
@@ -138,6 +147,9 @@ class PackageArtifactGateTests(unittest.TestCase):
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_REQUIRED_MEMBER")
+
+    def test_missing_uvicorn_provider_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing("marketplace/application/uvicorn_provider.py")
 
     def test_missing_federation_runtime_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/runtime/federation.py")
@@ -226,7 +238,7 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_runtime_dependency_metadata_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             path = self.wheel_path(temp_dir)
-            write_wheel(path, metadata_extra="Requires-Dist: psycopg[binary]==3.3.5; extra == \"postgres\"\nProvides-Extra: postgres\nRequires-Dist: requests>=2\n")
+            write_wheel(path, metadata_extra=REVIEWED_METADATA + "Requires-Dist: requests>=2\n")
             with self.assertRaises(ArtifactGateError) as caught:
                 audit_wheel(path, expected_name=PACKAGE, expected_version=VERSION)
             self.assertEqual(caught.exception.code, "WHEEL_METADATA_DEPENDENCY")

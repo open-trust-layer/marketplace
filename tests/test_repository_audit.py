@@ -31,11 +31,17 @@ dependencies = []
 
 [project.optional-dependencies]
 postgres = ["psycopg[binary]==3.3.5"]
+local-server = ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"]
 
 [tool.setuptools.packages.find]
 where = [\"src\"]
 include = [\"marketplace*\"]
 """
+
+_EXPECTED_OPTIONAL_DEPENDENCIES = {
+    "postgres": ["psycopg[binary]==3.3.5"],
+    "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+}
 
 
 class RepositoryAuditTests(unittest.TestCase):
@@ -176,14 +182,14 @@ class RepositoryAuditTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             text = _VALID_PYPROJECT.replace(
-                "psycopg[binary]==3.3.5",
+                "h11==0.16.0",
                 "requests>=2",
             )
             (root / "pyproject.toml").write_text(text, encoding="utf-8")
             findings: list[str] = []
             _audit_packaging(root, findings)
             self.assertIn(
-                "PYPROJECT_OPTIONAL_DEPENDENCIES MUST equal {'postgres': ['psycopg[binary]==3.3.5']}",
+                "PYPROJECT_OPTIONAL_DEPENDENCIES MUST equal " + repr(_EXPECTED_OPTIONAL_DEPENDENCIES),
                 findings,
             )
 
