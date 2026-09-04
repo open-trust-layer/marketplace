@@ -39,8 +39,8 @@ class MarketplaceState(
         )
     }
 
-    suspend fun createIntent(rawRecordJson: String) {
-        client.createIntent(rawRecordJson)
+    suspend fun createProductListing(fields: ProductListingInput) {
+        client.createProductListing(fields)
         fullResync()
     }
 

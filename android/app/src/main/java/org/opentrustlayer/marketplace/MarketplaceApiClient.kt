@@ -1,6 +1,7 @@
 package org.opentrustlayer.marketplace
 
 private const val API_INTENTS = "/api/intents"
+private const val API_PRODUCT_LISTINGS = "/api/product-listings"
 private const val API_SYNC = "/api/sync"
 private const val RESPONSES_SUFFIX = "/responses"
 private const val PAGE_LIMIT = 64
@@ -22,6 +23,21 @@ data class ApiResponse(
 interface MarketplaceTransport {
     suspend fun execute(request: ApiRequest): ApiResponse
 }
+
+data class ProductListingInput(
+    val seller_principal: String = "",
+    val subject_uri: String = "",
+    val title: String = "",
+    val description: String = "",
+    val consideration_coefficient: String = "",
+    val consideration_scale: String = "",
+    val currency_code: String = "",
+    val quantity_coefficient: String = "",
+    val quantity_scale: String = "",
+    val unit_uri: String = "",
+    val latitude_e6: String = "",
+    val longitude_e6: String = "",
+)
 
 data class RawRecord(
     val id: String,
@@ -88,6 +104,13 @@ class MarketplaceApiClient(
         val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$RESPONSES_SUFFIX?limit=$PAGE_LIMIT"
         return validateResponseList(codec.decodeResponseList(expectOk(transport.execute(ApiRequest("GET", path)))))
     }
+
+    suspend fun createProductListing(fields: ProductListingInput): WriteReceipt =
+        validateWriteReceipt(codec.decodeWriteReceipt(
+            expectOk(
+                transport.execute(ApiRequest("POST", API_PRODUCT_LISTINGS, structuredProductListingJson(fields)))
+            )
+        ))
 
     suspend fun createIntent(rawRecordJson: String): WriteReceipt =
         validateWriteReceipt(codec.decodeWriteReceipt(
@@ -225,6 +248,80 @@ class MarketplaceApiClient(
     }
 }
 
+private val JSON_INTEGER = Regex("0|-?[1-9][0-9]*")
+
+private fun canonicalIntegerJsonToken(value: String): String {
+    if (!JSON_INTEGER.matches(value)) {
+        throw MarketplaceClientException("PRODUCT_LISTING_INTEGER_INVALID", "product listing integer is invalid")
+    }
+    return value
+}
+
+private fun jsonString(value: String): String = buildString {
+    append('"')
+    for (char in value) {
+        when (char) {
+            '"' -> append("\\\"")
+            '\\' -> append("\\\\")
+            '\b' -> append("\\b")
+            '\u000C' -> append("\\f")
+            '\n' -> append("\\n")
+            '\r' -> append("\\r")
+            '\t' -> append("\\t")
+            else -> if (char.code < 0x20 || char.code in 0xD800..0xDFFF) {
+                append("\\u")
+                append(char.code.toString(16).padStart(4, '0'))
+            } else append(char)
+        }
+    }
+    append('"')
+}
+
+private fun structuredProductListingJson(fields: ProductListingInput): String {
+    val body = buildString {
+        append('{')
+        append("\"seller_principal\":")
+        append(jsonString(fields.seller_principal))
+        append(',')
+        append("\"subject_uri\":")
+        append(jsonString(fields.subject_uri))
+        append(',')
+        append("\"title\":")
+        append(jsonString(fields.title))
+        append(',')
+        append("\"description\":")
+        append(jsonString(fields.description))
+        append(',')
+        append("\"consideration_coefficient\":")
+        append(canonicalIntegerJsonToken(fields.consideration_coefficient))
+        append(',')
+        append("\"consideration_scale\":")
+        append(canonicalIntegerJsonToken(fields.consideration_scale))
+        append(',')
+        append("\"currency_code\":")
+        append(jsonString(fields.currency_code))
+        append(',')
+        append("\"quantity_coefficient\":")
+        append(canonicalIntegerJsonToken(fields.quantity_coefficient))
+        append(',')
+        append("\"quantity_scale\":")
+        append(canonicalIntegerJsonToken(fields.quantity_scale))
+        append(',')
+        append("\"unit_uri\":")
+        append(jsonString(fields.unit_uri))
+        append(',')
+        append("\"latitude_e6\":")
+        append(canonicalIntegerJsonToken(fields.latitude_e6))
+        append(',')
+        append("\"longitude_e6\":")
+        append(canonicalIntegerJsonToken(fields.longitude_e6))
+        append('}')
+    }
+    if (body.encodeToByteArray().size !in 1..MAX_RAW_JSON_BYTES) {
+        throw MarketplaceClientException("PRODUCT_LISTING_JSON_TOO_LARGE", "product listing JSON outside byte bound")
+    }
+    return body
+}
 private fun encodeComponent(value: String): String {
     val bytes = value.encodeToByteArray()
     val out = StringBuilder(bytes.size)

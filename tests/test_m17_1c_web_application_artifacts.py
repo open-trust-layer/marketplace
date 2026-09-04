@@ -23,7 +23,7 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
             'id="market-map"',
             'id="intent-list"',
             'id="intent-detail"',
-            'id="create-record-json"',
+            'id="create-seller-principal"',
             'id="response-record-json"',
             'id="sync-status"',
         ):
@@ -128,11 +128,13 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         success = block.index("Synchronized at local cursor")
         self.assertLess(bounded, success)
 
-    def test_authoring_remains_raw_reviewed_record_json_boundary(self):
+    def test_root_create_is_structured_while_response_remains_raw(self):
         text = APP.read_text(encoding="utf-8")
-        self.assertIn("create-record-json", INDEX.read_text(encoding="utf-8"))
-        self.assertIn("response-record-json", INDEX.read_text(encoding="utf-8"))
-        self.assertIn('"Content-Type": "application/json"', text)
+        index = INDEX.read_text(encoding="utf-8")
+        self.assertIn("create-seller-principal", index)
+        self.assertNotIn("create-record-json", index)
+        self.assertIn("response-record-json", index)
+        self.assertIn('"/api/product-listings"', text)
         for forbidden in ("buildMarketIntent", "validateMarketIntent", "recordIdentity", "signRecord"):
             self.assertNotIn(forbidden, text)
     def test_web_design_document_preserves_authority_boundary(self):
