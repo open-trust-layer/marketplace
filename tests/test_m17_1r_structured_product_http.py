@@ -10,6 +10,7 @@ from marketplace.application.authoring import (
 )
 from marketplace.application.http import (
     ApplicationHttpRequest,
+    MAX_APPLICATION_HTTP_BODY_BYTES,
     MarketplaceApplicationHttpAdapter,
 )
 from marketplace.application.postgres_state import (
@@ -93,7 +94,10 @@ class M17StructuredProductHttpTests(unittest.TestCase):
             self.request(body={**listing_document(), "extra": "x"}),
             self.request(body={key: value for key, value in listing_document().items() if key != "title"}),
             self.request(body=listing_document(latitude_e6=True)),
+            self.request(body=listing_document(latitude_e6=1.0)),
             self.request(body=b'{"title":"x","title":"y"}'),
+            self.request(body=b"[]"),
+            self.request(body=b"\xff"),
             self.request(query=(("x", "1"),)),
             self.request(content_type="text/plain"),
         )
@@ -123,6 +127,26 @@ class M17StructuredProductHttpTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.document(response)["error"]["code"], "PRODUCT_LISTING_FIELDS_INVALID")
         self.assertNotIn(hostile, response.body.decode("utf-8"))
+
+    def test_build_failure_is_internal_and_non_reflective(self):
+        hostile = "secret-builder-detail"
+
+        def fail(fields):
+            raise ProductListingAuthoringError("PRODUCT_LISTING_BUILD_FAILED", hostile)
+
+        adapter, _, _ = self.make_adapter(fail)
+        response = adapter.handle(self.request())
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(self.document(response)["error"]["code"], "PRODUCT_LISTING_BUILD_FAILED")
+        self.assertNotIn(hostile, response.body.decode("utf-8"))
+
+    def test_oversized_body_is_rejected_before_creator(self):
+        adapter, api, calls = self.make_adapter()
+        response = adapter.handle(self.request(body=b"{" + b"x" * MAX_APPLICATION_HTTP_BODY_BYTES))
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(self.document(response)["error"]["code"], "PAYLOAD_TOO_LARGE")
+        self.assertEqual(calls, [])
+        self.assertEqual(api.calls, [])
 
     def test_application_failure_mapping_is_reused(self):
         def fail(fields):

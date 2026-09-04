@@ -156,7 +156,9 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
         composition = compose_marketplace_application(
             store=store, intent_query=StaticIntentQuery(), prepare_record=lambda record: record,
             decode_record=lambda payload: payload, response_parent_ids=lambda record: (),
-            is_intent_record=lambda record: True, decode_record_json=decode_json, encode_record_json=encode_json,
+            is_intent_record=lambda record: True, decode_record_json=decode_json,
+            encode_record_json=encode_json,
+            build_product_listing_record=lambda draft: object(),
             index_html=b"<html></html>", app_js=b"console.log(1)", styles_css=b"body{}",
         )
         composition.initialize()
@@ -186,6 +188,7 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
             is_intent_record=lambda record: True,
             decode_record_json=decode_json,
             encode_record_json=encode_json,
+            build_product_listing_record=lambda draft: object(),
             index_html=b"<html></html>",
             app_js=b"console.log(1)",
             styles_css=b"body{}",

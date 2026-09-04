@@ -52,6 +52,7 @@ def make_composition():
         is_intent_record=lambda record: True,
         decode_record_json=decode_json,
         encode_record_json=encode_json,
+        build_product_listing_record=lambda draft: object(),
         index_html=INDEX,
         app_js=APP_JS,
         styles_css=STYLES,

@@ -65,6 +65,7 @@ class M17ApplicationHttpTests(unittest.TestCase):
             api=api,
             decode_record_json=decode_record,
             encode_record_json=encode_record,
+            create_product_listing=lambda fields: ApplicationStatePutResult(StoreDisposition.STORED, 9),
         ), api
 
     def request(self, method, path, *, query=(), content_type=None, body=b""):
