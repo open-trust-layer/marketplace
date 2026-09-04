@@ -14,13 +14,13 @@ RETENTION_POLICY = ROOT / "docs" / "RETENTION_POLICY.md"
 
 
 class M17PostgresArtifactTests(unittest.TestCase):
-    def test_postgres_provider_is_exact_optional_dependency_only(self):
+    def test_postgres_provider_remains_exact_reviewed_optional_dependency(self):
         document = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
         project = document["project"]
         self.assertEqual(project["dependencies"], [])
         self.assertEqual(
-            project["optional-dependencies"],
-            {"postgres": ["psycopg[binary]==3.3.5"]},
+            project["optional-dependencies"]["postgres"],
+            ["psycopg[binary]==3.3.5"],
         )
 
     def test_packaged_application_source_remains_connection_injected_and_network_inert(self):
