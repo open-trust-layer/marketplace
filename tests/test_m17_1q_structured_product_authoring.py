@@ -58,7 +58,8 @@ class M17StructuredProductAuthoringTests(unittest.TestCase):
         parents: dict[int, tuple[str, ...]] = {}
         api = MarketplaceApplicationApiService(
             state=state,
-            intent_query=FakeIntentQuery(),            response_parent_ids=lambda record: tuple(parents.get(id(record), ())),
+            intent_query=FakeIntentQuery(),
+            response_parent_ids=lambda record: tuple(parents.get(id(record), ())),
             is_intent_record=lambda record: True,
         )
         return api, state, parents
