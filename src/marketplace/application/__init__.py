@@ -7,6 +7,12 @@ from .api import (
     IntentRecordPredicate,
     MarketplaceApplicationApiService,
 )
+from .authoring import (
+    MarketplaceProductListingAuthoringService,
+    ProductListingAuthoringError,
+    ProductListingAuthoringFields,
+    ProductListingRecordBuilder,
+)
 from .composition import MarketplaceApplicationComposition, compose_marketplace_application
 from .http import (
     ApplicationHttpError,
@@ -106,6 +112,7 @@ __all__ = [
     "MarketplaceApplicationLaunchPlan",
     "MarketplaceApplicationStateService",
     "MarketplaceAsgiServerProvider",
+    "MarketplaceProductListingAuthoringService",
     "MarketplaceLocalRuntimeError",
     "MarketplaceSiteHostAdapter",
     "MarketplaceUvicornProviderError",
@@ -114,7 +121,10 @@ __all__ = [
     "PostgresApplicationStateStore",
     "PostgresIntentQuery",
     "PreparedApplicationRecord",
+    "ProductListingAuthoringError",
+    "ProductListingAuthoringFields",
     "ProductListingDraft",
+    "ProductListingRecordBuilder",
     "PublishedRecord",
     "SyncChange",
     "SyncPage",
