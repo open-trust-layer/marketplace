@@ -18,6 +18,7 @@ from .http import (
     RecordJsonDecoder,
     RecordJsonEncoder,
 )
+from .proposal_authoring import MarketplaceProposalAuthoringService, ProposalRecordBuilder
 from .postgres_state import ExpiryResult
 from .site_host import MarketplaceSiteHostAdapter
 from .state import (
@@ -35,6 +36,7 @@ class MarketplaceApplicationComposition:
     state: MarketplaceApplicationStateService
     api: MarketplaceApplicationApiService
     authoring: MarketplaceProductListingAuthoringService
+    proposal_authoring: MarketplaceProposalAuthoringService
     http: MarketplaceApplicationHttpAdapter
     site: MarketplaceSiteHostAdapter
 
@@ -53,6 +55,7 @@ def compose_marketplace_application(
     decode_record_json: RecordJsonDecoder,
     encode_record_json: RecordJsonEncoder,
     build_product_listing_record: ProductListingRecordBuilder,
+    build_proposal_record: ProposalRecordBuilder,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -74,11 +77,16 @@ def compose_marketplace_application(
         api=api,
         build_record=build_product_listing_record,
     )
+    proposal_authoring = MarketplaceProposalAuthoringService(
+        api=api,
+        build_record=build_proposal_record,
+    )
     http = MarketplaceApplicationHttpAdapter(
         api=api,
         decode_record_json=decode_record_json,
         encode_record_json=encode_record_json,
         create_product_listing=authoring.create_product_listing,
+        create_proposal=proposal_authoring.create_buyer_request_proposal,
     )
     site = MarketplaceSiteHostAdapter(
         application_http=http,
@@ -90,6 +98,7 @@ def compose_marketplace_application(
         state=state,
         api=api,
         authoring=authoring,
+        proposal_authoring=proposal_authoring,
         http=http,
         site=site,
     )

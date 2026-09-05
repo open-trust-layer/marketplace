@@ -13,6 +13,8 @@ from typing import Any, Callable
 from .api import ApplicationApiError, IntentIndexPage, MarketplaceApplicationApiService
 from .authoring import ProductListingAuthoringError, ProductListingAuthoringFields
 from .postgres_state import ApplicationStatePutResult, StoreDisposition, SyncChange, SyncPage
+from .proposal import BuyerRequestProposalDraft
+from .proposal_authoring import ProposalAuthoringError
 
 MAX_APPLICATION_HTTP_BODY_BYTES = 256 * 1024
 MAX_APPLICATION_HTTP_RESPONSE_BYTES = 300 * 1024
@@ -26,6 +28,7 @@ _CSP = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
 RecordJsonDecoder = Callable[[bytes], Any]
 RecordJsonEncoder = Callable[[Any], bytes]
 ProductListingCreator = Callable[[ProductListingAuthoringFields], ApplicationStatePutResult]
+ProposalCreator = Callable[[BuyerRequestProposalDraft], ApplicationStatePutResult]
 
 _PRODUCT_LISTING_STRING_FIELDS = (
     "seller_principal",
@@ -44,6 +47,7 @@ _PRODUCT_LISTING_INTEGER_FIELDS = (
     "longitude_e6",
 )
 _PRODUCT_LISTING_FIELDS = frozenset(_PRODUCT_LISTING_STRING_FIELDS + _PRODUCT_LISTING_INTEGER_FIELDS)
+_PROPOSAL_FIELDS = frozenset(("buyer_principal", "subject_uri", "action_uri"))
 
 
 class ApplicationHttpError(RuntimeError):
@@ -115,6 +119,19 @@ def _product_listing_fields(document: dict[str, Any]) -> ProductListingAuthoring
     if any(type(document[name]) is not int for name in _PRODUCT_LISTING_INTEGER_FIELDS):
         raise ValueError("structured product-listing integer field type is invalid")
     return ProductListingAuthoringFields(**document)
+
+
+def _proposal_draft(document: dict[str, Any], parent_record_id: str) -> BuyerRequestProposalDraft:
+    if frozenset(document) != _PROPOSAL_FIELDS or len(document) != len(_PROPOSAL_FIELDS):
+        raise ValueError("structured Proposal member set is invalid")
+    if any(type(document[name]) is not str for name in _PROPOSAL_FIELDS):
+        raise ValueError("structured Proposal field type is invalid")
+    return BuyerRequestProposalDraft(
+        buyer_principal=document["buyer_principal"],
+        subject_uri=document["subject_uri"],
+        action_uri=document["action_uri"],
+        parent_record_id=parent_record_id,
+    )
 
 
 def _control_json(document: object) -> bytes:
@@ -254,6 +271,18 @@ def _record_id_from_path(path: str, *, responses: bool) -> str | None:
     return record_id
 
 
+def _proposal_parent_path(path: str) -> str | None:
+    parts = path.split("/")
+    if len(parts) != 5 or parts[:3] != ["", "api", "intents"] or parts[4] != "proposals":
+        return None
+    record_id = parts[3]
+    if not record_id or len(record_id) > 512:
+        return None
+    if any(ord(char) < 33 or ord(char) > 126 or char in "/?#" for char in record_id):
+        return None
+    return record_id
+
+
 def _response_parent_path(path: str) -> str | None:
     parts = path.split("/")
     if len(parts) != 5 or parts[:3] != ["", "api", "intents"] or parts[4] != "responses":
@@ -308,15 +337,19 @@ class MarketplaceApplicationHttpAdapter:
         decode_record_json: RecordJsonDecoder,
         encode_record_json: RecordJsonEncoder,
         create_product_listing: ProductListingCreator,
+        create_proposal: ProposalCreator,
     ) -> None:
         if not callable(decode_record_json) or not callable(encode_record_json):
             raise TypeError("record JSON codecs MUST be callable")
         if not callable(create_product_listing):
             raise TypeError("create_product_listing MUST be callable")
+        if not callable(create_proposal):
+            raise TypeError("create_proposal MUST be callable")
         self._api = api
         self._decode_record_json = decode_record_json
         self._encode_record_json = encode_record_json
         self._create_product_listing = create_product_listing
+        self._create_proposal = create_proposal
 
     def _decode_record(self, body: bytes) -> Any:
         _validate_json_object_bytes(body)
@@ -352,6 +385,9 @@ class MarketplaceApplicationHttpAdapter:
             return self._product_listings(request)
         if request.path == "/api/sync":
             return self._sync(request)
+        proposal_parent_id = _proposal_parent_path(request.path)
+        if proposal_parent_id is not None:
+            return self._proposals(request, proposal_parent_id)
         parent_id = _response_parent_path(request.path)
         if parent_id is not None:
             return self._responses(request, parent_id)
@@ -425,6 +461,36 @@ class MarketplaceApplicationHttpAdapter:
                 "PRODUCT_LISTING_AUTHORING_FAILED",
                 "product listing could not be authored safely",
             )
+
+    def _proposals(self, request: ApplicationHttpRequest, parent_id: str) -> ApplicationHttpResponse:
+        if request.method != "POST":
+            return _error_response(405, "Method Not Allowed", "METHOD_NOT_ALLOWED", "route does not accept this method", allow="POST")
+        if request.query:
+            return _bad_request("QUERY_INVALID")
+        if request.content_type != _JSON_CONTENT_TYPE:
+            return _error_response(415, "Unsupported Media Type", "UNSUPPORTED_MEDIA_TYPE", "application/json is required")
+        try:
+            document = _decode_json_object_bytes(request.body)
+        except ValueError:
+            return _bad_request("INVALID_JSON_BODY")
+        try:
+            draft = _proposal_draft(document, parent_id)
+        except (TypeError, ValueError):
+            return _bad_request("PROPOSAL_REQUEST_INVALID")
+        try:
+            return _json_response(201, "Created", _put_document(self._create_proposal(draft)))
+        except ProposalAuthoringError as exc:
+            if exc.code == "PROPOSAL_DRAFT_INVALID":
+                return _error_response(400, "Bad Request", exc.code, "structured Proposal draft is invalid")
+            if exc.code == "PROPOSAL_BUILD_FAILED":
+                return _error_response(500, "Internal Server Error", exc.code, "Proposal record could not be built")
+            return _error_response(500, "Internal Server Error", "PROPOSAL_AUTHORING_FAILED", "Proposal could not be authored safely")
+        except ApplicationApiError as exc:
+            return _application_failure(exc)
+        except ApplicationHttpError:
+            return _error_response(500, "Internal Server Error", "APPLICATION_API_RESULT_INVALID", "application API returned an invalid result")
+        except Exception:
+            return _error_response(500, "Internal Server Error", "PROPOSAL_AUTHORING_FAILED", "Proposal could not be authored safely")
 
     def _intents(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
         if request.method == "GET":
@@ -570,6 +636,7 @@ __all__ = [
     "MAX_APPLICATION_HTTP_RESPONSE_BYTES",
     "MarketplaceApplicationHttpAdapter",
     "ProductListingCreator",
+    "ProposalCreator",
     "RecordJsonDecoder",
     "RecordJsonEncoder",
 ]

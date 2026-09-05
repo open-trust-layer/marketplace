@@ -65,6 +65,7 @@ def make_plan() -> MarketplaceApplicationLaunchPlan:
         decode_record_json=decode_json,
         encode_record_json=encode_json,
         build_product_listing_record=lambda draft: object(),
+        build_proposal_record=lambda draft: object(),
         index_html=b"<!doctype html><title>Marketplace</title>",
         app_js=b"console.log('marketplace');\n",
         styles_css=b"body { margin: 0; }\n",

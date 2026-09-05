@@ -69,6 +69,7 @@ class M17StructuredProductHttpTests(unittest.TestCase):
             decode_record_json=decode_record,
             encode_record_json=encode_record,
             create_product_listing=creator or default_creator,
+            create_proposal=lambda draft: (_ for _ in ()).throw(AssertionError("proposal creator called")),
         )
         return adapter, api, calls
 
