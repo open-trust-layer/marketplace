@@ -8,6 +8,13 @@ from olp.encoding.record_identity import record_identity_text
 
 from . import federation_v1
 from .application_v1 import build_reference_marketplace_application_launch_plan
+from .application_record_v1 import (
+    MarketplaceApplicationRecordError,
+    decode_marketplace_application_record,
+    is_marketplace_intent_record,
+    marketplace_response_parent_ids,
+    prepare_marketplace_application_record,
+)
 from .inbound_http_v1 import (
     decode_inbound_control_envelope_json,
     encode_prepared_inbound_response_json,
@@ -136,6 +143,7 @@ __all__ = [
     "LocalVisualSubmission",
     "MarketplaceConformanceError",
     "MarketplaceDiscoveryError",
+    "MarketplaceApplicationRecordError",
     "MarketplaceTransportJsonError",
     "PRODUCT_LISTING_PROFILE",
     "PROPOSAL_PROFILE",
@@ -152,6 +160,10 @@ __all__ = [
     "bind_cursor",
     "build_product_listing_record",
     "build_reference_marketplace_application_launch_plan",
+    "decode_marketplace_application_record",
+    "is_marketplace_intent_record",
+    "marketplace_response_parent_ids",
+    "prepare_marketplace_application_record",
     "build_buyer_request_proposal_record",
     "decode_inbound_control_envelope_json",
     "decode_transport_envelope_json",
