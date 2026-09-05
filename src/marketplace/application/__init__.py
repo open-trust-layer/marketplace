@@ -53,6 +53,11 @@ from .proposal import (
     BuyerRequestProposalDraft,
     review_buyer_request_proposal_draft,
 )
+from .proposal_authoring import (
+    MarketplaceProposalAuthoringService,
+    ProposalAuthoringError,
+    ProposalRecordBuilder,
+)
 from .postgres_query import ApplicationIntentQueryError, PostgresIntentQuery
 from .postgres_state import (
     APPLICATION_STATE_RETENTION_CLASS,
@@ -120,8 +125,9 @@ __all__ = [
     "MarketplaceApplicationLaunchPlan",
     "MarketplaceApplicationStateService",
     "MarketplaceAsgiServerProvider",
-    "MarketplaceProductListingAuthoringService",
     "MarketplaceLocalRuntimeError",
+    "MarketplaceProductListingAuthoringService",
+    "MarketplaceProposalAuthoringService",
     "MarketplaceSiteHostAdapter",
     "MarketplaceUvicornProviderError",
     "OfflineMapFixture",
@@ -134,6 +140,8 @@ __all__ = [
     "ProductListingCreator",
     "ProductListingDraft",
     "ProductListingRecordBuilder",
+    "ProposalAuthoringError",
+    "ProposalRecordBuilder",
     "PublishedRecord",
     "SyncChange",
     "SyncPage",
