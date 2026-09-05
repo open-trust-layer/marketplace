@@ -38,8 +38,8 @@ class M17InertPostgresReferenceCompositionTests(unittest.TestCase):
             host="127.0.0.1",
             port=8080,
             index_html=b"<html></html>",
-            app_js=b"",
-            styles_css=b"",
+            app_js=b"export {};",
+            styles_css=b"body{}",
         )
 
         self.assertEqual(calls, [])
