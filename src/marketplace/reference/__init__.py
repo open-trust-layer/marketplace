@@ -73,6 +73,10 @@ from .product_listing_v1 import (
     extract_product_listing,
     validate_product_listing_record,
 )
+from .proposal_v1 import (
+    ProposalProfileError,
+    build_buyer_request_proposal_record,
+)
 from .record_retrieval_v1 import (
     RetrievedRecordVerificationError,
     VerifiedRetrievedRecord,
@@ -135,6 +139,7 @@ __all__ = [
     "PRODUCT_LISTING_PROFILE",
     "PROPOSAL_PROFILE",
     "ProductListingProfileError",
+    "ProposalProfileError",
     "RECORD_TYPES",
     "RecordServingReferenceError",
     "RetrievedRecordVerificationError",
@@ -145,6 +150,7 @@ __all__ = [
     "VerifiedRetrievedRecord",
     "bind_cursor",
     "build_product_listing_record",
+    "build_buyer_request_proposal_record",
     "decode_inbound_control_envelope_json",
     "decode_transport_envelope_json",
     "encode_prepared_inbound_response_json",
