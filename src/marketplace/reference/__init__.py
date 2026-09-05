@@ -7,6 +7,7 @@ remains independent and does not import this package implicitly.
 from olp.encoding.record_identity import record_identity_text
 
 from . import federation_v1
+from .application_v1 import build_reference_marketplace_application_launch_plan
 from .inbound_http_v1 import (
     decode_inbound_control_envelope_json,
     encode_prepared_inbound_response_json,
@@ -150,6 +151,7 @@ __all__ = [
     "VerifiedRetrievedRecord",
     "bind_cursor",
     "build_product_listing_record",
+    "build_reference_marketplace_application_launch_plan",
     "build_buyer_request_proposal_record",
     "decode_inbound_control_envelope_json",
     "decode_transport_envelope_json",
