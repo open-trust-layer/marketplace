@@ -99,11 +99,15 @@
       </form>
       <form id="response-form" class="panel author-panel">
         <p class="eyebrow">Exact selected parent</p>
-        <h2>Respond to intent</h2>
-        <p class="muted">The submitted record must already carry the reviewed response binding for the selected parent.</p>
-        <label for="response-record-json">Response record JSON</label>
-        <textarea id="response-record-json" spellcheck="false" maxlength="262144" required></textarea>
-        <button id="submit-response" type="submit" disabled>Respond</button>
+        <h2>Create Proposal</h2>
+        <p class="muted">Enter buyer/request fields only. The selected parent is supplied by the route.</p>
+        <label for="proposal-buyer-principal">Buyer principal URI</label>
+        <input id="proposal-buyer-principal" type="text" autocomplete="off" required>
+        <label for="proposal-subject-uri">Subject URI</label>
+        <input id="proposal-subject-uri" type="text" autocomplete="off" required>
+        <label for="proposal-action-uri">Action URI</label>
+        <input id="proposal-action-uri" type="text" autocomplete="off" required>
+        <button id="submit-response" type="submit" disabled>Create Proposal</button>
         <p id="response-status" role="status" class="muted"></p>
       </form>
     </section>

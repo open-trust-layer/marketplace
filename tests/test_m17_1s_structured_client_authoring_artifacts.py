@@ -35,12 +35,13 @@ class M17StructuredClientAuthoringArtifactTests(unittest.TestCase):
         self.assertIn("async function createProductListing", text)
         self.assertIn("apiFetch(API_PRODUCT_LISTINGS", text)
         create_start = text.index("async function createProductListing")
-        response_start = text.index("async function respondToIntent", create_start)
-        create_block = text[create_start:response_start]
+        proposal_start = text.index("async function createProposal", create_start)
+        create_block = text[create_start:proposal_start]
         self.assertNotIn("API_INTENTS", create_block)
-        response_block = text[response_start:text.index("async function runSyncAction", response_start)]
-        self.assertIn("reviewedRecordJsonBody", response_block)
-        self.assertIn("API_INTENTS", response_block)
+        proposal_block = text[proposal_start:text.index("async function runSyncAction", proposal_start)]
+        self.assertIn("PROPOSALS_SUFFIX", proposal_block)
+        self.assertIn("API_INTENTS", proposal_block)
+        self.assertIn("RESPONSES_SUFFIX", text)
 
     def test_web_encoder_uses_exact_field_names_and_integer_tokens(self):
         text = WEB_APP.read_text(encoding="utf-8")
@@ -71,8 +72,10 @@ class M17StructuredClientAuthoringArtifactTests(unittest.TestCase):
         self.assertIn("ProductListingInput", app)
         self.assertNotIn("onCreateIntent", app)
         self.assertNotIn("state.createIntent", state)
-        self.assertIn("respondToIntent", client + state + app)
-        self.assertIn("rawRecordJson", client + state)
+        self.assertIn("respondToIntent", client)
+        self.assertIn("rawRecordJson", client)
+        self.assertNotIn("client.respondToIntent", state)
+        self.assertIn("createProposal", state + app)
 
     def test_android_encoder_preserves_integer_text_until_json_serialization(self):
         text = ANDROID_CLIENT.read_text(encoding="utf-8")

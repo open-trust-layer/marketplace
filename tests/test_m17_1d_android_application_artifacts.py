@@ -27,7 +27,7 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
             "Intent list",
             "Intent detail",
             "Create product listing",
-            "Respond to intent",
+            "Create Proposal",
         ):
             self.assertIn(marker, text)
 
@@ -38,6 +38,7 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
             '"/api/product-listings"',
             '"/api/sync"',
             '"/responses"',
+            '"/proposals"',
             "MarketplaceTransport",
             "suspend fun execute",
         ):
@@ -71,7 +72,7 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
 
     def test_root_create_is_structured_while_response_remains_raw(self):
         text = CLIENT.read_text(encoding="utf-8") + STATE.read_text(encoding="utf-8")
-        for marker in ("ProductListingInput", "createProductListing", "respondToIntent", "rawRecordJson"):
+        for marker in ("ProductListingInput", "createProductListing", "ProposalInput", "createProposal", "respondToIntent", "rawRecordJson"):
             self.assertIn(marker, text)
         for forbidden in (
             "buildMarketIntent", "validateMarketIntent", "recordIdentity", "signRecord",

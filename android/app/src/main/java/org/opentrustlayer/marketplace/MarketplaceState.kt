@@ -44,8 +44,8 @@ class MarketplaceState(
         fullResync()
     }
 
-    suspend fun respondToIntent(parentId: String, rawRecordJson: String) {
-        client.respondToIntent(parentId, rawRecordJson)
+    suspend fun createProposal(parentId: String, fields: ProposalInput) {
+        client.createProposal(parentId, fields)
         fullResync()
         selectRootIntent(parentId)
     }

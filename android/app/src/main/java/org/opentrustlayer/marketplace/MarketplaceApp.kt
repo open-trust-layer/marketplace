@@ -40,10 +40,10 @@ fun MarketplaceScreen(
     onSync: () -> Unit,
     onSelectIntent: (String) -> Unit,
     onCreateProductListing: (ProductListingInput) -> Unit,
-    onRespondToIntent: (String, String) -> Unit,
+    onCreateProposal: (String, ProposalInput) -> Unit,
 ) {
     var createFields by remember { mutableStateOf(ProductListingInput()) }
-    var responseJson by remember { mutableStateOf("") }
+    var proposalFields by remember { mutableStateOf(ProposalInput()) }
 
     MaterialTheme {
         Column(
@@ -155,21 +155,30 @@ fun MarketplaceScreen(
             Button(onClick = { onCreateProductListing(createFields) }) {
                 Text("Submit product listing")
             }
-            Text("Respond to intent", style = MaterialTheme.typography.titleMedium)
-            OutlinedTextField(
-                value = responseJson,
-                onValueChange = { responseJson = it },
-                label = { Text("Reviewed raw response record JSON") },
-                modifier = Modifier.fillMaxWidth(),
+            Text("Create Proposal", style = MaterialTheme.typography.titleMedium)
+            ListingField(
+                label = "Buyer principal URI",
+                value = proposalFields.buyer_principal,
+                onValueChange = { proposalFields = proposalFields.copy(buyer_principal = it) },
+            )
+            ListingField(
+                label = "Subject URI",
+                value = proposalFields.subject_uri,
+                onValueChange = { proposalFields = proposalFields.copy(subject_uri = it) },
+            )
+            ListingField(
+                label = "Action URI",
+                value = proposalFields.action_uri,
+                onValueChange = { proposalFields = proposalFields.copy(action_uri = it) },
             )
             val parentId = uiState.selectedRecord?.id
             Button(
                 onClick = {
-                    if (parentId != null) onRespondToIntent(parentId, responseJson)
+                    if (parentId != null) onCreateProposal(parentId, proposalFields)
                 },
                 enabled = parentId != null,
             ) {
-                Text("Submit response")
+                Text("Submit Proposal")
             }
         }
     }
