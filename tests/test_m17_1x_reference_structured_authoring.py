@@ -16,6 +16,7 @@ from marketplace.application.postgres_state import (
 )
 from marketplace.application.proposal import BuyerRequestProposalDraft
 from marketplace.reference.application_v1 import build_reference_marketplace_application_launch_plan
+from marketplace.reference.application_record_v1 import decode_marketplace_application_record
 from marketplace.reference.product_listing_v1 import build_product_listing_record
 from marketplace.reference.proposal_v1 import build_buyer_request_proposal_record
 from marketplace.reference.record_v1 import PROPOSAL_PROFILE, TYPE_INTENT
@@ -54,6 +55,7 @@ class MemoryStateStore:
     def put(self, prepared: PreparedApplicationRecord) -> ApplicationStatePutResult:
         self.change_seq += 1
         self.records[prepared.record_id] = prepared
+        self.captured.append(decode_marketplace_application_record(prepared.canonical_record))
         return ApplicationStatePutResult(StoreDisposition.STORED, self.change_seq)
 
     def get(self, record_id: str) -> PreparedApplicationRecord | None:
@@ -111,10 +113,6 @@ class M17ReferenceStructuredAuthoringTests(unittest.TestCase):
             port=48732,
             store=store,
             intent_query=EmptyIntentQuery(),
-            prepare_record=store.prepare,
-            decode_record=store.decode,
-            response_parent_ids=response_parent_ids,
-            is_intent_record=is_intent_record,
             decode_record_json=unused_decode_json,
             encode_record_json=unused_encode_json,
             index_html=b"<!doctype html>",
