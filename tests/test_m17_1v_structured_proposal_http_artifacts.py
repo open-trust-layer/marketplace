@@ -13,12 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 HTTP = ROOT / "src" / "marketplace" / "application" / "http.py"
 COMPOSITION = ROOT / "src" / "marketplace" / "application" / "composition.py"
 LAUNCH = ROOT / "src" / "marketplace" / "application" / "launch.py"
-DOC = ROOT / "docs" / "m17-1r-structured-product-http.md"
+DOC = ROOT / "docs" / "m17-1v-structured-proposal-http.md"
 
 
 class MinimalStore:
     def initialize(self):
-        raise AssertionError("M17.1R artifact composition must remain inert")
+        raise AssertionError("M17.1V composition must remain inert")
 
 
 class StaticIntentQuery:
@@ -34,12 +34,12 @@ def encode_json(record: object) -> bytes:
     return json.dumps(record, sort_keys=True, separators=(",", ":")).encode("utf-8")
 
 
-class M17StructuredProductHttpArtifactTests(unittest.TestCase):
-    def test_public_application_exports_creator_contract(self):
-        self.assertTrue(hasattr(application, "ProductListingCreator"))
-        self.assertIn("ProductListingCreator", application.__all__)
+class M17StructuredProposalHttpArtifactTests(unittest.TestCase):
+    def test_public_application_exports_proposal_creator_contract(self):
+        self.assertTrue(hasattr(application, "ProposalCreator"))
+        self.assertIn("ProposalCreator", application.__all__)
 
-    def test_composition_wires_authoring_service_to_http_without_initialization(self):
+    def test_composition_wires_proposal_authoring_without_initialization(self):
         composition = compose_marketplace_application(
             store=MinimalStore(),
             intent_query=StaticIntentQuery(),
@@ -55,17 +55,20 @@ class M17StructuredProductHttpArtifactTests(unittest.TestCase):
             app_js=b"console.log(1)",
             styles_css=b"body{}",
         )
-        self.assertIs(composition.authoring._api, composition.api)
-        self.assertIs(composition.http._create_product_listing.__self__, composition.authoring)
+        self.assertIs(composition.proposal_authoring._api, composition.api)
+        self.assertIs(
+            composition.http._create_proposal.__self__,
+            composition.proposal_authoring,
+        )
 
     def test_source_preserves_reference_and_runtime_authority_boundary(self):
         http = HTTP.read_text(encoding="utf-8")
         composition = COMPOSITION.read_text(encoding="utf-8")
         launch = LAUNCH.read_text(encoding="utf-8")
-        self.assertIn('"/api/product-listings"', http)
-        self.assertIn("ProductListingAuthoringFields", http)
-        self.assertIn("MarketplaceProductListingAuthoringService", composition)
-        self.assertIn("build_product_listing_record", composition)
+        self.assertIn('"proposals"', http)
+        self.assertIn("BuyerRequestProposalDraft", http)
+        self.assertIn("MarketplaceProposalAuthoringService", composition)
+        self.assertIn("build_proposal_record", launch)
         for text in (http, composition, launch):
             lowered = text.lower()
             for forbidden in (
@@ -79,17 +82,17 @@ class M17StructuredProductHttpArtifactTests(unittest.TestCase):
             ):
                 self.assertNotIn(forbidden, lowered)
 
-    def test_document_records_route_raw_path_and_deferred_clients(self):
+    def test_document_records_route_and_semantic_exclusions(self):
         self.assertTrue(DOC.is_file())
         text = DOC.read_text(encoding="utf-8")
         for marker in (
-            "POST /api/product-listings",
-            "POST /api/intents",
-            "PRODUCT_LISTING_REQUEST_INVALID",
-            "ProductListingAuthoringFields",
-            "does not modify `web/**` or `android/**`",
+            "POST /api/intents/{parent_record_id}/proposals",
+            "POST /api/intents/{parent_record_id}/responses",
+            "PROPOSAL_REQUEST_INVALID",
+            "BuyerRequestProposalDraft",
+            "No universal `ACTION_BUY`",
             "No live PostgreSQL connection",
-            "Uvicorn/server/socket activation",
+            "server/socket activation",
         ):
             self.assertIn(marker, text)
 

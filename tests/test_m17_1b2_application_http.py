@@ -66,6 +66,7 @@ class M17ApplicationHttpTests(unittest.TestCase):
             decode_record_json=decode_record,
             encode_record_json=encode_record,
             create_product_listing=lambda fields: ApplicationStatePutResult(StoreDisposition.STORED, 9),
+            create_proposal=lambda draft: (_ for _ in ()).throw(AssertionError("proposal creator called")),
         ), api
 
     def request(self, method, path, *, query=(), content_type=None, body=b""):
