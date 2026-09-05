@@ -1,4 +1,4 @@
-﻿"""Transport-neutral structured draft for one core buyer/request Proposal response."""
+"""Transport-neutral structured draft for one core buyer/request Proposal response."""
 from __future__ import annotations
 
 from dataclasses import dataclass

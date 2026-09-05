@@ -1,4 +1,4 @@
-﻿# M17.1T — Structured core Proposal response builder
+# M17.1T — Structured core Proposal response builder
 
 ## Baseline and purpose
 

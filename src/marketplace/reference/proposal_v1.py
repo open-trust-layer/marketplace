@@ -1,4 +1,4 @@
-﻿"""Reference OLP adapter for one structured core buyer/request Proposal response."""
+"""Reference OLP adapter for one structured core buyer/request Proposal response."""
 from __future__ import annotations
 
 from olp import RecordV1
