@@ -8,6 +8,9 @@ from olp.encoding.record_identity import record_identity_text
 
 from . import federation_v1
 from .application_v1 import build_reference_marketplace_application_launch_plan
+from .postgres_application_v1 import (
+    build_reference_postgres_marketplace_application_launch_plan,
+)
 from .application_record_v1 import (
     MarketplaceApplicationRecordError,
     decode_marketplace_application_record,
@@ -160,6 +163,7 @@ __all__ = [
     "bind_cursor",
     "build_product_listing_record",
     "build_reference_marketplace_application_launch_plan",
+    "build_reference_postgres_marketplace_application_launch_plan",
     "decode_marketplace_application_record",
     "is_marketplace_intent_record",
     "marketplace_response_parent_ids",
