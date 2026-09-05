@@ -97,14 +97,6 @@ def is_intent_record(record: object) -> bool:
     return type(record) is RecordV1 and record.type == TYPE_INTENT
 
 
-def unused_decode_json(body: bytes) -> object:
-    raise AssertionError("raw JSON decoder must remain unused by structured authoring integration")
-
-
-def unused_encode_json(record: object) -> bytes:
-    raise AssertionError("raw JSON encoder must remain unused by structured authoring integration")
-
-
 class M17ReferenceStructuredAuthoringTests(unittest.TestCase):
     def plan(self):
         store = MemoryStateStore()
@@ -113,8 +105,6 @@ class M17ReferenceStructuredAuthoringTests(unittest.TestCase):
             port=48732,
             store=store,
             intent_query=EmptyIntentQuery(),
-            decode_record_json=unused_decode_json,
-            encode_record_json=unused_encode_json,
             index_html=b"<!doctype html>",
             app_js=b"'use strict';",
             styles_css=b"body{}",
