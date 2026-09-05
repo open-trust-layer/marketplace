@@ -28,15 +28,13 @@ class M17ReferenceRecordStateAdapterArtifactsTests(unittest.TestCase):
         ):
             self.assertIn(marker, text)
 
-    def test_reference_launch_factory_fixes_state_semantics_but_leaves_raw_json_injected(self):
+    def test_reference_launch_factory_still_fixes_m17_1y_state_semantics(self):
         text = FACTORY.read_text(encoding="utf-8-sig")
         for marker in (
             "prepare_record=prepare_marketplace_application_record",
             "decode_record=decode_marketplace_application_record",
             "response_parent_ids=marketplace_response_parent_ids",
             "is_intent_record=is_marketplace_intent_record",
-            "decode_record_json: RecordJsonDecoder",
-            "encode_record_json: RecordJsonEncoder",
         ):
             self.assertIn(marker, text)
         signature = text.split("def build_reference_marketplace_application_launch_plan(", 1)[1].split(") -> MarketplaceApplicationLaunchPlan:", 1)[0]
