@@ -4,11 +4,13 @@ const API_INTENTS = "/api/intents";
 const API_PRODUCT_LISTINGS = "/api/product-listings";
 const API_SYNC = "/api/sync";
 const RESPONSES_SUFFIX = "/responses";
+const PROPOSALS_SUFFIX = "/proposals";
 const PAGE_LIMIT = 64;
 const SYNC_LIMIT = 64;
 const MAX_SYNC_PAGES = 4;
 const MAX_LIST_PAGES = 4;
 const MAX_RECORD_JSON_BYTES = 256 * 1024;
+const MAX_PROPOSAL_URI_BYTES = 2048;
 const MAX_RESPONSE_JSON_BYTES = 300 * 1024;
 const MAP_WIDTH = 720;
 const MAP_HEIGHT = 360;
@@ -19,6 +21,7 @@ const PRODUCT_LISTING_INTEGER_FIELDS = [
   "consideration_coefficient", "consideration_scale", "quantity_coefficient",
   "quantity_scale", "latitude_e6", "longitude_e6",
 ];
+const PROPOSAL_FIELDS = ["buyer_principal", "subject_uri", "action_uri"];
 
 const state = {
   records: new Map(),
@@ -386,20 +389,6 @@ async function incrementalSync() {
     throw error;
   }
 }
-function reviewedRecordJsonBody(text) {
-  if (typeof text !== "string" || text.trim().length === 0) {
-    throw stableClientError("RECORD_JSON_REQUIRED");
-  }
-  const bytes = new TextEncoder().encode(text);
-  if (bytes.length > MAX_RECORD_JSON_BYTES) throw stableClientError("RECORD_JSON_TOO_LARGE");
-  try {
-    JSON.parse(text);
-  } catch {
-    throw stableClientError("RECORD_JSON_INVALID");
-  }
-  return text;
-}
-
 function canonicalIntegerJsonToken(value) {
   if (typeof value !== "string" || !/^(0|-?[1-9][0-9]*)$/.test(value)) {
     throw stableClientError("PRODUCT_LISTING_INTEGER_INVALID");
@@ -424,6 +413,26 @@ function productListingJsonBody() {
   return body;
 }
 
+function reviewedProposalUri(value) {
+  if (typeof value !== "string" || value.length === 0) throw stableClientError("PROPOSAL_FIELD_INVALID");
+  if (new TextEncoder().encode(value).length > MAX_PROPOSAL_URI_BYTES) throw stableClientError("PROPOSAL_FIELD_INVALID");
+  if (!/^[A-Za-z][A-Za-z0-9+.-]*:\S+$/.test(value)) throw stableClientError("PROPOSAL_FIELD_INVALID");
+  return value;
+}
+
+function proposalJsonBody() {
+  const parts = [];
+  for (const name of PROPOSAL_FIELDS) {
+    const value = reviewedProposalUri(byId(`proposal-${name.replaceAll("_", "-")}`).value);
+    parts.push(`${JSON.stringify(name)}:${JSON.stringify(value)}`);
+  }
+  const body = `{${parts.join(",")}}`;
+  if (new TextEncoder().encode(body).length > MAX_RECORD_JSON_BYTES) {
+    throw stableClientError("PROPOSAL_JSON_TOO_LARGE");
+  }
+  return body;
+}
+
 function setFormStatus(id, message, kind = "") {
   const target = byId(id);
   target.textContent = message;
@@ -442,25 +451,25 @@ async function createProductListing(event) {
     setFormStatus("create-status", `Create failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
   }
 }
-async function respondToIntent(event) {
+async function createProposal(event) {
   event.preventDefault();
   if (state.selectedId === null) {
     setFormStatus("response-status", "Select a parent intent first.", "error");
     return;
   }
   try {
-    const body = reviewedRecordJsonBody(byId("response-record-json").value);
+    const body = proposalJsonBody();
     const parentId = requireRecordId(state.selectedId);
-    setFormStatus("response-status", "Submitting reviewed response record JSON…");
-    await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${RESPONSES_SUFFIX}`, {
+    setFormStatus("response-status", "Submitting structured Proposal…");
+    await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
       method: "POST",
       body,
     });
-    setFormStatus("response-status", "Response accepted by the shared application API.", "success");
+    setFormStatus("response-status", "Proposal accepted by the shared application API.", "success");
     await fullResync();
     if (state.records.has(parentId)) selectIntent(parentId);
   } catch (error) {
-    setFormStatus("response-status", `Response failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setFormStatus("response-status", `Proposal failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
   }
 }
 
@@ -482,7 +491,7 @@ byId("clear-selection").addEventListener("click", () => {
   renderDetail();
 });
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
-byId("response-form").addEventListener("submit", (event) => void respondToIntent(event));
+byId("response-form").addEventListener("submit", (event) => void createProposal(event));
 
 renderList();
 renderDetail();

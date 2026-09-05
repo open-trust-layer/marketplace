@@ -4,9 +4,11 @@ private const val API_INTENTS = "/api/intents"
 private const val API_PRODUCT_LISTINGS = "/api/product-listings"
 private const val API_SYNC = "/api/sync"
 private const val RESPONSES_SUFFIX = "/responses"
+private const val PROPOSALS_SUFFIX = "/proposals"
 private const val PAGE_LIMIT = 64
 private const val MAX_ID_CHARS = 512
 private const val MAX_RAW_JSON_BYTES = 256 * 1024
+private const val MAX_PROPOSAL_URI_BYTES = 2048
 private const val MAX_RESPONSE_JSON_BYTES = 300 * 1024
 
 data class ApiRequest(
@@ -37,6 +39,12 @@ data class ProductListingInput(
     val unit_uri: String = "",
     val latitude_e6: String = "",
     val longitude_e6: String = "",
+)
+
+data class ProposalInput(
+    val buyer_principal: String = "",
+    val subject_uri: String = "",
+    val action_uri: String = "",
 )
 
 data class RawRecord(
@@ -111,6 +119,13 @@ class MarketplaceApiClient(
                 transport.execute(ApiRequest("POST", API_PRODUCT_LISTINGS, structuredProductListingJson(fields)))
             )
         ))
+
+    suspend fun createProposal(parentId: String, fields: ProposalInput): WriteReceipt {
+        val path = "$API_INTENTS/${encodeComponent(requireBoundedId(parentId))}$PROPOSALS_SUFFIX"
+        return validateWriteReceipt(codec.decodeWriteReceipt(
+            expectOk(transport.execute(ApiRequest("POST", path, structuredProposalJson(fields))))
+        ))
+    }
 
     suspend fun createIntent(rawRecordJson: String): WriteReceipt =
         validateWriteReceipt(codec.decodeWriteReceipt(
@@ -249,10 +264,18 @@ class MarketplaceApiClient(
 }
 
 private val JSON_INTEGER = Regex("0|-?[1-9][0-9]*")
+private val ABSOLUTE_URI = Regex("[A-Za-z][A-Za-z0-9+.-]*:\\S+")
 
 private fun canonicalIntegerJsonToken(value: String): String {
     if (!JSON_INTEGER.matches(value)) {
         throw MarketplaceClientException("PRODUCT_LISTING_INTEGER_INVALID", "product listing integer is invalid")
+    }
+    return value
+}
+
+private fun reviewedProposalUri(value: String): String {
+    if (value.isEmpty() || value.encodeToByteArray().size > MAX_PROPOSAL_URI_BYTES || !ABSOLUTE_URI.matches(value)) {
+        throw MarketplaceClientException("PROPOSAL_FIELD_INVALID", "Proposal field is invalid")
     }
     return value
 }
@@ -322,6 +345,25 @@ private fun structuredProductListingJson(fields: ProductListingInput): String {
     }
     return body
 }
+private fun structuredProposalJson(fields: ProposalInput): String {
+    val body = buildString {
+        append('{')
+        append("\"buyer_principal\":")
+        append(jsonString(reviewedProposalUri(fields.buyer_principal)))
+        append(',')
+        append("\"subject_uri\":")
+        append(jsonString(reviewedProposalUri(fields.subject_uri)))
+        append(',')
+        append("\"action_uri\":")
+        append(jsonString(reviewedProposalUri(fields.action_uri)))
+        append('}')
+    }
+    if (body.encodeToByteArray().size !in 1..MAX_RAW_JSON_BYTES) {
+        throw MarketplaceClientException("PROPOSAL_JSON_TOO_LARGE", "Proposal JSON outside byte bound")
+    }
+    return body
+}
+
 private fun encodeComponent(value: String): String {
     val bytes = value.encodeToByteArray()
     val out = StringBuilder(bytes.size)

@@ -24,7 +24,9 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
             'id="intent-list"',
             'id="intent-detail"',
             'id="create-seller-principal"',
-            'id="response-record-json"',
+            'id="proposal-buyer-principal"',
+            'id="proposal-subject-uri"',
+            'id="proposal-action-uri"',
             'id="sync-status"',
         ):
             self.assertIn(marker, text)
@@ -34,6 +36,7 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
             '"/api/intents"',
             '"/api/sync"',
             '"/responses"',
+            '"/proposals"',
             'credentials: "omit"',
             'cache: "no-store"',
             'redirect: "error"',
@@ -102,7 +105,7 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         apply_block = text[apply_start:sync_start]
         self.assertNotIn("state.records.set(", apply_block)
         self.assertNotIn("state.records.delete(", apply_block)
-        sync_end = text.index("function reviewedRecordJsonBody", sync_start)
+        sync_end = text.index("function canonicalIntegerJsonToken", sync_start)
         sync_block = text[sync_start:sync_end]
         self.assertIn("browseDirty", sync_block)
         self.assertIn("await hydrateCurrentIntents()", sync_block)
@@ -119,7 +122,7 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
     def test_incremental_sync_does_not_claim_complete_when_page_budget_is_exhausted(self):
         text = APP.read_text(encoding="utf-8")
         start = text.index("async function incrementalSync")
-        end = text.index("function reviewedRecordJsonBody", start)
+        end = text.index("function canonicalIntegerJsonToken", start)
         block = text[start:end]
         self.assertIn("let hasMore", block)
         self.assertIn("if (hasMore)", block)
@@ -128,13 +131,15 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         success = block.index("Synchronized at local cursor")
         self.assertLess(bounded, success)
 
-    def test_root_create_is_structured_while_response_remains_raw(self):
+    def test_product_authoring_surfaces_are_structured(self):
         text = APP.read_text(encoding="utf-8")
         index = INDEX.read_text(encoding="utf-8")
         self.assertIn("create-seller-principal", index)
         self.assertNotIn("create-record-json", index)
-        self.assertIn("response-record-json", index)
+        self.assertNotIn("response-record-json", index)
+        self.assertIn("proposal-buyer-principal", index)
         self.assertIn('"/api/product-listings"', text)
+        self.assertIn('"/proposals"', text)
         for forbidden in ("buildMarketIntent", "validateMarketIntent", "recordIdentity", "signRecord"):
             self.assertNotIn(forbidden, text)
     def test_web_design_document_preserves_authority_boundary(self):
