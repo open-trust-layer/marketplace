@@ -48,6 +48,11 @@ from .local import (
     MarketplaceApplicationError,
     PublishedRecord,
 )
+from .proposal import (
+    MAX_PROPOSAL_PARENT_RECORD_ID_CHARS,
+    BuyerRequestProposalDraft,
+    review_buyer_request_proposal_draft,
+)
 from .postgres_query import ApplicationIntentQueryError, PostgresIntentQuery
 from .postgres_state import (
     APPLICATION_STATE_RETENTION_CLASS,
@@ -106,6 +111,8 @@ __all__ = [
     "MAX_LAUNCH_PORT",
     "MAX_RENDERED_LISTINGS",
     "MIN_LAUNCH_PORT",
+    "MAX_PROPOSAL_PARENT_RECORD_ID_CHARS",
+    "BuyerRequestProposalDraft",
     "MarketplaceApplicationApiService",
     "MarketplaceApplicationComposition",
     "MarketplaceApplicationError",
@@ -142,5 +149,6 @@ __all__ = [
     "compose_marketplace_application",
     "project_wgs84_e6",
     "render_product_listing_page",
+    "review_buyer_request_proposal_draft",
     "run_marketplace_application_foreground",
 ]
