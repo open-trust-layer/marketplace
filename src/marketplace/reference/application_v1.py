@@ -7,12 +7,15 @@ database connection, socket operation, or server execution.
 from __future__ import annotations
 
 from ..application.api import IntentQueryPort
-from ..application.http import RecordJsonDecoder, RecordJsonEncoder
 from ..application.launch import (
     MarketplaceApplicationLaunchPlan,
     build_marketplace_application_launch_plan,
 )
 from ..application.state import ApplicationStateStore
+from .application_record_json_v1 import (
+    decode_marketplace_application_record_json,
+    encode_marketplace_application_record_json,
+)
 from .application_record_v1 import (
     decode_marketplace_application_record,
     is_marketplace_intent_record,
@@ -29,8 +32,6 @@ def build_reference_marketplace_application_launch_plan(
     port: int,
     store: ApplicationStateStore,
     intent_query: IntentQueryPort,
-    decode_record_json: RecordJsonDecoder,
-    encode_record_json: RecordJsonEncoder,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -46,8 +47,8 @@ def build_reference_marketplace_application_launch_plan(
         decode_record=decode_marketplace_application_record,
         response_parent_ids=marketplace_response_parent_ids,
         is_intent_record=is_marketplace_intent_record,
-        decode_record_json=decode_record_json,
-        encode_record_json=encode_record_json,
+        decode_record_json=decode_marketplace_application_record_json,
+        encode_record_json=encode_marketplace_application_record_json,
         build_product_listing_record=build_product_listing_record,
         build_proposal_record=build_buyer_request_proposal_record,
         index_html=index_html,
