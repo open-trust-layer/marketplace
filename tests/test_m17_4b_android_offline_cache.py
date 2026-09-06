@@ -59,6 +59,15 @@ class M174BAndroidOfflineCacheTests(unittest.TestCase):
             "StandardCopyOption.REPLACE_EXISTING",
         ):
             self.assertIn(marker, text)
+
+    def test_platform_adapter_replace_has_explicit_unit_contract(self):
+        text = ANDROID_CACHE.read_text(encoding="utf-8")
+        self.assertIn(
+            "override suspend fun replace(snapshot: MarketplaceOfflineSnapshot): Unit = withContext(Dispatchers.IO)",
+            text,
+        )
+        self.assertIn("Files.move(", text)
+
     def test_state_adopts_cache_only_as_explicit_offline_fallback(self):
         text = STATE.read_text(encoding="utf-8")
         for marker in (
