@@ -10,6 +10,7 @@ TOOLCHAIN = ROOT / "android" / "toolchain.toml"
 SETTINGS = ROOT / "android" / "settings.gradle.kts"
 ROOT_BUILD = ROOT / "android" / "build.gradle.kts"
 APP_BUILD = ROOT / "android" / "app" / "build.gradle.kts"
+GRADLE_PROPERTIES = ROOT / "android" / "gradle.properties"
 DOC = ROOT / "docs" / "m17-1f-android-gradle-wiring.md"
 
 
@@ -19,7 +20,7 @@ class M17AndroidGradleWiringTests(unittest.TestCase):
         cls.pins = tomllib.loads(TOOLCHAIN.read_text(encoding="utf-8"))
 
     def test_required_source_wiring_artifacts_exist(self):
-        for path in (SETTINGS, ROOT_BUILD, APP_BUILD, DOC):
+        for path in (SETTINGS, ROOT_BUILD, APP_BUILD, GRADLE_PROPERTIES, DOC):
             self.assertTrue(path.is_file(), str(path))
 
     def test_settings_define_only_reviewed_module_and_standard_repositories(self):
@@ -46,6 +47,12 @@ class M17AndroidGradleWiringTests(unittest.TestCase):
         text = APP_BUILD.read_text(encoding="utf-8")
         self.assertNotIn("org.jetbrains.kotlin.android", text)
         self.assertIn('id("org.jetbrains.kotlin.plugin.compose")', text)
+
+    def test_gradle_disables_automatic_sdk_package_downloads(self):
+        text = GRADLE_PROPERTIES.read_text(encoding="utf-8")
+        assignments = {line.strip() for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")}
+        self.assertIn("android.builder.sdkDownload=false", assignments)
+        self.assertNotIn("android.builder.sdkDownload=true", assignments)
 
     def test_app_android_identity_and_sdk_contract_match_reviewed_profile(self):
         text = APP_BUILD.read_text(encoding="utf-8")
@@ -80,7 +87,7 @@ class M17AndroidGradleWiringTests(unittest.TestCase):
     def test_wiring_has_no_wrapper_signing_install_or_runtime_authority(self):
         combined = "\n".join(
             path.read_text(encoding="utf-8").lower()
-            for path in (SETTINGS, ROOT_BUILD, APP_BUILD)
+            for path in (SETTINGS, ROOT_BUILD, APP_BUILD, GRADLE_PROPERTIES)
         )
         for forbidden in (
             "signingconfig", "keystore", "storefile", "packageinstaller",
