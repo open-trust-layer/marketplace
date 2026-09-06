@@ -52,7 +52,9 @@ class M174BAndroidOfflineCacheTests(unittest.TestCase):
             "withContext(Dispatchers.IO)",
             "MessageDigest.getInstance(\"SHA-256\")",
             "OFFLINE_CACHE_CORRUPT",
+            "OFFLINE_CACHE_CLOCK_DELETE_FAILED",
             "OFFLINE_CACHE_EXPIRED",
+            'OFFLINE_CACHE_EXPIRED_CODE + "_DELETE_FAILED"',
             "StandardCopyOption.ATOMIC_MOVE",
             "StandardCopyOption.REPLACE_EXISTING",
         ):
@@ -63,7 +65,7 @@ class M174BAndroidOfflineCacheTests(unittest.TestCase):
             "suspend fun startupSync()",
             "adoptOfflineCache",
             "isOfflineCached = true",
-            'syncStatus = "OFFLINE / CACHED',
+            "syncStatus = offlineCacheStatus(snapshot)",
             "OFFLINE_WRITE_UNAVAILABLE",
             "cache.replace",
             "if (!hasMore)",
