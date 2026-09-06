@@ -59,6 +59,10 @@ class M173CAndroidOfflineMapSurfaceTests(unittest.TestCase):
         self.assertNotIn("Presentation-only map surface", app)
         for marker in ("Canvas(", "BoxWithConstraints(", "Map marker ${index + 1}", ".clickable { onSelectIntent(marker.recordId) }"):
             self.assertIn(marker, map_text)
+    def test_map_surface_uses_box_scope_match_parent_size_without_invalid_import(self):
+        text = MAP.read_text(encoding="utf-8")
+        self.assertIn("Modifier.matchParentSize()", text)
+        self.assertNotIn("import androidx.compose.foundation.layout.matchParentSize", text)
     def test_map_surface_adds_no_external_map_or_location_authority(self):
         map_text = MAP.read_text(encoding="utf-8").lower()
         build_text = APP_BUILD.read_text(encoding="utf-8").lower()
