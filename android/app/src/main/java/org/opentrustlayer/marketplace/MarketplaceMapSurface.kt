@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -25,6 +26,10 @@ import org.json.JSONObject
 private const val MAX_ANDROID_MAP_MARKERS = 64
 private const val MAP_WIDTH = 720
 private const val MAP_HEIGHT = 360
+private const val MARKET_INTENT_TYPE =
+    "https://open-trust-layer.github.io/marketplace/semantics/v1/record/market-intent"
+private const val PRODUCT_PROFILE =
+    "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/product-listing-v1"
 private const val PRODUCT_ACTION =
     "https://open-trust-layer.github.io/marketplace/semantics/v1/profile/product-listing-v1/action/sell"
 private const val TITLE_TERM =
@@ -60,7 +65,9 @@ internal fun extractAndroidMapMarkers(records: List<RawRecord>): List<AndroidMap
 }
 
 private fun markerFromRecord(record: RawRecord): AndroidMapMarker? = try {
-    val content = JSONObject(record.rawJson).optJSONObject("content") ?: return null
+    val root = JSONObject(record.rawJson)
+    if (root.optString("type") != MARKET_INTENT_TYPE || !hasReviewedProductProfile(root)) return null
+    val content = root.optJSONObject("content") ?: return null
     if (content.optJSONObject("action")?.optString("id") != PRODUCT_ACTION) return null
     val terms = content.optJSONObject("terms") ?: return null
     val title = terms.opt(TITLE_TERM) as? String ?: return null
@@ -73,6 +80,14 @@ private fun markerFromRecord(record: RawRecord): AndroidMapMarker? = try {
     AndroidMapMarker(record.id, title, latitudeE6, longitudeE6)
 } catch (_: Exception) {
     null
+}
+
+private fun hasReviewedProductProfile(root: JSONObject): Boolean {
+    val profiles = root.optJSONArray("profiles") ?: return false
+    for (index in 0 until profiles.length()) {
+        if (profiles.opt(index) == PRODUCT_PROFILE) return true
+    }
+    return false
 }
 
 private fun exactJsonInt(value: Any?): Int? = when (value) {
@@ -91,7 +106,7 @@ fun MarketplaceMapSurface(
     records: List<RawRecord>,
     onSelectIntent: (String) -> Unit,
 ) {
-    val markers = extractAndroidMapMarkers(records)
+    val markers = remember(records) { extractAndroidMapMarkers(records) }
     Text("WGS84 map", style = MaterialTheme.typography.titleMedium)
     Text(
         "Offline deterministic coordinate view; issuer-attributed, not verified.",

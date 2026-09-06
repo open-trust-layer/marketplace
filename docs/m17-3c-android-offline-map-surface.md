@@ -23,7 +23,7 @@ It does not change the Marketplace API, loopback endpoint, persistence model, ap
 
 Validated local product-listing records are defensively decoded from the existing canonical record JSON already held by `MarketplaceUiState`.
 
-Only records with the reviewed product-listing sell action and exact WGS84-e6 location scheme become markers. Coordinates outside latitude/longitude bounds or non-integer JSON coordinates are ignored rather than projected.
+Only records with the reviewed market-intent type, product-listing profile, sell action, and exact WGS84-e6 location scheme become markers. Coordinates outside latitude/longitude bounds or non-integer JSON coordinates are ignored rather than projected.
 
 Each marker has a stable local index and can select the same intent detail path already used by the intent list. A textual marker legend keeps title and exact six-decimal coordinates visible even where multiple listings share a projected point.
 

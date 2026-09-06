@@ -35,6 +35,9 @@ class M173CAndroidOfflineMapSurfaceTests(unittest.TestCase):
             "MAX_ANDROID_MAP_MARKERS = 64",
             "if (markers.size == MAX_ANDROID_MAP_MARKERS) break",
             "JSONObject(record.rawJson)",
+            "MARKET_INTENT_TYPE",
+            "PRODUCT_PROFILE",
+            "hasReviewedProductProfile",
             "PRODUCT_ACTION",
             "LOCATION_TERM",
             "LOCATION_SCHEME",
@@ -52,6 +55,7 @@ class M173CAndroidOfflineMapSurfaceTests(unittest.TestCase):
         self.assertIn("MarketplaceMapSurface(", app)
         self.assertIn("records = uiState.rootRecords", app)
         self.assertIn("onSelectIntent = onSelectIntent", app)
+        self.assertIn("remember(records) { extractAndroidMapMarkers(records) }", map_text)
         self.assertNotIn("Presentation-only map surface", app)
         for marker in ("Canvas(", "BoxWithConstraints(", "Map marker ${index + 1}", ".clickable { onSelectIntent(marker.recordId) }"):
             self.assertIn(marker, map_text)
