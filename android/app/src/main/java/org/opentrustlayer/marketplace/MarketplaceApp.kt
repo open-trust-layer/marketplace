@@ -61,10 +61,9 @@ fun MarketplaceScreen(
             }
             Text(uiState.syncStatus, style = MaterialTheme.typography.bodySmall)
             Text(operationStatus, style = MaterialTheme.typography.bodySmall)
-            Text("WGS84 map projection", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Presentation-only map surface; root intent coordinates remain display data.",
-                style = MaterialTheme.typography.bodySmall,
+            MarketplaceMapSurface(
+                records = uiState.rootRecords,
+                onSelectIntent = onSelectIntent,
             )
 
             Text("Intent list", style = MaterialTheme.typography.titleMedium)
