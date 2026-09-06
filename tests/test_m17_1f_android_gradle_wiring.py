@@ -36,11 +36,16 @@ class M17AndroidGradleWiringTests(unittest.TestCase):
         text = ROOT_BUILD.read_text(encoding="utf-8")
         expected = (
             f'id("com.android.application") version "{self.pins["android_gradle_plugin"]}" apply false',
-            f'id("org.jetbrains.kotlin.android") version "{self.pins["kotlin"]}" apply false',
             f'id("org.jetbrains.kotlin.plugin.compose") version "{self.pins["kotlin"]}" apply false',
         )
         for marker in expected:
             self.assertIn(marker, text)
+        self.assertNotIn("org.jetbrains.kotlin.android", text)
+
+    def test_agp9_app_uses_built_in_kotlin_with_compose_plugin(self):
+        text = APP_BUILD.read_text(encoding="utf-8")
+        self.assertNotIn("org.jetbrains.kotlin.android", text)
+        self.assertIn('id("org.jetbrains.kotlin.plugin.compose")', text)
 
     def test_app_android_identity_and_sdk_contract_match_reviewed_profile(self):
         text = APP_BUILD.read_text(encoding="utf-8")
