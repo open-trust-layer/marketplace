@@ -13,7 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Final
 
+from marketplace.application.asgi import MarketplaceAsgiHttpAdapter
+from marketplace.application.composition import MarketplaceApplicationComposition
 from marketplace.application.http import MAX_APPLICATION_HTTP_RESPONSE_BYTES
+from marketplace.application.launch import MarketplaceApplicationLaunchPlan
 from marketplace.application.runtime_server import (
     EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER,
     run_marketplace_application_foreground,
@@ -161,13 +164,43 @@ def _utc_clock() -> datetime:
 def _real_uvicorn_provider(*, importer: Callable[[str], object] = importlib.import_module):
     try:
         module = importer("marketplace.application.uvicorn_provider")
-        provider_type = getattr(module, "UvicornLoopbackServerProvider")
-        provider = provider_type()
     except Exception:
         raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_UNAVAILABLE") from None
-    if type(provider).__name__ != "UvicornLoopbackServerProvider":
+    try:
+        provider_type = getattr(module, "UvicornLoopbackServerProvider")
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID") from None
+    if type(provider_type) is not type:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID")
+    try:
+        provider = provider_type()
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID") from None
+    if type(provider) is not provider_type:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID")
+    try:
+        run = provider.run
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID") from None
+    if not callable(run):
         raise MarketplaceLocalhostBootstrapError("M17_2B_SERVER_PROVIDER_INVALID")
     return provider
+
+
+def _validate_plan_before_initialize(plan: object) -> MarketplaceApplicationLaunchPlan:
+    if type(plan) is not MarketplaceApplicationLaunchPlan:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    if type(plan.composition) is not MarketplaceApplicationComposition:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    if type(plan.asgi) is not MarketplaceAsgiHttpAdapter:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    if plan.host != LOCALHOST_HOST or type(plan.port) is not int:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    if plan.port < MIN_LOCALHOST_PORT or plan.port > MAX_LOCALHOST_PORT:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    if plan.asgi._site is not plan.composition.site:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
+    return plan
 
 
 def _execute_localhost(port: int, execution_opt_in: object) -> None:
@@ -192,6 +225,7 @@ def _execute_localhost(port: int, execution_opt_in: object) -> None:
         )
     except Exception:
         raise MarketplaceLocalhostBootstrapError("M17_2B_COMPOSITION_FAILED") from None
+    plan = _validate_plan_before_initialize(plan)
 
     provider = _real_uvicorn_provider()
     try:
