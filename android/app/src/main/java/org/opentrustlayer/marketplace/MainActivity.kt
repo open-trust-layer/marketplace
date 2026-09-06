@@ -13,12 +13,18 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val marketplaceCodec by lazy { AndroidMarketplaceJsonCodec() }
     private val marketplaceState by lazy {
         MarketplaceState(
-            MarketplaceApiClient(
+            client = MarketplaceApiClient(
                 transport = LoopbackMarketplaceTransport(),
-                codec = AndroidMarketplaceJsonCodec(),
-            )
+                codec = marketplaceCodec,
+            ),
+            cache = AndroidFileMarketplaceOfflineCache(
+                context = applicationContext,
+                codec = marketplaceCodec,
+            ),
+            nowEpochMillis = System::currentTimeMillis,
         )
     }
 
@@ -50,7 +56,7 @@ private fun MarketplaceRuntimeApplication(state: MarketplaceState) {
     }
 
     LaunchedEffect(Unit) {
-        runOperation { state.fullResync() }
+        runOperation { state.startupSync() }
     }
 
     MarketplaceScreen(

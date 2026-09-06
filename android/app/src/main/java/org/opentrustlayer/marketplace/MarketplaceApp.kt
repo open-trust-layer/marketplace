@@ -61,6 +61,9 @@ fun MarketplaceScreen(
             }
             Text(uiState.syncStatus, style = MaterialTheme.typography.bodySmall)
             Text(operationStatus, style = MaterialTheme.typography.bodySmall)
+            if (uiState.isOfflineCached) {
+                Text("OFFLINE / CACHED - read-only; create and proposal require online sync.", style = MaterialTheme.typography.bodySmall)
+            }
             MarketplaceMapSurface(
                 records = uiState.rootRecords,
                 onSelectIntent = onSelectIntent,
@@ -154,7 +157,10 @@ fun MarketplaceScreen(
                 value = createFields.longitude_e6,
                 onValueChange = { createFields = createFields.copy(longitude_e6 = it) },
             )
-            Button(onClick = { onCreateProductListing(createFields) }) {
+            Button(
+                onClick = { onCreateProductListing(createFields) },
+                enabled = !uiState.isOfflineCached,
+            ) {
                 Text("Submit product listing")
             }
             Text("Create Proposal", style = MaterialTheme.typography.titleMedium)
@@ -178,7 +184,7 @@ fun MarketplaceScreen(
                 onClick = {
                     if (parentId != null) onCreateProposal(parentId, proposalFields)
                 },
-                enabled = parentId != null,
+                enabled = parentId != null && !uiState.isOfflineCached,
             ) {
                 Text("Submit Proposal")
             }

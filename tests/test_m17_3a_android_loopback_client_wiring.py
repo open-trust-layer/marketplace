@@ -93,7 +93,7 @@ class M173AAndroidLoopbackClientWiringTests(unittest.TestCase):
             "LoopbackMarketplaceTransport()",
             "AndroidMarketplaceJsonCodec()",
             "LaunchedEffect(Unit)",
-            "state.fullResync()",
+            "state.startupSync()",
             "state.incrementalSync()",
             "state.selectRootIntent(recordId)",
             "state.createProductListing(fields)",
