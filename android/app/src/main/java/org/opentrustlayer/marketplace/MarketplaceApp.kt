@@ -1,13 +1,13 @@
 package org.opentrustlayer.marketplace
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -37,6 +37,7 @@ private fun ListingField(
 @Composable
 fun MarketplaceScreen(
     uiState: MarketplaceUiState,
+    operationStatus: String = "Ready",
     onSync: () -> Unit,
     onSelectIntent: (String) -> Unit,
     onCreateProductListing: (ProductListingInput) -> Unit,
@@ -49,6 +50,7 @@ fun MarketplaceScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -58,6 +60,7 @@ fun MarketplaceScreen(
                 }
             }
             Text(uiState.syncStatus, style = MaterialTheme.typography.bodySmall)
+            Text(operationStatus, style = MaterialTheme.typography.bodySmall)
             Text("WGS84 map projection", style = MaterialTheme.typography.titleMedium)
             Text(
                 "Presentation-only map surface; root intent coordinates remain display data.",
@@ -65,8 +68,8 @@ fun MarketplaceScreen(
             )
 
             Text("Intent list", style = MaterialTheme.typography.titleMedium)
-            LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(uiState.rootRecords, key = { it.id }) { record ->
+            Column(modifier = Modifier.fillMaxWidth()) {
+                uiState.rootRecords.forEach { record ->
                     Text(
                         record.id,
                         modifier = Modifier

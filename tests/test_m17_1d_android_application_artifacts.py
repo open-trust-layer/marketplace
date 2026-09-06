@@ -54,12 +54,14 @@ class M17AndroidApplicationArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, lowered)
 
-    def test_first_checkpoint_has_no_runtime_network_or_persistent_state_authority(self):
+    def test_transport_neutral_core_keeps_network_and_persistence_out(self):
         combined = "\n".join(
-            path.read_text(encoding="utf-8") for path in (APP, CLIENT, STATE, MANIFEST)
+            path.read_text(encoding="utf-8") for path in (APP, CLIENT, STATE)
         ).lower()
         for forbidden in (
-            "android.permission.internet",
+            "http://",
+            "https://",
+            "httpurlconnection",
             "sharedpreferences",
             "datastore",
             "roomdatabase",

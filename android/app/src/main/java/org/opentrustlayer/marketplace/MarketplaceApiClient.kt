@@ -82,7 +82,7 @@ interface MarketplaceJsonCodec {
     fun decodeIntentPage(rawJson: String): IntentPage
     fun decodeResponseList(rawJson: String): ResponseList
     fun decodeWriteReceipt(rawJson: String): WriteReceipt
-    fun decodeRecord(rawJson: String): RawRecord
+    fun decodeRecord(rawJson: String, expectedRecordId: String): RawRecord
     fun decodeSyncPage(rawJson: String): SyncPage
     fun decodeErrorCode(rawJson: String): String?
 }
@@ -103,7 +103,7 @@ class MarketplaceApiClient(
 
     suspend fun getIntent(recordId: String): RawRecord {
         val path = "$API_INTENTS/${encodeComponent(requireBoundedId(recordId))}"
-        val record = validateRecord(codec.decodeRecord(expectOk(transport.execute(ApiRequest("GET", path)))))
+        val record = validateRecord(codec.decodeRecord(expectOk(transport.execute(ApiRequest("GET", path))), recordId))
         if (record.id != recordId) throw MarketplaceClientException("RECORD_ID_MISMATCH", "record identity mismatch")
         return record
     }
