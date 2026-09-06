@@ -49,7 +49,8 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
         asset_provider.assert_not_called()
         postgres_provider.assert_not_called()
         server_provider.assert_not_called()
-        self.assertIn("separate runtime authorization", stdout.getvalue())
+        normalized_help = " ".join(stdout.getvalue().split())
+        self.assertIn("separate runtime authorization", normalized_help)
 
     def test_dry_run_is_external_io_inert(self):
         stdout = io.StringIO()
