@@ -119,7 +119,9 @@ The asset bytes are then passed directly into M17.2A. No alternate Web root, tem
 
 The selected `psycopg.connect(dsn)` callable is wrapped only as the `ConnectionFactory` already expected by M17.2A. Constructing the launch plan remains inert: no connection is opened by M17.2A construction.
 
-After all source-level inputs and providers have been selected and the M17.2A plan has been constructed, the bootstrap invokes exactly one:
+Before any stateful initialization, M17.2B independently revalidates that the returned object is the exact `MarketplaceApplicationLaunchPlan`, contains the exact `MarketplaceApplicationComposition` and exact `MarketplaceAsgiHttpAdapter`, retains the fixed loopback/port boundary, and keeps the ASGI adapter identity-bound to that composition's site. A forged or cross-bound plan fails as `M17_2B_LAUNCH_PLAN_INVALID` before database initialization.
+
+Only after that exact graph check does the bootstrap invoke exactly one:
 
 ```text
 plan.composition.initialize()
@@ -131,7 +133,7 @@ Initialization failure is normalized to `M17_2B_DATABASE_INITIALIZATION_FAILED` 
 
 ## Server boundary
 
-M17.2B selects the existing `UvicornLoopbackServerProvider` only on the live post-opt-in path. The adapter itself continues to lazy-import real Uvicorn only when its reviewed `run(...)` method executes.
+M17.2B selects the existing `UvicornLoopbackServerProvider` only on the live post-opt-in path. Selection requires the imported adapter symbol to be an exact class, construction to return that exact type, and its `run` attribute to be callable. The adapter itself continues to lazy-import real Uvicorn only when its reviewed `run(...)` method executes.
 
 After successful initialization, the bootstrap delegates exactly once through:
 
@@ -155,9 +157,10 @@ The HIGH-risk path is intentionally ordered fail-closed:
 4. select the fixed repository asset reader and adopt exactly three bounded asset byte strings;
 5. select the pinned PostgreSQL provider and create an inert connection factory;
 6. build the exact M17.2A launch plan;
-7. select the existing reviewed Uvicorn adapter;
-8. initialize the existing application composition exactly once;
-9. only after successful initialization, delegate exactly once to M17.1N foreground execution.
+7. revalidate exact launch-plan/composition/ASGI types, loopback metadata, and ASGI-to-site identity binding;
+8. select and exact-type-check the existing reviewed Uvicorn adapter;
+9. initialize the existing application composition exactly once;
+10. only after successful initialization, delegate exactly once to M17.1N foreground execution.
 
 Negative/security properties covered by deterministic tests include:
 
@@ -167,8 +170,9 @@ Negative/security properties covered by deterministic tests include:
 - DSN source name is fixed and secret values are not reflected;
 - Web asset names are exact and bytes are bounded;
 - PostgreSQL provider import is lazy and connection establishment remains later than factory construction;
-- Uvicorn adapter selection does not itself import real Uvicorn;
+- Uvicorn adapter selection requires the exact callable provider shape without importing real Uvicorn;
 - M17.2A is reused rather than bypassed;
+- a forged launch plan is rejected before database initialization;
 - database initialization precedes server delegation;
 - initialization failure prevents server delegation;
 - provider failures are non-reflective and not retried;
