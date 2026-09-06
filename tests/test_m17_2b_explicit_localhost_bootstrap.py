@@ -6,6 +6,7 @@ import io
 import pathlib
 import types
 import unittest
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
 import tools.marketplace_localhost as tool
@@ -160,11 +161,12 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
         self.assertIs(factory(), connection)
         self.assertEqual(calls[-1], ("connect", "postgresql://SECRET"))
 
-    def test_uvicorn_adapter_selection_does_not_require_real_uvicorn_import(self):
+    def test_uvicorn_adapter_selection_requires_exact_callable_provider(self):
         calls: list[str] = []
 
         class UvicornLoopbackServerProvider:
-            pass
+            def run(self, *, application: object, host: str, port: int) -> None:
+                raise AssertionError("run must not be invoked by provider selection")
 
         module = types.SimpleNamespace(UvicornLoopbackServerProvider=UvicornLoopbackServerProvider)
 
@@ -175,6 +177,31 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
         provider = tool._real_uvicorn_provider(importer=importer)
         self.assertIs(type(provider), UvicornLoopbackServerProvider)
         self.assertEqual(calls, ["marketplace.application.uvicorn_provider"])
+
+        malformed = types.SimpleNamespace(UvicornLoopbackServerProvider=lambda: object())
+        with self.assertRaises(tool.MarketplaceLocalhostBootstrapError) as caught:
+            tool._real_uvicorn_provider(importer=lambda _name: malformed)
+        self.assertEqual(caught.exception.code, "M17_2B_SERVER_PROVIDER_INVALID")
+
+    def test_preinitialize_validation_accepts_only_exact_m17_2a_plan_graph(self):
+        connection_factory = Mock(name="connection_factory")
+        clock = Mock(return_value=datetime(2026, 9, 6, tzinfo=timezone.utc))
+        plan = tool.build_reference_postgres_marketplace_application_launch_plan(
+            connection_factory=connection_factory,
+            clock=clock,
+            host=tool.LOCALHOST_HOST,
+            port=18080,
+            index_html=b"index",
+            app_js=b"app",
+            styles_css=b"css",
+        )
+        self.assertIs(tool._validate_plan_before_initialize(plan), plan)
+        connection_factory.assert_not_called()
+        clock.assert_not_called()
+
+        with self.assertRaises(tool.MarketplaceLocalhostBootstrapError) as caught:
+            tool._validate_plan_before_initialize(_Plan(_Composition([])))
+        self.assertEqual(caught.exception.code, "M17_2B_LAUNCH_PLAN_INVALID")
 
     def test_execute_reuses_m17_2a_and_initializes_before_server(self):
         events: list[str] = []
@@ -214,6 +241,11 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
             self.assertEqual(kwargs["styles_css"], b"css")
             return plan
 
+        def validate_plan(candidate):
+            events.append("validate-plan")
+            self.assertIs(candidate, plan)
+            return plan
+
         def build_server_provider():
             events.append("server-provider")
             return provider
@@ -228,9 +260,9 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
             tool, "_real_asset_reader", return_value=asset_reader
         ), patch.object(tool, "_build_psycopg_connection_factory", side_effect=build_connection_factory), patch.object(
             tool, "build_reference_postgres_marketplace_application_launch_plan", side_effect=build_plan
-        ), patch.object(tool, "_real_uvicorn_provider", side_effect=build_server_provider), patch.object(
-            tool, "run_marketplace_application_foreground", side_effect=run_server
-        ):
+        ), patch.object(tool, "_validate_plan_before_initialize", side_effect=validate_plan), patch.object(
+            tool, "_real_uvicorn_provider", side_effect=build_server_provider
+        ), patch.object(tool, "run_marketplace_application_foreground", side_effect=run_server):
             tool._execute_localhost(18080, tool.LOCALHOST_EXECUTION_OPT_IN)
 
         self.assertEqual(
@@ -242,6 +274,7 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
                 "web/styles.css",
                 "postgres-provider",
                 "plan",
+                "validate-plan",
                 "server-provider",
                 "initialize",
                 "server",
@@ -259,9 +292,9 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
             tool, "_real_asset_reader", return_value=lambda path: {"web/index.html": b"i", "web/app.js": b"j", "web/styles.css": b"c"}[path]
         ), patch.object(tool, "_build_psycopg_connection_factory", return_value=Mock()), patch.object(
             tool, "build_reference_postgres_marketplace_application_launch_plan", return_value=plan
-        ), patch.object(tool, "_real_uvicorn_provider", return_value=object()), patch.object(
-            tool, "run_marketplace_application_foreground", run_server
-        ):
+        ), patch.object(tool, "_validate_plan_before_initialize", return_value=plan), patch.object(
+            tool, "_real_uvicorn_provider", return_value=object()
+        ), patch.object(tool, "run_marketplace_application_foreground", run_server):
             with contextlib.redirect_stderr(stderr):
                 code = tool.main(["--port", "18080", "--execute-localhost", tool.LOCALHOST_EXECUTION_OPT_IN])
 
@@ -279,9 +312,9 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
             tool, "_real_asset_reader", return_value=lambda path: {"web/index.html": b"i", "web/app.js": b"j", "web/styles.css": b"c"}[path]
         ), patch.object(tool, "_build_psycopg_connection_factory", return_value=Mock()), patch.object(
             tool, "build_reference_postgres_marketplace_application_launch_plan", return_value=plan
-        ), patch.object(tool, "_real_uvicorn_provider", return_value=object()), patch.object(
-            tool, "run_marketplace_application_foreground", run_server
-        ):
+        ), patch.object(tool, "_validate_plan_before_initialize", return_value=plan), patch.object(
+            tool, "_real_uvicorn_provider", return_value=object()
+        ), patch.object(tool, "run_marketplace_application_foreground", run_server):
             with contextlib.redirect_stderr(stderr):
                 code = tool.main(["--port", "18080", "--execute-localhost", tool.LOCALHOST_EXECUTION_OPT_IN])
 
@@ -333,6 +366,7 @@ class MarketplaceLocalhostBootstrapSourceTests(unittest.TestCase):
     def test_source_reuses_exact_reviewed_composition_and_runtime_boundaries(self):
         source = SOURCE.read_text(encoding="utf-8")
         self.assertIn("build_reference_postgres_marketplace_application_launch_plan", source)
+        self.assertIn("_validate_plan_before_initialize(plan)", source)
         self.assertIn("plan.composition.initialize()", source)
         self.assertIn("run_marketplace_application_foreground", source)
         self.assertIn("EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER", source)
