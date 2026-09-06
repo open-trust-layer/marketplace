@@ -35,7 +35,19 @@ WHERE record.expires_at > %s
       SELECT 1 FROM marketplace_app_response_links AS links
       WHERE links.response_record_id = record.record_id
   )
-  AND (%s IS NULL OR record.record_id > %s)
+ORDER BY record.record_id
+LIMIT %s
+"""
+
+_SELECT_ROOT_INTENTS_AFTER_CURSOR = """
+SELECT record_id
+FROM marketplace_app_records AS record
+WHERE record.expires_at > %s
+  AND NOT EXISTS (
+      SELECT 1 FROM marketplace_app_response_links AS links
+      WHERE links.response_record_id = record.record_id
+  )
+  AND record.record_id > %s
 ORDER BY record.record_id
 LIMIT %s
 """
@@ -146,10 +158,17 @@ class PostgresIntentQuery:
                         "INTENT_CURSOR_INVALID",
                         "intent cursor is stale or does not identify a live root intent",
                     )
-            db_cursor.execute(
-                _SELECT_ROOT_INTENTS,
-                (now, reviewed_cursor, reviewed_cursor, reviewed_limit + 1),
+            root_sql = (
+                _SELECT_ROOT_INTENTS
+                if reviewed_cursor is None
+                else _SELECT_ROOT_INTENTS_AFTER_CURSOR
             )
+            root_params = (
+                (now, reviewed_limit + 1)
+                if reviewed_cursor is None
+                else (now, reviewed_cursor, reviewed_limit + 1)
+            )
+            db_cursor.execute(root_sql, root_params)
             raw_rows = db_cursor.fetchall()
             rows = list(raw_rows)
             if len(rows) > reviewed_limit + 1:

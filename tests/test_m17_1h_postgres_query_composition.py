@@ -116,7 +116,9 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
         self.assertIn("NOT EXISTS", sql)
         self.assertIn("marketplace_app_response_links", sql)
         self.assertIn("expires_at > %s", sql)
-        self.assertEqual(params, (NOW, None, None, 3))
+        self.assertNotIn("IS NULL", sql)
+        self.assertEqual(params, (NOW, 3))
+        self.assertNotIn(None, params)
         self.assertEqual(connection.commits, 1)
         self.assertEqual(connection.rollbacks, 0)
         self.assertEqual(connection.closes, 1)
@@ -129,6 +131,10 @@ class M17PostgresQueryCompositionTests(unittest.TestCase):
         page = query.list_intent_ids(cursor="r-b", limit=2)
         self.assertEqual(page, IntentIndexPage(("r-c",), None))
         self.assertEqual(connection.cursor_obj.calls[0][1], ("r-b", NOW))
+        sql, params = connection.cursor_obj.calls[1]
+        self.assertIn("record.record_id > %s", sql)
+        self.assertNotIn("IS NULL", sql)
+        self.assertEqual(params, (NOW, "r-b", 3))
 
     def test_stale_or_response_cursor_fails_closed(self):
         query, connection, _ = make_query([("SELECT EXISTS", [(False,)])])
