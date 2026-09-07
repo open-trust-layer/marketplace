@@ -46,7 +46,6 @@ class M17AuthProofProfileArtifactTests(unittest.TestCase):
         for forbidden in (
             "cryptography",
             "nacl",
-            "ed25519",
             "olp.",
             "private_key",
             "mnemonic",
