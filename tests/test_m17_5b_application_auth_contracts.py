@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import unittest
 
@@ -271,6 +271,24 @@ class M17ApplicationAuthContractsTests(unittest.TestCase):
             "product-ok",
         )
 
+    def test_principal_mismatch_does_not_refresh_idle_session(self):
+        self.register()
+        self.authenticate(now=1_001)
+        downstream = FakeProductWriter()
+        guarded = AuthenticatedProductListingAuthoringService(auth=self.auth, authoring=downstream)
+        with self.assertRaises(ApplicationAuthError):
+            guarded.create_product_listing(
+                session_token=self.token,
+                fields=self.product_fields("did:example:mallory"),
+                now=1_001 + AUTH_SESSION_IDLE_SECONDS - 1,
+            )
+        with self.assertRaises(ApplicationAuthError) as caught:
+            self.auth.authenticate_session(
+                session_token=self.token,
+                now=1_001 + AUTH_SESSION_IDLE_SECONDS,
+            )
+        self.assertEqual(caught.exception.code, "AUTH_SESSION_EXPIRED")
+        self.assertEqual(downstream.calls, [])
     def test_proposal_write_guard_blocks_principal_mismatch_before_downstream(self):
         self.register()
         self.authenticate()

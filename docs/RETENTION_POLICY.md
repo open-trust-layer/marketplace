@@ -164,6 +164,22 @@ The default and maximum content retention is **30 days** after last legitimate a
 Deletion failure remains a security/privacy event and MUST be surfaced. Deleting a local application copy MUST NOT be represented as deleting an immutable protocol record from the wider world. Payload content remains prohibited from long-lived operational logs and telemetry.
 
 This is a **source-level** authorization recorded in Issue #175. It grants **no production deployment**, no live database provisioning or administration, no migration of real-user databases, no credential issuance, and no payment, settlement, fulfillment, or other protected external side effect. A later production/deployment profile requires separate authorization and operational controls.
+## 7.2 Approved Marketplace application-auth MVP profile
+
+The owner-approved source-level authentication/session profile is `MARKETPLACE_APPLICATION_AUTH_MVP`.
+
+It applies only to transient application-authentication challenge/session coordination. Raw challenge material, raw session tokens, private keys, proof bodies, credential verifiers, passwords, OAuth/OIDC tokens, and equivalent authentication secrets MUST NOT be stored in Marketplace application-state PostgreSQL, operational logs, or the Android offline content cache.
+
+Source-level limits are:
+
+- authentication challenge: one proof attempt, maximum 120 seconds;
+- session idle lifetime: maximum 30 minutes;
+- session absolute lifetime: maximum 8 hours;
+- client session-token storage for the first MVP: process/memory only;
+- server-side source contract: retain only a one-way token digest plus bounded principal, verification-method, issuance/last-use/expiry metadata needed for session validation;
+- challenge/session expiry and revocation must fail closed and remove active in-memory authorization state.
+
+This profile is approved for M17.5B source contracts only. It grants no credential issuance, real login, provider/resolver administration, HTTP credential-carrier activation, persistent account/session database, secret provisioning, production deployment, or device credential persistence. Any durable auth/account store or runtime activation requires a separately reviewed retention/security profile and explicit authorization.
 ## 8. Future runtime requirement
 
 Marketplace currently has no production message/conversation runtime. Before a future reference runtime accepts or persists transient content, it MUST define and test:
