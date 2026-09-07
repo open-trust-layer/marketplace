@@ -59,7 +59,7 @@ class AndroidFileMarketplaceOfflineCache(
         }
     }
 
-    override suspend fun replace(snapshot: MarketplaceOfflineSnapshot) = withContext(Dispatchers.IO) {
+    override suspend fun replace(snapshot: MarketplaceOfflineSnapshot): Unit = withContext(Dispatchers.IO) {
         val reviewed = validateOfflineSnapshot(snapshot)
         validateCanonicalRecords(reviewed)
         val encoded = encodeEnvelope(reviewed).encodeToByteArray()
