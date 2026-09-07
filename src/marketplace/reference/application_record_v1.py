@@ -107,6 +107,22 @@ def is_marketplace_intent_record(record: object) -> bool:
     return record.type == TYPE_INTENT
 
 
+def marketplace_record_issuer_principal(record: object) -> str:
+    """Return the exact issuer principal from one validated Marketplace RecordV1."""
+
+    reviewed = _review_record(record)
+    content = reviewed.content
+    if not isinstance(content, Mapping):
+        _fail("APPLICATION_RECORD_ISSUER_INVALID", "application record issuer is unavailable")
+    issuer = content.get("issuer")
+    if not isinstance(issuer, Mapping):
+        _fail("APPLICATION_RECORD_ISSUER_INVALID", "application record issuer is unavailable")
+    principal = issuer.get("principal")
+    if type(principal) is not str or not principal:
+        _fail("APPLICATION_RECORD_ISSUER_INVALID", "application record issuer is unavailable")
+    return principal
+
+
 def prepare_marketplace_application_record(record: object) -> PreparedApplicationRecord:
     """Validate and deterministically serialize one record for application persistence."""
 
@@ -173,6 +189,7 @@ __all__ = [
     "MarketplaceApplicationRecordError",
     "decode_marketplace_application_record",
     "is_marketplace_intent_record",
+    "marketplace_record_issuer_principal",
     "marketplace_response_parent_ids",
     "prepare_marketplace_application_record",
 ]

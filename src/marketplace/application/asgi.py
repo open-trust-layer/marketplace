@@ -4,6 +4,8 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from typing import Any, Final
 
+from .auth_http import MarketplaceAuthenticatedApplicationHttpAdapter
+from .bearer import MarketplaceBearerTransportError, parse_marketplace_bearer_authorization
 from .http import (
     ApplicationHttpRequest,
     ApplicationHttpResponse,
@@ -21,9 +23,7 @@ MAX_ASGI_HEADER_BYTES: Final = 32 * 1024
 MAX_ASGI_QUERY_BYTES: Final = 4 * 1024
 MAX_ASGI_REQUEST_EVENTS: Final = 64
 
-_SENSITIVE_REQUEST_HEADERS = frozenset(
-    {"authorization", "cookie", "proxy-authorization"}
-)
+_SENSITIVE_REQUEST_HEADERS = frozenset({"cookie", "proxy-authorization"})
 _FORBIDDEN_RESPONSE_HEADERS = frozenset({"set-cookie"})
 _HEX_DIGITS = frozenset(b"0123456789abcdefABCDEF")
 _HTTP_TOKEN = frozenset("!#$%&'*+-.^_`|~0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -101,11 +101,16 @@ def _parse_query(raw: object) -> tuple[tuple[str, str], ...]:
     return tuple(result)
 
 
-def _review_headers(raw_headers: object) -> tuple[str | None, int | None]:
+def _review_headers(
+    raw_headers: object,
+    *,
+    allow_authorization: bool = False,
+) -> tuple[str | None, int | None, bytes | None]:
     if type(raw_headers) not in {list, tuple} or len(raw_headers) > MAX_ASGI_HEADER_COUNT:
         _fail("ASGI_HEADER_INVALID", "ASGI headers are outside the reviewed count bound")
     content_type: str | None = None
     content_length: int | None = None
+    authorization: bytes | None = None
     total = 0
     for pair in raw_headers:
         if type(pair) not in {list, tuple} or len(pair) != 2:
@@ -123,10 +128,20 @@ def _review_headers(raw_headers: object) -> tuple[str | None, int | None]:
         if not name or any(char not in _HTTP_TOKEN for char in name):
             _fail("ASGI_HEADER_INVALID", "ASGI header name is not a valid HTTP token")
         name = name.lower()
+        if name == "authorization":
+            if not allow_authorization:
+                _fail(
+                    "ASGI_SENSITIVE_HEADER_FORBIDDEN",
+                    "credentials and session headers are outside the M17.1L boundary",
+                )
+            if authorization is not None:
+                _fail("ASGI_HEADER_INVALID", "duplicate authorization is forbidden")
+            authorization = raw_value
+            continue
         if name in _SENSITIVE_REQUEST_HEADERS:
             _fail(
                 "ASGI_SENSITIVE_HEADER_FORBIDDEN",
-                "credentials and session headers are outside the M17.1L boundary",
+                "credentials and session headers are outside the reviewed boundary",
             )
         if name == "content-type":
             if content_type is not None:
@@ -159,10 +174,14 @@ def _review_headers(raw_headers: object) -> tuple[str | None, int | None]:
             content_length = int(value)
             if content_length > MAX_APPLICATION_HTTP_BODY_BYTES:
                 _fail("ASGI_REQUEST_TOO_LARGE", "request body exceeds the reviewed bound")
-    return content_type, content_length
+    return content_type, content_length, authorization
 
 
-def _review_scope(scope: object) -> tuple[str, str, tuple[tuple[str, str], ...], str | None, int | None]:
+def _review_scope(
+    scope: object,
+    *,
+    allow_authorization: bool = False,
+) -> tuple[str, str, tuple[tuple[str, str], ...], str | None, int | None, bytes | None]:
     if type(scope) is not dict:
         _fail("ASGI_SCOPE_INVALID", "ASGI scope must be an exact dict")
     if scope.get("type") != "http":
@@ -198,8 +217,11 @@ def _review_scope(scope: object) -> tuple[str, str, tuple[tuple[str, str], ...],
     if raw_path is not None and type(raw_path) is not bytes:
         _fail("ASGI_SCOPE_INVALID", "raw_path must be bytes when supplied")
     query = _parse_query(scope.get("query_string", b""))
-    content_type, content_length = _review_headers(scope.get("headers", []))
-    return method, path, query, content_type, content_length
+    content_type, content_length, authorization = _review_headers(
+        scope.get("headers", []),
+        allow_authorization=allow_authorization,
+    )
+    return method, path, query, content_type, content_length, authorization
 
 
 async def _read_request_body(
@@ -290,7 +312,7 @@ class MarketplaceAsgiHttpAdapter:
     async def __call__(self, scope: dict[str, Any], receive: AsgiReceive, send: AsgiSend) -> None:
         if not callable(receive) or not callable(send):
             raise TypeError("ASGI receive and send MUST be callable")
-        method, path, query, content_type, content_length = _review_scope(scope)
+        method, path, query, content_type, content_length, _authorization = _review_scope(scope)
         body = await _read_request_body(receive, expected_length=content_length)
         request = ApplicationHttpRequest(method, path, query, content_type, body)
         try:
@@ -323,6 +345,76 @@ class MarketplaceAsgiHttpAdapter:
         )
 
 
+class MarketplaceBearerAsgiHttpAdapter:
+    """Explicit M17.5C bearer-capable ASGI path; no runtime activation is implied."""
+
+    __slots__ = ("_site", "_application_http", "_now")
+
+    def __init__(
+        self,
+        *,
+        site: MarketplaceSiteHostAdapter,
+        application_http: MarketplaceAuthenticatedApplicationHttpAdapter,
+        now: Callable[[], int],
+    ) -> None:
+        if type(site) is not MarketplaceSiteHostAdapter:
+            raise TypeError("site MUST be exact MarketplaceSiteHostAdapter")
+        if type(application_http) is not MarketplaceAuthenticatedApplicationHttpAdapter:
+            raise TypeError("application_http MUST be exact authenticated HTTP adapter")
+        if not callable(now):
+            raise TypeError("now MUST be callable")
+        self._site = site
+        self._application_http = application_http
+        self._now = now
+
+    async def __call__(self, scope: dict[str, Any], receive: AsgiReceive, send: AsgiSend) -> None:
+        if not callable(receive) or not callable(send):
+            raise TypeError("ASGI receive and send MUST be callable")
+        method, path, query, content_type, content_length, authorization = _review_scope(
+            scope,
+            allow_authorization=True,
+        )
+        body = await _read_request_body(receive, expected_length=content_length)
+        request = ApplicationHttpRequest(method, path, query, content_type, body)
+        session_token: bytes | None = None
+        session_invalid = False
+        if authorization is not None:
+            try:
+                session_token = parse_marketplace_bearer_authorization(authorization)
+            except MarketplaceBearerTransportError:
+                session_invalid = True
+
+        try:
+            if path.startswith("/api/") or authorization is not None:
+                now = self._now()
+                if type(now) is not int or now < 0:
+                    _fail("ASGI_AUTH_TIME_INVALID", "application auth clock is invalid")
+                response = self._application_http.handle(
+                    request,
+                    session_token=session_token,
+                    session_invalid=session_invalid,
+                    now=now,
+                )
+            else:
+                response = self._site.handle(request)
+        except AsgiHttpAdapterError:
+            raise
+        except Exception:
+            _fail("ASGI_SITE_FAILURE", "Marketplace site host could not complete safely")
+        if (
+            type(response) is not ApplicationHttpResponse
+            or type(response.status_code) is not int
+            or not 100 <= response.status_code <= 599
+            or type(response.reason) is not str
+            or type(response.body) is not bytes
+            or len(response.body) > MAX_APPLICATION_HTTP_RESPONSE_BYTES
+        ):
+            _fail("ASGI_RESPONSE_INVALID", "Marketplace site host returned an invalid response")
+        headers = _response_headers(response)
+        await send({"type": "http.response.start", "status": response.status_code, "headers": headers})
+        await send({"type": "http.response.body", "body": response.body, "more_body": False})
+
+
 __all__ = [
     "MAX_ASGI_HEADER_BYTES",
     "MAX_ASGI_HEADER_COUNT",
@@ -330,4 +422,5 @@ __all__ = [
     "MAX_ASGI_REQUEST_EVENTS",
     "AsgiHttpAdapterError",
     "MarketplaceAsgiHttpAdapter",
+    "MarketplaceBearerAsgiHttpAdapter",
 ]

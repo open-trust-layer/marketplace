@@ -24,10 +24,10 @@ from marketplace.application.bearer import (
     MarketplaceBearerTransportError,
     parse_marketplace_bearer_authorization,
 )
+from marketplace.application.auth_http import MarketplaceAuthenticatedApplicationHttpAdapter
 from marketplace.application.http import (
     ApplicationHttpResponse,
     MarketplaceApplicationHttpAdapter,
-    MarketplaceAuthenticatedApplicationHttpAdapter,
 )
 from marketplace.application.postgres_state import ApplicationStatePutResult, StoreDisposition
 from marketplace.application.site_host import MarketplaceSiteHostAdapter
@@ -125,14 +125,14 @@ def make_active_auth() -> MarketplaceApplicationAuthService:
     return auth
 
 
-def make_stack():
+def make_stack(*, record_decoder=decode_record):
     api = FakeApi()
     listing = RecordingListingAuthoring()
     proposal = RecordingProposalAuthoring()
     auth = make_active_auth()
     base = MarketplaceApplicationHttpAdapter(
         api=api,
-        decode_record_json=decode_record,
+        decode_record_json=record_decoder,
         encode_record_json=encode_record,
         create_product_listing=listing.create_product_listing,
         create_proposal=proposal.create_buyer_request_proposal,
@@ -144,6 +144,9 @@ def make_stack():
         auth=auth,
         product_listing_authoring=guarded_listing,
         proposal_authoring=guarded_proposal,
+        decode_record_json=record_decoder,
+        create_intent=api.create_intent,
+        respond_to_intent=api.respond_to_intent,
         record_principal=lambda record: record["issuer"],
     )
     site = MarketplaceSiteHostAdapter(
@@ -323,6 +326,49 @@ class M17BearerSessionTransportTests(unittest.TestCase):
         self.assertEqual(sent[0]["status"], 403)
         self.assertEqual(response_document(sent)["error"]["code"], "AUTH_PRINCIPAL_MISMATCH")
         self.assertEqual(api.calls, [])
+
+    def test_canonical_invalid_session_is_rejected_before_body_parsing(self):
+        adapter, api, listing, proposal = make_stack()
+        hostile_body = b"{"
+        bad = b"Bearer mkt1_" + base64.urlsafe_b64encode(OTHER_TOKEN).rstrip(b"=")
+        sent = asyncio.run(
+            invoke(
+                adapter,
+                scope(
+                    method="POST",
+                    path="/api/product-listings",
+                    headers=json_headers(hostile_body, authorization=bad),
+                ),
+                hostile_body,
+            )
+        )
+        self.assertEqual(sent[0]["status"], 401)
+        self.assertEqual(response_document(sent)["error"]["code"], "AUTH_SESSION_INVALID")
+        self.assertEqual(api.calls, [])
+        self.assertEqual(listing.calls, [])
+        self.assertEqual(proposal.calls, [])
+
+    def test_raw_write_decodes_once_before_authorized_publication(self):
+        decoded = []
+
+        def unstable_decoder(body: bytes):
+            decoded.append(body)
+            principal = PRINCIPAL if len(decoded) == 1 else "did:example:other"
+            return {"issuer": principal, "kind": "synthetic"}
+
+        adapter, api, _, _ = make_stack(record_decoder=unstable_decoder)
+        body = b'{"issuer":"did:example:seller","kind":"synthetic"}'
+        sent = asyncio.run(
+            invoke(
+                adapter,
+                scope(method="POST", path="/api/intents", headers=json_headers(body, authorization=AUTH_VALUE)),
+                body,
+            )
+        )
+        self.assertEqual(sent[0]["status"], 201)
+        self.assertEqual(len(decoded), 1)
+        self.assertEqual(api.calls[0][0], "create_intent")
+        self.assertEqual(api.calls[0][1]["issuer"], PRINCIPAL)
 
     def test_duplicate_authorization_and_cookie_paths_fail_closed(self):
         adapter, _, _, _ = make_stack()
