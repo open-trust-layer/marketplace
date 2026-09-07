@@ -228,7 +228,12 @@ async def _read_request_body(
     receive: AsgiReceive,
     *,
     expected_length: int | None,
+    max_body_bytes: int = MAX_APPLICATION_HTTP_BODY_BYTES,
 ) -> bytes:
+    if type(max_body_bytes) is not int or max_body_bytes < 0 or max_body_bytes > MAX_APPLICATION_HTTP_BODY_BYTES:
+        _fail("ASGI_REQUEST_LIMIT_INVALID", "request body limit is outside the reviewed bound")
+    if expected_length is not None and expected_length > max_body_bytes:
+        _fail("ASGI_REQUEST_TOO_LARGE", "request body exceeds the reviewed bound")
     chunks: list[bytes] = []
     total = 0
     for _ in range(MAX_ASGI_REQUEST_EVENTS):
@@ -244,7 +249,7 @@ async def _read_request_body(
         if type(body) is not bytes or type(more_body) is not bool:
             _fail("ASGI_EVENT_INVALID", "http.request body fields are invalid")
         total += len(body)
-        if total > MAX_APPLICATION_HTTP_BODY_BYTES:
+        if total > max_body_bytes:
             _fail("ASGI_REQUEST_TOO_LARGE", "request body exceeds the reviewed bound")
         chunks.append(body)
         if not more_body:
