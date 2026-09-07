@@ -28,9 +28,12 @@ class M17ApplicationAuthArtifactTests(unittest.TestCase):
         self.assertIn("hashlib.sha256", source)
         self.assertIn("PrincipalBindingVerifier", source)
 
-    def test_existing_asgi_credential_boundary_is_unchanged(self):
+    def test_legacy_asgi_credential_boundary_remains_fail_closed(self):
         source = (ROOT / "src/marketplace/application/asgi.py").read_text(encoding="utf-8")
-        self.assertIn('{"authorization", "cookie", "proxy-authorization"}', source)
+        self.assertIn('_SENSITIVE_REQUEST_HEADERS = frozenset({"cookie", "proxy-authorization"})', source)
+        self.assertIn('if name == "authorization":', source)
+        self.assertIn('if not allow_authorization:', source)
+        self.assertIn('method, path, query, content_type, content_length, _authorization = _review_scope(scope)', source)
         self.assertIn('_FORBIDDEN_RESPONSE_HEADERS = frozenset({"set-cookie"})', source)
         self.assertIn("ASGI_SENSITIVE_HEADER_FORBIDDEN", source)
 

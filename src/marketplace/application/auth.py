@@ -316,6 +316,19 @@ class MarketplaceApplicationAuthService:
             touch=True,
         ).view()
 
+    def validate_session(
+        self,
+        *,
+        session_token: bytes,
+        now: int,
+    ) -> ApplicationSessionView:
+        """Validate one active session without extending its idle lifetime."""
+        return self._review_session(
+            session_token=session_token,
+            now=now,
+            touch=False,
+        ).view()
+
     def authorize_principal(
         self,
         *,
