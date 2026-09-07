@@ -15,15 +15,25 @@ private const val MAX_REQUEST_BYTES = 256 * 1024
 private const val MAX_RESPONSE_BYTES = 300 * 1024
 private const val MAX_REQUEST_PATH_CHARS = 4_096
 
-class LoopbackMarketplaceTransport : MarketplaceTransport {
+class LoopbackMarketplaceTransport : MarketplaceTransport, EphemeralAuthorizationTransport {
     private val baseUri = URI(LOOPBACK_BASE_URL)
 
-    override suspend fun execute(request: ApiRequest): ApiResponse = withContext(Dispatchers.IO) {
-        executeBlocking(request)
-    }
+    override suspend fun execute(request: ApiRequest): ApiResponse =
+        executeEphemeral(request, null)
 
-    private fun executeBlocking(request: ApiRequest): ApiResponse {
+    override suspend fun executeEphemeral(request: ApiRequest, authorization: String?): ApiResponse =
+        withContext(Dispatchers.IO) {
+            executeBlocking(request, authorization)
+        }
+    private fun executeBlocking(request: ApiRequest, authorization: String?): ApiResponse {
         val target = reviewedTarget(request)
+        if (authorization != null) {
+            if (!reviewedBearerAuthorization(authorization) ||
+                !reviewedAuthenticatedClientRoute(request.method, request.path)
+            ) {
+                fail("AUTH_SESSION_INVALID", "Marketplace authorization is invalid")
+            }
+        }
         val connection = target.toURL().openConnection() as HttpURLConnection
         try {
             connection.instanceFollowRedirects = false
@@ -31,6 +41,9 @@ class LoopbackMarketplaceTransport : MarketplaceTransport {
             connection.readTimeout = READ_TIMEOUT_MS
             connection.requestMethod = request.method
             connection.setRequestProperty("Accept", "application/json")
+            if (authorization != null) {
+                connection.setRequestProperty("Authorization", authorization)
+            }
             val body = request.body
             if (body != null) writeBody(connection, body)
             val status = connection.responseCode
@@ -45,12 +58,14 @@ class LoopbackMarketplaceTransport : MarketplaceTransport {
             connection.disconnect()
         }
     }
-
     private fun reviewedTarget(request: ApiRequest): URI {
         if (request.method != "GET" && request.method != "POST") {
             fail("APPLICATION_HTTP_METHOD_INVALID", "Marketplace request method is not allowed")
         }
-        if ((request.method == "GET" && request.body != null) || (request.method == "POST" && request.body == null)) {
+        val emptyLogout = request.method == "POST" && request.path == API_AUTH_LOGOUT && request.body == null
+        if ((request.method == "GET" && request.body != null) ||
+            (request.method == "POST" && request.body == null && !emptyLogout)
+        ) {
             fail("APPLICATION_HTTP_ENTITY_INVALID", "Marketplace request entity does not match the reviewed method")
         }
         if (request.path.length !in 1..MAX_REQUEST_PATH_CHARS || !request.path.startsWith("/") || request.path.startsWith("//")) {
@@ -73,7 +88,6 @@ class LoopbackMarketplaceTransport : MarketplaceTransport {
         }
         return resolved
     }
-
     private fun writeBody(connection: HttpURLConnection, body: String) {
         val bytes = body.encodeToByteArray()
         if (bytes.size !in 1..MAX_REQUEST_BYTES) {
@@ -108,5 +122,6 @@ class LoopbackMarketplaceTransport : MarketplaceTransport {
         }
     }
 
-    private fun fail(code: String, message: String): Nothing = throw MarketplaceClientException(code, message)
+    private fun fail(code: String, message: String): Nothing =
+        throw MarketplaceClientException(code, message)
 }
