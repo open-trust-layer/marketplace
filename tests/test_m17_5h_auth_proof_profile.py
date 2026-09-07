@@ -159,7 +159,7 @@ class M17AuthProofProfileTests(unittest.TestCase):
             valid + "=",
             valid[:-1],
             valid[:-1] + "!",
-            AUTH_SIGNATURE_PREFIX + "A" * AUTH_SIGNATURE_PAYLOAD_CHARS,
+            AUTH_SIGNATURE_PREFIX + "A" * (AUTH_SIGNATURE_PAYLOAD_CHARS - 1) + "B",
         )
         for value in invalid_values:
             with self.subTest(value=repr(value)[:30]):
