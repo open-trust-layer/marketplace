@@ -68,7 +68,7 @@ No challenge, proof, bearer token, private material, or credential is intentiona
 M17.5F authorizes none of the following:
 
 - concrete challenge/session generation or CSPRNG/provider selection;
-- private-key creation, import, custody, browser wallet/extension access, Android Keystore access, or other private-key handling;
+- no private-key handling: no private-key creation, import, custody, browser wallet/extension access, Android Keystore access, or equivalent key authority;
 - real OLP signing, cryptographic proof creation, or real proof verification;
 - DID/resolver/provider lookup, administration, or network activity;
 - OAuth, OIDC, password, JWT, cookie, callback, redirect, or cross-origin credential capability;
