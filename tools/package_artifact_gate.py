@@ -50,6 +50,7 @@ _HEX_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/__init__.py",
     "marketplace/application/auth_verifier_ed25519.py",
+    "marketplace/application/auth_verification_method_snapshot.py",
     "marketplace/application/uvicorn_provider.py",
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",
