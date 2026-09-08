@@ -69,11 +69,13 @@ class M17AuthMaterialArtifactTests(unittest.TestCase):
             self.assertNotIn("auth_material", entry_text)
             self.assertNotIn("MarketplaceCredentialMaterialSource", entry_text)
 
-    def test_dependency_and_workflow_surfaces_are_not_needed_by_this_profile(self):
+    def test_later_optional_verifier_dependency_does_not_widen_this_profile(self):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         workflow = (ROOT / ".github" / "workflows" / "conformance.yml").read_text(encoding="utf-8")
+        source = SOURCE.read_text(encoding="utf-8")
         self.assertIn("dependencies = []", pyproject)
-        self.assertNotIn("cryptography", pyproject)
+        self.assertIn('auth-verify = ["cryptography==50.0.1"]', pyproject)
+        self.assertNotIn("cryptography", source)
         self.assertNotIn("auth_material", pyproject)
         self.assertIn("unittest", (ROOT / "tools" / "conformance_gate.py").read_text(encoding="utf-8"))
         self.assertNotIn("auth_material", workflow)

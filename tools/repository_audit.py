@@ -58,6 +58,7 @@ _EXPECTED_LICENSE = "Apache-2.0"
 _EXPECTED_OPTIONAL_DEPENDENCIES = {
     "postgres": ["psycopg[binary]==3.3.5"],
     "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+    "auth-verify": ["cryptography==50.0.1"],
 }
 
 

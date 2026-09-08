@@ -34,19 +34,22 @@ EXPECTED_PACKAGE_NAME = "open-layer-marketplace"
 EXPECTED_OPTIONAL_DEPENDENCIES = {
     "postgres": ["psycopg[binary]==3.3.5"],
     "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+    "auth-verify": ["cryptography==50.0.1"],
 }
 EXPECTED_REQUIRES_DIST = [
     'psycopg[binary]==3.3.5; extra == "postgres"',
     'uvicorn==0.52.4; extra == "local-server"',
     'click==8.5.0; extra == "local-server"',
     'h11==0.16.0; extra == "local-server"',
+    'cryptography==50.0.1; extra == "auth-verify"',
 ]
-EXPECTED_PROVIDES_EXTRA = ["postgres", "local-server"]
+EXPECTED_PROVIDES_EXTRA = ["postgres", "local-server", "auth-verify"]
 _DEV_VERSION_RE = re.compile(r"^0\.0\.\d+\.dev\d+$")
 _HEX_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _HEX_COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/__init__.py",
+    "marketplace/application/auth_verifier_ed25519.py",
     "marketplace/application/uvicorn_provider.py",
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",

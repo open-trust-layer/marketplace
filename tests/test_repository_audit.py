@@ -32,6 +32,7 @@ dependencies = []
 [project.optional-dependencies]
 postgres = ["psycopg[binary]==3.3.5"]
 local-server = ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"]
+auth-verify = ["cryptography==50.0.1"]
 
 [tool.setuptools.packages.find]
 where = [\"src\"]
@@ -41,6 +42,7 @@ include = [\"marketplace*\"]
 _EXPECTED_OPTIONAL_DEPENDENCIES = {
     "postgres": ["psycopg[binary]==3.3.5"],
     "local-server": ["uvicorn==0.52.4", "click==8.5.0", "h11==0.16.0"],
+    "auth-verify": ["cryptography==50.0.1"],
 }
 
 
