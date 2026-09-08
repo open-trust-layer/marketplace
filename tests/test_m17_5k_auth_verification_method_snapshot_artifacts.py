@@ -45,8 +45,9 @@ class M17AuthVerificationMethodSnapshotArtifactTests(unittest.TestCase):
             },
         )
         self.assertIn("@dataclass(frozen=True, slots=True)", text)
+        self.assertIn("@dataclass(frozen=True, slots=True, init=False)", text)
         self.assertIn("MappingProxyType(copied)", text)
-        self.assertIn("__slots__ = (\"_entries\",)", text)
+        self.assertIn("object.__setattr__(self, \"_entries\", MappingProxyType(copied))", text)
 
     def test_source_has_no_crypto_private_key_resolution_io_or_refresh_authority(self):
         text = SOURCE.read_text(encoding="utf-8")

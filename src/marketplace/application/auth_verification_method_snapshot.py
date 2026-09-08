@@ -76,10 +76,11 @@ class AuthenticationVerificationMethodEvidence:
             _fail()
 
 
+@dataclass(frozen=True, slots=True, init=False)
 class MarketplaceAuthenticationVerificationMethodSnapshot:
     """Immutable shared key-source and principal-binding evidence snapshot."""
 
-    __slots__ = ("_entries",)
+    _entries: Mapping[str, AuthenticationVerificationMethodEvidence]
 
     def __init__(
         self,
@@ -98,7 +99,7 @@ class MarketplaceAuthenticationVerificationMethodSnapshot:
             if method in copied:
                 _fail()
             copied[method] = entry
-        self._entries: Mapping[str, AuthenticationVerificationMethodEvidence] = MappingProxyType(copied)
+        object.__setattr__(self, "_entries", MappingProxyType(copied))
 
     def verification_key_bytes(self, verification_method: str) -> bytes:
         """Return the exact frozen public key for one exact method identifier."""

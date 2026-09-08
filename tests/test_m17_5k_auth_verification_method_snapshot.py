@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from dataclasses import FrozenInstanceError
 import json
 import unittest
 
@@ -216,6 +217,9 @@ class M17AuthVerificationMethodSnapshotTests(unittest.TestCase):
             snapshot.verification_key_bytes("did:example:bob#key-2")
         for name in ("add", "update", "delete", "refresh", "reload"):
             self.assertFalse(hasattr(snapshot, name), name)
+        with self.assertRaises(FrozenInstanceError):
+            snapshot._entries = {}  # type: ignore[misc,assignment]
+        self.assertEqual(snapshot.verification_key_bytes(METHOD), TEST_PUBLIC_KEY)
 
     def test_binding_uses_explicit_controller_and_half_open_validity_only(self):
         snapshot = MarketplaceAuthenticationVerificationMethodSnapshot(
