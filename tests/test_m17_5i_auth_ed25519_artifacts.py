@@ -72,23 +72,26 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_marketplace_production_crypto_is_limited_to_exact_m17_5j_public_verifier(self):
+    def test_marketplace_production_crypto_is_limited_to_exact_public_verifiers(self):
         source_root = ROOT / "src" / "marketplace"
         files = tuple(source_root.rglob("*.py"))
         self.assertTrue(files)
-        verifier_path = source_root / "application" / "auth_verifier_ed25519.py"
+        allowed_public_verifier_paths = {
+            source_root / "application" / "auth_verifier_ed25519.py",
+            source_root / "application" / "auth_evidence_trust_ed25519.py",
+        }
         for path in files:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("olp.crypto.ed25519", text, str(path))
             self.assertNotIn("import nacl", text, str(path))
             self.assertNotIn("from nacl", text, str(path))
-            if path == verifier_path:
+            self.assertNotIn("Ed25519PrivateKey", text, str(path))
+            self.assertNotIn("def sign(", text, str(path))
+            if path in allowed_public_verifier_paths:
                 self.assertIn(
                     "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey",
                     text,
                 )
-                self.assertNotIn("Ed25519PrivateKey", text)
-                self.assertNotIn("def sign(", text)
             else:
                 self.assertNotIn("from cryptography", text, str(path))
                 self.assertNotIn("import cryptography", text, str(path))
