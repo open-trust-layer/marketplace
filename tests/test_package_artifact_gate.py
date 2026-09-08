@@ -41,6 +41,7 @@ REQUIRED = {
     "marketplace/__init__.py": b"",
     "marketplace/application/auth_verifier_ed25519.py": b"# reviewed public-key verifier\n",
     "marketplace/application/auth_evidence_trust_ed25519.py": b"# static public evidence trust verifier\n",
+    "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
     "marketplace/application/auth_static_composition.py": b"# static authentication composition\n",
     "marketplace/application/auth_trust_anchor_manifest.py": b"# canonical static trust-anchor manifest intake\n",
     "marketplace/application/auth_verification_method_snapshot.py": b"# immutable verification-method snapshot\n",
@@ -162,6 +163,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_evidence_trust_ed25519_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_evidence_trust_ed25519.py"
+        )
+
+    def test_missing_auth_http_composition_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_http_composition.py"
         )
 
     def test_missing_auth_static_composition_member_is_rejected(self):
