@@ -40,6 +40,7 @@ REVIEWED_METADATA = (
 REQUIRED = {
     "marketplace/__init__.py": b"",
     "marketplace/application/auth_verifier_ed25519.py": b"# reviewed public-key verifier\n",
+    "marketplace/application/auth_verification_method_snapshot.py": b"# immutable verification-method snapshot\n",
     "marketplace/application/uvicorn_provider.py": b"# inert reviewed provider adapter\n",
     "marketplace/runtime/__init__.py": b"",
     "marketplace/runtime/composition.py": b"# runtime\n",
@@ -153,6 +154,11 @@ class PackageArtifactGateTests(unittest.TestCase):
 
     def test_missing_auth_verifier_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/application/auth_verifier_ed25519.py")
+
+    def test_missing_auth_verification_method_snapshot_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_verification_method_snapshot.py"
+        )
 
     def test_missing_uvicorn_provider_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/application/uvicorn_provider.py")
