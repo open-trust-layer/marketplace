@@ -144,6 +144,19 @@ class M17AuthEvidenceTrustEd25519Tests(unittest.TestCase):
         with self.assertRaises(AuthenticationEvidenceTrustError):
             AuthenticationEvidenceTrustAnchor(AUTHORITY, b"x" * 31)
 
+    def test_authority_uri_rejects_whitespace_without_rejecting_letter_s(self):
+        with self.assertRaises(AuthenticationEvidenceTrustError):
+            AuthenticationEvidenceTrustAnchor(
+                authority="https://authority.example/has space",
+                public_key=RFC8032_PUBLIC_KEY,
+            )
+
+        anchor = AuthenticationEvidenceTrustAnchor(
+            authority="https://authority.example/safe",
+            public_key=RFC8032_PUBLIC_KEY,
+        )
+        self.assertEqual(anchor.authority, "https://authority.example/safe")
+
     def test_authority_lookup_is_exact_and_has_no_fallback(self):
         snapshot = _snapshot(AuthenticationEvidenceTrustAnchor(AUTHORITY, RFC8032_PUBLIC_KEY))
         self.assertEqual(

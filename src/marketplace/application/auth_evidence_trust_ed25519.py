@@ -30,7 +30,7 @@ AUTH_EVIDENCE_TRUST_SIGNATURE_BYTES: Final = 64
 AUTH_EVIDENCE_TRUST_URI_MAX_BYTES: Final = 2048
 AUTH_EVIDENCE_TRUST_TRANSCRIPT_PREFIX: Final = b"MARKETPLACE-AUTH-EVIDENCE"
 AUTH_EVIDENCE_TRUST_TRANSCRIPT_VERSION: Final = 1
-_AUTHORITY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$")
+_AUTHORITY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
 
 
 class AuthenticationEvidenceTrustError(ValueError):
