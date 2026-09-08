@@ -72,25 +72,35 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_marketplace_production_source_does_not_import_ed25519_provider(self):
+    def test_marketplace_production_crypto_is_limited_to_exact_m17_5j_public_verifier(self):
         source_root = ROOT / "src" / "marketplace"
         files = tuple(source_root.rglob("*.py"))
         self.assertTrue(files)
+        verifier_path = source_root / "application" / "auth_verifier_ed25519.py"
         for path in files:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("olp.crypto.ed25519", text, str(path))
-            self.assertNotIn("from cryptography", text, str(path))
-            self.assertNotIn("import cryptography", text, str(path))
             self.assertNotIn("import nacl", text, str(path))
             self.assertNotIn("from nacl", text, str(path))
+            if path == verifier_path:
+                self.assertIn(
+                    "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey",
+                    text,
+                )
+                self.assertNotIn("Ed25519PrivateKey", text)
+                self.assertNotIn("def sign(", text)
+            else:
+                self.assertNotIn("from cryptography", text, str(path))
+                self.assertNotIn("import cryptography", text, str(path))
 
-    def test_marketplace_dependency_and_workflow_boundaries_are_not_widened(self):
+    def test_marketplace_dependency_and_workflow_boundaries_admit_only_exact_verifier_extra(self):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         workflow = (ROOT / ".github" / "workflows" / "conformance.yml").read_text(encoding="utf-8")
         gate = (ROOT / "tools" / "conformance_gate.py").read_text(encoding="utf-8")
         self.assertIn("dependencies = []", pyproject)
-        self.assertNotIn("cryptography", pyproject)
+        self.assertIn('auth-verify = ["cryptography==50.0.1"]', pyproject)
         self.assertNotIn("nacl", pyproject)
+        self.assertEqual(workflow.count('"cryptography==50.0.1"'), 1)
         self.assertIn("41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c", workflow)
         self.assertNotIn("test_m17_5i", workflow)
         self.assertIn("unittest", gate)

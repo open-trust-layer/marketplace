@@ -63,6 +63,10 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "setuptools==80.9.0"'
 
+      - name: Install reviewed authentication verifier dependency
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "cryptography==50.0.1"'
+
       - name: Install OLP reference dependency
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check --no-build-isolation -e ./olp'

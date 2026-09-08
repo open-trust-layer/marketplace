@@ -128,12 +128,14 @@ class M17AuthProofProfileArtifactTests(unittest.TestCase):
             self.assertNotIn("AuthenticationProofSigner", entry_text)
             self.assertNotIn("MarketplaceAuthenticationProof", entry_text)
 
-    def test_dependency_workflow_and_android_surfaces_are_unchanged_in_kind(self):
+    def test_later_optional_verifier_dependency_does_not_widen_proof_profile_or_android(self):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         workflow = (ROOT / ".github" / "workflows" / "conformance.yml").read_text(encoding="utf-8")
         android = (ROOT / "android" / "app" / "build.gradle.kts").read_text(encoding="utf-8")
+        source = SOURCE.read_text(encoding="utf-8")
         self.assertIn("dependencies = []", pyproject)
-        self.assertNotIn("cryptography", pyproject)
+        self.assertIn('auth-verify = ["cryptography==50.0.1"]', pyproject)
+        self.assertNotIn("cryptography", source)
         self.assertNotIn("nacl", pyproject)
         self.assertNotIn("auth_proof_profile", pyproject)
         self.assertNotIn("auth_proof_profile", workflow)
