@@ -55,6 +55,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/application/auth_http_composition.py",
     "marketplace/application/auth_runtime_inputs.py",
     "marketplace/application/auth_startup_provisioning.py",
+    "marketplace/application/auth_startup_composition.py",
     "marketplace/application/auth_static_composition.py",
     "marketplace/application/auth_trust_anchor_manifest.py",
     "marketplace/application/auth_verification_method_snapshot.py",
