@@ -51,6 +51,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/__init__.py",
     "marketplace/application/auth_verifier_ed25519.py",
     "marketplace/application/auth_evidence_trust_ed25519.py",
+    "marketplace/application/auth_asgi_composition.py",
     "marketplace/application/auth_http_composition.py",
     "marketplace/application/auth_runtime_inputs.py",
     "marketplace/application/auth_static_composition.py",
