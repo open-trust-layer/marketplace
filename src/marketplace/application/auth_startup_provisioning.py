@@ -42,17 +42,26 @@ def _is_reparse(info: os.stat_result) -> bool:
 
 
 def _identity(info: os.stat_result) -> tuple[int, ...]:
-    # Windows path and handle stat APIs can disagree on ctime for one file.
-    ctime_ns = 0 if os.name == "nt" else info.st_ctime_ns
     return (
         info.st_dev,
         info.st_ino,
         stat.S_IFMT(info.st_mode),
         info.st_size,
         info.st_mtime_ns,
-        ctime_ns,
+        info.st_ctime_ns,
         getattr(info, "st_nlink", 0),
         getattr(info, "st_file_attributes", 0),
+    )
+
+
+def _same_path_handle_identity(
+    path_identity: tuple[int, ...], handle_identity: tuple[int, ...]
+) -> bool:
+    if os.name != "nt":
+        return path_identity == handle_identity
+    return (
+        path_identity[:5] + path_identity[6:]
+        == handle_identity[:5] + handle_identity[6:]
     )
 
 
@@ -100,18 +109,18 @@ def _safe_child(directory: str, filename: str) -> tuple[str, tuple[int, ...]]:
 def _read_bounded(path: str, expected: tuple[int, ...], maximum: int) -> bytes:
     try:
         with open(path, "rb") as handle:
-            opened = os.fstat(handle.fileno())
-            if _identity(opened) != expected:
+            opened = _identity(os.fstat(handle.fileno()))
+            if not _same_path_handle_identity(expected, opened):
                 _fail()
             raw = handle.read(maximum + 1)
-            after_read = os.fstat(handle.fileno())
-        after_path = os.lstat(path)
+            after_read = _identity(os.fstat(handle.fileno()))
+        after_path = _identity(os.lstat(path))
         real_after = os.path.realpath(path, strict=True)
     except MarketplaceAuthenticationStartupProvisioningError:
         raise
     except Exception:
         _fail()
-    if _identity(after_read) != expected or _identity(after_path) != expected:
+    if after_read != opened or after_path != expected:
         _fail()
     if os.path.normcase(real_after) != os.path.normcase(path):
         _fail()

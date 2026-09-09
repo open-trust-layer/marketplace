@@ -132,9 +132,9 @@ class MarketplaceAuthenticationStartupProvisioningArtifactTests(
             "stat.S_ISREG(info.st_mode)",
             "stat.S_ISLNK(info.st_mode)",
             "st_file_attributes",
-            "_identity(opened) != expected",
-            "_identity(after_read) != expected",
-            "_identity(after_path) != expected",
+            "_same_path_handle_identity(expected, opened)",
+            "after_read != opened",
+            "after_path != expected",
         )
         for marker in required:
             with self.subTest(marker=marker):

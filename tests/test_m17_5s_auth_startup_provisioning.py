@@ -322,6 +322,30 @@ class MarketplaceAuthenticationStartupProvisioningTests(unittest.TestCase):
                     _read_bounded(str(path), expected, 16), b"stable"
                 )
 
+    def test_post_read_path_ctime_drift_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "input.bin"
+            path.write_bytes(b"stable")
+            expected = _identity(os.lstat(path))
+            real_lstat = os.lstat
+
+            def changed_lstat(target):
+                info = real_lstat(target)
+                return _stat_proxy(
+                    info, st_ctime_ns=info.st_ctime_ns + 1
+                )
+
+            with (
+                patch(
+                    "marketplace.application.auth_startup_provisioning.os.lstat",
+                    side_effect=changed_lstat,
+                ),
+                self.assertRaises(
+                    MarketplaceAuthenticationStartupProvisioningError
+                ),
+            ):
+                _read_bounded(str(path), expected, 16)
+
     def test_unstable_open_file_identity_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "input.bin"
