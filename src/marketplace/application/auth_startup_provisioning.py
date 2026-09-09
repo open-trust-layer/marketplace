@@ -42,13 +42,15 @@ def _is_reparse(info: os.stat_result) -> bool:
 
 
 def _identity(info: os.stat_result) -> tuple[int, ...]:
+    # Windows path and handle stat APIs can disagree on ctime for one file.
+    ctime_ns = 0 if os.name == "nt" else info.st_ctime_ns
     return (
         info.st_dev,
         info.st_ino,
         stat.S_IFMT(info.st_mode),
         info.st_size,
         info.st_mtime_ns,
-        info.st_ctime_ns,
+        ctime_ns,
         getattr(info, "st_nlink", 0),
         getattr(info, "st_file_attributes", 0),
     )

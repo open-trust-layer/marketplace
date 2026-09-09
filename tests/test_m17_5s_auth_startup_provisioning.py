@@ -300,6 +300,28 @@ class MarketplaceAuthenticationStartupProvisioningTests(unittest.TestCase):
                     directory=str(root)
                 )
 
+    @unittest.skipUnless(os.name == "nt", "Windows-only ctime normalization")
+    def test_windows_ctime_api_skew_keeps_stable_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "input.bin"
+            path.write_bytes(b"stable")
+            expected = _identity(os.lstat(path))
+            real_fstat = os.fstat
+
+            def skewed_fstat(fd):
+                info = real_fstat(fd)
+                return _stat_proxy(
+                    info, st_ctime_ns=info.st_ctime_ns + 1
+                )
+
+            with patch(
+                "marketplace.application.auth_startup_provisioning.os.fstat",
+                side_effect=skewed_fstat,
+            ):
+                self.assertEqual(
+                    _read_bounded(str(path), expected, 16), b"stable"
+                )
+
     def test_unstable_open_file_identity_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "input.bin"
