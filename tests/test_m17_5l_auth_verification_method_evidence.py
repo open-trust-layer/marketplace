@@ -164,6 +164,27 @@ class M17AuthVerificationMethodEvidenceTests(unittest.TestCase):
         with self.assertRaises(AuthenticationVerificationMethodEvidenceError):
             evidence_claim(method="relative/key")
 
+    def test_uri_shape_accepts_post_scheme_s_and_rejects_actual_whitespace(self):
+        claim = evidence_claim(
+            method="did:example:synthetic#key-1",
+            controller="did:example:synthetic",
+        )
+        claims = evidence_claims(
+            authority="https://synthetic.example/evidence",
+            entries=(claim,),
+        )
+        raw = encode_marketplace_authentication_verification_method_evidence_claims(claims)
+        self.assertEqual(decode_marketplace_authentication_verification_method_evidence_claims(raw), claims)
+
+        for invalid in (
+            "did:example:synthetic key",
+            "did:example:synthetic\tkey",
+            "https://synthetic.example/evidence path",
+        ):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(AuthenticationVerificationMethodEvidenceError):
+                    evidence_claim(method=invalid)
+
     def test_bundle_lease_is_half_open_and_at_most_24_hours(self):
         evidence_claims(issued_at=100, expires_at=100 + AUTH_EVIDENCE_MAX_LEASE_SECONDS)
         for issued, expires in ((100, 100), (101, 100), (100, 100 + AUTH_EVIDENCE_MAX_LEASE_SECONDS + 1)):
