@@ -9,14 +9,14 @@ DOC = ROOT / "docs" / "m17-5v-auth-runtime-server.md"
 PACKAGE_GATE = ROOT / "tools" / "package_artifact_gate.py"
 PACKAGE_TEST = ROOT / "tests" / "test_package_artifact_gate.py"
 APPLICATION = ROOT / "src" / "marketplace" / "application"
-CONTROL_POINTS = (
+LEGACY_CONTROL_POINTS = (
     APPLICATION / "runtime_server.py",
     APPLICATION / "uvicorn_provider.py",
     APPLICATION / "auth_launch.py",
     APPLICATION / "auth_startup_composition.py",
     APPLICATION / "__init__.py",
-    ROOT / "tools" / "marketplace_localhost.py",
 )
+AUTHENTICATED_LOCALHOST_BOOTSTRAP = ROOT / "tools" / "marketplace_localhost.py"
 
 
 class MarketplaceAuthenticatedRuntimeServerArtifactTests(unittest.TestCase):
@@ -127,8 +127,8 @@ class MarketplaceAuthenticatedRuntimeServerArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, calls)
 
-    def test_existing_runtime_provider_and_bootstrap_do_not_select_v(self) -> None:
-        for path in CONTROL_POINTS:
+    def test_existing_runtime_control_points_do_not_select_v(self) -> None:
+        for path in LEGACY_CONTROL_POINTS:
             with self.subTest(path=str(path.relative_to(ROOT))):
                 text = path.read_text(encoding="utf-8")
                 self.assertNotIn("auth_runtime_server", text)
@@ -136,6 +136,32 @@ class MarketplaceAuthenticatedRuntimeServerArtifactTests(unittest.TestCase):
                     "run_marketplace_authenticated_application_foreground",
                     text,
                 )
+
+    def test_m17_5y_bootstrap_selects_v_only_through_explicit_authenticated_mode(self) -> None:
+        text = AUTHENTICATED_LOCALHOST_BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn("auth_runtime_server", text)
+        self.assertIn("run_marketplace_authenticated_application_foreground", text)
+        self.assertIn(
+            '"EXECUTE_AUTHENTICATED_MARKETPLACE_LOCALHOST_MVP_V1"',
+            text,
+        )
+        self.assertIn(
+            '"EXECUTE_ONE_AUTHENTICATED_MARKETPLACE_LOOPBACK_SERVER"',
+            text,
+        )
+        self.assertIn('"--execute-authenticated-localhost"', text)
+
+        tree = ast.parse(text)
+        top_level_modules: set[str] = set()
+        for node in tree.body:
+            if isinstance(node, ast.Import):
+                top_level_modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                top_level_modules.add(node.module)
+        self.assertNotIn(
+            "marketplace.application.auth_runtime_server",
+            top_level_modules,
+        )
 
     def test_package_gate_requires_new_module(self) -> None:
         gate = PACKAGE_GATE.read_text(encoding="utf-8")

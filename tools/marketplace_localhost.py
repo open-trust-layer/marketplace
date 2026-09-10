@@ -1,8 +1,8 @@
 """Explicit repo-only localhost bootstrap for the reviewed Marketplace M17 stack.
 
-Import, help, and dry-run are external-I/O inert. The live path requires the exact
-M17.2B execution opt-in before selecting environment, filesystem, PostgreSQL, or
-server providers. This tool is not a production deployment or service entry point.
+Import, help, and dry-run are external-I/O inert. The existing M17.2B live path
+requires its exact opt-in; the M17.5Y authenticated path requires a separate exact
+opt-in and provisioning preflight. This is not a production deployment/service entry point.
 """
 from __future__ import annotations
 
@@ -27,6 +27,9 @@ from marketplace.reference.postgres_application_v1 import (
 
 
 LOCALHOST_EXECUTION_OPT_IN: Final = "EXECUTE_MARKETPLACE_LOCALHOST_MVP_V1"
+AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN: Final = (
+    "EXECUTE_AUTHENTICATED_MARKETPLACE_LOCALHOST_MVP_V1"
+)
 LOCALHOST_HOST: Final = "127.0.0.1"
 MIN_LOCALHOST_PORT: Final = 1024
 MAX_LOCALHOST_PORT: Final = 65535
@@ -55,6 +58,119 @@ def _validate_port(port: int) -> int:
 def _validate_execution_opt_in(value: object) -> None:
     if type(value) is not str or value != LOCALHOST_EXECUTION_OPT_IN:
         raise MarketplaceLocalhostBootstrapError("M17_2B_EXECUTION_OPT_IN_REQUIRED")
+
+
+def _validate_authenticated_execution_opt_in(value: object) -> None:
+    if type(value) is not str or value != AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_EXECUTION_OPT_IN_REQUIRED")
+
+
+def _validate_authentication_provisioning_directory(value: object) -> str:
+    if type(value) is not str or not value or "\x00" in value:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_PROVISIONING_DIRECTORY_INVALID")
+    if not Path(value).is_absolute():
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_PROVISIONING_DIRECTORY_INVALID")
+    return value
+
+
+def _load_authentication_provisioning(
+    directory: str,
+    *,
+    importer: Callable[[str], object] = importlib.import_module,
+):
+    try:
+        module = importer("marketplace.application.auth_startup_provisioning")
+        loader = getattr(module, "load_marketplace_authentication_startup_provisioning")
+        if not callable(loader):
+            raise TypeError("loader")
+        return loader(directory=directory)
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_PROVISIONING_FAILED") from None
+
+
+def _compose_authentication_runtime_inputs(
+    *, importer: Callable[[str], object] = importlib.import_module
+):
+    try:
+        module = importer("marketplace.application.auth_runtime_inputs")
+        composer = getattr(module, "compose_marketplace_authentication_runtime_inputs")
+        if not callable(composer):
+            raise TypeError("composer")
+        return composer()
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_RUNTIME_INPUTS_FAILED") from None
+
+
+def _build_authenticated_postgres_plan(
+    *,
+    connection_factory: object,
+    clock: Callable[[], datetime],
+    host: str,
+    port: int,
+    index_html: bytes,
+    app_js: bytes,
+    styles_css: bytes,
+    provisioning: object,
+    runtime_inputs: object,
+    importer: Callable[[str], object] = importlib.import_module,
+):
+    try:
+        module = importer("marketplace.reference.auth_postgres_application_v1")
+        builder = getattr(
+            module,
+            "build_reference_authenticated_postgres_marketplace_launch_plan",
+        )
+        if not callable(builder):
+            raise TypeError("builder")
+        return builder(
+            connection_factory=connection_factory,
+            clock=clock,
+            host=host,
+            port=port,
+            index_html=index_html,
+            app_js=app_js,
+            styles_css=styles_css,
+            provisioning=provisioning,
+            runtime_inputs=runtime_inputs,
+        )
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_COMPOSITION_FAILED") from None
+
+
+def _validate_authenticated_plan_before_initialize(
+    plan: object,
+    *,
+    importer: Callable[[str], object] = importlib.import_module,
+) -> MarketplaceApplicationComposition:
+    try:
+        runtime_module = importer("marketplace.application.auth_runtime_server")
+        validator = getattr(runtime_module, "_validate_plan")
+        if not callable(validator):
+            raise TypeError("validator")
+        validator(plan)
+        application = plan.startup.http.application
+        if type(application) is not MarketplaceApplicationComposition:
+            raise TypeError("application")
+        return application
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_LAUNCH_PLAN_INVALID") from None
+
+
+def _run_authenticated_foreground(
+    *,
+    plan: object,
+    provider: object,
+    importer: Callable[[str], object] = importlib.import_module,
+) -> None:
+    try:
+        module = importer("marketplace.application.auth_runtime_server")
+        runner = getattr(module, "run_marketplace_authenticated_application_foreground")
+        token = getattr(module, "EXECUTE_ONE_AUTHENTICATED_MARKETPLACE_LOOPBACK_SERVER")
+        if not callable(runner) or type(token) is not str:
+            raise TypeError("runtime")
+        runner(plan=plan, provider=provider, execute_token=token)
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_5Y_LOOPBACK_SERVER_FAILED") from None
 
 
 def _real_environment_getter() -> Callable[[str], str | None]:
@@ -243,11 +359,53 @@ def _execute_localhost(port: int, execution_opt_in: object) -> None:
         raise MarketplaceLocalhostBootstrapError("M17_2B_LOOPBACK_SERVER_FAILED") from None
 
 
+def _execute_authenticated_localhost(
+    port: int,
+    execution_opt_in: object,
+    provisioning_directory: object,
+) -> None:
+    validated_port = _validate_port(port)
+    _validate_authenticated_execution_opt_in(execution_opt_in)
+    directory = _validate_authentication_provisioning_directory(provisioning_directory)
+
+    provisioning = _load_authentication_provisioning(directory)
+    runtime_inputs = _compose_authentication_runtime_inputs()
+
+    getenv = _real_environment_getter()
+    dsn = _read_postgres_dsn(getenv)
+    asset_reader = _real_asset_reader()
+    index_html, app_js, styles_css = _load_web_assets(asset_reader)
+    connection_factory = _build_psycopg_connection_factory(dsn)
+
+    plan = _build_authenticated_postgres_plan(
+        connection_factory=connection_factory,
+        clock=_utc_clock,
+        host=LOCALHOST_HOST,
+        port=validated_port,
+        index_html=index_html,
+        app_js=app_js,
+        styles_css=styles_css,
+        provisioning=provisioning,
+        runtime_inputs=runtime_inputs,
+    )
+    application = _validate_authenticated_plan_before_initialize(plan)
+    provider = _real_uvicorn_provider()
+
+    try:
+        application.initialize()
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "M17_5Y_DATABASE_INITIALIZATION_FAILED"
+        ) from None
+
+    _run_authenticated_foreground(plan=plan, provider=provider)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "HIGH-capability repo-only Marketplace localhost bootstrap. Dry-run performs no external I/O; "
-            "live execution requires the exact M17.2B opt-in and separate runtime authorization."
+            "live execution requires an exact mode-specific opt-in and separate runtime authorization."
         )
     )
     parser.add_argument(
@@ -267,6 +425,16 @@ def _parser() -> argparse.ArgumentParser:
         metavar="TOKEN",
         help="TOKEN must equal the exact documented M17.2B localhost execution opt-in",
     )
+    mode.add_argument(
+        "--execute-authenticated-localhost",
+        metavar="TOKEN",
+        help="TOKEN must equal the exact documented M17.5Y authenticated localhost execution opt-in",
+    )
+    parser.add_argument(
+        "--authentication-provisioning-directory",
+        metavar="ABSOLUTE_DIRECTORY",
+        help="explicit absolute local directory consumed only by the authenticated M17.5Y mode",
+    )
     return parser
 
 
@@ -278,11 +446,39 @@ def main(argv: list[str] | None = None) -> int:
         print(exc.code, file=sys.stderr)
         return 2
 
+    if (
+        args.execute_authenticated_localhost is None
+        and args.authentication_provisioning_directory is not None
+    ):
+        print("M17_5Y_PROVISIONING_DIRECTORY_MODE_INVALID", file=sys.stderr)
+        return 2
+
     if args.dry_run:
         print(
             "M17_2B_DRY_RUN_READY "
             f"host={LOCALHOST_HOST} port={port} filesystem_invoked=false environment_invoked=false "
             "postgres_invoked=false server_invoked=false"
+        )
+        return 0
+
+    if args.execute_authenticated_localhost is not None:
+        try:
+            _execute_authenticated_localhost(
+                port,
+                args.execute_authenticated_localhost,
+                args.authentication_provisioning_directory,
+            )
+        except MarketplaceLocalhostBootstrapError as exc:
+            print(exc.code, file=sys.stderr)
+            preflight_codes = {
+                "M17_2B_PORT_INVALID",
+                "M17_5Y_EXECUTION_OPT_IN_REQUIRED",
+                "M17_5Y_PROVISIONING_DIRECTORY_INVALID",
+            }
+            return 2 if exc.code in preflight_codes else 1
+        print(
+            "M17_5Y_AUTHENTICATED_LOCALHOST_FOREGROUND_COMPLETE "
+            "public_exposure=false production_deployment=false android_runtime=false"
         )
         return 0
 
