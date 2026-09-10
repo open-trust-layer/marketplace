@@ -16,8 +16,8 @@ MODULE = "marketplace.reference.auth_postgres_application_v1"
 HOST = "127.0.0.1"
 PORT = 8443
 INDEX_HTML = b"<html></html>"
-APP_JS = b""
-STYLES_CSS = b""
+APP_JS = b"console.log('marketplace')"
+STYLES_CSS = b"body{display:block}"
 
 
 class MarketplaceReferenceAuthenticatedPostgresApplicationTests(unittest.TestCase):
