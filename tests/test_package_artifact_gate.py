@@ -43,6 +43,7 @@ REQUIRED = {
     "marketplace/application/auth_evidence_trust_ed25519.py": b"# static public evidence trust verifier\n",
     "marketplace/application/auth_asgi_composition.py": b"# static authenticated ASGI composition\n",
     "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
+    "marketplace/application/auth_launch.py": b"# inert authenticated loopback launch plan\n",
     "marketplace/application/auth_runtime_inputs.py": b"# reviewed authentication runtime inputs\n",
     "marketplace/application/auth_startup_provisioning.py": b"# bounded authentication startup provisioning\n",
     "marketplace/application/auth_startup_composition.py": (
@@ -184,6 +185,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_runtime_inputs_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_runtime_inputs.py"
+        )
+
+    def test_missing_auth_launch_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_launch.py"
         )
 
     def test_missing_auth_startup_composition_member_is_rejected(self):
