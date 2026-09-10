@@ -53,6 +53,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/application/auth_evidence_trust_ed25519.py",
     "marketplace/application/auth_asgi_composition.py",
     "marketplace/application/auth_http_composition.py",
+    "marketplace/application/auth_launch.py",
     "marketplace/application/auth_runtime_inputs.py",
     "marketplace/application/auth_startup_provisioning.py",
     "marketplace/application/auth_startup_composition.py",
