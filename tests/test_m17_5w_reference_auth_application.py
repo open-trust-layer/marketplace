@@ -67,6 +67,12 @@ def _forge_plan(plan: MarketplaceApplicationLaunchPlan, **changes):
     return forged
 
 
+def _forge_asgi_with_wrong_site() -> MarketplaceAsgiHttpAdapter:
+    forged = object.__new__(MarketplaceAsgiHttpAdapter)
+    object.__setattr__(forged, "_site", object())
+    return forged
+
+
 class MarketplaceReferenceAuthenticatedLaunchTests(unittest.TestCase):
     def test_profile_success_identity_and_single_clock_sample(self) -> None:
         plan, provisioning, runtime_inputs = _inputs()
@@ -146,7 +152,7 @@ class MarketplaceReferenceAuthenticatedLaunchTests(unittest.TestCase):
             _forge_plan(plan, port=_IntegerSubclass(8443)),
             _forge_plan(plan, composition=object()),
             _forge_plan(plan, asgi=object()),
-            _forge_plan(plan, asgi=MarketplaceAsgiHttpAdapter(site=object())),
+            _forge_plan(plan, asgi=_forge_asgi_with_wrong_site()),
         )
         for candidate in cases:
             with self.subTest(candidate=type(candidate).__name__):
