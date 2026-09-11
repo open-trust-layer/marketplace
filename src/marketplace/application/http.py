@@ -12,6 +12,7 @@ from typing import Any, Callable
 
 from .api import ApplicationApiError, IntentIndexPage, MarketplaceApplicationApiService
 from .authoring import ProductListingAuthoringError, ProductListingAuthoringFields
+from .mvp import MarketplaceMvpFlightResult
 from .postgres_state import ApplicationStatePutResult, StoreDisposition, SyncChange, SyncPage
 from .proposal import BuyerRequestProposalDraft
 from .proposal_authoring import ProposalAuthoringError
@@ -29,6 +30,7 @@ RecordJsonDecoder = Callable[[bytes], Any]
 RecordJsonEncoder = Callable[[Any], bytes]
 ProductListingCreator = Callable[[ProductListingAuthoringFields], ApplicationStatePutResult]
 ProposalCreator = Callable[[BuyerRequestProposalDraft], ApplicationStatePutResult]
+MvpFlightRunner = Callable[[], MarketplaceMvpFlightResult]
 
 _PRODUCT_LISTING_STRING_FIELDS = (
     "seller_principal",
@@ -338,6 +340,7 @@ class MarketplaceApplicationHttpAdapter:
         encode_record_json: RecordJsonEncoder,
         create_product_listing: ProductListingCreator,
         create_proposal: ProposalCreator,
+        run_mvp_flight: MvpFlightRunner | None = None,
     ) -> None:
         if not callable(decode_record_json) or not callable(encode_record_json):
             raise TypeError("record JSON codecs MUST be callable")
@@ -345,11 +348,14 @@ class MarketplaceApplicationHttpAdapter:
             raise TypeError("create_product_listing MUST be callable")
         if not callable(create_proposal):
             raise TypeError("create_proposal MUST be callable")
+        if run_mvp_flight is not None and not callable(run_mvp_flight):
+            raise TypeError("run_mvp_flight MUST be callable when supplied")
         self._api = api
         self._decode_record_json = decode_record_json
         self._encode_record_json = encode_record_json
         self._create_product_listing = create_product_listing
         self._create_proposal = create_proposal
+        self._run_mvp_flight = run_mvp_flight
 
     def _decode_record(self, body: bytes) -> Any:
         _validate_json_object_bytes(body)
@@ -385,6 +391,8 @@ class MarketplaceApplicationHttpAdapter:
             return self._product_listings(request)
         if request.path == "/api/sync":
             return self._sync(request)
+        if request.path == "/api/mvp-flight":
+            return self._mvp_flight(request)
         proposal_parent_id = _proposal_parent_path(request.path)
         if proposal_parent_id is not None:
             return self._proposals(request, proposal_parent_id)
@@ -395,6 +403,51 @@ class MarketplaceApplicationHttpAdapter:
         if record_id is not None:
             return self._intent(request, record_id)
         return _error_response(404, "Not Found", "ROUTE_NOT_FOUND", "route does not exist")
+
+    def _mvp_flight(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
+        if request.method != "POST":
+            return _error_response(
+                405,
+                "Method Not Allowed",
+                "METHOD_NOT_ALLOWED",
+                "route does not accept this method",
+                allow="POST",
+            )
+        if request.query or not _require_empty_entity(request):
+            return _bad_request()
+        if self._run_mvp_flight is None:
+            return _error_response(
+                503,
+                "Service Unavailable",
+                "MVP_FLIGHT_UNAVAILABLE",
+                "local MVP flight capability is not configured",
+            )
+        try:
+            result = self._run_mvp_flight()
+        except Exception:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "MVP_FLIGHT_FAILED",
+                "local MVP flight could not complete safely",
+            )
+        if type(result) is not MarketplaceMvpFlightResult:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "MVP_FLIGHT_RESULT_INVALID",
+                "local MVP flight returned an invalid result",
+            )
+        try:
+            document = result.to_document()
+        except Exception:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "MVP_FLIGHT_RESULT_INVALID",
+                "local MVP flight returned an invalid result",
+            )
+        return _json_response(200, "OK", document)
 
     def _product_listings(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
         if request.method != "POST":

@@ -15,6 +15,7 @@ from .authoring import (
 )
 from .http import (
     MarketplaceApplicationHttpAdapter,
+    MvpFlightRunner,
     RecordJsonDecoder,
     RecordJsonEncoder,
 )
@@ -56,6 +57,7 @@ def compose_marketplace_application(
     encode_record_json: RecordJsonEncoder,
     build_product_listing_record: ProductListingRecordBuilder,
     build_proposal_record: ProposalRecordBuilder,
+    run_mvp_flight: MvpFlightRunner | None = None,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -87,6 +89,7 @@ def compose_marketplace_application(
         encode_record_json=encode_record_json,
         create_product_listing=authoring.create_product_listing,
         create_proposal=proposal_authoring.create_buyer_request_proposal,
+        run_mvp_flight=run_mvp_flight,
     )
     site = MarketplaceSiteHostAdapter(
         application_http=http,
