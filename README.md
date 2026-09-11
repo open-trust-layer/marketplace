@@ -5,7 +5,7 @@
 > Coordinate exchange around anything that can be referenced, without making ownership, legality, truth, value, or trust centrally owned.
 
 **Project status:** experimental / application-foundation implementation in progress
-**Application foundation status:** Product M17.1A–J source-level foundation — implemented and conformance-validated
+**Application foundation status:** Product M17.1A–J source-level foundation and reviewed M17.5 authentication/session/principal-binding stack — implemented and conformance-validated; M17.5Z bounded loopback-only synthetic live acceptance completed
 
 Product M17.1 currently includes:
 
@@ -20,7 +20,7 @@ Product M17.1 currently includes:
 - **M17.1I** — inert same-origin Web/API site host; and
 - **M17.1J** — inert full-site application composition.
 
-This is **not a production deployment**: there is **no live PostgreSQL activation**, **no network/server activation**, and **Android build remains unproven** until the reviewed toolchain is actually available and a separately authorized compiled lane succeeds. Runtime filesystem asset loading, production hosting, authentication/session infrastructure, signing, installation, distribution, and deployment remain separate reviewed capabilities.
+This is **not a production deployment**: there is **no live PostgreSQL activation**, **no network/server activation**, and **Android build remains unproven** until the reviewed toolchain is actually available and a separately authorized compiled lane succeeds. The reviewed M17.5 authentication/session/principal-binding stack, explicit authenticated localhost bootstrap, and one bounded loopback-only synthetic live acceptance are complete at source/local-test scope. Production runtime filesystem asset loading and hosting, production authentication deployment, production PostgreSQL activation, persistent service hosting, public-network exposure, persistent production credential/key provisioning, browser/WebCrypto/wallet activation, Android live-login/runtime, signing, installation, publishing/distribution, and deployment remain separate governed capabilities.
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
 **Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
 **Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
