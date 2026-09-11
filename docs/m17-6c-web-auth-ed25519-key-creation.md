@@ -93,7 +93,7 @@ M17.6C grants fresh key creation and public-key export only. It grants:
 - no persistence in localStorage, sessionStorage, IndexedDB, cookies, Cache API, service workers, filesystem or any other store;
 - no key restoration, recovery, backup, migration, rotation, revocation or multi-key selection;
 - no signing operation and no generic signing oracle;
-- no server enrollment, registration, identity binding, trust-evidence mutation or verification-method assignment;
+- no server enrollment, registration, identity binding or trust-evidence mutation, and no verification-method assignment;
 - no ambient `window.crypto` / `globalThis.crypto` selection;
 - no active Web authentication selection or session establishment;
 - no browser execution or real-browser secure-context acceptance;
