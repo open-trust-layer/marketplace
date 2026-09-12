@@ -7,7 +7,6 @@ It performs no network, filesystem persistence, database, settlement, or deploym
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -29,6 +28,7 @@ from olp.evidence import record_ref
 from olp.model.verification import ResolvedVerificationMethod
 
 from marketplace.application import ExactDecimal, LocalMarketplaceApplication, ProductListingDraft, UNIT_ITEM
+from marketplace.application.mvp import MarketplaceMvpFlightResult
 from marketplace.application.proposal import BuyerRequestProposalDraft
 from marketplace.reference.matching_v1 import evaluate_discovery, evaluate_match
 from marketplace.reference.product_listing_v1 import (
@@ -70,39 +70,6 @@ class MarketplaceMvpFlightError(RuntimeError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
         self.code = code
-
-
-@dataclass(frozen=True, slots=True)
-class MarketplaceMvpFlightResult:
-    seller_principal: str
-    buyer_principal: str
-    listing_record_id: str
-    proposal_record_id: str
-    proposal_acceptance_record_id: str
-    agreement_record_id: str
-    performance_record_id: str
-    fulfillment_acceptance_record_id: str
-    completion_record_id: str
-    listing_integrity_verified: bool
-    agreement_formation: str
-    fulfillment_conclusion: str
-    states: tuple[str, ...]
-    final_state: str
-    completed_at: str
-    universal_truth: bool
-    payment_or_settlement_evaluated: bool
-
-    @property
-    def audit_record_ids(self) -> tuple[str, ...]:
-        return (
-            self.listing_record_id,
-            self.proposal_record_id,
-            self.proposal_acceptance_record_id,
-            self.agreement_record_id,
-            self.performance_record_id,
-            self.fulfillment_acceptance_record_id,
-            self.completion_record_id,
-        )
 
 
 class _CloseOnlyExpiryHandle:

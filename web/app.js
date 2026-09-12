@@ -3,6 +3,7 @@
 const API_INTENTS = "/api/intents";
 const API_PRODUCT_LISTINGS = "/api/product-listings";
 const API_SYNC = "/api/sync";
+const API_MVP_FLIGHT = "/api/mvp-flight";
 const RESPONSES_SUFFIX = "/responses";
 const PROPOSALS_SUFFIX = "/proposals";
 const PAGE_LIMIT = 64;
@@ -41,6 +42,9 @@ const selectedRecordId = byId("selected-record-id");
 const selectedRecordJson = byId("selected-record-json");
 const responseList = byId("response-list");
 const responseButton = byId("submit-response");
+const mvpFlightButton = byId("run-mvp-flight");
+const mvpFlightLifecycle = byId("mvp-flight-lifecycle");
+const mvpFlightAudit = byId("mvp-flight-audit");
 function stableClientError(code) {
   const error = new Error("Marketplace request failed");
   error.code = code;
@@ -473,6 +477,102 @@ async function createProposal(event) {
   }
 }
 
+function reviewedMvpText(value, maximum = 4096) {
+  if (typeof value !== "string" || value.length === 0 || value.length > maximum) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  return value;
+}
+
+function reviewedMvpFlightDocument(value) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  if (value.profile !== "MARKETPLACE_MVP_FLIGHT_ACCEPTANCE_V1") {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  const participants = value.participants;
+  const verification = value.verification;
+  const records = value.records;
+  if (participants === null || typeof participants !== "object" || Array.isArray(participants)) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  if (verification === null || typeof verification !== "object" || Array.isArray(verification)) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  if (records === null || typeof records !== "object" || Array.isArray(records)) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  const states = value.states;
+  const audit = value.audit_record_ids;
+  if (!Array.isArray(states) || states.length === 0 || states.length > 16) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  if (!Array.isArray(audit) || audit.length === 0 || audit.length > 32) {
+    throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  }
+  for (const stateValue of states) reviewedMvpText(stateValue, 64);
+  for (const recordId of audit) requireRecordId(recordId);
+  if (new Set(audit).size !== audit.length) throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  const finalState = reviewedMvpText(value.final_state, 64);
+  if (finalState !== states[states.length - 1]) throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  if (typeof verification.listing_integrity_verified !== "boolean") throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  if (typeof verification.universal_truth !== "boolean") throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  if (typeof verification.payment_or_settlement_evaluated !== "boolean") throw stableClientError("MVP_FLIGHT_DOCUMENT_INVALID");
+  return {
+    seller: reviewedMvpText(participants.seller),
+    buyer: reviewedMvpText(participants.buyer),
+    states,
+    finalState,
+    completedAt: reviewedMvpText(value.completed_at, 128),
+    listingId: requireRecordId(records.listing),
+    agreementId: requireRecordId(records.agreement),
+    agreementFormation: reviewedMvpText(verification.agreement_formation, 128),
+    fulfillmentConclusion: reviewedMvpText(verification.fulfillment_conclusion, 128),
+    listingIntegrityVerified: verification.listing_integrity_verified,
+    universalTruth: verification.universal_truth,
+    paymentOrSettlementEvaluated: verification.payment_or_settlement_evaluated,
+    audit,
+  };
+}
+
+function renderMvpFlight(documentValue) {
+  const flight = reviewedMvpFlightDocument(documentValue);
+  byId("mvp-flight-final").textContent = flight.finalState;
+  byId("mvp-flight-seller").textContent = `Seller: ${flight.seller}`;
+  byId("mvp-flight-buyer").textContent = `Buyer: ${flight.buyer}`;
+  byId("mvp-flight-completed-at").textContent = `Completion timestamp: ${flight.completedAt}`;
+  byId("mvp-flight-verification").textContent =
+    `Listing integrity=${flight.listingIntegrityVerified}; agreement=${flight.agreementFormation}; ` +
+    `fulfillment=${flight.fulfillmentConclusion}; universal truth=${flight.universalTruth}; ` +
+    `payment/settlement evaluated=${flight.paymentOrSettlementEvaluated}.`;
+  mvpFlightLifecycle.replaceChildren();
+  for (const stateValue of flight.states) {
+    const item = document.createElement("li");
+    item.textContent = stateValue;
+    mvpFlightLifecycle.append(item);
+  }
+  mvpFlightAudit.textContent = [
+    `listing=${flight.listingId}`,
+    `agreement=${flight.agreementId}`,
+    ...flight.audit.map((recordId, index) => `audit[${index}]=${recordId}`),
+  ].join("\n");
+}
+
+async function runMvpFlight() {
+  mvpFlightButton.disabled = true;
+  setFormStatus("mvp-flight-status", "Running bounded local two-user MVP journey?");
+  try {
+    const documentValue = await apiFetch(API_MVP_FLIGHT, { method: "POST" });
+    renderMvpFlight(documentValue);
+    setFormStatus("mvp-flight-status", "MVP journey completed with visible verification and audit evidence.", "success");
+  } catch (error) {
+    setFormStatus("mvp-flight-status", `MVP journey failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+  } finally {
+    mvpFlightButton.disabled = false;
+  }
+}
+
 async function runSyncAction() {
   try {
     await incrementalSync();
@@ -492,6 +592,7 @@ byId("clear-selection").addEventListener("click", () => {
 });
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
 byId("response-form").addEventListener("submit", (event) => void createProposal(event));
+mvpFlightButton.addEventListener("click", () => void runMvpFlight());
 
 renderList();
 renderDetail();

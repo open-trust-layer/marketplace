@@ -7,6 +7,7 @@ database connection, socket operation, or server execution.
 from __future__ import annotations
 
 from ..application.api import IntentQueryPort
+from ..application.http import MvpFlightRunner
 from ..application.launch import (
     MarketplaceApplicationLaunchPlan,
     build_marketplace_application_launch_plan,
@@ -32,6 +33,7 @@ def build_reference_marketplace_application_launch_plan(
     port: int,
     store: ApplicationStateStore,
     intent_query: IntentQueryPort,
+    run_mvp_flight: MvpFlightRunner | None = None,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -51,6 +53,7 @@ def build_reference_marketplace_application_launch_plan(
         encode_record_json=encode_marketplace_application_record_json,
         build_product_listing_record=build_product_listing_record,
         build_proposal_record=build_buyer_request_proposal_record,
+        run_mvp_flight=run_mvp_flight,
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,

@@ -173,6 +173,24 @@ def _run_authenticated_foreground(
         raise MarketplaceLocalhostBootstrapError("M17_5Y_LOOPBACK_SERVER_FAILED") from None
 
 
+def _load_mvp_flight_runner(
+    *, importer: Callable[[str], object] = importlib.import_module
+):
+    module_name = (
+        "tools.marketplace_mvp_flight_acceptance"
+        if __package__
+        else "marketplace_mvp_flight_acceptance"
+    )
+    try:
+        module = importer(module_name)
+        runner = getattr(module, "run_marketplace_mvp_flight_acceptance")
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("MVP_FLIGHT_RUNNER_UNAVAILABLE") from None
+    if not callable(runner):
+        raise MarketplaceLocalhostBootstrapError("MVP_FLIGHT_RUNNER_INVALID")
+    return runner
+
+
 def _real_environment_getter() -> Callable[[str], str | None]:
     import os
 
@@ -322,6 +340,7 @@ def _validate_plan_before_initialize(plan: object) -> MarketplaceApplicationLaun
 def _execute_localhost(port: int, execution_opt_in: object) -> None:
     validated_port = _validate_port(port)
     _validate_execution_opt_in(execution_opt_in)
+    mvp_flight_runner = _load_mvp_flight_runner()
 
     getenv = _real_environment_getter()
     dsn = _read_postgres_dsn(getenv)
@@ -335,6 +354,7 @@ def _execute_localhost(port: int, execution_opt_in: object) -> None:
             clock=_utc_clock,
             host=LOCALHOST_HOST,
             port=validated_port,
+            run_mvp_flight=mvp_flight_runner,
             index_html=index_html,
             app_js=app_js,
             styles_css=styles_css,

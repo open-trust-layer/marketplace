@@ -7,6 +7,7 @@ operation, or server execution.
 """
 from __future__ import annotations
 
+from ..application.http import MvpFlightRunner
 from ..application.launch import MarketplaceApplicationLaunchPlan
 from ..application.postgres_query import PostgresIntentQuery
 from ..application.postgres_state import (
@@ -23,6 +24,7 @@ def build_reference_postgres_marketplace_application_launch_plan(
     clock: Clock,
     host: str,
     port: int,
+    run_mvp_flight: MvpFlightRunner | None = None,
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
@@ -42,6 +44,7 @@ def build_reference_postgres_marketplace_application_launch_plan(
         port=port,
         store=store,
         intent_query=intent_query,
+        run_mvp_flight=run_mvp_flight,
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,
