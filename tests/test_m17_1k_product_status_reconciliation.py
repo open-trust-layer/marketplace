@@ -8,17 +8,18 @@ DOC = ROOT / "docs" / "m17-1k-product-status-reconciliation.md"
 
 
 class M17ProductStatusReconciliationTests(unittest.TestCase):
-    def test_current_status_reports_application_foundation(self):
+    def test_current_status_reports_accepted_local_mvp(self):
         text = README.read_text(encoding="utf-8-sig")
         first_status = next(line for line in text.splitlines() if line.startswith("**Project status:**"))
-        self.assertIn("application-foundation implementation", first_status)
+        self.assertIn("local MVP demonstrator implemented and end-to-end accepted", first_status)
+        self.assertIn("merged `main`", first_status)
         self.assertNotIn("pre-implementation", first_status)
 
     def test_readme_records_m17_1a_through_j_without_production_claim(self):
         text = README.read_text(encoding="utf-8-sig")
         for marker in ("M17.1A", "M17.1B", "M17.1C", "M17.1D", "M17.1E", "M17.1F", "M17.1G", "M17.1H", "M17.1I", "M17.1J"):
             self.assertIn(marker, text)
-        for marker in ("not a production deployment", "no live PostgreSQL activation", "no network/server activation", "Android build remains unproven"):
+        for marker in ("not a production deployment", "no live production PostgreSQL activation", "no persistent Marketplace service hosting", "Android build remains unproven"):
             self.assertIn(marker, text)
 
     def test_historical_preimplementation_claim_is_time_scoped(self):

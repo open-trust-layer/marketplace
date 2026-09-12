@@ -4,8 +4,40 @@
 
 > Coordinate exchange around anything that can be referenced, without making ownership, legality, truth, value, or trust centrally owned.
 
-**Project status:** experimental / application-foundation implementation in progress
-**Application foundation status:** Product M17.1A–J source-level foundation and reviewed M17.5 authentication/session/principal-binding stack — implemented and conformance-validated; M17.5Z bounded loopback-only synthetic live acceptance completed
+**Project status:** local MVP demonstrator implemented and end-to-end accepted on merged `main`
+**MVP status:** the database-free Web demonstrator completes the deterministic two-user journey `CREATED → PUBLISHED → DISCOVERED → ACCEPTED → COMPLETED` with visible listing, agreement, verification, fulfillment, and audit evidence.
+**Production status:** not deployed. Production PostgreSQL, persistent hosting, public-network exposure, production authentication/credentials, payments/settlement, Android runtime/distribution, and other production side effects remain separately governed capabilities.
+
+## Try the MVP locally
+
+The quickest evaluator path is a **loopback-only, database-free, process-memory demo**. It does not read `MARKETPLACE_POSTGRES_DSN` and does not require a PostgreSQL server.
+
+Prerequisites:
+
+- Python 3.11+;
+- an Open Layer Protocol checkout matching `conformance/olp-source-pin.txt`;
+- the reviewed `local-server` and `auth-verify` optional dependencies.
+
+From the Marketplace repository root, with the pinned OLP `src` directory available on `PYTHONPATH`:
+
+```powershell
+python -m pip install -e ".[local-server,auth-verify]"
+$env:PYTHONPATH = "src;tools;C:\path\to\pinned-olp\src"
+```
+
+Then follow the governed live-demo command and exact execution opt-in in [MARKETPLACE_MVP_ACCEPTANCE.md](MARKETPLACE_MVP_ACCEPTANCE.md).
+
+Open `http://127.0.0.1:18080/`, then select **Run complete local MVP journey**.
+
+A successful run visibly reaches:
+
+```text
+CREATED → PUBLISHED → DISCOVERED → ACCEPTED → COMPLETED
+```
+
+The demo uses synthetic local identities and bounded process-memory state. Stop it with `Ctrl+C`; no production deployment, payment/settlement, public-network exposure, or universal-truth claim is implied. The frozen executable checklist and direct acceptance commands are in [`MARKETPLACE_MVP_ACCEPTANCE.md`](MARKETPLACE_MVP_ACCEPTANCE.md).
+
+## Application foundation
 
 Product M17.1 currently includes:
 
@@ -20,7 +52,7 @@ Product M17.1 currently includes:
 - **M17.1I** — inert same-origin Web/API site host; and
 - **M17.1J** — inert full-site application composition.
 
-This is **not a production deployment**: there is **no live PostgreSQL activation**, **no network/server activation**, and **Android build remains unproven** until the reviewed toolchain is actually available and a separately authorized compiled lane succeeds. The reviewed M17.5 authentication/session/principal-binding stack, explicit authenticated localhost bootstrap, and one bounded loopback-only synthetic live acceptance are complete at source/local-test scope. Production runtime filesystem asset loading and hosting, production authentication deployment, production PostgreSQL activation, persistent service hosting, public-network exposure, persistent production credential/key provisioning, browser/WebCrypto/wallet activation, Android live-login/runtime, signing, installation, publishing/distribution, and deployment remain separate governed capabilities.
+This is **not a production deployment**: the reviewed loopback-only demonstrator is intentionally local and process-memory-only. There is **no live production PostgreSQL activation**, **no persistent Marketplace service hosting**, and **Android build remains unproven** until the reviewed toolchain is actually available and a separately authorized compiled lane succeeds. Production runtime hosting, production authentication deployment, production PostgreSQL activation, public-network exposure, persistent production credential/key provisioning, browser/WebCrypto/wallet activation, Android live-login/runtime, signing, installation, publishing/distribution, payments/settlement, and deployment remain separate governed capabilities.
 **Foundation status:** Milestone 1 — Foundations — COMPLETE
 **Object model status:** Milestone 2 — Marketplace Object Model & Representation — COMPLETE
 **Record representation status:** Milestone 3 — Marketplace Record Representation & Identity — COMPLETE
