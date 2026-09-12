@@ -21,12 +21,16 @@ from marketplace.application.runtime_server import (
     EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER,
     run_marketplace_application_foreground,
 )
+from marketplace.reference.memory_application_v1 import (
+    build_reference_memory_marketplace_application_launch_plan,
+)
 from marketplace.reference.postgres_application_v1 import (
     build_reference_postgres_marketplace_application_launch_plan,
 )
 
 
 LOCALHOST_EXECUTION_OPT_IN: Final = "EXECUTE_MARKETPLACE_LOCALHOST_MVP_V1"
+DEMO_LOCALHOST_EXECUTION_OPT_IN: Final = "EXECUTE_MARKETPLACE_IN_MEMORY_DEMO_V1"
 AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN: Final = (
     "EXECUTE_AUTHENTICATED_MARKETPLACE_LOCALHOST_MVP_V1"
 )
@@ -58,6 +62,11 @@ def _validate_port(port: int) -> int:
 def _validate_execution_opt_in(value: object) -> None:
     if type(value) is not str or value != LOCALHOST_EXECUTION_OPT_IN:
         raise MarketplaceLocalhostBootstrapError("M17_2B_EXECUTION_OPT_IN_REQUIRED")
+
+
+def _validate_demo_execution_opt_in(value: object) -> None:
+    if type(value) is not str or value != DEMO_LOCALHOST_EXECUTION_OPT_IN:
+        raise MarketplaceLocalhostBootstrapError("MVP_DEMO_EXECUTION_OPT_IN_REQUIRED")
 
 
 def _validate_authenticated_execution_opt_in(value: object) -> None:
@@ -379,6 +388,40 @@ def _execute_localhost(port: int, execution_opt_in: object) -> None:
         raise MarketplaceLocalhostBootstrapError("M17_2B_LOOPBACK_SERVER_FAILED") from None
 
 
+def _execute_demo_localhost(port: int, execution_opt_in: object) -> None:
+    validated_port = _validate_port(port)
+    _validate_demo_execution_opt_in(execution_opt_in)
+    mvp_flight_runner = _load_mvp_flight_runner()
+
+    asset_reader = _real_asset_reader()
+    index_html, app_js, styles_css = _load_web_assets(asset_reader)
+    try:
+        plan = build_reference_memory_marketplace_application_launch_plan(
+            host=LOCALHOST_HOST,
+            port=validated_port,
+            run_mvp_flight=mvp_flight_runner,
+            index_html=index_html,
+            app_js=app_js,
+            styles_css=styles_css,
+        )
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("MVP_DEMO_COMPOSITION_FAILED") from None
+    plan = _validate_plan_before_initialize(plan)
+    provider = _real_uvicorn_provider()
+    try:
+        plan.composition.initialize()
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("MVP_DEMO_INITIALIZATION_FAILED") from None
+    try:
+        run_marketplace_application_foreground(
+            plan=plan,
+            provider=provider,
+            execute_token=EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER,
+        )
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("MVP_DEMO_LOOPBACK_SERVER_FAILED") from None
+
+
 def _execute_authenticated_localhost(
     port: int,
     execution_opt_in: object,
@@ -446,6 +489,11 @@ def _parser() -> argparse.ArgumentParser:
         help="TOKEN must equal the exact documented M17.2B localhost execution opt-in",
     )
     mode.add_argument(
+        "--execute-demo-localhost",
+        metavar="TOKEN",
+        help="TOKEN must equal the exact in-memory MVP demo execution opt-in",
+    )
+    mode.add_argument(
         "--execute-authenticated-localhost",
         metavar="TOKEN",
         help="TOKEN must equal the exact documented M17.5Y authenticated localhost execution opt-in",
@@ -478,6 +526,18 @@ def main(argv: list[str] | None = None) -> int:
             "M17_2B_DRY_RUN_READY "
             f"host={LOCALHOST_HOST} port={port} filesystem_invoked=false environment_invoked=false "
             "postgres_invoked=false server_invoked=false"
+        )
+        return 0
+
+    if args.execute_demo_localhost is not None:
+        try:
+            _execute_demo_localhost(port, args.execute_demo_localhost)
+        except MarketplaceLocalhostBootstrapError as exc:
+            print(exc.code, file=sys.stderr)
+            return 2 if exc.code in {"MVP_DEMO_EXECUTION_OPT_IN_REQUIRED", "M17_2B_PORT_INVALID"} else 1
+        print(
+            "MVP_DEMO_LOCALHOST_FOREGROUND_COMPLETE "
+            "persistence=process_memory public_exposure=false production_deployment=false"
         )
         return 0
 
