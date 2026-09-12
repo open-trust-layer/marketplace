@@ -23,6 +23,25 @@ const PRODUCT_LISTING_INTEGER_FIELDS = [
   "quantity_scale", "latitude_e6", "longitude_e6",
 ];
 const PROPOSAL_FIELDS = ["buyer_principal", "subject_uri", "action_uri"];
+const SYNTHETIC_PRODUCT_LISTING_EXAMPLE = Object.freeze({
+  seller_principal: "urn:open-layer-marketplace:demo:seller",
+  subject_uri: "urn:open-layer-marketplace:demo:item:city-bicycle",
+  title: "City bicycle",
+  description: "Synthetic local evaluator listing.",
+  consideration_coefficient: "12500",
+  consideration_scale: "2",
+  currency_code: "EUR",
+  quantity_coefficient: "1",
+  quantity_scale: "0",
+  unit_uri: "urn:open-layer-marketplace:demo:unit:item",
+  latitude_e6: "52090700",
+  longitude_e6: "5121400",
+});
+const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({
+  buyer_principal: "urn:open-layer-marketplace:demo:buyer",
+  subject_uri: "urn:open-layer-marketplace:demo:item:city-bicycle",
+  action_uri: "urn:open-layer-marketplace:demo:action:buy",
+});
 
 const state = {
   records: new Map(),
@@ -443,6 +462,22 @@ function setFormStatus(id, message, kind = "") {
   target.className = kind || "muted";
 }
 
+function fillSyntheticExample(prefix, values) {
+  for (const [name, value] of Object.entries(values)) {
+    byId(`${prefix}-${name.replaceAll("_", "-")}`).value = value;
+  }
+}
+
+function fillSyntheticListingExample() {
+  fillSyntheticExample("create", SYNTHETIC_PRODUCT_LISTING_EXAMPLE);
+  setFormStatus("create-status", "Synthetic example loaded. Review the fields, then submit manually.");
+}
+
+function fillSyntheticProposalExample() {
+  fillSyntheticExample("proposal", SYNTHETIC_PROPOSAL_EXAMPLE);
+  setFormStatus("response-status", "Synthetic example loaded. Select the intended parent, review the fields, then submit manually.");
+}
+
 async function createProductListing(event) {
   event.preventDefault();
   try {
@@ -590,6 +625,8 @@ byId("clear-selection").addEventListener("click", () => {
   renderList();
   renderDetail();
 });
+byId("fill-example-listing").addEventListener("click", fillSyntheticListingExample);
+byId("fill-example-proposal").addEventListener("click", fillSyntheticProposalExample);
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
 byId("response-form").addEventListener("submit", (event) => void createProposal(event));
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
