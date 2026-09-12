@@ -73,20 +73,20 @@
         </div>
         <span id="mvp-flight-final" class="muted">Not run</span>
       </div>
-      <p class="muted">Run the reviewed two-user local flight: identity ? listing ? publish ? discover ? verify ? accept ? agreement ? completed.</p>
+      <p class="muted">Run the reviewed two-user local flight: identity → listing → publish → discover → verify → accept → agreement → completed.</p>
       <button id="run-mvp-flight" type="button">Run complete local MVP journey</button>
       <p id="mvp-flight-status" role="status" class="muted">Local synthetic test identities only. No payment, settlement, deployment, or universal-truth claim.</p>
       <ol id="mvp-flight-lifecycle" class="mvp-flight-lifecycle" aria-label="MVP lifecycle"></ol>
       <div class="mvp-flight-grid">
         <div>
           <h3>Participants</h3>
-          <p id="mvp-flight-seller" class="record-id muted">Seller: ?</p>
-          <p id="mvp-flight-buyer" class="record-id muted">Buyer: ?</p>
+          <p id="mvp-flight-seller" class="record-id muted">Seller: —</p>
+          <p id="mvp-flight-buyer" class="record-id muted">Buyer: —</p>
         </div>
         <div>
           <h3>Verification</h3>
           <p id="mvp-flight-verification" class="muted">Not evaluated.</p>
-          <p id="mvp-flight-completed-at" class="muted">Completion timestamp: ?</p>
+          <p id="mvp-flight-completed-at" class="muted">Completion timestamp: —</p>
         </div>
       </div>
       <h3>Audit record identities</h3>
@@ -98,6 +98,7 @@
         <p class="eyebrow">Shared structured authoring</p>
         <h2>Create product listing</h2>
         <p class="muted">Enter transport fields only. M17.1Q/M72 remains authoritative for Marketplace semantics.</p>
+        <button id="fill-example-listing" type="button" class="secondary">Fill synthetic example</button>
         <label for="create-seller-principal">Seller principal URI</label>
         <input id="create-seller-principal" type="text" autocomplete="off">
         <label for="create-subject-uri">Subject URI</label>
@@ -129,6 +130,7 @@
         <p class="eyebrow">Exact selected parent</p>
         <h2>Create Proposal</h2>
         <p class="muted">Enter buyer/request fields only. The selected parent is supplied by the route.</p>
+        <button id="fill-example-proposal" type="button" class="secondary">Fill synthetic example</button>
         <label for="proposal-buyer-principal">Buyer principal URI</label>
         <input id="proposal-buyer-principal" type="text" autocomplete="off" required>
         <label for="proposal-subject-uri">Subject URI</label>
