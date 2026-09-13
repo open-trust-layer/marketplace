@@ -39,7 +39,6 @@ const SYNTHETIC_PRODUCT_LISTING_EXAMPLE = Object.freeze({
 });
 const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({
   buyer_principal: "urn:open-layer-marketplace:demo:buyer",
-  subject_uri: "urn:open-layer-marketplace:demo:item:city-bicycle",
   action_uri: "urn:open-layer-marketplace:demo:action:buy",
 });
 
@@ -61,6 +60,8 @@ const selectedRecordId = byId("selected-record-id");
 const selectedRecordJson = byId("selected-record-json");
 const responseList = byId("response-list");
 const responseButton = byId("submit-response");
+const proposalExampleButton = byId("fill-example-proposal");
+const proposalParent = byId("proposal-parent");
 const mvpFlightButton = byId("run-mvp-flight");
 const mvpFlightLifecycle = byId("mvp-flight-lifecycle");
 const mvpFlightAudit = byId("mvp-flight-audit");
@@ -244,6 +245,32 @@ function renderList() {
   renderMap(records);
 }
 
+function selectedProductListingSubjectUri(record) {
+  if (record === null || typeof record !== "object" || Array.isArray(record)) return null;
+  if (!Array.isArray(record.profiles) || !record.profiles.some((profile) => typeof profile === "string" && profile.endsWith("/profile/product-listing-v1"))) return null;
+  const subjects = record.content?.subjects;
+  if (!Array.isArray(subjects) || subjects.length !== 1) return null;
+  const subject = subjects[0];
+  if (subject === null || typeof subject !== "object" || Array.isArray(subject)) return null;
+  try {
+    return reviewedProposalUri(subject.uri);
+  } catch {
+    return null;
+  }
+}
+
+function renderProposalParentGuidance(record) {
+  const subjectUri = selectedProductListingSubjectUri(record);
+  proposalExampleButton.disabled = subjectUri === null;
+  if (state.selectedId === null) {
+    proposalParent.textContent = "Selected parent: none.";
+    return;
+  }
+  proposalParent.textContent = subjectUri === null
+    ? `Selected parent: ${state.selectedId} · product-listing subject unavailable for guided example.`
+    : `Selected parent: ${state.selectedId} · subject ${subjectUri}`;
+}
+
 function renderDetail() {
   const record = state.selectedRecord;
   selectedRecordId.textContent = state.selectedId ?? "No intent selected.";
@@ -251,6 +278,7 @@ function renderDetail() {
     ? "Select an intent to inspect its reviewed record JSON."
     : JSON.stringify(record, null, 2);
   responseButton.disabled = record === undefined || record === null;
+  renderProposalParentGuidance(record);
 }
 async function renderResponses(recordId) {
   responseList.replaceChildren();
@@ -474,8 +502,13 @@ function fillSyntheticListingExample() {
 }
 
 function fillSyntheticProposalExample() {
-  fillSyntheticExample("proposal", SYNTHETIC_PROPOSAL_EXAMPLE);
-  setFormStatus("response-status", "Synthetic example loaded. Select the intended parent, review the fields, then submit manually.");
+  const subjectUri = selectedProductListingSubjectUri(state.selectedRecord);
+  if (subjectUri === null) {
+    setFormStatus("response-status", "Select a product listing with one valid subject before loading the example.", "error");
+    return;
+  }
+  fillSyntheticExample("proposal", { ...SYNTHETIC_PROPOSAL_EXAMPLE, subject_uri: subjectUri });
+  setFormStatus("response-status", "Synthetic example loaded for the selected product listing. Review the fields, then submit manually.");
 }
 
 async function createProductListing(event) {
@@ -596,7 +629,7 @@ function renderMvpFlight(documentValue) {
 
 async function runMvpFlight() {
   mvpFlightButton.disabled = true;
-  setFormStatus("mvp-flight-status", "Running bounded local two-user MVP journey?");
+  setFormStatus("mvp-flight-status", "Running bounded local two-user MVP journey…");
   try {
     const documentValue = await apiFetch(API_MVP_FLIGHT, { method: "POST" });
     renderMvpFlight(documentValue);
