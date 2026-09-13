@@ -259,6 +259,28 @@ function selectedProductListingSubjectUri(record) {
   }
 }
 
+function proposalResponseSummary(record) {
+  if (record === null || typeof record !== "object" || Array.isArray(record)) return null;
+  if (!Array.isArray(record.profiles) || !record.profiles.some((profile) => typeof profile === "string" && profile.endsWith("/profile/proposal-v1"))) return null;
+  const issuer = record.content?.issuer;
+  const subjects = record.content?.subjects;
+  const action = record.content?.action;
+  if (issuer === null || typeof issuer !== "object" || Array.isArray(issuer)) return null;
+  if (!Array.isArray(subjects) || subjects.length !== 1) return null;
+  const subject = subjects[0];
+  if (subject === null || typeof subject !== "object" || Array.isArray(subject)) return null;
+  if (action === null || typeof action !== "object" || Array.isArray(action)) return null;
+  try {
+    return {
+      buyerPrincipal: reviewedProposalUri(issuer.principal),
+      subjectUri: reviewedProposalUri(subject.uri),
+      actionUri: reviewedProposalUri(action.id),
+    };
+  } catch {
+    return null;
+  }
+}
+
 function newlyCreatedProductListingId(previousIds, expectedSubjectUri, previousViewWasCurrent) {
   if (!(previousIds instanceof Set) || typeof previousViewWasCurrent !== "boolean") {
     throw stableClientError("POST_CREATE_SELECTION_INVALID");
@@ -311,7 +333,18 @@ async function renderResponses(recordId) {
       const item = document.createElement("button");
       item.type = "button";
       item.className = "response-card record-id";
-      item.textContent = id;
+      const summary = proposalResponseSummary(state.records.get(id));
+      if (summary === null) {
+        item.textContent = id;
+      } else {
+        const title = document.createElement("span");
+        title.className = "intent-title";
+        title.textContent = "Buyer Proposal";
+        const metadata = document.createElement("span");
+        metadata.className = "record-id muted small";
+        metadata.textContent = `Buyer ${summary.buyerPrincipal} · Subject ${summary.subjectUri} · Action ${summary.actionUri} · Record ${id}`;
+        item.append(title, metadata);
+      }
       item.addEventListener("click", () => void inspectIntent(id));
       responseList.append(item);
     }
