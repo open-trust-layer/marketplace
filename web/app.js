@@ -564,9 +564,18 @@ async function createProposal(event) {
       method: "POST",
       body,
     });
-    setFormStatus("response-status", "Proposal accepted by the shared application API.", "success");
-    await fullResync();
-    if (state.records.has(parentId)) selectIntent(parentId);
+    try {
+      await fullResync();
+    } catch (error) {
+      setFormStatus("response-status", `Proposal accepted, but local refresh failed: ${error.code ?? "CLIENT_FAILURE"}`, "warning");
+      return;
+    }
+    if (state.records.has(parentId)) {
+      selectIntent(parentId);
+      setFormStatus("response-status", "Proposal accepted and parent responses refreshed.", "success");
+      return;
+    }
+    setFormStatus("response-status", "Proposal accepted, but the parent is not present in the refreshed local view.", "warning");
   } catch (error) {
     setFormStatus("response-status", `Proposal failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
   }
