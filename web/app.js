@@ -48,6 +48,7 @@ const state = {
   selectedRecord: null,
   syncCursor: null,
   truncated: false,
+  responseParentId: null,
 };
 
 const byId = (id) => document.getElementById(id);
@@ -59,6 +60,7 @@ const viewCount = byId("view-count");
 const selectedRecordId = byId("selected-record-id");
 const selectedRecordJson = byId("selected-record-json");
 const responseList = byId("response-list");
+const returnParentButton = byId("return-parent");
 const responseButton = byId("submit-response");
 const proposalExampleButton = byId("fill-example-proposal");
 const proposalParent = byId("proposal-parent");
@@ -308,6 +310,11 @@ function renderProposalParentGuidance(record) {
 
 function renderDetail() {
   const record = state.selectedRecord;
+  const canReturnToParent = state.responseParentId !== null
+    && state.selectedId !== null
+    && state.selectedId !== state.responseParentId;
+  returnParentButton.hidden = !canReturnToParent;
+  returnParentButton.disabled = !canReturnToParent;
   selectedRecordId.textContent = state.selectedId ?? "No intent selected.";
   selectedRecordJson.textContent = record === undefined || record === null
     ? "Select an intent to inspect its reviewed record JSON."
@@ -345,6 +352,9 @@ async function renderResponses(recordId) {
         metadata.textContent = `Buyer ${summary.buyerPrincipal} · Subject ${summary.subjectUri} · Action ${summary.actionUri} · Record ${id}`;
         item.append(title, metadata);
       }
+      item.addEventListener("click", () => {
+        state.responseParentId = recordId;
+      });
       item.addEventListener("click", () => void inspectIntent(id));
       responseList.append(item);
     }
@@ -359,6 +369,7 @@ async function renderResponses(recordId) {
 function selectIntent(recordId) {
   const reviewed = requireRecordId(recordId);
   const record = state.records.get(reviewed);
+  state.responseParentId = null;
   state.selectedId = record === undefined ? null : reviewed;
   state.selectedRecord = record ?? null;
   renderList();
@@ -720,7 +731,18 @@ async function runSyncAction() {
 
 filterInput.addEventListener("input", renderList);
 byId("sync-now").addEventListener("click", () => void runSyncAction());
+returnParentButton.addEventListener("click", () => {
+  const parentId = state.responseParentId;
+  if (parentId === null) return;
+  state.responseParentId = null;
+  if (state.records.has(parentId)) {
+    selectIntent(parentId);
+  } else {
+    void inspectIntent(parentId);
+  }
+});
 byId("clear-selection").addEventListener("click", () => {
+  state.responseParentId = null;
   state.selectedId = null;
   state.selectedRecord = null;
   responseList.replaceChildren();
