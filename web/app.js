@@ -259,6 +259,19 @@ function selectedProductListingSubjectUri(record) {
   }
 }
 
+function newlyCreatedProductListingId(previousIds, expectedSubjectUri, previousViewWasCurrent) {
+  if (!(previousIds instanceof Set) || typeof previousViewWasCurrent !== "boolean") {
+    throw stableClientError("POST_CREATE_SELECTION_INVALID");
+  }
+  if (!previousViewWasCurrent || state.truncated) return null;
+  const candidates = [];
+  for (const [recordId, record] of state.records.entries()) {
+    if (previousIds.has(recordId)) continue;
+    if (selectedProductListingSubjectUri(record) === expectedSubjectUri) candidates.push(recordId);
+  }
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
 function renderProposalParentGuidance(record) {
   const subjectUri = selectedProductListingSubjectUri(record);
   proposalExampleButton.disabled = subjectUri === null;
@@ -515,10 +528,24 @@ async function createProductListing(event) {
   event.preventDefault();
   try {
     const body = productListingJsonBody();
+    const submittedSubjectUri = byId("create-subject-uri").value;
+    const previousIds = new Set(state.records.keys());
+    const previousViewWasCurrent = state.syncCursor !== null && state.truncated === false;
     setFormStatus("create-status", "Submitting structured product listing…");
     await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
-    setFormStatus("create-status", "Product listing accepted by the shared application API.", "success");
-    await fullResync();
+    try {
+      await fullResync();
+    } catch (error) {
+      setFormStatus("create-status", `Product listing accepted, but local refresh failed: ${error.code ?? "CLIENT_FAILURE"}`, "warning");
+      return;
+    }
+    const createdId = newlyCreatedProductListingId(previousIds, submittedSubjectUri, previousViewWasCurrent);
+    if (createdId !== null) {
+      selectIntent(createdId);
+      setFormStatus("create-status", "Product listing accepted and selected for Proposal authoring.", "success");
+      return;
+    }
+    setFormStatus("create-status", "Product listing accepted. Select it from the current view to continue.", "success");
   } catch (error) {
     setFormStatus("create-status", `Create failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
   }
