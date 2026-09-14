@@ -63,6 +63,7 @@ window.MarketplaceI18n = (() => {
     "browse.fallback": ["Marketplace intent", "Запись Marketplace"],
     "browse.boundedSuffix": ["bounded view", "ограничено"],
     "browse.proposalMetadata": ["Buyer {buyer} · Subject {subject} · Action {action}", "Покупатель {buyer} · Предмет {subject} · Действие {action}"],
+    "browse.listingMetadata": ["Seller {seller} · Price {price} · Quantity {quantity}", "Продавец {seller} · Цена {price} · Количество {quantity}"],
     "map.select": ["Select intent {recordId}", "Выбрать запись {recordId}"],
     "proposal.parentMissing": ["Selected parent: {recordId} · product-listing subject unavailable for guided example.", "Родительская запись: {recordId} · предмет объявления недоступен для пошагового примера."],
     "proposal.parentSubject": ["Selected parent: {recordId} · subject {subjectUri}", "Родительская запись: {recordId} · предмет {subjectUri}"],
@@ -446,11 +447,14 @@ function filteredRecords() {
   if (!query) return records;
   return records.filter(([recordId, record]) => {
     const summary = proposalResponseSummary(record);
+    const listingSummary = summary === null ? productListingSummary(record) : null;
     const title = summary === null
       ? displayText(record, "/term/title", "")
       : i18n.t("responses.proposal");
     const metadata = summary === null
-      ? ""
+      ? listingSummary === null
+        ? ""
+        : i18n.t("browse.listingMetadata", { seller: listingSummary.sellerPrincipal, price: listingSummary.price, quantity: listingSummary.quantity })
       : i18n.t("browse.proposalMetadata", { buyer: summary.buyerPrincipal, subject: summary.subjectUri, action: summary.actionUri });
     return [recordId, title, metadata].some((value) => value.toLocaleLowerCase().includes(query));
   });
@@ -478,6 +482,7 @@ function renderList() {
     card.className = "intent-card";
     card.setAttribute("aria-current", state.selectedId === recordId ? "true" : "false");
     const summary = proposalResponseSummary(record);
+    const listingSummary = summary === null ? productListingSummary(record) : null;
     const title = document.createElement("span");
     title.className = "intent-title";
     title.textContent = summary === null
@@ -487,7 +492,14 @@ function renderList() {
     identity.className = "record-id muted small";
     identity.textContent = recordId;
     if (summary === null) {
-      card.append(title, identity);
+      if (listingSummary === null) {
+        card.append(title, identity);
+      } else {
+        const metadata = document.createElement("span");
+        metadata.className = "record-id muted small";
+        metadata.textContent = i18n.t("browse.listingMetadata", { seller: listingSummary.sellerPrincipal, price: listingSummary.price, quantity: listingSummary.quantity });
+        card.append(title, metadata, identity);
+      }
     } else {
       const metadata = document.createElement("span");
       metadata.className = "record-id muted small";
@@ -511,6 +523,51 @@ function selectedProductListingSubjectUri(record) {
   if (subject === null || typeof subject !== "object" || Array.isArray(subject)) return null;
   try {
     return reviewedProposalUri(subject.uri);
+  } catch {
+    return null;
+  }
+}
+
+function exactDecimalPresentation(value) {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+  const coefficient = value.coefficient;
+  const scale = value.scale;
+  if (!Number.isSafeInteger(coefficient) || !Number.isSafeInteger(scale) || scale < 0 || scale > 18) return null;
+  const negative = coefficient < 0;
+  let digits = String(Math.abs(coefficient));
+  if (scale > 0) {
+    digits = digits.padStart(scale + 1, "0");
+    digits = `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
+  }
+  return negative ? `-${digits}` : digits;
+}
+
+function productListingSummary(record) {
+  if (record === null || typeof record !== "object" || Array.isArray(record)) return null;
+  if (!Array.isArray(record.profiles) || !record.profiles.some((profile) => typeof profile === "string" && profile.endsWith("/profile/product-listing-v1"))) return null;
+  const issuer = record.content?.issuer;
+  const action = record.content?.action;
+  if (issuer === null || typeof issuer !== "object" || Array.isArray(issuer)) return null;
+  if (action === null || typeof action !== "object" || Array.isArray(action)) return null;
+  const subjectUri = selectedProductListingSubjectUri(record);
+  let consideration = null;
+  let quantity = null;
+  for (const [key, value] of recordTerms(record)) {
+    if (typeof key !== "string") continue;
+    if (key.endsWith("/term/consideration")) consideration = value;
+    if (key.endsWith("/term/quantity")) quantity = value;
+  }
+  if (subjectUri === null || consideration === null || quantity === null) return null;
+  if (typeof consideration !== "object" || Array.isArray(consideration) || consideration.kind !== "monetary") return null;
+  if (typeof quantity !== "object" || Array.isArray(quantity)) return null;
+  const amount = exactDecimalPresentation(consideration.amount);
+  const quantityValue = exactDecimalPresentation(quantity.value);
+  if (amount === null || quantityValue === null || typeof consideration.currency_code !== "string" || !/^[A-Z]{3}$/.test(consideration.currency_code)) return null;
+  if (consideration.amount.coefficient < 0 || quantity.value.coefficient <= 0) return null;
+  try {
+    const actionUri = reviewedProposalUri(action.id);
+    if (!actionUri.endsWith("/action/sell")) return null;
+    return { sellerPrincipal: reviewedProposalUri(issuer.principal), subjectUri, price: `${amount} ${consideration.currency_code}`, quantity: `${quantityValue} ${reviewedProposalUri(quantity.unit)}` };
   } catch {
     return null;
   }
