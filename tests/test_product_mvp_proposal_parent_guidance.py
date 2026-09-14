@@ -7,6 +7,7 @@ from marketplace.application.listing import ExactDecimal, ProductListingDraft, b
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "web" / "index.html"
 APP = ROOT / "web" / "app.js"
+I18N = APP
 SUBJECT_URI = "urn:open-layer-marketplace:demo:item:custom-listing"
 
 
@@ -56,20 +57,18 @@ class MarketplaceMvpProposalParentGuidanceTests(unittest.TestCase):
     def test_guidance_fails_closed_without_a_valid_product_listing_subject(self):
         text = APP.read_text(encoding="utf-8")
         self.assertIn("proposalExampleButton.disabled = subjectUri === null", text)
-        self.assertIn(
-            "Select a product listing with one valid subject before loading the example.",
-            text,
-        )
-        self.assertIn("Selected parent: none.", text)
-        self.assertIn("product-listing subject unavailable for guided example.", text)
-        self.assertIn(
-            "Synthetic example loaded for the selected product listing.",
-            text,
-        )
+        self.assertIn('"proposal.exampleNeedsListing"', text)
+        self.assertIn('i18n.t("author.parentNone")', text)
+        self.assertIn('i18n.t("proposal.parentMissing"', text)
+        self.assertIn('"proposal.exampleLoaded"', text)
+        catalog = I18N.read_text(encoding="utf-8")
+        self.assertIn("Selected parent: none.", catalog)
+        self.assertIn("Родительская запись: не выбрана.", catalog)
 
     def test_mvp_running_status_uses_reviewed_readable_punctuation(self):
-        text = APP.read_text(encoding="utf-8")
+        text = I18N.read_text(encoding="utf-8")
         self.assertIn("Running bounded local two-user MVP journey…", text)
+        self.assertIn("Запускаем ограниченный локальный сценарий MVP для двух пользователей…", text)
         self.assertNotIn("Running bounded local two-user MVP journey?", text)
 
 

@@ -14,10 +14,12 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
 
     def test_response_click_tracks_exact_rendered_parent_only_in_client_state(self):
         text = APP.read_text(encoding="utf-8")
-        block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
-        self.assertIn("state.responseParentId = recordId", block)
-        self.assertIn("void inspectIntent(id)", block)
-        self.assertEqual(block.count("apiFetch("), 1)
+        render_block = text.split("function renderResponseItems(recordId, ids) {", 1)[1].split("\nasync function renderResponses", 1)[0]
+        fetch_block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
+        self.assertIn("state.responseParentId = recordId", render_block)
+        self.assertIn("void inspectIntent(id)", render_block)
+        self.assertNotIn("apiFetch(", render_block)
+        self.assertEqual(fetch_block.count("apiFetch("), 1)
 
     def test_direct_selection_and_clear_drop_transient_parent_navigation(self):
         text = APP.read_text(encoding="utf-8")

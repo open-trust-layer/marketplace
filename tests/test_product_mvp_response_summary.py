@@ -31,20 +31,22 @@ class MarketplaceMvpResponseSummaryTests(unittest.TestCase):
         self.assertIn("buyerPrincipal: reviewedProposalUri(issuer.principal)", text)
         self.assertIn("subjectUri: reviewedProposalUri(subject.uri)", text)
         self.assertIn("actionUri: reviewedProposalUri(action.id)", text)
-        block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
-        self.assertEqual(block.count("apiFetch("), 1)
-        self.assertIn("proposalResponseSummary(state.records.get(id))", block)
-        self.assertIn("if (summary === null)", block)
-        self.assertIn("item.textContent = id", block)
+        render_block = text.split("function renderResponseItems(recordId, ids) {", 1)[1].split("\nasync function renderResponses", 1)[0]
+        fetch_block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
+        self.assertEqual(fetch_block.count("apiFetch("), 1)
+        self.assertIn("proposalResponseSummary(state.records.get(id))", render_block)
+        self.assertIn("if (summary === null)", render_block)
+        self.assertIn("item.textContent = id", render_block)
 
     def test_readable_summary_uses_text_nodes_and_preserves_click_through(self):
         text = APP.read_text(encoding="utf-8")
-        block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
-        self.assertIn('title.textContent = "Buyer Proposal"', block)
-        self.assertIn("Buyer ${summary.buyerPrincipal}", block)
-        self.assertIn("Subject ${summary.subjectUri}", block)
-        self.assertIn("Action ${summary.actionUri}", block)
-        self.assertIn("Record ${id}", block)
+        block = text.split("function renderResponseItems(recordId, ids) {", 1)[1].split("\nasync function renderResponses", 1)[0]
+        self.assertIn('title.textContent = i18n.t("responses.proposal")', block)
+        self.assertIn('i18n.t("responses.metadata"', block)
+        self.assertIn("buyer: summary.buyerPrincipal", block)
+        self.assertIn("subject: summary.subjectUri", block)
+        self.assertIn("action: summary.actionUri", block)
+        self.assertIn("recordId: id", block)
         self.assertIn('item.addEventListener("click", () => void inspectIntent(id))', block)
         self.assertNotIn("innerHTML", block)
 
