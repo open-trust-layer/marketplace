@@ -126,9 +126,9 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
         block = text[start:end]
         self.assertIn("let hasMore", block)
         self.assertIn("if (hasMore)", block)
-        self.assertIn("more changes remain", block)
+        self.assertIn('"sync.paused"', block)
         bounded = block.index("if (hasMore)")
-        success = block.index("Synchronized at local cursor")
+        success = block.index('"sync.done"')
         self.assertLess(bounded, success)
 
     def test_product_authoring_surfaces_are_structured(self):

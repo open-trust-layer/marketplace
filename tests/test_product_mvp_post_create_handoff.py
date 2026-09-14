@@ -30,7 +30,7 @@ class MarketplaceMvpPostCreateHandoffTests(unittest.TestCase):
         self.assertIn('const submittedSubjectUri = byId("create-subject-uri").value;', block)
         self.assertIn("const previousIds = new Set(state.records.keys());", block)
         self.assertIn("const previousViewWasCurrent = state.syncCursor !== null && state.truncated === false;", block)
-        self.assertIn("Submitting structured product listing\u2026", block)
+        self.assertIn('setFormStatus("create-status", "listing.submitting")', block)
         self.assertNotIn("\u00e2\u20ac\u00a6", block)
         self.assertIn('await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });', block)
         self.assertIn("await fullResync();", block)
@@ -50,11 +50,11 @@ class MarketplaceMvpPostCreateHandoffTests(unittest.TestCase):
         start = text.index("async function createProductListing")
         end = text.index("async function createProposal", start)
         block = text[start:end]
-        self.assertIn("Product listing accepted, but local refresh failed:", block)
+        self.assertIn('"listing.refreshFailed"', block)
         self.assertIn('"warning"', block)
-        self.assertIn("Product listing accepted and selected for Proposal authoring.", block)
-        self.assertIn("Product listing accepted. Select it from the current view to continue.", block)
-        self.assertIn("Create failed:", block)
+        self.assertIn('"listing.acceptedSelected"', block)
+        self.assertIn('"listing.accepted"', block)
+        self.assertIn('"listing.failed"', block)
 
 
 if __name__ == "__main__":

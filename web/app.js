@@ -1,5 +1,221 @@
 "use strict";
 
+window.MarketplaceI18n = (() => {
+  const SUPPORTED_LANGUAGES = new Set(["en", "ru"]);
+  const messages = Object.freeze({
+    "document.title": ["Open Layer Marketplace", "Open Layer Marketplace"],
+    "shell.marketplace": ["Marketplace", "Маркетплейс"],
+    "sync.notSynchronized": ["Not synchronized", "Не синхронизировано"],
+    "sync.now": ["Sync now", "Синхронизировать"],
+    "toolbar.filter": ["Filter current bounded view", "Фильтр текущего ограниченного представления"],
+    "toolbar.placeholder": ["Record id or visible text", "ID записи или видимый текст"],
+    "browse.zero": ["0 intents", "0 записей"],
+    "map.projection": ["Presentation-only projection", "Проекция только для отображения"],
+    "map.title": ["Map", "Карта"],
+    "map.grid": ["WGS84 · offline grid", "WGS84 · офлайн-сетка"],
+    "map.disclaimer": ["Locations are issuer-attributed presentation data, not verified position or protocol truth.", "Координаты — это данные отображения, заявленные издателем, а не подтверждённое местоположение или истина протокола."],
+    "browse.boundary": ["Bounded current view", "Ограниченное текущее представление"],
+    "browse.title": ["Intents", "Записи"],
+    "detail.selected": ["Selected record", "Выбранная запись"],
+    "detail.title": ["Intent detail", "Детали записи"],
+    "detail.back": ["Back to parent listing", "К родительскому объявлению"],
+    "detail.clear": ["Clear", "Очистить"],
+    "detail.none": ["No intent selected.", "Запись не выбрана."],
+    "detail.inspect": ["Select an intent to inspect its reviewed record JSON.", "Выберите запись, чтобы просмотреть проверенный JSON записи."],
+    "responses.title": ["Responses", "Ответы"],
+    "mvp.eyebrow": ["Local synthetic product acceptance", "Локальная синтетическая приёмка продукта"],
+    "mvp.title": ["Complete MVP journey", "Полный сценарий MVP"],
+    "mvp.notRun": ["Not run", "Не запускался"],
+    "mvp.runIntro": ["Run the reviewed two-user local flight: identity → listing → publish → discover → verify → accept → agreement → completed.", "Запустите проверенный локальный сценарий двух пользователей: идентификатор → объявление → публикация → обнаружение → проверка → принятие → соглашение → завершено."],
+    "mvp.run": ["Run complete local MVP journey", "Запустить полный локальный сценарий MVP"],
+    "mvp.localOnly": ["Local synthetic test identities only. No payment, settlement, deployment, or universal-truth claim.", "Только локальные синтетические тестовые идентификаторы. Без платежей, расчётов, развёртывания и заявлений об универсальной истине."],
+    "mvp.participants": ["Participants", "Участники"],
+    "mvp.sellerEmpty": ["Seller: —", "Продавец: —"],
+    "mvp.buyerEmpty": ["Buyer: —", "Покупатель: —"],
+    "mvp.verification": ["Verification", "Проверка"],
+    "mvp.notEvaluated": ["Not evaluated.", "Не оценено."],
+    "mvp.completedEmpty": ["Completion timestamp: —", "Время завершения: —"],
+    "mvp.auditTitle": ["Audit record identities", "Идентификаторы записей аудита"],
+    "mvp.auditEmpty": ["Run the local MVP journey to produce the bounded audit trail.", "Запустите локальный сценарий MVP, чтобы сформировать ограниченный журнал аудита."],
+    "author.shared": ["Shared structured authoring", "Общее структурированное создание"],
+    "author.createListing": ["Create product listing", "Создать объявление"],
+    "author.listingHelp": ["Enter transport fields only. M17.1Q/M72 remains authoritative for Marketplace semantics.", "Введите только транспортные поля. M17.1Q/M72 остаётся авторитетным источником семантики Marketplace."],
+    "author.fillExample": ["Fill synthetic example", "Заполнить синтетический пример"],
+    "field.sellerPrincipal": ["Seller principal URI", "URI принципала продавца"],
+    "field.subjectUri": ["Subject URI", "URI предмета"],
+    "field.title": ["Title", "Название"],
+    "field.description": ["Description", "Описание"],
+    "field.priceCoefficient": ["Price coefficient (integer)", "Коэффициент цены (целое число)"],
+    "field.priceScale": ["Price scale (integer)", "Масштаб цены (целое число)"],
+    "field.currency": ["Currency code", "Код валюты"],
+    "field.quantityCoefficient": ["Quantity coefficient (integer)", "Коэффициент количества (целое число)"],
+    "field.quantityScale": ["Quantity scale (integer)", "Масштаб количества (целое число)"],
+    "field.unitUri": ["Unit URI", "URI единицы"],
+    "field.latitude": ["Latitude E6 (integer)", "Широта E6 (целое число)"],
+    "field.longitude": ["Longitude E6 (integer)", "Долгота E6 (целое число)"],
+    "author.parent": ["Exact selected parent", "Точно выбранная родительская запись"],
+    "author.createProposal": ["Create Proposal", "Создать предложение"],
+    "author.proposalHelp": ["Enter buyer/request fields only. The selected parent is supplied by the route.", "Введите только поля покупателя/запроса. Выбранная родительская запись задаётся маршрутом."],
+    "author.parentNone": ["Selected parent: none.", "Родительская запись: не выбрана."],
+    "field.buyerPrincipal": ["Buyer principal URI", "URI принципала покупателя"],
+    "field.actionUri": ["Action URI", "URI действия"],
+    "browse.empty": ["No intents in this bounded current view.", "В текущем ограниченном представлении записей нет."],
+    "browse.fallback": ["Marketplace intent", "Запись Marketplace"],
+    "browse.boundedSuffix": ["bounded view", "ограничено"],
+    "map.select": ["Select intent {recordId}", "Выбрать запись {recordId}"],
+    "proposal.parentMissing": ["Selected parent: {recordId} · product-listing subject unavailable for guided example.", "Родительская запись: {recordId} · предмет объявления недоступен для пошагового примера."],
+    "proposal.parentSubject": ["Selected parent: {recordId} · subject {subjectUri}", "Родительская запись: {recordId} · предмет {subjectUri}"],
+    "responses.empty": ["No responses in this bounded local application view.", "В текущем ограниченном локальном представлении ответов нет."],
+    "responses.proposal": ["Buyer Proposal", "Предложение покупателя"],
+    "responses.metadata": ["Buyer {buyer} · Subject {subject} · Action {action} · Record {recordId}", "Покупатель {buyer} · Предмет {subject} · Действие {action} · Запись {recordId}"],
+    "responses.unavailable": ["Responses unavailable: {code}", "Ответы недоступны: {code}"],
+    "detail.failed": ["Detail failed: {code}", "Не удалось загрузить детали: {code}"],
+    "sync.capture": ["Capturing sync watermark…", "Фиксируем отметку синхронизации…"],
+    "sync.done": ["Synchronized at local cursor {cursor}", "Синхронизировано на локальном курсоре {cursor}"],
+    "sync.from": ["Syncing from local cursor {cursor}…", "Синхронизация с локального курсора {cursor}…"],
+    "sync.paused": ["Sync paused at local cursor {cursor}; more changes remain", "Синхронизация приостановлена на локальном курсоре {cursor}; остались изменения"],
+    "sync.failed": ["Sync failed: {code}", "Ошибка синхронизации: {code}"],
+    "sync.initialFailed": ["Initial sync failed: {code}", "Ошибка начальной синхронизации: {code}"],
+    "author.exampleLoaded": ["Synthetic example loaded. Review the fields, then submit manually.", "Синтетический пример загружен. Проверьте поля и отправьте вручную."],
+    "proposal.exampleNeedsListing": ["Select a product listing with one valid subject before loading the example.", "Перед загрузкой примера выберите объявление с одним корректным предметом."],
+    "proposal.exampleLoaded": ["Synthetic example loaded for the selected product listing. Review the fields, then submit manually.", "Синтетический пример загружен для выбранного объявления. Проверьте поля и отправьте вручную."],
+    "listing.submitting": ["Submitting structured product listing…", "Отправляем структурированное объявление…"],
+    "listing.refreshFailed": ["Product listing accepted, but local refresh failed: {code}", "Объявление принято, но локальное обновление не удалось: {code}"],
+    "listing.acceptedSelected": ["Product listing accepted and selected for Proposal authoring.", "Объявление принято и выбрано для создания предложения."],
+    "listing.accepted": ["Product listing accepted. Select it from the current view to continue.", "Объявление принято. Выберите его в текущем представлении, чтобы продолжить."],
+    "listing.failed": ["Create failed: {code}", "Ошибка создания: {code}"],
+    "proposal.selectParent": ["Select a parent intent first.", "Сначала выберите родительскую запись."],
+    "proposal.submitting": ["Submitting structured Proposal…", "Отправляем структурированное предложение…"],
+    "proposal.refreshFailed": ["Proposal accepted, but local refresh failed: {code}", "Предложение принято, но локальное обновление не удалось: {code}"],
+    "proposal.acceptedRefreshed": ["Proposal accepted and parent responses refreshed.", "Предложение принято, ответы родительской записи обновлены."],
+    "proposal.parentGone": ["Proposal accepted, but the parent is not present in the refreshed local view.", "Предложение принято, но родительская запись отсутствует в обновлённом локальном представлении."],
+    "proposal.failed": ["Proposal failed: {code}", "Ошибка предложения: {code}"],
+    "mvp.seller": ["Seller: {seller}", "Продавец: {seller}"],
+    "mvp.buyer": ["Buyer: {buyer}", "Покупатель: {buyer}"],
+    "mvp.completed": ["Completion timestamp: {timestamp}", "Время завершения: {timestamp}"],
+    "mvp.verificationValue": ["Listing integrity={integrity}; agreement={agreement}; fulfillment={fulfillment}; universal truth={truth}; payment/settlement evaluated={payment}.", "Целостность объявления={integrity}; соглашение={agreement}; исполнение={fulfillment}; универсальная истина={truth}; платёж/расчёт оценён={payment}."],
+    "mvp.running": ["Running bounded local two-user MVP journey…", "Запускаем ограниченный локальный сценарий MVP для двух пользователей…"],
+    "mvp.completedStatus": ["MVP journey completed with visible verification and audit evidence.", "Сценарий MVP завершён с видимыми данными проверки и аудита."],
+    "mvp.failed": ["MVP journey failed: {code}", "Сценарий MVP завершился ошибкой: {code}"],
+    "aria.marketplaceControls": ["Marketplace controls", "Элементы управления Marketplace"],
+    "aria.marketplaceBrowser": ["Marketplace browser", "Обзор Marketplace"],
+    "aria.intentMap": ["Marketplace intent coordinate map", "Карта координат записей Marketplace"],
+    "aria.mvpLifecycle": ["MVP lifecycle", "Жизненный цикл MVP"],
+    "aria.authoring": ["Record authoring boundaries", "Границы создания записей"],
+    "language.group": ["Language", "Язык"],
+    "language.english": ["Switch to English", "Переключить на английский"],
+    "language.russian": ["Switch to Russian", "Переключить на русский"],
+  });
+
+  const DYNAMIC_IDS = new Set([
+    "sync-status", "view-count", "selected-record-id", "selected-record-json", "proposal-parent",
+    "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
+    "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
+  ]);
+  let language = "en";
+  const listeners = new Set();
+
+  function messageEntry(key) {
+    const entry = messages[key];
+    if (!Array.isArray(entry) || entry.length !== 2) throw new Error("Marketplace translation key is invalid");
+    return entry;
+  }
+  function t(key, variables = {}) {
+    const template = messageEntry(key)[language === "ru" ? 1 : 0];
+    return template.replace(/\{([A-Za-z0-9_]+)\}/g, (_match, name) => {
+      if (!Object.prototype.hasOwnProperty.call(variables, name)) throw new Error("Marketplace translation variable is missing");
+      return String(variables[name]);
+    });
+  }
+
+  function keyForEnglishText(value) {
+    for (const [key, entry] of Object.entries(messages)) {
+      if (entry[0] === value) return key;
+    }
+    return null;
+  }
+
+  function markStaticSurface() {
+    for (const element of document.querySelectorAll("body *")) {
+      if (!DYNAMIC_IDS.has(element.id) && element.children.length === 0) {
+        const text = element.textContent.trim();
+        const key = keyForEnglishText(text);
+        if (key !== null) element.dataset.i18n = key;
+      }
+      if (element instanceof HTMLInputElement && element.placeholder) {
+        const placeholderKey = keyForEnglishText(element.placeholder);
+        if (placeholderKey !== null) element.dataset.i18nPlaceholder = placeholderKey;
+      }
+      const ariaLabel = element.getAttribute("aria-label");
+      if (ariaLabel) {
+        const ariaKey = keyForEnglishText(ariaLabel);
+        if (ariaKey !== null) element.dataset.i18nAriaLabel = ariaKey;
+      }
+    }
+  }
+
+  function applyStaticTranslations() {
+    document.documentElement.lang = language;
+    document.title = t("document.title");
+    for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
+    for (const element of document.querySelectorAll("[data-i18n-placeholder]")) element.placeholder = t(element.dataset.i18nPlaceholder);
+    for (const element of document.querySelectorAll("[data-i18n-aria-label]")) element.setAttribute("aria-label", t(element.dataset.i18nAriaLabel));
+    const english = document.getElementById("language-en");
+    const russian = document.getElementById("language-ru");
+    if (english !== null) {
+      english.setAttribute("aria-pressed", language === "en" ? "true" : "false");
+      english.setAttribute("aria-label", t("language.english"));
+    }
+    if (russian !== null) {
+      russian.setAttribute("aria-pressed", language === "ru" ? "true" : "false");
+      russian.setAttribute("aria-label", t("language.russian"));
+    }
+    const group = document.querySelector(".language-switch");
+    if (group !== null) group.setAttribute("aria-label", t("language.group"));
+  }
+
+  function setLanguage(nextLanguage) {
+    if (!SUPPORTED_LANGUAGES.has(nextLanguage)) throw new Error("Marketplace language is unsupported");
+    if (language === nextLanguage) return;
+    language = nextLanguage;
+    applyStaticTranslations();
+    for (const listener of listeners) listener(language);
+  }
+
+  function onChange(listener) {
+    if (typeof listener !== "function") throw new TypeError("Marketplace language listener must be callable");
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }
+  function mount() {
+    const syncBox = document.querySelector(".sync-box");
+    if (syncBox === null) throw new Error("Marketplace language mount point is unavailable");
+    const switcher = document.createElement("div");
+    switcher.className = "language-switch";
+    switcher.setAttribute("role", "group");
+    const english = document.createElement("button");
+    english.id = "language-en";
+    english.type = "button";
+    english.className = "language-option";
+    english.textContent = "EN";
+    const russian = document.createElement("button");
+    russian.id = "language-ru";
+    russian.type = "button";
+    russian.className = "language-option";
+    russian.textContent = "RU";
+    english.addEventListener("click", () => setLanguage("en"));
+    russian.addEventListener("click", () => setLanguage("ru"));
+    switcher.append(english, russian);
+    syncBox.prepend(switcher);
+    markStaticSurface();
+    applyStaticTranslations();
+  }
+
+  return Object.freeze({ mount, onChange, setLanguage, t, get language() { return language; } });
+})();
+
+"use strict";
+
 const API_INTENTS = "/api/intents";
 const API_PRODUCT_LISTINGS = "/api/product-listings";
 const API_SYNC = "/api/sync";
@@ -23,6 +239,9 @@ const PRODUCT_LISTING_INTEGER_FIELDS = [
   "quantity_scale", "latitude_e6", "longitude_e6",
 ];
 const PROPOSAL_FIELDS = ["buyer_principal", "subject_uri", "action_uri"];
+const i18n = window.MarketplaceI18n;
+if (i18n === undefined) throw new Error("Marketplace localization is unavailable");
+i18n.mount();
 const SYNTHETIC_PRODUCT_LISTING_EXAMPLE = Object.freeze({
   seller_principal: "urn:open-layer-marketplace:demo:seller",
   subject_uri: "urn:open-layer-marketplace:demo:item:city-bicycle",
@@ -49,6 +268,11 @@ const state = {
   syncCursor: null,
   truncated: false,
   responseParentId: null,
+  responseIds: [],
+  responseErrorCode: null,
+  mvpFlightDocument: null,
+  syncUi: { key: "sync.notSynchronized", variables: {}, kind: "" },
+  formUi: new Map([["mvp-flight-status", { key: "mvp.localOnly", variables: {}, kind: "muted" }]]),
 };
 
 const byId = (id) => document.getElementById(id);
@@ -128,9 +352,14 @@ function requireCursor(value) {
   return value;
 }
 
-function setStatus(message, kind = "") {
-  syncStatus.textContent = message;
-  syncStatus.className = kind;
+function renderSyncStatus() {
+  syncStatus.textContent = i18n.t(state.syncUi.key, state.syncUi.variables);
+  syncStatus.className = state.syncUi.kind;
+}
+
+function setStatus(key, variables = {}, kind = "") {
+  state.syncUi = { key, variables, kind };
+  renderSyncStatus();
 }
 function recordTerms(record) {
   const terms = record?.content?.terms;
@@ -197,7 +426,7 @@ function renderMap(records) {
       class: "map-marker",
       tabindex: 0,
       role: "button",
-      "aria-label": `Select intent ${recordId}`,
+      "aria-label": i18n.t("map.select", { recordId }),
     });
     marker.addEventListener("click", () => selectIntent(recordId));
     marker.addEventListener("keydown", (event) => {
@@ -219,13 +448,21 @@ function filteredRecords() {
     return recordId.toLocaleLowerCase().includes(query) || title.toLocaleLowerCase().includes(query);
   });
 }
+function localizedIntentCount(count) {
+  if (i18n.language !== "ru") return `${count} intent${count === 1 ? "" : "s"}`;
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+  const noun = mod10 === 1 && mod100 !== 11 ? "запись" : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? "записи" : "записей";
+  return `${count} ${noun}`;
+}
+
 function renderList() {
   const records = filteredRecords();
   intentList.replaceChildren();
   if (records.length === 0) {
     const empty = document.createElement("p");
     empty.className = "empty-state";
-    empty.textContent = "No intents in this bounded current view.";
+    empty.textContent = i18n.t("browse.empty");
     intentList.append(empty);
   }
   for (const [recordId, record] of records) {
@@ -235,7 +472,7 @@ function renderList() {
     card.setAttribute("aria-current", state.selectedId === recordId ? "true" : "false");
     const title = document.createElement("span");
     title.className = "intent-title";
-    title.textContent = displayText(record, "/term/title", "Marketplace intent");
+    title.textContent = displayText(record, "/term/title", i18n.t("browse.fallback"));
     const identity = document.createElement("span");
     identity.className = "record-id muted small";
     identity.textContent = recordId;
@@ -243,7 +480,8 @@ function renderList() {
     card.addEventListener("click", () => selectIntent(recordId));
     intentList.append(card);
   }
-  viewCount.textContent = `${records.length} intent${records.length === 1 ? "" : "s"}${state.truncated ? " · bounded view" : ""}`;
+  const countLabel = localizedIntentCount(records.length);
+  viewCount.textContent = state.truncated ? `${countLabel} · ${i18n.t("browse.boundedSuffix")}` : countLabel;
   renderMap(records);
 }
 
@@ -300,12 +538,12 @@ function renderProposalParentGuidance(record) {
   const subjectUri = selectedProductListingSubjectUri(record);
   proposalExampleButton.disabled = subjectUri === null;
   if (state.selectedId === null) {
-    proposalParent.textContent = "Selected parent: none.";
+    proposalParent.textContent = i18n.t("author.parentNone");
     return;
   }
   proposalParent.textContent = subjectUri === null
-    ? `Selected parent: ${state.selectedId} · product-listing subject unavailable for guided example.`
-    : `Selected parent: ${state.selectedId} · subject ${subjectUri}`;
+    ? i18n.t("proposal.parentMissing", { recordId: state.selectedId })
+    : i18n.t("proposal.parentSubject", { recordId: state.selectedId, subjectUri });
 }
 
 function renderDetail() {
@@ -315,13 +553,46 @@ function renderDetail() {
     && state.selectedId !== state.responseParentId;
   returnParentButton.hidden = !canReturnToParent;
   returnParentButton.disabled = !canReturnToParent;
-  selectedRecordId.textContent = state.selectedId ?? "No intent selected.";
+  selectedRecordId.textContent = state.selectedId ?? i18n.t("detail.none");
   selectedRecordJson.textContent = record === undefined || record === null
-    ? "Select an intent to inspect its reviewed record JSON."
+    ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
   responseButton.disabled = record === undefined || record === null;
   renderProposalParentGuidance(record);
 }
+function renderResponseItems(recordId, ids) {
+  responseList.replaceChildren();
+  if (ids.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "muted";
+    empty.textContent = i18n.t("responses.empty");
+    responseList.append(empty);
+    return;
+  }
+  for (const id of ids) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "response-card record-id";
+    const summary = proposalResponseSummary(state.records.get(id));
+    if (summary === null) {
+      item.textContent = id;
+    } else {
+      const title = document.createElement("span");
+      title.className = "intent-title";
+      title.textContent = i18n.t("responses.proposal");
+      const metadata = document.createElement("span");
+      metadata.className = "record-id muted small";
+      metadata.textContent = i18n.t("responses.metadata", { buyer: summary.buyerPrincipal, subject: summary.subjectUri, action: summary.actionUri, recordId: id });
+      item.append(title, metadata);
+    }
+    item.addEventListener("click", () => {
+      state.responseParentId = recordId;
+    });
+    item.addEventListener("click", () => void inspectIntent(id));
+    responseList.append(item);
+  }
+}
+
 async function renderResponses(recordId) {
   responseList.replaceChildren();
   try {
@@ -329,39 +600,15 @@ async function renderResponses(recordId) {
     const ids = documentValue.record_ids;
     if (!Array.isArray(ids) || ids.length > PAGE_LIMIT) throw stableClientError("RESPONSE_LIST_INVALID");
     for (const value of ids) requireRecordId(value);
-    if (ids.length === 0) {
-      const empty = document.createElement("p");
-      empty.className = "muted";
-      empty.textContent = "No responses in this bounded local application view.";
-      responseList.append(empty);
-      return;
-    }
-    for (const id of ids) {
-      const item = document.createElement("button");
-      item.type = "button";
-      item.className = "response-card record-id";
-      const summary = proposalResponseSummary(state.records.get(id));
-      if (summary === null) {
-        item.textContent = id;
-      } else {
-        const title = document.createElement("span");
-        title.className = "intent-title";
-        title.textContent = "Buyer Proposal";
-        const metadata = document.createElement("span");
-        metadata.className = "record-id muted small";
-        metadata.textContent = `Buyer ${summary.buyerPrincipal} · Subject ${summary.subjectUri} · Action ${summary.actionUri} · Record ${id}`;
-        item.append(title, metadata);
-      }
-      item.addEventListener("click", () => {
-        state.responseParentId = recordId;
-      });
-      item.addEventListener("click", () => void inspectIntent(id));
-      responseList.append(item);
-    }
+    state.responseIds = ids;
+    state.responseErrorCode = null;
+    renderResponseItems(recordId, ids);
   } catch (error) {
+    state.responseIds = [];
+    state.responseErrorCode = error.code ?? "CLIENT_FAILURE";
     const message = document.createElement("p");
     message.className = "error";
-    message.textContent = `Responses unavailable: ${error.code ?? "CLIENT_FAILURE"}`;
+    message.textContent = i18n.t("responses.unavailable", { code: state.responseErrorCode });
     responseList.append(message);
   }
 }
@@ -370,6 +617,8 @@ function selectIntent(recordId) {
   const reviewed = requireRecordId(recordId);
   const record = state.records.get(reviewed);
   state.responseParentId = null;
+  state.responseIds = [];
+  state.responseErrorCode = null;
   state.selectedId = record === undefined ? null : reviewed;
   state.selectedRecord = record ?? null;
   renderList();
@@ -383,6 +632,8 @@ async function inspectIntent(recordId) {
     const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(reviewed)}`);
     state.selectedId = reviewed;
     state.selectedRecord = record;
+    state.responseIds = [];
+    state.responseErrorCode = null;
     renderList();
     renderDetail();
     await renderResponses(reviewed);
@@ -392,7 +643,7 @@ async function inspectIntent(recordId) {
     responseList.replaceChildren();
     renderList();
     renderDetail();
-    setStatus(`Detail failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setStatus("detail.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }
 async function captureSyncWatermark() {
@@ -444,13 +695,13 @@ async function hydrateCurrentIntents() {
 }
 
 async function fullResync() {
-  setStatus("Capturing sync watermark…");
+  setStatus("sync.capture");
   const watermark = await captureSyncWatermark();
   await hydrateCurrentIntents();
   state.syncCursor = watermark;
   renderList();
   renderDetail();
-  setStatus(`Synchronized at local cursor ${watermark}`, "success");
+  setStatus("sync.done", { cursor: watermark }, "success");
 }
 async function applySyncPage(documentValue) {
   if (!Array.isArray(documentValue.changes) || documentValue.changes.length > SYNC_LIMIT) {
@@ -474,7 +725,7 @@ async function applySyncPage(documentValue) {
 
 async function incrementalSync() {
   if (state.syncCursor === null) return fullResync();
-  setStatus(`Syncing from local cursor ${state.syncCursor}…`);
+  setStatus("sync.from", { cursor: state.syncCursor });
   try {
     let browseDirty = false;
     let hasMore = false;
@@ -488,10 +739,10 @@ async function incrementalSync() {
     renderList();
     renderDetail();
     if (hasMore) {
-      setStatus(`Sync paused at local cursor ${state.syncCursor}; more changes remain`, "warning");
+      setStatus("sync.paused", { cursor: state.syncCursor }, "warning");
       return;
     }
-    setStatus(`Synchronized at local cursor ${state.syncCursor}`, "success");
+    setStatus("sync.done", { cursor: state.syncCursor }, "success");
   } catch (error) {
     if (error.code === "SYNC_CURSOR_EXPIRED") return fullResync();
     throw error;
@@ -541,10 +792,21 @@ function proposalJsonBody() {
   return body;
 }
 
-function setFormStatus(id, message, kind = "") {
+function renderFormStatus(id) {
   const target = byId(id);
-  target.textContent = message;
-  target.className = kind || "muted";
+  const ui = state.formUi.get(id);
+  if (target === null || ui === undefined) return;
+  target.textContent = i18n.t(ui.key, ui.variables);
+  target.className = ui.kind || "muted";
+}
+
+function renderFormStatuses() {
+  for (const id of state.formUi.keys()) renderFormStatus(id);
+}
+
+function setFormStatus(id, key, variables = {}, kind = "") {
+  state.formUi.set(id, { key, variables, kind });
+  renderFormStatus(id);
 }
 
 function fillSyntheticExample(prefix, values) {
@@ -555,17 +817,17 @@ function fillSyntheticExample(prefix, values) {
 
 function fillSyntheticListingExample() {
   fillSyntheticExample("create", SYNTHETIC_PRODUCT_LISTING_EXAMPLE);
-  setFormStatus("create-status", "Synthetic example loaded. Review the fields, then submit manually.");
+  setFormStatus("create-status", "author.exampleLoaded");
 }
 
 function fillSyntheticProposalExample() {
   const subjectUri = selectedProductListingSubjectUri(state.selectedRecord);
   if (subjectUri === null) {
-    setFormStatus("response-status", "Select a product listing with one valid subject before loading the example.", "error");
+    setFormStatus("response-status", "proposal.exampleNeedsListing", {}, "error");
     return;
   }
   fillSyntheticExample("proposal", { ...SYNTHETIC_PROPOSAL_EXAMPLE, subject_uri: subjectUri });
-  setFormStatus("response-status", "Synthetic example loaded for the selected product listing. Review the fields, then submit manually.");
+  setFormStatus("response-status", "proposal.exampleLoaded");
 }
 
 async function createProductListing(event) {
@@ -575,35 +837,35 @@ async function createProductListing(event) {
     const submittedSubjectUri = byId("create-subject-uri").value;
     const previousIds = new Set(state.records.keys());
     const previousViewWasCurrent = state.syncCursor !== null && state.truncated === false;
-    setFormStatus("create-status", "Submitting structured product listing…");
+    setFormStatus("create-status", "listing.submitting");
     await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
     try {
       await fullResync();
     } catch (error) {
-      setFormStatus("create-status", `Product listing accepted, but local refresh failed: ${error.code ?? "CLIENT_FAILURE"}`, "warning");
+      setFormStatus("create-status", "listing.refreshFailed", { code: error.code ?? "CLIENT_FAILURE" }, "warning");
       return;
     }
     const createdId = newlyCreatedProductListingId(previousIds, submittedSubjectUri, previousViewWasCurrent);
     if (createdId !== null) {
       selectIntent(createdId);
-      setFormStatus("create-status", "Product listing accepted and selected for Proposal authoring.", "success");
+      setFormStatus("create-status", "listing.acceptedSelected", {}, "success");
       return;
     }
-    setFormStatus("create-status", "Product listing accepted. Select it from the current view to continue.", "success");
+    setFormStatus("create-status", "listing.accepted", {}, "success");
   } catch (error) {
-    setFormStatus("create-status", `Create failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setFormStatus("create-status", "listing.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }
 async function createProposal(event) {
   event.preventDefault();
   if (state.selectedId === null) {
-    setFormStatus("response-status", "Select a parent intent first.", "error");
+    setFormStatus("response-status", "proposal.selectParent", {}, "error");
     return;
   }
   try {
     const body = proposalJsonBody();
     const parentId = requireRecordId(state.selectedId);
-    setFormStatus("response-status", "Submitting structured Proposal…");
+    setFormStatus("response-status", "proposal.submitting");
     await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
       method: "POST",
       body,
@@ -611,17 +873,17 @@ async function createProposal(event) {
     try {
       await fullResync();
     } catch (error) {
-      setFormStatus("response-status", `Proposal accepted, but local refresh failed: ${error.code ?? "CLIENT_FAILURE"}`, "warning");
+      setFormStatus("response-status", "proposal.refreshFailed", { code: error.code ?? "CLIENT_FAILURE" }, "warning");
       return;
     }
     if (state.records.has(parentId)) {
       selectIntent(parentId);
-      setFormStatus("response-status", "Proposal accepted and parent responses refreshed.", "success");
+      setFormStatus("response-status", "proposal.acceptedRefreshed", {}, "success");
       return;
     }
-    setFormStatus("response-status", "Proposal accepted, but the parent is not present in the refreshed local view.", "warning");
+    setFormStatus("response-status", "proposal.parentGone", {}, "warning");
   } catch (error) {
-    setFormStatus("response-status", `Proposal failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setFormStatus("response-status", "proposal.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }
 
@@ -684,16 +946,26 @@ function reviewedMvpFlightDocument(value) {
   };
 }
 
-function renderMvpFlight(documentValue) {
-  const flight = reviewedMvpFlightDocument(documentValue);
+function renderMvpFlightState() {
+  if (state.mvpFlightDocument === null) {
+    byId("mvp-flight-final").textContent = i18n.t("mvp.notRun");
+    byId("mvp-flight-seller").textContent = i18n.t("mvp.sellerEmpty");
+    byId("mvp-flight-buyer").textContent = i18n.t("mvp.buyerEmpty");
+    byId("mvp-flight-verification").textContent = i18n.t("mvp.notEvaluated");
+    byId("mvp-flight-completed-at").textContent = i18n.t("mvp.completedEmpty");
+    mvpFlightLifecycle.replaceChildren();
+    mvpFlightAudit.textContent = i18n.t("mvp.auditEmpty");
+    return;
+  }
+  const flight = reviewedMvpFlightDocument(state.mvpFlightDocument);
   byId("mvp-flight-final").textContent = flight.finalState;
-  byId("mvp-flight-seller").textContent = `Seller: ${flight.seller}`;
-  byId("mvp-flight-buyer").textContent = `Buyer: ${flight.buyer}`;
-  byId("mvp-flight-completed-at").textContent = `Completion timestamp: ${flight.completedAt}`;
-  byId("mvp-flight-verification").textContent =
-    `Listing integrity=${flight.listingIntegrityVerified}; agreement=${flight.agreementFormation}; ` +
-    `fulfillment=${flight.fulfillmentConclusion}; universal truth=${flight.universalTruth}; ` +
-    `payment/settlement evaluated=${flight.paymentOrSettlementEvaluated}.`;
+  byId("mvp-flight-seller").textContent = i18n.t("mvp.seller", { seller: flight.seller });
+  byId("mvp-flight-buyer").textContent = i18n.t("mvp.buyer", { buyer: flight.buyer });
+  byId("mvp-flight-completed-at").textContent = i18n.t("mvp.completed", { timestamp: flight.completedAt });
+  byId("mvp-flight-verification").textContent = i18n.t("mvp.verificationValue", {
+    integrity: flight.listingIntegrityVerified, agreement: flight.agreementFormation,
+    fulfillment: flight.fulfillmentConclusion, truth: flight.universalTruth, payment: flight.paymentOrSettlementEvaluated,
+  });
   mvpFlightLifecycle.replaceChildren();
   for (const stateValue of flight.states) {
     const item = document.createElement("li");
@@ -707,15 +979,20 @@ function renderMvpFlight(documentValue) {
   ].join("\n");
 }
 
+function renderMvpFlight(documentValue) {
+  state.mvpFlightDocument = documentValue;
+  renderMvpFlightState();
+}
+
 async function runMvpFlight() {
   mvpFlightButton.disabled = true;
-  setFormStatus("mvp-flight-status", "Running bounded local two-user MVP journey…");
+  setFormStatus("mvp-flight-status", "mvp.running");
   try {
     const documentValue = await apiFetch(API_MVP_FLIGHT, { method: "POST" });
     renderMvpFlight(documentValue);
-    setFormStatus("mvp-flight-status", "MVP journey completed with visible verification and audit evidence.", "success");
+    setFormStatus("mvp-flight-status", "mvp.completedStatus", {}, "success");
   } catch (error) {
-    setFormStatus("mvp-flight-status", `MVP journey failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setFormStatus("mvp-flight-status", "mvp.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   } finally {
     mvpFlightButton.disabled = false;
   }
@@ -725,7 +1002,7 @@ async function runSyncAction() {
   try {
     await incrementalSync();
   } catch (error) {
-    setStatus(`Sync failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+    setStatus("sync.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }
 
@@ -743,6 +1020,8 @@ returnParentButton.addEventListener("click", () => {
 });
 byId("clear-selection").addEventListener("click", () => {
   state.responseParentId = null;
+  state.responseIds = [];
+  state.responseErrorCode = null;
   state.selectedId = null;
   state.selectedRecord = null;
   responseList.replaceChildren();
@@ -755,8 +1034,30 @@ byId("create-form").addEventListener("submit", (event) => void createProductList
 byId("response-form").addEventListener("submit", (event) => void createProposal(event));
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
 
+i18n.onChange(() => {
+  renderSyncStatus();
+  renderFormStatuses();
+  renderList();
+  renderDetail();
+  if (state.selectedId !== null) {
+    if (state.responseErrorCode === null) {
+      renderResponseItems(state.selectedId, state.responseIds);
+    } else {
+      responseList.replaceChildren();
+      const message = document.createElement("p");
+      message.className = "error";
+      message.textContent = i18n.t("responses.unavailable", { code: state.responseErrorCode });
+      responseList.append(message);
+    }
+  }
+  renderMvpFlightState();
+});
+
+renderSyncStatus();
+renderFormStatuses();
 renderList();
 renderDetail();
+renderMvpFlightState();
 void fullResync().catch((error) => {
-  setStatus(`Initial sync failed: ${error.code ?? "CLIENT_FAILURE"}`, "error");
+  setStatus("sync.initialFailed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
 });

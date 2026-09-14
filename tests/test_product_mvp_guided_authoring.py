@@ -8,6 +8,7 @@ from marketplace.application.proposal import BuyerRequestProposalDraft
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = ROOT / "web" / "index.html"
 APP = ROOT / "web" / "app.js"
+I18N = APP
 
 
 class MarketplaceMvpGuidedAuthoringTests(unittest.TestCase):
@@ -38,7 +39,11 @@ class MarketplaceMvpGuidedAuthoringTests(unittest.TestCase):
         end = text.index("async function createProductListing", start)
         block = text[start:end]
         self.assertIn('.value = value', block)
-        self.assertIn("Review the fields, then submit manually.", block)
+        self.assertIn('setFormStatus("create-status", "author.exampleLoaded")', block)
+        self.assertIn('setFormStatus("response-status", "proposal.exampleLoaded")', block)
+        catalog = I18N.read_text(encoding="utf-8")
+        self.assertIn("Review the fields, then submit manually.", catalog)
+        self.assertIn("Проверьте поля и отправьте вручную.", catalog)
         self.assertNotIn("apiFetch", block)
         self.assertNotIn("fetch(", block)
         self.assertNotIn("submit()", block)
