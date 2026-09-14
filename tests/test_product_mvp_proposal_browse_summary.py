@@ -11,6 +11,10 @@ class MarketplaceMvpProposalBrowseSummaryTests(unittest.TestCase):
         text = APP.read_text(encoding="utf-8")
         return text.split("function renderList() {", 1)[1].split("\nfunction selectedProductListingSubjectUri", 1)[0]
 
+    def filtered_records_block(self) -> str:
+        text = APP.read_text(encoding="utf-8")
+        return text.split("function filteredRecords() {", 1)[1].split("\nfunction localizedIntentCount", 1)[0]
+
     def test_browse_reuses_fail_closed_proposal_summary(self):
         block = self.render_list_block()
         self.assertIn("const summary = proposalResponseSummary(record);", block)
@@ -36,6 +40,21 @@ class MarketplaceMvpProposalBrowseSummaryTests(unittest.TestCase):
         block = self.render_list_block()
         self.assertIn("identity.textContent = recordId", block)
         self.assertIn("card.append(title, metadata, identity);", block)
+        self.assertNotIn("translateRecord", block)
+        self.assertNotIn("translateUri", block)
+
+    def test_filter_matches_the_same_visible_proposal_text_as_the_card(self):
+        block = self.filtered_records_block()
+        self.assertIn("const summary = proposalResponseSummary(record);", block)
+        self.assertIn('i18n.t("responses.proposal")', block)
+        self.assertIn('i18n.t("browse.proposalMetadata"', block)
+        self.assertIn("[recordId, title, metadata].some", block)
+
+    def test_filter_adds_no_fetch_write_or_protocol_translation(self):
+        block = self.filtered_records_block()
+        self.assertNotIn("apiFetch(", block)
+        self.assertNotIn("fetch(", block)
+        self.assertNotIn("innerHTML", block)
         self.assertNotIn("translateRecord", block)
         self.assertNotIn("translateUri", block)
 

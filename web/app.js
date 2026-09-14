@@ -445,8 +445,14 @@ function filteredRecords() {
   const records = Array.from(state.records.entries());
   if (!query) return records;
   return records.filter(([recordId, record]) => {
-    const title = displayText(record, "/term/title", "");
-    return recordId.toLocaleLowerCase().includes(query) || title.toLocaleLowerCase().includes(query);
+    const summary = proposalResponseSummary(record);
+    const title = summary === null
+      ? displayText(record, "/term/title", "")
+      : i18n.t("responses.proposal");
+    const metadata = summary === null
+      ? ""
+      : i18n.t("browse.proposalMetadata", { buyer: summary.buyerPrincipal, subject: summary.subjectUri, action: summary.actionUri });
+    return [recordId, title, metadata].some((value) => value.toLocaleLowerCase().includes(query));
   });
 }
 function localizedIntentCount(count) {
