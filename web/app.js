@@ -62,6 +62,7 @@ window.MarketplaceI18n = (() => {
     "browse.empty": ["No intents in this bounded current view.", "В текущем ограниченном представлении записей нет."],
     "browse.fallback": ["Marketplace intent", "Запись Marketplace"],
     "browse.boundedSuffix": ["bounded view", "ограничено"],
+    "browse.proposalMetadata": ["Buyer {buyer} · Subject {subject} · Action {action}", "Покупатель {buyer} · Предмет {subject} · Действие {action}"],
     "map.select": ["Select intent {recordId}", "Выбрать запись {recordId}"],
     "proposal.parentMissing": ["Selected parent: {recordId} · product-listing subject unavailable for guided example.", "Родительская запись: {recordId} · предмет объявления недоступен для пошагового примера."],
     "proposal.parentSubject": ["Selected parent: {recordId} · subject {subjectUri}", "Родительская запись: {recordId} · предмет {subjectUri}"],
@@ -470,13 +471,23 @@ function renderList() {
     card.type = "button";
     card.className = "intent-card";
     card.setAttribute("aria-current", state.selectedId === recordId ? "true" : "false");
+    const summary = proposalResponseSummary(record);
     const title = document.createElement("span");
     title.className = "intent-title";
-    title.textContent = displayText(record, "/term/title", i18n.t("browse.fallback"));
+    title.textContent = summary === null
+      ? displayText(record, "/term/title", i18n.t("browse.fallback"))
+      : i18n.t("responses.proposal");
     const identity = document.createElement("span");
     identity.className = "record-id muted small";
     identity.textContent = recordId;
-    card.append(title, identity);
+    if (summary === null) {
+      card.append(title, identity);
+    } else {
+      const metadata = document.createElement("span");
+      metadata.className = "record-id muted small";
+      metadata.textContent = i18n.t("browse.proposalMetadata", { buyer: summary.buyerPrincipal, subject: summary.subjectUri, action: summary.actionUri });
+      card.append(title, metadata, identity);
+    }
     card.addEventListener("click", () => selectIntent(recordId));
     intentList.append(card);
   }
