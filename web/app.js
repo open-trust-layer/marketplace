@@ -110,7 +110,7 @@ window.MarketplaceI18n = (() => {
   });
 
   const DYNAMIC_IDS = new Set([
-    "sync-status", "view-count", "selected-record-id", "selected-record-json", "proposal-parent",
+    "sync-status", "view-count", "selected-record-id", "selected-record-summary", "selected-record-json", "proposal-parent",
     "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
   ]);
@@ -284,6 +284,7 @@ const filterInput = byId("intent-filter");
 const syncStatus = byId("sync-status");
 const viewCount = byId("view-count");
 const selectedRecordId = byId("selected-record-id");
+const selectedRecordSummary = byId("selected-record-summary");
 const selectedRecordJson = byId("selected-record-json");
 const responseList = byId("response-list");
 const returnParentButton = byId("return-parent");
@@ -608,6 +609,28 @@ function newlyCreatedProductListingId(previousIds, expectedSubjectUri, previousV
   return candidates.length === 1 ? candidates[0] : null;
 }
 
+function renderSelectedRecordSummary(record) {
+  selectedRecordSummary.replaceChildren();
+  selectedRecordSummary.hidden = true;
+  if (record === undefined || record === null) return;
+  const proposalSummary = proposalResponseSummary(record);
+  const listingSummary = proposalSummary === null ? productListingSummary(record) : null;
+  if (proposalSummary === null && listingSummary === null) return;
+  const title = document.createElement("span");
+  title.className = "intent-title";
+  const metadata = document.createElement("span");
+  metadata.className = "record-id muted small";
+  if (proposalSummary !== null) {
+    title.textContent = i18n.t("responses.proposal");
+    metadata.textContent = i18n.t("browse.proposalMetadata", { buyer: proposalSummary.buyerPrincipal, subject: proposalSummary.subjectUri, action: proposalSummary.actionUri });
+  } else {
+    title.textContent = displayText(record, "/term/title", i18n.t("browse.fallback"));
+    metadata.textContent = i18n.t("browse.listingMetadata", { seller: listingSummary.sellerPrincipal, price: listingSummary.price, quantity: listingSummary.quantity });
+  }
+  selectedRecordSummary.append(title, metadata);
+  selectedRecordSummary.hidden = false;
+}
+
 function renderProposalParentGuidance(record) {
   const subjectUri = selectedProductListingSubjectUri(record);
   proposalExampleButton.disabled = subjectUri === null;
@@ -628,6 +651,7 @@ function renderDetail() {
   returnParentButton.hidden = !canReturnToParent;
   returnParentButton.disabled = !canReturnToParent;
   selectedRecordId.textContent = state.selectedId ?? i18n.t("detail.none");
+  renderSelectedRecordSummary(record);
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
