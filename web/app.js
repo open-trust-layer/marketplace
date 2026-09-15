@@ -92,6 +92,7 @@ window.MarketplaceI18n = (() => {
     "proposal.submitting": ["Submitting structured Proposal…", "Отправляем структурированное предложение…"],
     "proposal.refreshFailed": ["Proposal accepted, but local refresh failed: {code}", "Предложение принято, но локальное обновление не удалось: {code}"],
     "proposal.acceptedRefreshed": ["Proposal accepted and parent responses refreshed.", "Предложение принято, ответы родительской записи обновлены."],
+    "proposal.responsesUnavailable": ["Proposal accepted, but parent responses could not be refreshed: {code}", "Предложение принято, но не удалось обновить ответы родительской записи: {code}"],
     "proposal.parentGone": ["Proposal accepted, but the parent is not present in the refreshed local view.", "Предложение принято, но родительская запись отсутствует в обновлённом локальном представлении."],
     "proposal.failed": ["Proposal failed: {code}", "Ошибка предложения: {code}"],
     "mvp.seller": ["Seller: {seller}", "Продавец: {seller}"],
@@ -723,7 +724,8 @@ function selectIntent(recordId) {
   state.selectedRecord = record ?? null;
   renderList();
   renderDetail();
-  if (state.selectedId !== null) void renderResponses(state.selectedId);
+  if (state.selectedId !== null) return renderResponses(state.selectedId);
+  return Promise.resolve();
 }
 
 async function inspectIntent(recordId) {
@@ -987,7 +989,11 @@ async function createProposal(event) {
       return;
     }
     if (state.records.has(parentId)) {
-      selectIntent(parentId);
+      await selectIntent(parentId);
+      if (state.responseErrorCode !== null) {
+        setFormStatus("response-status", "proposal.responsesUnavailable", { code: state.responseErrorCode }, "warning");
+        return;
+      }
       setFormStatus("response-status", "proposal.acceptedRefreshed", {}, "success");
       return;
     }
