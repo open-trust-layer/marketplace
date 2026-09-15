@@ -87,6 +87,8 @@ window.MarketplaceI18n = (() => {
     "listing.accepted": ["Product listing accepted. Select it from the current view to continue.", "Объявление принято. Выберите его в текущем представлении, чтобы продолжить."],
     "listing.failed": ["Create failed: {code}", "Ошибка создания: {code}"],
     "proposal.selectParent": ["Select a parent intent first.", "Сначала выберите родительскую запись."],
+    "proposal.selectListing": ["Select a product listing with one valid subject before creating a Proposal.", "Перед созданием предложения выберите объявление с одним корректным предметом."],
+    "proposal.subjectMismatch": ["Proposal subject must exactly match the selected product listing subject {subjectUri}.", "Предмет предложения должен точно совпадать с предметом выбранного объявления {subjectUri}."],
     "proposal.submitting": ["Submitting structured Proposal…", "Отправляем структурированное предложение…"],
     "proposal.refreshFailed": ["Proposal accepted, but local refresh failed: {code}", "Предложение принято, но локальное обновление не удалось: {code}"],
     "proposal.acceptedRefreshed": ["Proposal accepted and parent responses refreshed.", "Предложение принято, ответы родительской записи обновлены."],
@@ -655,7 +657,7 @@ function renderDetail() {
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
-  responseButton.disabled = record === undefined || record === null;
+  responseButton.disabled = selectedProductListingSubjectUri(record) === null;
   renderProposalParentGuidance(record);
 }
 function renderResponseItems(recordId, ids) {
@@ -960,7 +962,17 @@ async function createProposal(event) {
     setFormStatus("response-status", "proposal.selectParent", {}, "error");
     return;
   }
+  const parentSubjectUri = selectedProductListingSubjectUri(state.selectedRecord);
+  if (parentSubjectUri === null) {
+    setFormStatus("response-status", "proposal.selectListing", {}, "error");
+    return;
+  }
   try {
+    const submittedSubjectUri = reviewedProposalUri(byId("proposal-subject-uri").value);
+    if (submittedSubjectUri !== parentSubjectUri) {
+      setFormStatus("response-status", "proposal.subjectMismatch", { subjectUri: parentSubjectUri }, "error");
+      return;
+    }
     const body = proposalJsonBody();
     const parentId = requireRecordId(state.selectedId);
     setFormStatus("response-status", "proposal.submitting");
