@@ -41,6 +41,9 @@ window.MarketplaceI18n = (() => {
     "author.createListing": ["Create product listing", "Создать объявление"],
     "author.listingHelp": ["Enter transport fields only. M17.1Q/M72 remains authoritative for Marketplace semantics.", "Введите только транспортные поля. M17.1Q/M72 остаётся авторитетным источником семантики Marketplace."],
     "author.fillExample": ["Fill synthetic example", "Заполнить синтетический пример"],
+    "author.priceScale2Preset": ["Use 2-decimal price", "Цена с 2 знаками после запятой"],
+    "author.quantityOnePreset": ["Set quantity to 1", "Установить количество 1"],
+    "author.presetApplied": ["Preset applied. Review remaining fields before submitting.", "Шаблон применён. Проверьте остальные поля перед отправкой."],
     "field.sellerPrincipal": ["Seller principal URI", "URI принципала продавца"],
     "field.subjectUri": ["Subject URI", "URI предмета"],
     "field.title": ["Title", "Название"],
@@ -1071,6 +1074,20 @@ function fillSyntheticListingExample() {
   setFormStatus("create-status", "author.exampleLoaded");
 }
 
+function applyListingPreset(values) {
+  fillSyntheticExample("create", values);
+  renderListingDraftPreview();
+  setFormStatus("create-status", "author.presetApplied");
+}
+
+function applyPriceScale2Preset() {
+  applyListingPreset({ consideration_scale: "2" });
+}
+
+function applyQuantityOnePreset() {
+  applyListingPreset({ quantity_coefficient: "1", quantity_scale: "0" });
+}
+
 function fillSyntheticProposalExample() {
   const subjectUri = selectedProductListingSubjectUri(state.selectedRecord);
   if (subjectUri === null) {
@@ -1326,6 +1343,8 @@ for (const name of [...PRODUCT_LISTING_STRING_FIELDS, ...PRODUCT_LISTING_INTEGER
   byId(id).addEventListener("input", renderListingDraftPreview);
 }
 byId("fill-example-listing").addEventListener("click", fillSyntheticListingExample);
+byId("preset-price-scale-2").addEventListener("click", applyPriceScale2Preset);
+byId("preset-quantity-one").addEventListener("click", applyQuantityOnePreset);
 byId("fill-example-proposal").addEventListener("click", fillSyntheticProposalExample);
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
 byId("response-form").addEventListener("submit", (event) => void createProposal(event));
