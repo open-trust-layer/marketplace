@@ -59,6 +59,8 @@ window.MarketplaceI18n = (() => {
     "author.quantityPreviewEmpty": ["Quantity preview: —", "Количество: —"],
     "author.locationPreview": ["Location preview: {latitude}, {longitude}", "Координаты: {latitude}, {longitude}"],
     "author.locationPreviewEmpty": ["Location preview: —", "Координаты: —"],
+    "author.draftIncomplete": ["Draft incomplete: complete all required listing fields with valid values.", "\u0427\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u043d\u0435 \u0433\u043e\u0442\u043e\u0432: \u0437\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0432\u0441\u0435 \u043e\u0431\u044f\u0437\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u043e\u043b\u044f \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u043c\u0438 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u044f\u043c\u0438."],
+    "author.draftReady": ["Client checks passed; server validation remains authoritative.", "\u041a\u043b\u0438\u0435\u043d\u0442\u0441\u043a\u0438\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u043f\u0440\u043e\u0439\u0434\u0435\u043d\u044b; \u0441\u0435\u0440\u0432\u0435\u0440\u043d\u0430\u044f \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u044f \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u0440\u0438\u0442\u0435\u0442\u043d\u043e\u0439."],
     "author.parent": ["Exact selected parent", "Точно выбранная родительская запись"],
     "author.createProposal": ["Create Proposal", "Создать предложение"],
     "author.proposalHelp": ["Enter buyer/request fields only. The selected parent is supplied by the route.", "Введите только поля покупателя/запроса. Выбранная родительская запись задаётся маршрутом."],
@@ -94,6 +96,7 @@ window.MarketplaceI18n = (() => {
     "listing.refreshFailed": ["Product listing accepted, but local refresh failed: {code}", "Объявление принято, но локальное обновление не удалось: {code}"],
     "listing.acceptedSelected": ["Product listing accepted and selected for Proposal authoring.", "Объявление принято и выбрано для создания предложения."],
     "listing.accepted": ["Product listing accepted. Select it from the current view to continue.", "Объявление принято. Выберите его в текущем представлении, чтобы продолжить."],
+    "listing.notReady": ["Complete the visible listing draft before submitting.", "\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u0432\u0438\u0434\u0438\u043c\u044b\u0439 \u0447\u0435\u0440\u043d\u043e\u0432\u0438\u043a \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f \u043f\u0435\u0440\u0435\u0434 \u043e\u0442\u043f\u0440\u0430\u0432\u043a\u043e\u0439."],
     "listing.failed": ["Create failed: {code}", "Ошибка создания: {code}"],
     "proposal.selectParent": ["Select a parent intent first.", "Сначала выберите родительскую запись."],
     "proposal.selectListing": ["Select a product listing with one valid subject before creating a Proposal.", "Перед созданием предложения выберите объявление с одним корректным предметом."],
@@ -127,7 +130,7 @@ window.MarketplaceI18n = (() => {
     "sync-status", "view-count", "selected-record-id", "selected-record-summary", "selected-record-json", "proposal-parent",
     "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
-    "create-price-preview", "create-quantity-preview", "create-location-preview",
+    "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness",
   ]);
   let language = "en";
   const listeners = new Set();
@@ -245,6 +248,9 @@ const MAX_SYNC_PAGES = 4;
 const MAX_LIST_PAGES = 4;
 const MAX_RECORD_JSON_BYTES = 256 * 1024;
 const MAX_PROPOSAL_URI_BYTES = 2048;
+const MAX_LISTING_TITLE_BYTES = 120;
+const MAX_LISTING_DESCRIPTION_BYTES = 4096;
+const MAX_APPLICATION_INTEGER = (1n << 63n) - 1n;
 const MAX_RESPONSE_JSON_BYTES = 300 * 1024;
 const MAP_WIDTH = 720;
 const MAP_HEIGHT = 360;
@@ -937,6 +943,42 @@ function draftExactDecimalPresentation(coefficientText, scaleText) {
   return negative ? `-${digits}` : digits;
 }
 
+function draftTextWithin(value, maxBytes) {
+  return typeof value === "string" && value.length > 0 && new TextEncoder().encode(value).length <= maxBytes;
+}
+
+function draftIntegerWithin(value, minimum, maximum) {
+  if (typeof value !== "string" || !/^(0|-?[1-9][0-9]*)$/.test(value)) return null;
+  try {
+    const integer = BigInt(value);
+    return integer >= minimum && integer <= maximum ? integer : null;
+  } catch { return null; }
+}
+
+function listingDraftLooksReady() {
+  const absoluteUriReady = (id) => { try { reviewedProposalUri(byId(id).value); return true; } catch { return false; } };
+  const priceCoefficient = draftIntegerWithin(byId("create-consideration-coefficient").value, 0n, MAX_APPLICATION_INTEGER);
+  const priceScale = draftIntegerWithin(byId("create-consideration-scale").value, 0n, 18n);
+  const quantityCoefficient = draftIntegerWithin(byId("create-quantity-coefficient").value, 1n, MAX_APPLICATION_INTEGER);
+  const quantityScale = draftIntegerWithin(byId("create-quantity-scale").value, 0n, 18n);
+  const latitude = draftIntegerWithin(byId("create-latitude-e6").value, -90000000n, 90000000n);
+  const longitude = draftIntegerWithin(byId("create-longitude-e6").value, -180000000n, 180000000n);
+  return absoluteUriReady("create-seller-principal") && absoluteUriReady("create-subject-uri")
+    && draftTextWithin(byId("create-title").value, MAX_LISTING_TITLE_BYTES)
+    && draftTextWithin(byId("create-description").value, MAX_LISTING_DESCRIPTION_BYTES)
+    && priceCoefficient !== null && priceScale !== null && /^[A-Z]{3}$/.test(byId("create-currency-code").value)
+    && quantityCoefficient !== null && quantityScale !== null && absoluteUriReady("create-unit-uri")
+    && latitude !== null && longitude !== null;
+}
+
+function renderListingDraftReadiness() {
+  const ready = listingDraftLooksReady();
+  const target = byId("create-readiness");
+  target.textContent = i18n.t(ready ? "author.draftReady" : "author.draftIncomplete");
+  target.className = ready ? "success" : "muted";
+  byId("create-submit").disabled = !ready;
+}
+
 function renderListingDraftPreview() {
   const price = draftExactDecimalPresentation(byId("create-consideration-coefficient").value, byId("create-consideration-scale").value);
   const currency = byId("create-currency-code").value;
@@ -960,6 +1002,7 @@ function renderListingDraftPreview() {
   byId("create-location-preview").textContent = locationValid
     ? i18n.t("author.locationPreview", { latitude: draftExactDecimalPresentation(latitudeText, "6"), longitude: draftExactDecimalPresentation(longitudeText, "6") })
     : i18n.t("author.locationPreviewEmpty");
+  renderListingDraftReadiness();
 }
 
 function productListingJsonBody() {
@@ -1040,6 +1083,11 @@ function fillSyntheticProposalExample() {
 
 async function createProductListing(event) {
   event.preventDefault();
+  if (!listingDraftLooksReady()) {
+    renderListingDraftPreview();
+    setFormStatus("create-status", "listing.notReady", {}, "warning");
+    return;
+  }
   try {
     const body = productListingJsonBody();
     const submittedSubjectUri = byId("create-subject-uri").value;
@@ -1273,7 +1321,8 @@ byId("clear-selection").addEventListener("click", () => {
   renderList();
   renderDetail();
 });
-for (const id of ["create-consideration-coefficient", "create-consideration-scale", "create-currency-code", "create-quantity-coefficient", "create-quantity-scale", "create-unit-uri", "create-latitude-e6", "create-longitude-e6"]) {
+for (const name of [...PRODUCT_LISTING_STRING_FIELDS, ...PRODUCT_LISTING_INTEGER_FIELDS]) {
+  const id = `create-${name.replaceAll("_", "-")}`;
   byId(id).addEventListener("input", renderListingDraftPreview);
 }
 byId("fill-example-listing").addEventListener("click", fillSyntheticListingExample);
