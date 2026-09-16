@@ -277,6 +277,7 @@ const state = {
   responseIds: [],
   responseErrorCode: null,
   responseRequestSerial: 0,
+  detailRequestSerial: 0,
   mvpFlightDocument: null,
   syncUi: { key: "sync.notSynchronized", variables: {}, kind: "" },
   formUi: new Map([["mvp-flight-status", { key: "mvp.localOnly", variables: {}, kind: "muted" }]]),
@@ -724,6 +725,7 @@ async function renderResponses(recordId) {
 
 function selectIntent(recordId) {
   const reviewed = requireRecordId(recordId);
+  state.detailRequestSerial += 1;
   const record = state.records.get(reviewed);
   state.responseParentId = null;
   state.responseIds = [];
@@ -738,8 +740,11 @@ function selectIntent(recordId) {
 
 async function inspectIntent(recordId) {
   const reviewed = requireRecordId(recordId);
+  const requestSerial = state.detailRequestSerial + 1;
+  state.detailRequestSerial = requestSerial;
   try {
     const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(reviewed)}`);
+    if (state.detailRequestSerial !== requestSerial) return false;
     state.selectedId = reviewed;
     state.selectedRecord = record;
     state.responseIds = [];
@@ -747,13 +752,16 @@ async function inspectIntent(recordId) {
     renderList();
     renderDetail();
     await renderResponses(reviewed);
+    return true;
   } catch (error) {
+    if (state.detailRequestSerial !== requestSerial) return false;
     state.selectedId = null;
     state.selectedRecord = null;
     responseList.replaceChildren();
     renderList();
     renderDetail();
     setStatus("detail.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
+    return true;
   }
 }
 async function captureSyncWatermark() {
@@ -1147,6 +1155,7 @@ returnParentButton.addEventListener("click", () => {
   }
 });
 byId("clear-selection").addEventListener("click", () => {
+  state.detailRequestSerial += 1;
   state.responseParentId = null;
   state.responseIds = [];
   state.responseErrorCode = null;
