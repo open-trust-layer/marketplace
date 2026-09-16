@@ -41,7 +41,9 @@ class MarketplaceMvpResponseSummaryTests(unittest.TestCase):
     def test_readable_summary_uses_text_nodes_and_preserves_click_through(self):
         text = APP.read_text(encoding="utf-8")
         block = text.split("function renderResponseItems(recordId, ids) {", 1)[1].split("\nasync function renderResponses", 1)[0]
-        self.assertIn('title.textContent = i18n.t("responses.proposal")', block)
+        self.assertIn('title.textContent = i18n.t(isRecentProposal ? "responses.newProposal" : "responses.proposal")', block)
+        self.assertIn('"responses.proposal"', block)
+        self.assertIn('"responses.newProposal"', block)
         self.assertIn('i18n.t("responses.metadata"', block)
         self.assertIn("buyer: summary.buyerPrincipal", block)
         self.assertIn("subject: summary.subjectUri", block)

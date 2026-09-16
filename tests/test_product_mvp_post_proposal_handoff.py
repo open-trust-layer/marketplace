@@ -29,6 +29,42 @@ class MarketplaceMvpPostProposalHandoffTests(unittest.TestCase):
         self.assertLess(block.index("const responsesCurrent = await selectIntent(parentId);"), block.index('"proposal.acceptedRefreshed"'))
         self.assertNotIn("selectIntent(createdId)", block)
 
+    def test_unique_new_matching_proposal_requires_current_exact_response_sets(self):
+        text = APP.read_text(encoding="utf-8")
+        start = text.index("function newlyCreatedProposalId")
+        end = text.index("function renderSelectedRecordSummary", start)
+        block = text[start:end]
+        self.assertIn("previousResponsesWereCurrent", block)
+        self.assertIn("state.selectedId !== reviewedParent", block)
+        self.assertIn("state.responseLoading", block)
+        self.assertIn("state.responseErrorCode !== null", block)
+        self.assertIn("previousResponseIds.has(recordId)", block)
+        self.assertIn("summary.buyerPrincipal === expectedBuyer", block)
+        self.assertIn("summary.subjectUri === expectedSubject", block)
+        self.assertIn("summary.actionUri === expectedAction", block)
+        self.assertIn("candidates.length === 1", block)
+
+    def test_successful_refresh_marks_uniquely_identified_new_proposal(self):
+        block = self._block()
+        self.assertIn("const previousResponseIds = new Set(state.responseIds);", block)
+        self.assertIn("const previousResponsesWereCurrent = !state.responseLoading && state.responseErrorCode === null;", block)
+        self.assertIn("newlyCreatedProposalId(parentId, previousResponseIds, expectedSummary, previousResponsesWereCurrent)", block)
+        self.assertIn("state.recentProposalId = createdId", block)
+        self.assertIn("state.recentProposalParentId = parentId", block)
+        self.assertIn("renderResponseItems(parentId, state.responseIds)", block)
+        self.assertIn('"proposal.acceptedHighlighted"', block)
+        self.assertIn('"proposal.acceptedRefreshed"', block)
+
+    def test_response_list_labels_recent_proposal_without_reordering(self):
+        text = APP.read_text(encoding="utf-8")
+        start = text.index("function renderResponseItems")
+        end = text.index("async function renderResponses", start)
+        block = text[start:end]
+        self.assertIn("state.recentProposalParentId === recordId", block)
+        self.assertIn("state.recentProposalId === id", block)
+        self.assertIn('"responses.newProposal"', block)
+        self.assertNotIn("sort(", block)
+
     def test_response_refresh_failure_is_reported_after_accepted_write(self):
         block = self._block()
         self.assertIn("if (state.responseErrorCode !== null)", block)
