@@ -69,6 +69,7 @@ window.MarketplaceI18n = (() => {
     "proposal.parentSubject": ["Selected parent: {recordId} · subject {subjectUri}", "Родительская запись: {recordId} · предмет {subjectUri}"],
     "responses.empty": ["No responses in this bounded local application view.", "В текущем ограниченном локальном представлении ответов нет."],
     "responses.loading": ["Loading responses\u2026", "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u043e\u0442\u0432\u0435\u0442\u044b\u2026"],
+    "responses.newProposal": ["New Proposal", "\u041d\u043e\u0432\u043e\u0435 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435"],
     "responses.proposal": ["Buyer Proposal", "Предложение покупателя"],
     "responses.metadata": ["Buyer {buyer} · Subject {subject} · Action {action} · Record {recordId}", "Покупатель {buyer} · Предмет {subject} · Действие {action} · Запись {recordId}"],
     "detail.responseParent": ["Response to parent record {recordId}", "\u041e\u0442\u0432\u0435\u0442 \u043d\u0430 \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c {recordId}"],
@@ -94,6 +95,7 @@ window.MarketplaceI18n = (() => {
     "proposal.submitting": ["Submitting structured Proposal…", "Отправляем структурированное предложение…"],
     "proposal.refreshFailed": ["Proposal accepted, but local refresh failed: {code}", "Предложение принято, но локальное обновление не удалось: {code}"],
     "proposal.acceptedRefreshed": ["Proposal accepted and parent responses refreshed.", "Предложение принято, ответы родительской записи обновлены."],
+    "proposal.acceptedHighlighted": ["Proposal accepted; new Proposal {recordId} is marked in the response list.", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u043d\u044f\u0442\u043e; \u043d\u043e\u0432\u043e\u0435 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435 {recordId} \u043e\u0442\u043c\u0435\u0447\u0435\u043d\u043e \u0432 \u0441\u043f\u0438\u0441\u043a\u0435 \u043e\u0442\u0432\u0435\u0442\u043e\u0432."],
     "proposal.responsesUnavailable": ["Proposal accepted, but parent responses could not be refreshed: {code}", "Предложение принято, но не удалось обновить ответы родительской записи: {code}"],
     "proposal.responsesSuperseded": ["Proposal accepted, but parent response refresh was superseded by newer navigation.", "Предложение принято, но обновление ответов родительской записи было заменено более новым переходом."],
     "proposal.parentGone": ["Proposal accepted, but the parent is not present in the refreshed local view.", "Предложение принято, но родительская запись отсутствует в обновлённом локальном представлении."],
@@ -279,6 +281,8 @@ const state = {
   responseIds: [],
   responseErrorCode: null,
   responseLoading: false,
+  recentProposalId: null,
+  recentProposalParentId: null,
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -618,6 +622,21 @@ function newlyCreatedProductListingId(previousIds, expectedSubjectUri, previousV
   return candidates.length === 1 ? candidates[0] : null;
 }
 
+function newlyCreatedProposalId(parentId, previousResponseIds, expectedSummary, previousResponsesWereCurrent) {
+  const reviewedParent = requireRecordId(parentId);
+  if (!(previousResponseIds instanceof Set) || expectedSummary === null || typeof expectedSummary !== "object" || Array.isArray(expectedSummary) || typeof previousResponsesWereCurrent !== "boolean") throw stableClientError("POST_PROPOSAL_SELECTION_INVALID");
+  const expectedBuyer = reviewedProposalUri(expectedSummary.buyerPrincipal);
+  const expectedSubject = reviewedProposalUri(expectedSummary.subjectUri);
+  const expectedAction = reviewedProposalUri(expectedSummary.actionUri);
+  if (!previousResponsesWereCurrent || state.selectedId !== reviewedParent || state.responseLoading || state.responseErrorCode !== null) return null;
+  const candidates = state.responseIds.filter((recordId) => {
+    if (previousResponseIds.has(recordId)) return false;
+    const summary = proposalResponseSummary(state.records.get(recordId));
+    return summary !== null && summary.buyerPrincipal === expectedBuyer && summary.subjectUri === expectedSubject && summary.actionUri === expectedAction;
+  });
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
 function renderSelectedRecordSummary(record) {
   selectedRecordSummary.replaceChildren();
   selectedRecordSummary.hidden = true;
@@ -700,7 +719,8 @@ function renderResponseItems(recordId, ids) {
     } else {
       const title = document.createElement("span");
       title.className = "intent-title";
-      title.textContent = i18n.t("responses.proposal");
+      const isRecentProposal = state.recentProposalParentId === recordId && state.recentProposalId === id;
+      title.textContent = i18n.t(isRecentProposal ? "responses.newProposal" : "responses.proposal");
       const metadata = document.createElement("span");
       metadata.className = "record-id muted small";
       metadata.textContent = i18n.t("responses.metadata", { buyer: summary.buyerPrincipal, subject: summary.subjectUri, action: summary.actionUri, recordId: id });
@@ -1016,6 +1036,15 @@ async function createProposal(event) {
     }
     const body = proposalJsonBody();
     const parentId = requireRecordId(state.selectedId);
+    const previousResponseIds = new Set(state.responseIds);
+    const previousResponsesWereCurrent = !state.responseLoading && state.responseErrorCode === null;
+    const expectedSummary = {
+      buyerPrincipal: reviewedProposalUri(byId("proposal-buyer-principal").value),
+      subjectUri: submittedSubjectUri,
+      actionUri: reviewedProposalUri(byId("proposal-action-uri").value),
+    };
+    state.recentProposalId = null;
+    state.recentProposalParentId = null;
     setFormStatus("response-status", "proposal.submitting");
     await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
       method: "POST",
@@ -1035,6 +1064,14 @@ async function createProposal(event) {
       }
       if (state.responseErrorCode !== null) {
         setFormStatus("response-status", "proposal.responsesUnavailable", { code: state.responseErrorCode }, "warning");
+        return;
+      }
+      const createdId = newlyCreatedProposalId(parentId, previousResponseIds, expectedSummary, previousResponsesWereCurrent);
+      if (createdId !== null) {
+        state.recentProposalId = createdId;
+        state.recentProposalParentId = parentId;
+        renderResponseItems(parentId, state.responseIds);
+        setFormStatus("response-status", "proposal.acceptedHighlighted", { recordId: createdId }, "success");
         return;
       }
       setFormStatus("response-status", "proposal.acceptedRefreshed", {}, "success");
