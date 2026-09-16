@@ -53,6 +53,12 @@ window.MarketplaceI18n = (() => {
     "field.unitUri": ["Unit URI", "URI единицы"],
     "field.latitude": ["Latitude E6 (integer)", "Широта E6 (целое число)"],
     "field.longitude": ["Longitude E6 (integer)", "Долгота E6 (целое число)"],
+    "author.pricePreview": ["Price preview: {price} {currency}", "Цена: {price} {currency}"],
+    "author.pricePreviewEmpty": ["Price preview: —", "Цена: —"],
+    "author.quantityPreview": ["Quantity preview: {quantity} {unit}", "Количество: {quantity} {unit}"],
+    "author.quantityPreviewEmpty": ["Quantity preview: —", "Количество: —"],
+    "author.locationPreview": ["Location preview: {latitude}, {longitude}", "Координаты: {latitude}, {longitude}"],
+    "author.locationPreviewEmpty": ["Location preview: —", "Координаты: —"],
     "author.parent": ["Exact selected parent", "Точно выбранная родительская запись"],
     "author.createProposal": ["Create Proposal", "Создать предложение"],
     "author.proposalHelp": ["Enter buyer/request fields only. The selected parent is supplied by the route.", "Введите только поля покупателя/запроса. Выбранная родительская запись задаётся маршрутом."],
@@ -121,6 +127,7 @@ window.MarketplaceI18n = (() => {
     "sync-status", "view-count", "selected-record-id", "selected-record-summary", "selected-record-json", "proposal-parent",
     "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
+    "create-price-preview", "create-quantity-preview", "create-location-preview",
   ]);
   let language = "en";
   const listeners = new Set();
@@ -916,6 +923,45 @@ function canonicalIntegerJsonToken(value) {
   return value;
 }
 
+function draftExactDecimalPresentation(coefficientText, scaleText) {
+  if (typeof coefficientText !== "string" || !/^(0|-?[1-9][0-9]*)$/.test(coefficientText)) return null;
+  if (typeof scaleText !== "string" || !/^(0|[1-9][0-9]*)$/.test(scaleText)) return null;
+  const scale = Number(scaleText);
+  if (!Number.isSafeInteger(scale) || scale < 0 || scale > 18) return null;
+  const negative = coefficientText.startsWith("-");
+  let digits = negative ? coefficientText.slice(1) : coefficientText;
+  if (scale > 0) {
+    digits = digits.padStart(scale + 1, "0");
+    digits = `${digits.slice(0, -scale)}.${digits.slice(-scale)}`;
+  }
+  return negative ? `-${digits}` : digits;
+}
+
+function renderListingDraftPreview() {
+  const price = draftExactDecimalPresentation(byId("create-consideration-coefficient").value, byId("create-consideration-scale").value);
+  const currency = byId("create-currency-code").value;
+  const priceValid = price !== null && !byId("create-consideration-coefficient").value.startsWith("-") && /^[A-Z]{3}$/.test(currency);
+  byId("create-price-preview").textContent = priceValid
+    ? i18n.t("author.pricePreview", { price, currency }) : i18n.t("author.pricePreviewEmpty");
+  const quantity = draftExactDecimalPresentation(byId("create-quantity-coefficient").value, byId("create-quantity-scale").value);
+  const unit = byId("create-unit-uri").value;
+  let reviewedUnit = null;
+  try { reviewedUnit = reviewedProposalUri(unit); } catch { reviewedUnit = null; }
+  const quantityCoefficient = byId("create-quantity-coefficient").value;
+  const quantityValid = quantity !== null && quantityCoefficient !== "0" && !quantityCoefficient.startsWith("-") && reviewedUnit !== null;
+  byId("create-quantity-preview").textContent = quantityValid
+    ? i18n.t("author.quantityPreview", { quantity, unit: reviewedUnit }) : i18n.t("author.quantityPreviewEmpty");
+  const latitudeText = byId("create-latitude-e6").value;
+  const longitudeText = byId("create-longitude-e6").value;
+  const latitude = /^(0|-?[1-9][0-9]*)$/.test(latitudeText) ? Number(latitudeText) : NaN;
+  const longitude = /^(0|-?[1-9][0-9]*)$/.test(longitudeText) ? Number(longitudeText) : NaN;
+  const locationValid = Number.isSafeInteger(latitude) && Number.isSafeInteger(longitude)
+    && latitude >= -90000000 && latitude <= 90000000 && longitude >= -180000000 && longitude <= 180000000;
+  byId("create-location-preview").textContent = locationValid
+    ? i18n.t("author.locationPreview", { latitude: draftExactDecimalPresentation(latitudeText, "6"), longitude: draftExactDecimalPresentation(longitudeText, "6") })
+    : i18n.t("author.locationPreviewEmpty");
+}
+
 function productListingJsonBody() {
   const parts = [];
   for (const name of PRODUCT_LISTING_STRING_FIELDS) {
@@ -978,6 +1024,7 @@ function fillSyntheticExample(prefix, values) {
 
 function fillSyntheticListingExample() {
   fillSyntheticExample("create", SYNTHETIC_PRODUCT_LISTING_EXAMPLE);
+  renderListingDraftPreview();
   setFormStatus("create-status", "author.exampleLoaded");
 }
 
@@ -1226,6 +1273,9 @@ byId("clear-selection").addEventListener("click", () => {
   renderList();
   renderDetail();
 });
+for (const id of ["create-consideration-coefficient", "create-consideration-scale", "create-currency-code", "create-quantity-coefficient", "create-quantity-scale", "create-unit-uri", "create-latitude-e6", "create-longitude-e6"]) {
+  byId(id).addEventListener("input", renderListingDraftPreview);
+}
 byId("fill-example-listing").addEventListener("click", fillSyntheticListingExample);
 byId("fill-example-proposal").addEventListener("click", fillSyntheticProposalExample);
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
@@ -1235,6 +1285,7 @@ mvpFlightButton.addEventListener("click", () => void runMvpFlight());
 i18n.onChange(() => {
   renderSyncStatus();
   renderFormStatuses();
+  renderListingDraftPreview();
   renderList();
   renderDetail();
   if (state.selectedId !== null) {
@@ -1255,6 +1306,7 @@ i18n.onChange(() => {
 
 renderSyncStatus();
 renderFormStatuses();
+renderListingDraftPreview();
 renderList();
 renderDetail();
 renderMvpFlightState();
