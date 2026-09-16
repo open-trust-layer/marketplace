@@ -24,8 +24,10 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
     def test_direct_selection_and_clear_drop_transient_parent_navigation(self):
         text = APP.read_text(encoding="utf-8")
         select_block = text.split("function selectIntent(recordId) {", 1)[1].split("\nasync function inspectIntent", 1)[0]
+        self.assertIn("state.detailRequestSerial += 1", select_block)
         self.assertIn("state.responseParentId = null", select_block)
         clear_block = text.split('byId("clear-selection").addEventListener("click", () => {', 1)[1].split("});", 1)[0]
+        self.assertIn("state.detailRequestSerial += 1", clear_block)
         self.assertIn("state.responseParentId = null", clear_block)
 
     def test_return_prefers_synced_parent_and_falls_back_to_reviewed_fetch(self):
@@ -47,6 +49,17 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
         self.assertEqual(block.count("return true;"), 2)
         self.assertLess(block.index(stale_guard), block.index("state.responseIds = ids"))
         self.assertLess(block.rindex(stale_guard), block.index("state.responseErrorCode = error.code"))
+
+    def test_detail_inspection_ignores_stale_success_and_failure_results(self):
+        text = APP.read_text(encoding="utf-8")
+        block = text.split("async function inspectIntent(recordId) {", 1)[1].split("\nasync function captureSyncWatermark", 1)[0]
+        self.assertIn("const requestSerial = state.detailRequestSerial + 1", block)
+        self.assertIn("state.detailRequestSerial = requestSerial", block)
+        stale_guard = "if (state.detailRequestSerial !== requestSerial) return false;"
+        self.assertEqual(block.count(stale_guard), 2)
+        self.assertLess(block.index(stale_guard), block.index("state.selectedId = reviewed"))
+        self.assertLess(block.rindex(stale_guard), block.index("state.selectedId = null"))
+        self.assertEqual(block.count("return true;"), 2)
 
     def test_back_button_visibility_is_navigation_only(self):
         text = APP.read_text(encoding="utf-8")
