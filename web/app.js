@@ -93,6 +93,7 @@ window.MarketplaceI18n = (() => {
     "proposal.refreshFailed": ["Proposal accepted, but local refresh failed: {code}", "Предложение принято, но локальное обновление не удалось: {code}"],
     "proposal.acceptedRefreshed": ["Proposal accepted and parent responses refreshed.", "Предложение принято, ответы родительской записи обновлены."],
     "proposal.responsesUnavailable": ["Proposal accepted, but parent responses could not be refreshed: {code}", "Предложение принято, но не удалось обновить ответы родительской записи: {code}"],
+    "proposal.responsesSuperseded": ["Proposal accepted, but parent response refresh was superseded by newer navigation.", "Предложение принято, но обновление ответов родительской записи было заменено более новым переходом."],
     "proposal.parentGone": ["Proposal accepted, but the parent is not present in the refreshed local view.", "Предложение принято, но родительская запись отсутствует в обновлённом локальном представлении."],
     "proposal.failed": ["Proposal failed: {code}", "Ошибка предложения: {code}"],
     "mvp.seller": ["Seller: {seller}", "Продавец: {seller}"],
@@ -275,6 +276,7 @@ const state = {
   responseParentId: null,
   responseIds: [],
   responseErrorCode: null,
+  responseRequestSerial: 0,
   mvpFlightDocument: null,
   syncUi: { key: "sync.notSynchronized", variables: {}, kind: "" },
   formUi: new Map([["mvp-flight-status", { key: "mvp.localOnly", variables: {}, kind: "muted" }]]),
@@ -695,22 +697,28 @@ function renderResponseItems(recordId, ids) {
 }
 
 async function renderResponses(recordId) {
+  const requestSerial = state.responseRequestSerial + 1;
+  state.responseRequestSerial = requestSerial;
   responseList.replaceChildren();
   try {
     const documentValue = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}${RESPONSES_SUFFIX}?limit=${PAGE_LIMIT}`);
+    if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;
     const ids = documentValue.record_ids;
     if (!Array.isArray(ids) || ids.length > PAGE_LIMIT) throw stableClientError("RESPONSE_LIST_INVALID");
     for (const value of ids) requireRecordId(value);
     state.responseIds = ids;
     state.responseErrorCode = null;
     renderResponseItems(recordId, ids);
+    return true;
   } catch (error) {
+    if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;
     state.responseIds = [];
     state.responseErrorCode = error.code ?? "CLIENT_FAILURE";
     const message = document.createElement("p");
     message.className = "error";
     message.textContent = i18n.t("responses.unavailable", { code: state.responseErrorCode });
     responseList.append(message);
+    return true;
   }
 }
 
@@ -989,7 +997,11 @@ async function createProposal(event) {
       return;
     }
     if (state.records.has(parentId)) {
-      await selectIntent(parentId);
+      const responsesCurrent = await selectIntent(parentId);
+      if (responsesCurrent !== true) {
+        setFormStatus("response-status", "proposal.responsesSuperseded", {}, "warning");
+        return;
+      }
       if (state.responseErrorCode !== null) {
         setFormStatus("response-status", "proposal.responsesUnavailable", { code: state.responseErrorCode }, "warning");
         return;
