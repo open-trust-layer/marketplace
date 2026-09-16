@@ -68,6 +68,7 @@ window.MarketplaceI18n = (() => {
     "proposal.parentMissing": ["Selected parent: {recordId} · product-listing subject unavailable for guided example.", "Родительская запись: {recordId} · предмет объявления недоступен для пошагового примера."],
     "proposal.parentSubject": ["Selected parent: {recordId} · subject {subjectUri}", "Родительская запись: {recordId} · предмет {subjectUri}"],
     "responses.empty": ["No responses in this bounded local application view.", "В текущем ограниченном локальном представлении ответов нет."],
+    "responses.loading": ["Loading responses\u2026", "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u043e\u0442\u0432\u0435\u0442\u044b\u2026"],
     "responses.proposal": ["Buyer Proposal", "Предложение покупателя"],
     "responses.metadata": ["Buyer {buyer} · Subject {subject} · Action {action} · Record {recordId}", "Покупатель {buyer} · Предмет {subject} · Действие {action} · Запись {recordId}"],
     "detail.responseParent": ["Response to parent record {recordId}", "\u041e\u0442\u0432\u0435\u0442 \u043d\u0430 \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c {recordId}"],
@@ -277,6 +278,7 @@ const state = {
   responseParentId: null,
   responseIds: [],
   responseErrorCode: null,
+  responseLoading: false,
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -671,6 +673,14 @@ function renderDetail() {
   responseButton.disabled = selectedProductListingSubjectUri(record) === null;
   renderProposalParentGuidance(record);
 }
+function renderResponseLoading() {
+  responseList.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "muted";
+  loading.textContent = i18n.t("responses.loading");
+  responseList.append(loading);
+}
+
 function renderResponseItems(recordId, ids) {
   responseList.replaceChildren();
   if (ids.length === 0) {
@@ -707,19 +717,22 @@ function renderResponseItems(recordId, ids) {
 async function renderResponses(recordId) {
   const requestSerial = state.responseRequestSerial + 1;
   state.responseRequestSerial = requestSerial;
-  responseList.replaceChildren();
+  state.responseLoading = true;
+  renderResponseLoading();
   try {
     const documentValue = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}${RESPONSES_SUFFIX}?limit=${PAGE_LIMIT}`);
     if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;
     const ids = documentValue.record_ids;
     if (!Array.isArray(ids) || ids.length > PAGE_LIMIT) throw stableClientError("RESPONSE_LIST_INVALID");
     for (const value of ids) requireRecordId(value);
+    state.responseLoading = false;
     state.responseIds = ids;
     state.responseErrorCode = null;
     renderResponseItems(recordId, ids);
     return true;
   } catch (error) {
     if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;
+    state.responseLoading = false;
     state.responseIds = [];
     state.responseErrorCode = error.code ?? "CLIENT_FAILURE";
     const message = document.createElement("p");
@@ -737,6 +750,7 @@ function selectIntent(recordId) {
   state.responseParentId = null;
   state.responseIds = [];
   state.responseErrorCode = null;
+  state.responseLoading = false;
   state.selectedId = record === undefined ? null : reviewed;
   state.selectedRecord = record ?? null;
   renderList();
@@ -756,6 +770,7 @@ async function inspectIntent(recordId) {
     state.selectedRecord = record;
     state.responseIds = [];
     state.responseErrorCode = null;
+    state.responseLoading = false;
     renderList();
     renderDetail();
     await renderResponses(reviewed);
@@ -764,6 +779,7 @@ async function inspectIntent(recordId) {
     if (state.detailRequestSerial !== requestSerial) return false;
     state.selectedId = null;
     state.selectedRecord = null;
+    state.responseLoading = false;
     responseList.replaceChildren();
     renderList();
     renderDetail();
@@ -1166,6 +1182,7 @@ byId("clear-selection").addEventListener("click", () => {
   state.responseParentId = null;
   state.responseIds = [];
   state.responseErrorCode = null;
+  state.responseLoading = false;
   state.selectedId = null;
   state.selectedRecord = null;
   responseList.replaceChildren();
@@ -1184,7 +1201,9 @@ i18n.onChange(() => {
   renderList();
   renderDetail();
   if (state.selectedId !== null) {
-    if (state.responseErrorCode === null) {
+    if (state.responseLoading) {
+      renderResponseLoading();
+    } else if (state.responseErrorCode === null) {
       renderResponseItems(state.selectedId, state.responseIds);
     } else {
       responseList.replaceChildren();

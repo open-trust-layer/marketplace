@@ -50,6 +50,21 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
         self.assertLess(block.index(stale_guard), block.index("state.responseIds = ids"))
         self.assertLess(block.rindex(stale_guard), block.index("state.responseErrorCode = error.code"))
 
+    def test_response_loading_state_is_explicit_i18n_and_stale_safe(self):
+        text = APP.read_text(encoding="utf-8")
+        loading = text.split("function renderResponseLoading() {", 1)[1].split("\nfunction renderResponseItems", 1)[0]
+        refresh = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
+        language = text.split("i18n.onChange(() => {", 1)[1].split("\n  renderMvpFlightState();", 1)[0]
+        self.assertIn('i18n.t("responses.loading")', loading)
+        self.assertNotIn("apiFetch(", loading)
+        self.assertIn("state.responseLoading = true", refresh)
+        self.assertLess(refresh.index("renderResponseLoading()"), refresh.index("apiFetch("))
+        stale_guard = "if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;"
+        self.assertLess(refresh.index(stale_guard), refresh.index("state.responseLoading = false"))
+        self.assertLess(refresh.rindex(stale_guard), refresh.rindex("state.responseLoading = false"))
+        self.assertIn("if (state.responseLoading)", language)
+        self.assertLess(language.index("if (state.responseLoading)"), language.index("state.responseErrorCode === null"))
+
     def test_detail_inspection_ignores_stale_success_and_failure_results(self):
         text = APP.read_text(encoding="utf-8")
         block = text.split("async function inspectIntent(recordId) {", 1)[1].split("\nasync function captureSyncWatermark", 1)[0]
