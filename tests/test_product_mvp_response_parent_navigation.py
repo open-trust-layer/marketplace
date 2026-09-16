@@ -61,6 +61,16 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
         self.assertLess(block.rindex(stale_guard), block.index("state.selectedId = null"))
         self.assertEqual(block.count("return true;"), 2)
 
+    def test_response_detail_surfaces_exact_parent_context_without_io(self):
+        text = APP.read_text(encoding="utf-8")
+        summary = text.split("function renderSelectedRecordSummary(record) {", 1)[1].split("\nfunction renderProposalParentGuidance", 1)[0]
+        self.assertIn("state.responseParentId !== null", summary)
+        self.assertIn("state.selectedId !== state.responseParentId", summary)
+        self.assertIn('i18n.t("detail.responseParent", { recordId: state.responseParentId })', summary)
+        self.assertIn("selectedRecordSummary.append(parent)", summary)
+        self.assertNotIn("apiFetch(", summary)
+        self.assertNotIn("fetch(", summary)
+
     def test_back_button_visibility_is_navigation_only(self):
         text = APP.read_text(encoding="utf-8")
         block = text.split("function renderDetail() {", 1)[1].split("\nasync function renderResponses", 1)[0]
