@@ -70,6 +70,7 @@ window.MarketplaceI18n = (() => {
     "responses.empty": ["No responses in this bounded local application view.", "В текущем ограниченном локальном представлении ответов нет."],
     "responses.proposal": ["Buyer Proposal", "Предложение покупателя"],
     "responses.metadata": ["Buyer {buyer} · Subject {subject} · Action {action} · Record {recordId}", "Покупатель {buyer} · Предмет {subject} · Действие {action} · Запись {recordId}"],
+    "detail.responseParent": ["Response to parent record {recordId}", "\u041e\u0442\u0432\u0435\u0442 \u043d\u0430 \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u0443\u044e \u0437\u0430\u043f\u0438\u0441\u044c {recordId}"],
     "responses.unavailable": ["Responses unavailable: {code}", "Ответы недоступны: {code}"],
     "detail.failed": ["Detail failed: {code}", "Не удалось загрузить детали: {code}"],
     "sync.capture": ["Capturing sync watermark…", "Фиксируем отметку синхронизации…"],
@@ -634,6 +635,12 @@ function renderSelectedRecordSummary(record) {
     metadata.textContent = i18n.t("browse.listingMetadata", { seller: listingSummary.sellerPrincipal, price: listingSummary.price, quantity: listingSummary.quantity });
   }
   selectedRecordSummary.append(title, metadata);
+  if (state.responseParentId !== null && state.selectedId !== state.responseParentId) {
+    const parent = document.createElement("span");
+    parent.className = "record-id muted small";
+    parent.textContent = i18n.t("detail.responseParent", { recordId: state.responseParentId });
+    selectedRecordSummary.append(parent);
+  }
   selectedRecordSummary.hidden = false;
 }
 
