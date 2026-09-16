@@ -11,7 +11,7 @@ permissions:
 jobs:
   acceptance:
     runs-on: [self-hosted, Windows, X64, marketplace-ci]
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
       CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
