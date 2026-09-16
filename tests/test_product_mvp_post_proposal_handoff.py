@@ -24,9 +24,9 @@ class MarketplaceMvpPostProposalHandoffTests(unittest.TestCase):
     def test_successful_refresh_keeps_exact_parent_selected(self):
         block = self._block()
         self.assertIn("if (state.records.has(parentId))", block)
-        self.assertIn("await selectIntent(parentId);", block)
+        self.assertIn("const responsesCurrent = await selectIntent(parentId);", block)
         self.assertIn('"proposal.acceptedRefreshed"', block)
-        self.assertLess(block.index("await selectIntent(parentId);"), block.index('"proposal.acceptedRefreshed"'))
+        self.assertLess(block.index("const responsesCurrent = await selectIntent(parentId);"), block.index('"proposal.acceptedRefreshed"'))
         self.assertNotIn("selectIntent(createdId)", block)
 
     def test_response_refresh_failure_is_reported_after_accepted_write(self):
@@ -35,7 +35,14 @@ class MarketplaceMvpPostProposalHandoffTests(unittest.TestCase):
         self.assertIn('"proposal.responsesUnavailable"', block)
         self.assertIn("{ code: state.responseErrorCode }", block)
         self.assertIn('"warning"', block)
-        self.assertLess(block.index("await selectIntent(parentId);"), block.index('"proposal.responsesUnavailable"'))
+        self.assertLess(block.index("const responsesCurrent = await selectIntent(parentId);"), block.index('"proposal.responsesUnavailable"'))
+
+    def test_superseded_parent_response_refresh_is_warning_not_false_success(self):
+        block = self._block()
+        self.assertIn("if (responsesCurrent !== true)", block)
+        self.assertIn('"proposal.responsesSuperseded"', block)
+        self.assertIn('"warning"', block)
+        self.assertLess(block.index('"proposal.responsesSuperseded"'), block.index('"proposal.acceptedRefreshed"'))
 
     def test_select_intent_exposes_response_refresh_completion(self):
         text = APP.read_text(encoding="utf-8")

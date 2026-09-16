@@ -37,6 +37,17 @@ class MarketplaceMvpResponseParentNavigationTests(unittest.TestCase):
         self.assertIn("void inspectIntent(parentId)", block)
         self.assertNotIn("fetch(", block)
 
+    def test_response_refresh_ignores_stale_success_and_failure_results(self):
+        text = APP.read_text(encoding="utf-8")
+        block = text.split("async function renderResponses(recordId) {", 1)[1].split("\nfunction selectIntent", 1)[0]
+        self.assertIn("const requestSerial = state.responseRequestSerial + 1", block)
+        self.assertIn("state.responseRequestSerial = requestSerial", block)
+        stale_guard = "if (state.selectedId !== recordId || state.responseRequestSerial !== requestSerial) return false;"
+        self.assertEqual(block.count(stale_guard), 2)
+        self.assertEqual(block.count("return true;"), 2)
+        self.assertLess(block.index(stale_guard), block.index("state.responseIds = ids"))
+        self.assertLess(block.rindex(stale_guard), block.index("state.responseErrorCode = error.code"))
+
     def test_back_button_visibility_is_navigation_only(self):
         text = APP.read_text(encoding="utf-8")
         block = text.split("function renderDetail() {", 1)[1].split("\nasync function renderResponses", 1)[0]
