@@ -14,7 +14,7 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertIn("name: Marketplace conformance", self.workflow)
         self.assertIn("  acceptance:\n", self.workflow)
         self.assertIn(
-            "tools/conformance_gate.py --olp-root ../olp --timeout 90",
+            "tools/conformance_gate.py --olp-root ../olp --timeout 180",
             self.workflow,
         )
 
