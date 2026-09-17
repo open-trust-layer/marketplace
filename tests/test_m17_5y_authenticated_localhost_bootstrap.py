@@ -20,12 +20,14 @@ AUTH_WEB_ASSETS = {
     "web/auth_establishment.js": b"auth-establishment",
     "web/auth_ed25519_proof_provider.js": b"auth-proof",
     "web/auth_ed25519_key_creation.js": b"auth-key-creation",
+    "web/auth_bootstrap.js": b"auth-bootstrap",
 }
 AUTH_WEB_MODULES = (
     ("/client_session.js", b"client-session"),
     ("/auth_establishment.js", b"auth-establishment"),
     ("/auth_ed25519_proof_provider.js", b"auth-proof"),
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
+    ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
 
@@ -264,6 +266,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
                 "web/auth_establishment.js",
                 "web/auth_ed25519_proof_provider.js",
                 "web/auth_ed25519_key_creation.js",
+                "web/auth_bootstrap.js",
                 "postgres-provider",
                 "plan",
                 "validate-plan",

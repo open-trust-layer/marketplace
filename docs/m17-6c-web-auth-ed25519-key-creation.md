@@ -137,3 +137,7 @@ Rollback is **source-only rollback**: revert the exact M17.6C merge if later sep
 Later capabilities remain separately governed: server enrollment/binding of `mkpk1_` public material to one identity and verification method; composition with M17.6B proof creation and M17.6A establishment; bounded real-browser secure-context acceptance; active Web login and session-derived actor identity; any custody persistence/recovery lifecycle; Android custody/auth; and production key administration, service hosting, public-network exposure or deployment.
 
 Until those gates are separately reviewed, M17.6C creates no active Marketplace authentication session and assigns no verification method.
+
+## Later product selection note
+
+The later Product browser authentication bootstrap may select M17.6C only through the reviewed `auth_bootstrap.js` boundary and only after explicit user action. The original M17.6C source remains free of ambient crypto selection, networking, persistence, background work, and private-key export.
