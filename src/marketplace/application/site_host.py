@@ -18,6 +18,12 @@ from .http import (
 _STATIC_CSP = "default-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
 _JSON_CONTENT_TYPE = "application/json; charset=utf-8"
 _STATIC_ROUTES = frozenset(("/", "/index.html", "/app.js", "/styles.css"))
+_REVIEWED_WEB_MODULE_ROUTES = frozenset((
+    "/client_session.js",
+    "/auth_establishment.js",
+    "/auth_ed25519_proof_provider.js",
+    "/auth_ed25519_key_creation.js",
+))
 
 
 class ApplicationHttpPort(Protocol):
@@ -95,6 +101,20 @@ def _review_asset(value: object, label: str) -> bytes:
     return value
 
 
+def _review_web_modules(value: object) -> dict[str, tuple[bytes, str]]:
+    if type(value) is not tuple:
+        raise TypeError("web_modules MUST be an exact tuple")
+    reviewed: dict[str, tuple[bytes, str]] = {}
+    for item in value:
+        if type(item) is not tuple or len(item) != 2:
+            raise TypeError("web module entry MUST be an exact path/bytes tuple")
+        path, body = item
+        if type(path) is not str or path not in _REVIEWED_WEB_MODULE_ROUTES or path in reviewed:
+            raise ValueError("web module route is not reviewed")
+        reviewed[path] = (_review_asset(body, "web_module"), "text/javascript; charset=utf-8")
+    return reviewed
+
+
 class MarketplaceSiteHostAdapter:
     """Join the reviewed Web shell and product API without transport ownership."""
 
@@ -105,6 +125,7 @@ class MarketplaceSiteHostAdapter:
         index_html: bytes,
         app_js: bytes,
         styles_css: bytes,
+        web_modules: tuple[tuple[str, bytes], ...] = (),
     ) -> None:
         if not callable(getattr(application_http, "handle", None)):
             raise TypeError("application_http MUST expose a callable handle method")
@@ -115,6 +136,7 @@ class MarketplaceSiteHostAdapter:
             "/app.js": (_review_asset(app_js, "app_js"), "text/javascript; charset=utf-8"),
             "/styles.css": (_review_asset(styles_css, "styles_css"), "text/css; charset=utf-8"),
         }
+        self._assets.update(_review_web_modules(web_modules))
 
     def handle(self, request: ApplicationHttpRequest) -> ApplicationHttpResponse:
         if not _metadata_is_valid(request):
@@ -127,7 +149,7 @@ class MarketplaceSiteHostAdapter:
         if request.path.startswith("/api/"):
             return self._application_http.handle(request)
 
-        if request.path not in _STATIC_ROUTES:
+        if request.path not in self._assets:
             return _error(404, "Not Found", "ROUTE_NOT_FOUND", "route does not exist")
         if request.method != "GET":
             return _error(405, "Method Not Allowed", "METHOD_NOT_ALLOWED", "route does not accept this method", allow="GET")

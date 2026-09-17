@@ -62,6 +62,7 @@ def build_marketplace_application_launch_plan(
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
+    web_modules: tuple[tuple[str, bytes], ...] = (),
 ) -> MarketplaceApplicationLaunchPlan:
     """Compose existing reviewed surfaces without initialization or external I/O."""
 
@@ -82,6 +83,7 @@ def build_marketplace_application_launch_plan(
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,
+        web_modules=web_modules,
     )
     asgi = MarketplaceAsgiHttpAdapter(site=composition.site)
     return MarketplaceApplicationLaunchPlan(

@@ -42,7 +42,18 @@ MAX_POSTGRES_DSN_CHARS: Final = 8192
 _INDEX_ASSET: Final = "web/index.html"
 _APP_JS_ASSET: Final = "web/app.js"
 _STYLES_ASSET: Final = "web/styles.css"
-_ALLOWED_ASSETS: Final = frozenset((_INDEX_ASSET, _APP_JS_ASSET, _STYLES_ASSET))
+_AUTH_WEB_MODULE_ASSETS: Final = (
+    ("/client_session.js", "web/client_session.js"),
+    ("/auth_establishment.js", "web/auth_establishment.js"),
+    ("/auth_ed25519_proof_provider.js", "web/auth_ed25519_proof_provider.js"),
+    ("/auth_ed25519_key_creation.js", "web/auth_ed25519_key_creation.js"),
+)
+_ALLOWED_ASSETS: Final = frozenset((
+    _INDEX_ASSET,
+    _APP_JS_ASSET,
+    _STYLES_ASSET,
+    *(relative_path for _, relative_path in _AUTH_WEB_MODULE_ASSETS),
+))
 
 
 class MarketplaceLocalhostBootstrapError(RuntimeError):
@@ -119,6 +130,7 @@ def _build_authenticated_postgres_plan(
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
+    web_modules: tuple[tuple[str, bytes], ...],
     provisioning: object,
     runtime_inputs: object,
     importer: Callable[[str], object] = importlib.import_module,
@@ -139,6 +151,7 @@ def _build_authenticated_postgres_plan(
             index_html=index_html,
             app_js=app_js,
             styles_css=styles_css,
+            web_modules=web_modules,
             provisioning=provisioning,
             runtime_inputs=runtime_inputs,
         )
@@ -277,6 +290,31 @@ def _load_web_assets(reader: Callable[[str], bytes]) -> tuple[bytes, bytes, byte
         if type(value) is not bytes or not value or len(value) > MAX_APPLICATION_HTTP_RESPONSE_BYTES:
             raise MarketplaceLocalhostBootstrapError("M17_2B_WEB_ASSET_SIZE_INVALID")
     return index_html, app_js, styles_css
+
+
+def _load_auth_web_modules(
+    reader: Callable[[str], bytes],
+) -> tuple[tuple[str, bytes], ...]:
+    if not callable(reader):
+        raise MarketplaceLocalhostBootstrapError("M17_2B_WEB_ASSET_PROVIDER_INVALID")
+    try:
+        modules = tuple(
+            (route, reader(relative_path))
+            for route, relative_path in _AUTH_WEB_MODULE_ASSETS
+        )
+    except MarketplaceLocalhostBootstrapError:
+        raise
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError("M17_2B_WEB_ASSET_READ_FAILED") from None
+    for route, value in modules:
+        if (
+            type(route) is not str
+            or type(value) is not bytes
+            or not value
+            or len(value) > MAX_APPLICATION_HTTP_RESPONSE_BYTES
+        ):
+            raise MarketplaceLocalhostBootstrapError("M17_2B_WEB_ASSET_SIZE_INVALID")
+    return modules
 
 
 def _build_psycopg_connection_factory(
@@ -438,6 +476,7 @@ def _execute_authenticated_localhost(
     dsn = _read_postgres_dsn(getenv)
     asset_reader = _real_asset_reader()
     index_html, app_js, styles_css = _load_web_assets(asset_reader)
+    web_modules = _load_auth_web_modules(asset_reader)
     connection_factory = _build_psycopg_connection_factory(dsn)
 
     plan = _build_authenticated_postgres_plan(
@@ -448,6 +487,7 @@ def _execute_authenticated_localhost(
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,
+        web_modules=web_modules,
         provisioning=provisioning,
         runtime_inputs=runtime_inputs,
     )
