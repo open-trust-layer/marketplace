@@ -68,6 +68,8 @@ window.MarketplaceI18n = (() => {
     "author.createProposal": ["Create Proposal", "Создать предложение"],
     "author.proposalHelp": ["Enter buyer/request fields only. The selected parent is supplied by the route.", "Введите только поля покупателя/запроса. Выбранная родительская запись задаётся маршрутом."],
     "author.parentNone": ["Selected parent: none.", "Родительская запись: не выбрана."],
+    "author.proposalDraftIncomplete": ["Proposal incomplete: select a product listing and enter valid buyer, subject, and action URIs. The subject must match the selected listing.", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u043d\u0435 \u0433\u043e\u0442\u043e\u0432\u043e: \u0432\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435 \u0438 \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u043d\u044b\u0435 URI \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u0435\u043b\u044f, \u043f\u0440\u0435\u0434\u043c\u0435\u0442\u0430 \u0438 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f. \u041f\u0440\u0435\u0434\u043c\u0435\u0442 \u0434\u043e\u043b\u0436\u0435\u043d \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0442\u044c \u0441 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u044b\u043c \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435\u043c."],
+    "author.proposalDraftReady": ["Proposal client checks passed; server validation remains authoritative.", "\u041a\u043b\u0438\u0435\u043d\u0442\u0441\u043a\u0438\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u044f \u043f\u0440\u043e\u0439\u0434\u0435\u043d\u044b; \u0441\u0435\u0440\u0432\u0435\u0440\u043d\u0430\u044f \u0432\u0430\u043b\u0438\u0434\u0430\u0446\u0438\u044f \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u0430\u0432\u0442\u043e\u0440\u0438\u0442\u0435\u0442\u043d\u043e\u0439."],
     "field.buyerPrincipal": ["Buyer principal URI", "URI принципала покупателя"],
     "field.actionUri": ["Action URI", "URI действия"],
     "browse.empty": ["No intents in this bounded current view.", "В текущем ограниченном представлении записей нет."],
@@ -133,7 +135,7 @@ window.MarketplaceI18n = (() => {
     "sync-status", "view-count", "selected-record-id", "selected-record-summary", "selected-record-json", "proposal-parent",
     "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
-    "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness",
+    "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
   ]);
   let language = "en";
   const listeners = new Set();
@@ -320,6 +322,7 @@ const returnParentButton = byId("return-parent");
 const responseButton = byId("submit-response");
 const proposalExampleButton = byId("fill-example-proposal");
 const proposalParent = byId("proposal-parent");
+const proposalReadiness = byId("proposal-readiness");
 const mvpFlightButton = byId("run-mvp-flight");
 const mvpFlightLifecycle = byId("mvp-flight-lifecycle");
 const mvpFlightAudit = byId("mvp-flight-audit");
@@ -707,6 +710,7 @@ function renderDetail() {
     : JSON.stringify(record, null, 2);
   responseButton.disabled = selectedProductListingSubjectUri(record) === null;
   renderProposalParentGuidance(record);
+  renderProposalDraftReadiness();
 }
 function renderResponseLoading() {
   responseList.replaceChildren();
@@ -1032,6 +1036,26 @@ function reviewedProposalUri(value) {
   return value;
 }
 
+function proposalDraftLooksReady() {
+  const parentSubjectUri = selectedProductListingSubjectUri(state.selectedRecord);
+  if (state.selectedId === null || parentSubjectUri === null) return false;
+  try {
+    reviewedProposalUri(byId("proposal-buyer-principal").value);
+    const submittedSubjectUri = reviewedProposalUri(byId("proposal-subject-uri").value);
+    reviewedProposalUri(byId("proposal-action-uri").value);
+    return submittedSubjectUri === parentSubjectUri;
+  } catch {
+    return false;
+  }
+}
+
+function renderProposalDraftReadiness() {
+  const ready = proposalDraftLooksReady();
+  responseButton.disabled = !ready;
+  proposalReadiness.textContent = i18n.t(ready ? "author.proposalDraftReady" : "author.proposalDraftIncomplete");
+  proposalReadiness.className = ready ? "success" : "muted";
+}
+
 function proposalJsonBody() {
   const parts = [];
   for (const name of PROPOSAL_FIELDS) {
@@ -1095,6 +1119,7 @@ function fillSyntheticProposalExample() {
     return;
   }
   fillSyntheticExample("proposal", { ...SYNTHETIC_PROPOSAL_EXAMPLE, subject_uri: subjectUri });
+  renderProposalDraftReadiness();
   setFormStatus("response-status", "proposal.exampleLoaded");
 }
 
@@ -1341,6 +1366,10 @@ byId("clear-selection").addEventListener("click", () => {
 for (const name of [...PRODUCT_LISTING_STRING_FIELDS, ...PRODUCT_LISTING_INTEGER_FIELDS]) {
   const id = `create-${name.replaceAll("_", "-")}`;
   byId(id).addEventListener("input", renderListingDraftPreview);
+}
+for (const name of PROPOSAL_FIELDS) {
+  const id = `proposal-${name.replaceAll("_", "-")}`;
+  byId(id).addEventListener("input", renderProposalDraftReadiness);
 }
 byId("fill-example-listing").addEventListener("click", fillSyntheticListingExample);
 byId("preset-price-scale-2").addEventListener("click", applyPriceScale2Preset);
