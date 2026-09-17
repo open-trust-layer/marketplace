@@ -122,6 +122,28 @@ window.MarketplaceI18n = (() => {
     "acceptance.parent": ["Parent listing: {recordId}", "\u0420\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.proposal": ["Proposal: {recordId}", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.button": ["Accept Proposal", "\u041f\u0440\u0438\u043d\u044f\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435"],
+    "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
+    "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
+    "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
+    "auth.intro": ["Create one memory-only browser key. Keep this page open while you separately provision its public value and restart/relaunch authenticated localhost to load that startup evidence.", "Создайте один ключ только в памяти. Не закрывайте эту страницу, пока отдельно добавляете его публичное значение и перезапускаете authenticated localhost, чтобы загрузить новые startup-evidence."],
+    "auth.start": ["Start local authentication", "\u0417\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0443\u044e \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044e"],
+    "auth.generate": ["Generate browser key", "\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u043a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430"],
+    "auth.browserKeyEmpty": ["Browser enrollment carrier: \u2014", "\u041a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430: \u2014"],
+    "auth.evidenceKeyEmpty": ["Provisioning public key: \u2014", "\u041f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u043a\u043b\u044e\u0447 \u0434\u043b\u044f provisioning: \u2014"],
+    "auth.browserKey": ["Browser enrollment carrier: {key}", "\u041a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430: {key}"],
+    "auth.evidenceKey": ["Provisioning public key: {key}", "\u041f\u0443\u0431\u043b\u0438\u0447\u043d\u044b\u0439 \u043a\u043b\u044e\u0447 \u0434\u043b\u044f provisioning: {key}"],
+    "field.verificationMethod": ["Verification method URI", "URI \u043c\u0435\u0442\u043e\u0434\u0430 \u0432\u0435\u0440\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438"],
+    "auth.establish": ["Establish authenticated session", "\u0421\u043e\u0437\u0434\u0430\u0442\u044c \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u0443\u044e \u0441\u0435\u0441\u0441\u0438\u044e"],
+    "auth.reset": ["Reset in-memory authentication", "\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044e \u0432 \u043f\u0430\u043c\u044f\u0442\u0438"],
+    "auth.empty": ["No key or authenticated session exists in this page.", "\u0412 \u044d\u0442\u043e\u0439 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0435 \u043d\u0435\u0442 \u043a\u043b\u044e\u0447\u0430 \u0438\u043b\u0438 \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u043e\u0439 \u0441\u0435\u0441\u0441\u0438\u0438."],
+    "auth.loading": ["Loading reviewed authentication modules\u2026", "\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u043c \u043f\u0440\u043e\u0432\u0435\u0440\u0435\u043d\u043d\u044b\u0435 \u043c\u043e\u0434\u0443\u043b\u0438 \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438\u2026"],
+    "auth.ready": ["Authentication module ready. Generate one browser key.", "\u041c\u043e\u0434\u0443\u043b\u044c \u0433\u043e\u0442\u043e\u0432. \u0421\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u043e\u0434\u0438\u043d \u043a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430."],
+    "auth.keyReady": ["Browser key created. Keep this page open. Provision the public key and separately restart/relaunch authenticated localhost to load that evidence, then enter the bound principal and verification method. Reloading this page destroys the private key.", "Ключ браузера создан. Не закрывайте эту страницу. Добавьте публичный ключ и отдельно перезапустите authenticated localhost, чтобы загрузить эти evidence; затем введите связанные principal и verification method. Перезагрузка этой страницы уничтожит закрытый ключ."],
+    "auth.establishing": ["Establishing authenticated session\u2026", "\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u0443\u044e \u0441\u0435\u0441\u0441\u0438\u044e\u2026"],
+    "auth.active": ["Authenticated seller session established for {principal}. Proposal acceptance is still disabled.", "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 {principal} \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 Proposal \u043f\u043e\u043a\u0430 \u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e."],
+    "auth.sessionActive": ["Active: {principal}", "\u0410\u043a\u0442\u0438\u0432\u043d\u0430: {principal}"],
+    "auth.failed": ["Authentication failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438: {code}"],
+    "auth.resetDone": ["In-memory authentication reset. No key or session remains referenced by this page.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u0432 \u043f\u0430\u043c\u044f\u0442\u0438 \u0441\u0431\u0440\u043e\u0448\u0435\u043d\u0430. \u0421\u0442\u0440\u0430\u043d\u0438\u0446\u0430 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0445\u0440\u0430\u043d\u0438\u0442 \u0441\u0441\u044b\u043b\u043e\u043a \u043d\u0430 \u043a\u043b\u044e\u0447 \u0438\u043b\u0438 \u0441\u0435\u0441\u0441\u0438\u044e."],
     "mvp.seller": ["Seller: {seller}", "Продавец: {seller}"],
     "mvp.buyer": ["Buyer: {buyer}", "Покупатель: {buyer}"],
     "mvp.completed": ["Completion timestamp: {timestamp}", "Время завершения: {timestamp}"],
@@ -145,6 +167,7 @@ window.MarketplaceI18n = (() => {
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
     "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
+    "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
   const listeners = new Set();
@@ -338,6 +361,20 @@ const proposalAcceptanceSeller = byId("proposal-acceptance-seller");
 const proposalAcceptanceParent = byId("proposal-acceptance-parent");
 const proposalAcceptanceProposal = byId("proposal-acceptance-proposal");
 const acceptProposalButton = byId("accept-proposal");
+const authLoadButton = byId("auth-load");
+const authGenerateKeyButton = byId("auth-generate-key");
+const authEstablishButton = byId("auth-establish");
+const authResetButton = byId("auth-reset");
+const authPrincipalInput = byId("auth-principal");
+const authVerificationMethodInput = byId("auth-verification-method");
+const authSessionState = byId("auth-session-state");
+const authBrowserPublicKey = byId("auth-browser-public-key");
+const authEvidencePublicKey = byId("auth-evidence-public-key");
+const authStatus = byId("auth-status");
+let authBootstrap = null;
+let authBrowserPublicKeyValue = null;
+let authEvidencePublicKeyValue = null;
+let authStatusUi = { key: "auth.empty", variables: {}, kind: "muted" };
 const mvpFlightButton = byId("run-mvp-flight");
 const mvpFlightLifecycle = byId("mvp-flight-lifecycle");
 const mvpFlightAudit = byId("mvp-flight-audit");
@@ -386,6 +423,101 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
     throw stableClientError(typeof code === "string" ? code : `HTTP_${response.status}`);
   }
   return documentValue;
+}
+
+function authUriLooksReady(value) {
+  return typeof value === "string" && value.length > 0 &&
+    new TextEncoder().encode(value).length <= MAX_PROPOSAL_URI_BYTES &&
+    /^[A-Za-z][A-Za-z0-9+.-]*:\S+$/.test(value);
+}
+
+function setAuthStatus(key, variables = {}, kind = "muted") {
+  authStatusUi = { key, variables, kind };
+  renderAuthState();
+}
+
+function renderAuthState() {
+  const snapshot = authBootstrap === null
+    ? { keyReady: false, active: false, principal: null }
+    : authBootstrap.state();
+  authSessionState.textContent = snapshot.active
+    ? i18n.t("auth.sessionActive", { principal: snapshot.principal })
+    : i18n.t("auth.inactive");
+  authBrowserPublicKey.textContent = authBrowserPublicKeyValue === null
+    ? i18n.t("auth.browserKeyEmpty")
+    : i18n.t("auth.browserKey", { key: authBrowserPublicKeyValue });
+  authEvidencePublicKey.textContent = authEvidencePublicKeyValue === null
+    ? i18n.t("auth.evidenceKeyEmpty")
+    : i18n.t("auth.evidenceKey", { key: authEvidencePublicKeyValue });
+  authStatus.textContent = i18n.t(authStatusUi.key, authStatusUi.variables);
+  authStatus.className = authStatusUi.kind;
+  authGenerateKeyButton.disabled = authBootstrap === null || snapshot.keyReady || snapshot.active;
+  authEstablishButton.disabled = authBootstrap === null || !snapshot.keyReady || snapshot.active ||
+    !authUriLooksReady(authPrincipalInput.value) || !authUriLooksReady(authVerificationMethodInput.value);
+  authResetButton.disabled = authBootstrap === null || (!snapshot.keyReady && !snapshot.active);
+}
+
+async function startLocalAuthentication() {
+  authLoadButton.disabled = true;
+  setAuthStatus("auth.loading");
+  try {
+    if (globalThis.isSecureContext !== true || globalThis.crypto?.subtle === undefined) {
+      throw stableClientError("AUTH_SECURE_CONTEXT_REQUIRED");
+    }
+    let module;
+    try {
+      module = await import("./auth_bootstrap.js");
+    } catch {
+      throw stableClientError("AUTH_MODULE_UNAVAILABLE");
+    }
+    authBootstrap = module.createMarketplaceBrowserAuthBootstrap({
+      subtle: globalThis.crypto.subtle,
+      fetchImpl: window.fetch.bind(window),
+    });
+    setAuthStatus("auth.ready", {}, "success");
+  } catch (error) {
+    authBootstrap = null;
+    authLoadButton.disabled = false;
+    setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
+  }
+}
+
+async function generateAuthenticationKey() {
+  if (authBootstrap === null) return;
+  authGenerateKeyButton.disabled = true;
+  try {
+    const created = await authBootstrap.createAuthenticationKey();
+    authBrowserPublicKeyValue = created.publicKeyValue;
+    authEvidencePublicKeyValue = created.evidencePublicKeyValue;
+    setAuthStatus("auth.keyReady", {}, "success");
+  } catch (error) {
+    setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
+  }
+}
+
+async function establishAuthenticationSession() {
+  if (authBootstrap === null) return;
+  authEstablishButton.disabled = true;
+  setAuthStatus("auth.establishing");
+  try {
+    const established = await authBootstrap.establishSession(
+      authPrincipalInput.value,
+      authVerificationMethodInput.value,
+    );
+    setAuthStatus("auth.active", { principal: established.principal }, "success");
+  } catch (error) {
+    setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
+  }
+}
+
+function resetAuthentication() {
+  if (authBootstrap === null) return;
+  authBootstrap.reset();
+  authBrowserPublicKeyValue = null;
+  authEvidencePublicKeyValue = null;
+  authPrincipalInput.value = "";
+  authVerificationMethodInput.value = "";
+  setAuthStatus("auth.resetDone");
 }
 
 function requireRecordId(value) {
@@ -1420,6 +1552,12 @@ byId("preset-quantity-one").addEventListener("click", applyQuantityOnePreset);
 byId("fill-example-proposal").addEventListener("click", fillSyntheticProposalExample);
 byId("create-form").addEventListener("submit", (event) => void createProductListing(event));
 byId("response-form").addEventListener("submit", (event) => void createProposal(event));
+authLoadButton.addEventListener("click", () => void startLocalAuthentication());
+authGenerateKeyButton.addEventListener("click", () => void generateAuthenticationKey());
+authEstablishButton.addEventListener("click", () => void establishAuthenticationSession());
+authResetButton.addEventListener("click", resetAuthentication);
+authPrincipalInput.addEventListener("input", renderAuthState);
+authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
 
 i18n.onChange(() => {
@@ -1442,6 +1580,7 @@ i18n.onChange(() => {
     }
   }
   renderMvpFlightState();
+  renderAuthState();
 });
 
 renderSyncStatus();
@@ -1450,6 +1589,7 @@ renderListingDraftPreview();
 renderList();
 renderDetail();
 renderMvpFlightState();
+renderAuthState();
 void fullResync().catch((error) => {
   setStatus("sync.initialFailed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
 });

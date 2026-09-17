@@ -77,6 +77,28 @@
       </div>
     </section>
 
+    <section id="local-auth" class="panel detail-panel" aria-labelledby="local-auth-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Authenticated localhost</p>
+          <h2 id="local-auth-heading">Seller authentication</h2>
+        </div>
+        <span id="auth-session-state" class="muted">Inactive</span>
+      </div>
+      <p class="muted">Create one memory-only browser key, provision its public value through the reviewed startup evidence path, then establish the seller session.</p>
+      <button id="auth-load" type="button">Start local authentication</button>
+      <button id="auth-generate-key" type="button" disabled>Generate browser key</button>
+      <p id="auth-browser-public-key" class="record-id muted">Browser enrollment carrier: â€”</p>
+      <p id="auth-evidence-public-key" class="record-id muted">Provisioning public key: â€”</p>
+      <label for="auth-principal">Seller principal URI</label>
+      <input id="auth-principal" type="text" autocomplete="off">
+      <label for="auth-verification-method">Verification method URI</label>
+      <input id="auth-verification-method" type="text" autocomplete="off">
+      <button id="auth-establish" type="button" disabled>Establish authenticated session</button>
+      <button id="auth-reset" type="button" class="secondary" disabled>Reset in-memory authentication</button>
+      <p id="auth-status" role="status" class="muted">No key or authenticated session exists in this page.</p>
+    </section>
+
     <section id="mvp-flight" class="panel detail-panel" aria-labelledby="mvp-flight-heading">
       <div class="panel-heading">
         <div>

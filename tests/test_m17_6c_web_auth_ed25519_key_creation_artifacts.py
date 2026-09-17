@@ -14,6 +14,7 @@ APP = ROOT / "web" / "app.js"
 CLIENT_SESSION = ROOT / "web" / "client_session.js"
 AUTH_ESTABLISHMENT = ROOT / "web" / "auth_establishment.js"
 PROOF_PROVIDER = ROOT / "web" / "auth_ed25519_proof_provider.js"
+AUTH_BOOTSTRAP = ROOT / "web" / "auth_bootstrap.js"
 ANDROID_MAIN = ROOT / "android" / "app" / "src" / "main" / "java" / "org" / "opentrustlayer" / "marketplace" / "MainActivity.kt"
 
 
@@ -22,12 +23,18 @@ class M176CWebAuthEd25519KeyCreationArtifactTests(unittest.TestCase):
         for path in (SOURCE, CONTRACT, ARTIFACTS, DOC):
             self.assertTrue(path.is_file(), str(path))
 
-    def test_key_creation_boundary_remains_unselected(self) -> None:
+    def test_key_creation_is_selected_only_by_reviewed_browser_bootstrap(self) -> None:
         for path in (INDEX, APP, CLIENT_SESSION, AUTH_ESTABLISHMENT, PROOF_PROVIDER, ANDROID_MAIN):
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("auth_ed25519_key_creation.js", text, str(path))
             self.assertNotIn("createMarketplaceWebAuthEd25519KeyCreation", text, str(path))
             self.assertNotIn("MARKETPLACE_WEB_AUTH_ED25519_KEY_CREATION_V1", text, str(path))
+        bootstrap = AUTH_BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertEqual(bootstrap.count('from "./auth_ed25519_key_creation.js"'), 1)
+        self.assertEqual(bootstrap.count("createMarketplaceWebAuthEd25519KeyCreation"), 2)
+        self.assertNotIn("localStorage", bootstrap)
+        self.assertNotIn("sessionStorage", bootstrap)
+        self.assertNotIn("indexedDB", bootstrap)
 
     def test_source_has_one_creation_call_and_public_only_export_call(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")

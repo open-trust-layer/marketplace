@@ -47,6 +47,7 @@ _AUTH_WEB_MODULE_ASSETS: Final = (
     ("/auth_establishment.js", "web/auth_establishment.js"),
     ("/auth_ed25519_proof_provider.js", "web/auth_ed25519_proof_provider.js"),
     ("/auth_ed25519_key_creation.js", "web/auth_ed25519_key_creation.js"),
+    ("/auth_bootstrap.js", "web/auth_bootstrap.js"),
 )
 _ALLOWED_ASSETS: Final = frozenset((
     _INDEX_ASSET,

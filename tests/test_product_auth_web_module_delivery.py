@@ -15,6 +15,7 @@ AUTH_MODULES = (
     ("/auth_establishment.js", b"auth-establishment"),
     ("/auth_ed25519_proof_provider.js", b"auth-proof"),
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
+    ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
 
@@ -86,13 +87,17 @@ class ProductAuthWebModuleDeliveryTests(unittest.TestCase):
         self.assertEqual(localhost._load_web_assets(reader), (b"index", b"app", b"css"))
         self.assertEqual(reads, ["web/index.html", "web/app.js", "web/styles.css"])
 
-    def test_modules_remain_unselected_by_active_page(self) -> None:
+    def test_active_page_selects_only_bootstrap_on_explicit_action(self) -> None:
         index = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
         app = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
-        for path, _ in AUTH_MODULES:
+        bootstrap = (ROOT / "web" / "auth_bootstrap.js").read_text(encoding="utf-8")
+        self.assertNotIn("auth_bootstrap.js", index)
+        self.assertEqual(app.count('import("./auth_bootstrap.js")'), 1)
+        for path, _ in AUTH_MODULES[:-1]:
             marker = path.removeprefix("/")
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
+            self.assertIn(f'./{marker}', bootstrap)
 
     def test_authenticated_reference_builder_forwards_nonempty_module_bundle_only(self) -> None:
         modules = AUTH_MODULES

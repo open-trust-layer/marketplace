@@ -28,3 +28,7 @@ A later separately reviewed product capability may let the browser create a non-
 ## Rollback
 
 Rollback is source-only: revert this delivery change. Because the active page still selects none of these modules, rollback requires no credential revocation, key cleanup, session cleanup, database migration, service restart, or external-data repair.
+
+## Later activation note
+
+The later Product browser authentication bootstrap may select `/auth_bootstrap.js` only after an explicit user action. The four lower-level reviewed authentication modules remain free of direct `app.js` imports and are composed only by that bootstrap boundary.
