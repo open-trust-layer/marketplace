@@ -114,6 +114,14 @@ window.MarketplaceI18n = (() => {
     "proposal.responsesSuperseded": ["Proposal accepted, but parent response refresh was superseded by newer navigation.", "Предложение принято, но обновление ответов родительской записи было заменено более новым переходом."],
     "proposal.parentGone": ["Proposal accepted, but the parent is not present in the refreshed local view.", "Предложение принято, но родительская запись отсутствует в обновлённом локальном представлении."],
     "proposal.failed": ["Proposal failed: {code}", "Ошибка предложения: {code}"],
+    "acceptance.title": ["Seller acceptance handoff", "\u041f\u0435\u0440\u0435\u0434\u0430\u0447\u0430 \u043d\u0430 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c"],
+    "acceptance.inspect": ["Select a Proposal from a listing response to inspect the seller acceptance boundary.", "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0432 \u043e\u0442\u0432\u0435\u0442\u0430\u0445 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f, \u0447\u0442\u043e\u0431\u044b \u043f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0433\u0440\u0430\u043d\u0438\u0446\u0443 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c."],
+    "acceptance.authRequired": ["Authentication required. No seller acceptance has been published.", "\u0422\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c \u043d\u0435 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e."],
+    "acceptance.parentUnavailable": ["The Proposal is visible, but its exact parent listing is not available in this navigation context. No acceptance can be prepared.", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0432\u0438\u0434\u043d\u043e, \u043d\u043e \u0442\u043e\u0447\u043d\u043e\u0435 \u0440\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0432 \u0442\u0435\u043a\u0443\u0449\u0435\u043c \u043a\u043e\u043d\u0442\u0435\u043a\u0441\u0442\u0435 \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u0438. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u0438\u0442\u044c \u043d\u0435\u043b\u044c\u0437\u044f."],
+    "acceptance.seller": ["Seller: {seller}", "\u041f\u0440\u043e\u0434\u0430\u0432\u0435\u0446: {seller}"],
+    "acceptance.parent": ["Parent listing: {recordId}", "\u0420\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435: {recordId}"],
+    "acceptance.proposal": ["Proposal: {recordId}", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435: {recordId}"],
+    "acceptance.button": ["Accept Proposal", "\u041f\u0440\u0438\u043d\u044f\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435"],
     "mvp.seller": ["Seller: {seller}", "Продавец: {seller}"],
     "mvp.buyer": ["Buyer: {buyer}", "Покупатель: {buyer}"],
     "mvp.completed": ["Completion timestamp: {timestamp}", "Время завершения: {timestamp}"],
@@ -136,6 +144,7 @@ window.MarketplaceI18n = (() => {
     "mvp-flight-final", "mvp-flight-status", "mvp-flight-seller", "mvp-flight-buyer",
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
     "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
+    "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
   ]);
   let language = "en";
   const listeners = new Set();
@@ -323,6 +332,12 @@ const responseButton = byId("submit-response");
 const proposalExampleButton = byId("fill-example-proposal");
 const proposalParent = byId("proposal-parent");
 const proposalReadiness = byId("proposal-readiness");
+const proposalAcceptanceHandoff = byId("proposal-acceptance-handoff");
+const proposalAcceptanceStatus = byId("proposal-acceptance-status");
+const proposalAcceptanceSeller = byId("proposal-acceptance-seller");
+const proposalAcceptanceParent = byId("proposal-acceptance-parent");
+const proposalAcceptanceProposal = byId("proposal-acceptance-proposal");
+const acceptProposalButton = byId("accept-proposal");
 const mvpFlightButton = byId("run-mvp-flight");
 const mvpFlightLifecycle = byId("mvp-flight-lifecycle");
 const mvpFlightAudit = byId("mvp-flight-audit");
@@ -696,6 +711,33 @@ function renderProposalParentGuidance(record) {
     : i18n.t("proposal.parentSubject", { recordId: state.selectedId, subjectUri });
 }
 
+function renderProposalAcceptanceHandoff(record) {
+  proposalAcceptanceHandoff.hidden = true;
+  acceptProposalButton.disabled = true;
+  proposalAcceptanceStatus.textContent = i18n.t("acceptance.inspect");
+  proposalAcceptanceSeller.textContent = "";
+  proposalAcceptanceParent.textContent = "";
+  proposalAcceptanceProposal.textContent = "";
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  proposalAcceptanceHandoff.hidden = false;
+  proposalAcceptanceProposal.textContent = i18n.t("acceptance.proposal", { recordId: state.selectedId });
+  if (state.responseParentId === null) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.parentUnavailable");
+    return;
+  }
+  const parentId = state.responseParentId;
+  const parentListing = productListingSummary(state.records.get(parentId));
+  if (parentListing === null) {
+    proposalAcceptanceParent.textContent = i18n.t("acceptance.parent", { recordId: parentId });
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.parentUnavailable");
+    return;
+  }
+  proposalAcceptanceSeller.textContent = i18n.t("acceptance.seller", { seller: parentListing.sellerPrincipal });
+  proposalAcceptanceParent.textContent = i18n.t("acceptance.parent", { recordId: parentId });
+  proposalAcceptanceStatus.textContent = i18n.t("acceptance.authRequired");
+}
+
 function renderDetail() {
   const record = state.selectedRecord;
   const canReturnToParent = state.responseParentId !== null
@@ -705,6 +747,7 @@ function renderDetail() {
   returnParentButton.disabled = !canReturnToParent;
   selectedRecordId.textContent = state.selectedId ?? i18n.t("detail.none");
   renderSelectedRecordSummary(record);
+  renderProposalAcceptanceHandoff(record);
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
