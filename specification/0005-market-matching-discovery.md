@@ -26,7 +26,7 @@ OLP remains authoritative for Record Identity, exact evidence references, resolu
 The Milestone 5 executable vectors use the same OLP reference source pin as Milestones 3–4:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 This is a draft reproducibility pin, not a fork of OLP.

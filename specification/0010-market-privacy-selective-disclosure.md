@@ -25,7 +25,7 @@ Marketplace Privacy v1 depends on Marketplace Specifications 0001–0009 and app
 The executable vectors use OLP source commit:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 OLP remains authoritative for `DisclosureRequestV1`, disclosure dependency semantics, exact Record/Proof identity, resource commitments, bundle construction, native privacy warnings, and external selective-disclosure format semantics.

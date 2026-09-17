@@ -155,7 +155,7 @@ Marketplace canonical identity encoding = OLP-CIE-1
 Marketplace record envelope = OLP RecordV1
 ```
 
-The core semantic namespace is `https://open-trust-layer.github.io/marketplace/semantics/v1`. Executable conformance coverage currently contains 33 positive/negative record and structure vectors. Positive identities are derived exclusively through the OLP reference implementation pinned by the vector set to source commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`.
+The core semantic namespace is `https://open-trust-layer.github.io/marketplace/semantics/v1`. Executable conformance coverage currently contains 33 positive/negative record and structure vectors. Positive identities are derived exclusively through the OLP reference implementation pinned by the vector set to source commit `4e57057d5d946797814f33125f77c4b6732cbfda`.
 
 Milestone 3 does not freeze a mandatory Marketplace JSON/CBOR wire format or transport API; those remain separate from identity.
 

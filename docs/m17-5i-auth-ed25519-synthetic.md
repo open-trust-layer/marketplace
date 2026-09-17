@@ -24,7 +24,7 @@ Marketplace continues to declare an empty base runtime dependency set (`dependen
 
 The existing Marketplace conformance workflow already checks out the Open Layer Protocol reference at exact source commit:
 
-`41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`
+`4e57057d5d946797814f33125f77c4b6732cbfda`
 
 and installs that pinned OLP checkout into the disposable CI environment before Marketplace tests run. That pinned OLP package already declares `cryptography>=41.0` and exposes the reviewed helper module `olp.crypto.ed25519`.
 

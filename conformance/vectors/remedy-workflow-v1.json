@@ -1,7 +1,7 @@
 {
   "format": "marketplace-remedy-workflow-v1-conformance-vectors",
   "profile": "https://open-trust-layer.github.io/marketplace/semantics/v1/remedy-workflow/profile/outcome-rules-v1",
-  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+  "olp_reference_source_commit": "4e57057d5d946797814f33125f77c4b6732cbfda",
   "cases": [
     {
       "id": "profile-valid",

@@ -26,7 +26,7 @@ The workflow creates a fresh virtual environment under the runner temporary dire
 - Python: `3.12.10` x64
 - official Python package SHA-256: `17e4ee587e0ecee4674040da8b248e151475ff65becae18fe0ec81f8312b5035`
 - reviewed build backend: `setuptools==80.9.0`
-- pinned OLP source commit: `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`
+- pinned OLP source commit: `4e57057d5d946797814f33125f77c4b6732cbfda`
 
 No production virtual environment, package directory, runtime configuration, database, or credential store is reused by CI.
 

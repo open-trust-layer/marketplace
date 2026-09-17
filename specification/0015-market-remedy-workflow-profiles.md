@@ -12,7 +12,7 @@ The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, and **MAY** have
 
 ## 2. Dependency and constitutional boundaries
 
-Marketplace Specifications 0001–0014 and the applicable Open Layer Protocol specifications remain authoritative. The executable compatibility target is the OLP source commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`; a release MUST bind to an explicit released compatibility target.
+Marketplace Specifications 0001–0014 and the applicable Open Layer Protocol specifications remain authoritative. The executable compatibility target is the OLP source commit `4e57057d5d946797814f33125f77c4b6732cbfda`; a release MUST bind to an explicit released compatibility target.
 
 Conforming implementations MUST preserve these distinctions:
 

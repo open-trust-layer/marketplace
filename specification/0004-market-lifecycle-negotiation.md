@@ -22,7 +22,7 @@ The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, 
 
 Marketplace Lifecycle & Negotiation v1 builds on Marketplace Specification 0003 and Open Layer Protocol record identity, detached proofs, evidence relationships, identity/authority evidence, and lifecycle evidence.
 
-The Milestone 4 executable vectors use OLP reference implementation source commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c` as a draft reproducibility baseline.
+The Milestone 4 executable vectors use OLP reference implementation source commit `4e57057d5d946797814f33125f77c4b6732cbfda` as a draft reproducibility baseline.
 
 ## 4. Core invariants
 

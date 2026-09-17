@@ -82,7 +82,7 @@ Repository audit requires the wrapper files to remain small and to delegate to `
 The reference adapters require OLP types and canonical operations. The Marketplace conformance baseline is tied to the exact OLP source commit:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 Milestone 22 deliberately does **not** declare `open-layer-protocol` as a mandatory or optional public-index dependency. Until OLP publication ownership and release provenance are separately established, adding that dependency name would create an unnecessary dependency-confusion / package-resolution trust path.

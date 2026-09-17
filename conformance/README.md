@@ -123,7 +123,7 @@ The policy helper produces a local process result only. It does not create a uni
 All manifest-registered vector sets pin the OLP source commit used for reproducibility:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 A future Marketplace release MUST bind to a released OLP compatibility target rather than this draft source pin.

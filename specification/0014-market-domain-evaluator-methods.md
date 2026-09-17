@@ -24,7 +24,7 @@ M15 depends on Marketplace Specifications 0001–0013 and applicable Open Layer 
 The executable vectors use the repository OLP source pin:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 A released Marketplace version MUST bind to an explicit released OLP compatibility target rather than this draft source pin.

@@ -1,7 +1,7 @@
 {
   "format": "marketplace-lifecycle-negotiation-v1-conformance-vectors",
   "marketplace_semantic_base": "https://open-trust-layer.github.io/marketplace/semantics/v1",
-  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+  "olp_reference_source_commit": "4e57057d5d946797814f33125f77c4b6732cbfda",
   "note": "record/proof/value fields use OLP implementation-neutral conformance projection; this JSON file is not a Marketplace wire format",
   "record_identities": {
     "base_intent": "r1_nG_mJ62vVyiX7Z5TZI-c34YuOYla96k2clLkwhKNOwI",
