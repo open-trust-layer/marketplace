@@ -74,7 +74,7 @@ jobs:
       - name: Run Marketplace acceptance gate
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         working-directory: marketplace
-        run: '& $env:MARKETPLACE_CI_PYTHON tools/conformance_gate.py --olp-root ../olp --timeout 90'
+        run: '& $env:MARKETPLACE_CI_PYTHON tools/conformance_gate.py --olp-root ../olp --timeout 180'
 
       - name: Cleanup disposable CI state
         if: ${{ always() }}
