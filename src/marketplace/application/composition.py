@@ -61,6 +61,7 @@ def compose_marketplace_application(
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
+    web_modules: tuple[tuple[str, bytes], ...] = (),
 ) -> MarketplaceApplicationComposition:
     """Wire reviewed application layers from injected dependencies only."""
 
@@ -96,6 +97,7 @@ def compose_marketplace_application(
         index_html=index_html,
         app_js=app_js,
         styles_css=styles_css,
+        web_modules=web_modules,
     )
     return MarketplaceApplicationComposition(
         state=state,

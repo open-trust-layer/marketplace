@@ -26,20 +26,33 @@ def build_reference_authenticated_postgres_marketplace_launch_plan(
     index_html: bytes,
     app_js: bytes,
     styles_css: bytes,
+    web_modules: tuple[tuple[str, bytes], ...] = (),
     provisioning: MarketplaceAuthenticationStartupProvisioning,
     runtime_inputs: MarketplaceAuthenticationRuntimeInputs,
 ) -> MarketplaceAuthenticatedLoopbackLaunchPlan:
     """Compose reviewed PostgreSQL and authentication layers without activating them."""
 
-    application_plan = build_reference_postgres_marketplace_application_launch_plan(
-        connection_factory=connection_factory,
-        clock=clock,
-        host=host,
-        port=port,
-        index_html=index_html,
-        app_js=app_js,
-        styles_css=styles_css,
-    )
+    if web_modules:
+        application_plan = build_reference_postgres_marketplace_application_launch_plan(
+            connection_factory=connection_factory,
+            clock=clock,
+            host=host,
+            port=port,
+            index_html=index_html,
+            app_js=app_js,
+            styles_css=styles_css,
+            web_modules=web_modules,
+        )
+    else:
+        application_plan = build_reference_postgres_marketplace_application_launch_plan(
+            connection_factory=connection_factory,
+            clock=clock,
+            host=host,
+            port=port,
+            index_html=index_html,
+            app_js=app_js,
+            styles_css=styles_css,
+        )
     return build_reference_authenticated_marketplace_launch_plan(
         application_plan=application_plan,
         provisioning=provisioning,

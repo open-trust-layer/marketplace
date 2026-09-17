@@ -12,6 +12,21 @@ import tools.marketplace_localhost as tool
 
 PROVISIONING_DIRECTORY = str(pathlib.Path.cwd() / "synthetic-auth")
 PORT = 18080
+AUTH_WEB_ASSETS = {
+    "web/index.html": b"index",
+    "web/app.js": b"app",
+    "web/styles.css": b"css",
+    "web/client_session.js": b"client-session",
+    "web/auth_establishment.js": b"auth-establishment",
+    "web/auth_ed25519_proof_provider.js": b"auth-proof",
+    "web/auth_ed25519_key_creation.js": b"auth-key-creation",
+}
+AUTH_WEB_MODULES = (
+    ("/client_session.js", b"client-session"),
+    ("/auth_establishment.js", b"auth-establishment"),
+    ("/auth_ed25519_proof_provider.js", b"auth-proof"),
+    ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
+)
 
 
 class _Application:
@@ -178,15 +193,9 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
 
         def asset_provider():
             events.append("asset-provider")
-            values = {
-                "web/index.html": b"index",
-                "web/app.js": b"app",
-                "web/styles.css": b"css",
-            }
-
             def read(path: str):
                 events.append(path)
-                return values[path]
+                return AUTH_WEB_ASSETS[path]
 
             return read
 
@@ -204,6 +213,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
             self.assertEqual(kwargs["index_html"], b"index")
             self.assertEqual(kwargs["app_js"], b"app")
             self.assertEqual(kwargs["styles_css"], b"css")
+            self.assertEqual(kwargs["web_modules"], AUTH_WEB_MODULES)
             self.assertIs(kwargs["provisioning"], provisioning)
             self.assertIs(kwargs["runtime_inputs"], runtime_inputs)
             return plan
@@ -250,6 +260,10 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
                 "web/index.html",
                 "web/app.js",
                 "web/styles.css",
+                "web/client_session.js",
+                "web/auth_establishment.js",
+                "web/auth_ed25519_proof_provider.js",
+                "web/auth_ed25519_key_creation.js",
                 "postgres-provider",
                 "plan",
                 "validate-plan",
@@ -323,11 +337,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
             patch.object(
                 tool,
                 "_real_asset_reader",
-                return_value=lambda path: {
-                    "web/index.html": b"index",
-                    "web/app.js": b"app",
-                    "web/styles.css": b"css",
-                }[path],
+                return_value=lambda path: AUTH_WEB_ASSETS[path],
             ),
             patch.object(tool, "_build_psycopg_connection_factory", return_value=Mock()),
             patch.object(tool, "_build_authenticated_postgres_plan", return_value=plan),
@@ -363,11 +373,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
             patch.object(
                 tool,
                 "_real_asset_reader",
-                return_value=lambda path: {
-                    "web/index.html": b"index",
-                    "web/app.js": b"app",
-                    "web/styles.css": b"css",
-                }[path],
+                return_value=lambda path: AUTH_WEB_ASSETS[path],
             ),
             patch.object(tool, "_build_psycopg_connection_factory", return_value=Mock()),
             patch.object(tool, "_build_authenticated_postgres_plan", return_value=object()),
