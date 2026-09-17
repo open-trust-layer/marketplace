@@ -18,7 +18,7 @@ from marketplace_remedy_workflow_v1 import (
 ROOT = Path(__file__).resolve().parents[1]
 VECTOR_PATH = ROOT / "conformance" / "vectors" / "remedy-workflow-v1.json"
 EXPECTED_FORMAT = "marketplace-remedy-workflow-v1-conformance-vectors"
-EXPECTED_OLP_COMMIT = "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c"
+EXPECTED_OLP_COMMIT = "4e57057d5d946797814f33125f77c4b6732cbfda"
 EXPECTED_POSITIVE = 23
 EXPECTED_NEGATIVE = 48
 

@@ -16,7 +16,7 @@ from marketplace_policy_v1 import (
 
 ROOT = Path(__file__).resolve().parents[1]
 VECTOR_PATH = ROOT / "conformance" / "vectors" / "safety-policy-authorization-v1.json"
-EXPECTED_OLP_COMMIT = "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c"
+EXPECTED_OLP_COMMIT = "4e57057d5d946797814f33125f77c4b6732cbfda"
 RECORD_ID = "r1_SK_yrUOC25u_ZODjtpO757oZsM1NquB1W1VM5BZK8QI"
 
 

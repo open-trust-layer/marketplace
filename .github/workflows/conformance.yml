@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: open-trust-layer/protocol
-          ref: 41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+          ref: 4e57057d5d946797814f33125f77c4b6732cbfda
           path: olp
           fetch-depth: 1
           persist-credentials: false

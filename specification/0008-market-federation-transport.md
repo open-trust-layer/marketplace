@@ -28,7 +28,7 @@ Marketplace M8 profiles those primitives; it does not fork them.
 The executable vectors use the same draft OLP reproducibility pin as Milestones 3–7:
 
 ```text
-41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c
+4e57057d5d946797814f33125f77c4b6732cbfda
 ```
 
 ## 4. Core invariants

@@ -1,6 +1,6 @@
 {
   "format": "marketplace-deployment-profiles-v1-conformance-vectors",
-  "olp_reference_source_commit": "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+  "olp_reference_source_commit": "4e57057d5d946797814f33125f77c4b6732cbfda",
   "profile": "https://open-trust-layer.github.io/marketplace/semantics/v1/deployment/profile/core-node-v1",
   "note": "deployment descriptors and observations are processing metadata; this JSON file is not a Marketplace wire format",
   "cases": [

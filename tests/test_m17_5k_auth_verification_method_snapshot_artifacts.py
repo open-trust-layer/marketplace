@@ -133,7 +133,7 @@ class M17AuthVerificationMethodSnapshotArtifactTests(unittest.TestCase):
         self.assertIn('*repo_root.glob("src/**/*.py")', repository_audit)
         self.assertEqual(
             (ROOT / "conformance" / "olp-source-pin.txt").read_text(encoding="ascii").strip(),
-            "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+            "4e57057d5d946797814f33125f77c4b6732cbfda",
         )
 
     def test_wheel_gate_requires_new_snapshot_module(self):

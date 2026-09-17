@@ -22,7 +22,7 @@ The key words **MUST**, **MUST NOT**, **REQUIRED**, **SHOULD**, **SHOULD NOT**, 
 
 M11 depends on Marketplace Specifications 0001–0010 and applicable OLP specifications, especially OLP 0004 for proof purposes and OLP 0006–0007 for identity, authority, delegation, and lifecycle evidence.
 
-The executable conformance profile is pinned to OLP source commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`.
+The executable conformance profile is pinned to OLP source commit `4e57057d5d946797814f33125f77c4b6732cbfda`.
 OLP remains authoritative for `authorization` proof-purpose semantics, AuthorityGrantStatementV1, authority delegation scope, authority/lifecycle status, exact evidence identity, and the distinction between authority evidence and final application authorization.
 
 ## 4. Core invariants

@@ -104,7 +104,7 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
         self.assertIn('auth-verify = ["cryptography==50.0.1"]', pyproject)
         self.assertNotIn("nacl", pyproject)
         self.assertEqual(workflow.count('"cryptography==50.0.1"'), 1)
-        self.assertIn("41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c", workflow)
+        self.assertIn("4e57057d5d946797814f33125f77c4b6732cbfda", workflow)
         self.assertNotIn("test_m17_5i", workflow)
         self.assertIn("unittest", gate)
         self.assertIn("test_*.py", gate)
@@ -133,7 +133,7 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
             "8bab6c83f09e299f392cf6f994f1fa73406ae379",
             "Issue #276",
             "HIGH",
-            "41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c",
+            "4e57057d5d946797814f33125f77c4b6732cbfda",
             "cryptography>=41.0",
             "RFC 8032",
             "fixed synthetic non-secret",

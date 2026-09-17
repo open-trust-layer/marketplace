@@ -91,7 +91,7 @@ continues to import no OLP implementation and receives no M74-specific dependenc
 The developer Python environment is intentionally not modified to install the pinned OLP dependency
 graph. Source syntax, artifact membership, and static authority checks are exercised locally. Genuine
 OLP behavior and the complete repository/package/vector acceptance remain authoritative in the existing
-isolated self-hosted CI with exact OLP pin `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`.
+isolated self-hosted CI with exact OLP pin `4e57057d5d946797814f33125f77c4b6732cbfda`.
 
 ## Optimization evidence
 

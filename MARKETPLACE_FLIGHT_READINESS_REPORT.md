@@ -67,7 +67,7 @@ Marketplace is flight-ready when a fresh local demonstration proves that User A 
 
 ## Executed MVP evidence
 
-The locked local MVP flight has been executed with the same reviewed dependency versions used by CI: Python 3.12.10, pinned OLP commit `41b768e50b6cb9cc8e516ad7b6c40969f9ed7b6c`, and `cryptography==50.0.1`.
+The locked local MVP flight has been executed with the same reviewed dependency versions used by CI: Python 3.12.10, pinned OLP commit `4e57057d5d946797814f33125f77c4b6732cbfda`, and `cryptography==50.0.1`.
 
 Focused result: `3 tests / PASS`.
 
