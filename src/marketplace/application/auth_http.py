@@ -7,6 +7,7 @@ from .api import ApplicationApiError
 from .auth import (
     ApplicationAuthError,
     AuthenticatedProductListingAuthoringService,
+    AuthenticatedProposalAcceptanceAuthoringService,
     AuthenticatedProposalAuthoringService,
     MarketplaceApplicationAuthService,
 )
@@ -25,6 +26,10 @@ from .http import (
     _proposal_parent_path,
     _put_document,
     _response_parent_path,
+)
+from .proposal_acceptance import (
+    ProposalAcceptanceAuthoringError,
+    ProposalAcceptancePublicationResult,
 )
 from .proposal_authoring import ProposalAuthoringError
 
@@ -69,6 +74,17 @@ def _auth_invalid() -> ApplicationHttpResponse:
     )
 
 
+def _acceptance_proposal_path(path: str) -> str | None:
+    parts = path.split("/")
+    if len(parts) != 5 or parts[:3] != ["", "api", "intents"] or parts[4] != "acceptance":
+        return None
+    record_id = parts[3]
+    if not record_id or len(record_id) > 512:
+        return None
+    if any(ord(char) < 33 or ord(char) > 126 or char in "/?#" for char in record_id):
+        return None
+    return record_id
+
 def _protected_write(request: ApplicationHttpRequest) -> tuple[str, str | None] | None:
     if request.method != "POST":
         return None
@@ -76,6 +92,9 @@ def _protected_write(request: ApplicationHttpRequest) -> tuple[str, str | None] 
         return ("intent", None)
     if request.path == "/api/product-listings":
         return ("listing", None)
+    acceptance_proposal = _acceptance_proposal_path(request.path)
+    if acceptance_proposal is not None:
+        return ("acceptance", acceptance_proposal)
     proposal_parent = _proposal_parent_path(request.path)
     if proposal_parent is not None:
         return ("proposal", proposal_parent)
@@ -95,6 +114,7 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
         auth: MarketplaceApplicationAuthService,
         product_listing_authoring: AuthenticatedProductListingAuthoringService,
         proposal_authoring: AuthenticatedProposalAuthoringService,
+        proposal_acceptance_authoring: AuthenticatedProposalAcceptanceAuthoringService | None = None,
         decode_record_json: RecordJsonDecoder,
         create_intent: RawIntentCreator,
         respond_to_intent: RawResponseCreator,
@@ -108,6 +128,11 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
             raise TypeError("product_listing_authoring MUST be exact authenticated authoring service")
         if type(proposal_authoring) is not AuthenticatedProposalAuthoringService:
             raise TypeError("proposal_authoring MUST be exact authenticated proposal service")
+        if (
+            proposal_acceptance_authoring is not None
+            and type(proposal_acceptance_authoring) is not AuthenticatedProposalAcceptanceAuthoringService
+        ):
+            raise TypeError("proposal_acceptance_authoring MUST be exact authenticated acceptance service when supplied")
         if not callable(decode_record_json):
             raise TypeError("decode_record_json MUST be callable")
         if not callable(create_intent):
@@ -120,6 +145,7 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
         self._auth = auth
         self._product_listing_authoring = product_listing_authoring
         self._proposal_authoring = proposal_authoring
+        self._proposal_acceptance_authoring = proposal_acceptance_authoring
         self._decode_record_json = decode_record_json
         self._create_intent = create_intent
         self._respond_to_intent = respond_to_intent
@@ -159,6 +185,13 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
             return self._proposal(
                 request,
                 parent_id=parent_id,
+                session_token=session_token,
+                now=now,
+            )
+        if kind == "acceptance":
+            return self._proposal_acceptance(
+                request,
+                proposal_id=parent_id,
                 session_token=session_token,
                 now=now,
             )
@@ -268,6 +301,72 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
                 "Proposal could not be authored safely",
             )
 
+    def _proposal_acceptance(
+        self,
+        request: ApplicationHttpRequest,
+        *,
+        proposal_id: str | None,
+        session_token: bytes,
+        now: int,
+    ) -> ApplicationHttpResponse:
+        if type(proposal_id) is not str or not proposal_id:
+            return _bad_request()
+        if request.query or request.body != b"" or request.content_type is not None:
+            return _bad_request("PROPOSAL_ACCEPTANCE_REQUEST_INVALID")
+        if self._proposal_acceptance_authoring is None:
+            return _error_response(
+                503,
+                "Service Unavailable",
+                "PROPOSAL_ACCEPTANCE_UNAVAILABLE",
+                "seller Proposal acceptance is not configured",
+            )
+        try:
+            result = self._proposal_acceptance_authoring.accept_proposal(
+                session_token=session_token,
+                proposal_record_id=proposal_id,
+                now=now,
+            )
+        except ApplicationAuthError as exc:
+            return _auth_error(exc)
+        except ProposalAcceptanceAuthoringError as exc:
+            if exc.code == "PROPOSAL_ACCEPTANCE_SELLER_MISMATCH":
+                return _error_response(
+                    403,
+                    "Forbidden",
+                    exc.code,
+                    "authenticated seller does not own the Proposal parent listing",
+                )
+            if exc.code in {
+                "PROPOSAL_ACCEPTANCE_PROPOSAL_NOT_FOUND",
+                "PROPOSAL_ACCEPTANCE_LISTING_NOT_FOUND",
+            }:
+                return _error_response(404, "Not Found", exc.code, "required Marketplace record was not found")
+            if exc.code in {
+                "PROPOSAL_ACCEPTANCE_PROPOSAL_UNAVAILABLE",
+                "PROPOSAL_ACCEPTANCE_LISTING_UNAVAILABLE",
+            }:
+                return _error_response(503, "Service Unavailable", exc.code, "required Marketplace state is unavailable")
+            if exc.code in {
+                "PROPOSAL_ACCEPTANCE_REQUEST_INVALID",
+                "PROPOSAL_ACCEPTANCE_PROPOSAL_INVALID",
+                "PROPOSAL_ACCEPTANCE_PARENT_INVALID",
+                "PROPOSAL_ACCEPTANCE_LISTING_INVALID",
+            }:
+                return _error_response(409, "Conflict", exc.code, "Proposal acceptance preconditions are not satisfied")
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PROPOSAL_ACCEPTANCE_FAILED",
+                "seller Proposal acceptance could not be published safely",
+            )
+        if type(result) is not ProposalAcceptancePublicationResult:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PROPOSAL_ACCEPTANCE_RESULT_INVALID",
+                "seller Proposal acceptance returned an invalid result",
+            )
+        return _json_response(201, "Created", result.to_document())
     def _authorize_raw_record(
         self,
         record: Any,

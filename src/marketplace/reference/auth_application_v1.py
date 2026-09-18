@@ -17,6 +17,7 @@ from ..application.auth_startup_provisioning import (
     MarketplaceAuthenticationStartupProvisioning,
 )
 from ..application.composition import MarketplaceApplicationComposition
+from ..application.proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
 from ..application.launch import (
     LOOPBACK_LAUNCH_HOST,
     MAX_LAUNCH_PORT,
@@ -24,7 +25,17 @@ from ..application.launch import (
     MarketplaceApplicationLaunchPlan,
 )
 from .application_record_json_v1 import decode_marketplace_application_record_json
-from .application_record_v1 import marketplace_record_issuer_principal
+from .application_record_v1 import (
+    marketplace_record_issuer_principal,
+    marketplace_response_parent_ids,
+)
+from .product_listing_v1 import extract_product_listing
+from .proposal_acceptance_v1 import (
+    build_proposal_acceptance_record,
+    is_marketplace_proposal_record,
+    proposal_acceptance_proposal_id,
+    proposal_acceptance_record_id,
+)
 
 PROFILE_NAME: Final = "MARKETPLACE_REFERENCE_AUTHENTICATED_LAUNCH_V1"
 _ERROR_MESSAGE: Final = "reference authenticated Marketplace launch composition failed"
@@ -78,12 +89,22 @@ def build_reference_authenticated_marketplace_launch_plan(
         _fail()
 
     try:
+        proposal_acceptance_authoring = MarketplaceProposalAcceptanceAuthoringService(
+            state=application_plan.composition.state,
+            is_proposal_record=is_marketplace_proposal_record,
+            proposal_parent_ids=marketplace_response_parent_ids,
+            extract_product_listing=extract_product_listing,
+            build_record=build_proposal_acceptance_record,
+            acceptance_proposal_id=proposal_acceptance_proposal_id,
+            record_identity=proposal_acceptance_record_id,
+        )
         startup = compose_marketplace_authenticated_startup(
             application=application_plan.composition,
             provisioning=provisioning,
             runtime_inputs=runtime_inputs,
             decode_record_json=decode_marketplace_application_record_json,
             record_principal=marketplace_record_issuer_principal,
+            proposal_acceptance_authoring=proposal_acceptance_authoring,
         )
         if type(startup) is not MarketplaceAuthenticatedStartupComposition:
             _fail()
