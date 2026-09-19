@@ -167,7 +167,7 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
             "AGREEMENT_ASSENT_PREPARATION_INVALID",
         )
 
-    def test_signature_length_is_rejected_before_evidence_builder(self) -> None:
+    def test_signature_length_is_rejected_before_proof_builder(self) -> None:
         calls = []
         service = MarketplaceAgreementAssentProofService(
             verification_methods=_snapshot(),
@@ -194,7 +194,7 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
         )
         self.assertEqual(calls, [])
 
-    def test_evidence_builder_failure_is_stable_and_non_reflective(self) -> None:
+    def test_proof_builder_failure_is_stable_and_non_reflective(self) -> None:
         def fail(*_args):
             raise RuntimeError("sensitive proof detail")
 
