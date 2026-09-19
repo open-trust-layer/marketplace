@@ -23,11 +23,10 @@ and one purpose-specific operation:
 
 The preparation shape is exact:
 
-    agreementRecordId
     verificationMethod
     signingInput
 
-No principal or attribution decision enters the browser signer.
+No Agreement identity, principal or attribution decision enters the browser signer.
 
 ## Signing contract
 
@@ -43,6 +42,9 @@ The key must be:
     extractable false
     algorithm   Ed25519
     usages      ["sign"]
+
+The signer deliberately receives no Agreement Record Identity. Record binding is
+owned by the exact OLP signing bytes and is re-verified by the server.
 
 The preparation verification method must equal the pinned method.
 

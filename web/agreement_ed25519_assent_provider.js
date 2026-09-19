@@ -3,7 +3,6 @@
 const PROFILE = "MARKETPLACE_WEB_AGREEMENT_ED25519_ASSENT_PROVIDER_V1";
 const MAX_SIGNING_INPUT_BYTES = 4096;
 const MAX_URI_BYTES = 2048;
-const RECORD_ID_PATTERN = /^r1_[A-Za-z0-9_-]{43}$/;
 
 function stableAssentError() {
   const error = new Error("Marketplace Web Agreement assent signing operation failed");
@@ -19,13 +18,6 @@ function reviewedUri(value) {
   if (typeof value !== "string" || value.length === 0 ||
       utf8(value).length > MAX_URI_BYTES ||
       !/^[A-Za-z][A-Za-z0-9+.-]*:\S+$/.test(value)) {
-    throw stableAssentError();
-  }
-  return value;
-}
-
-function reviewedRecordId(value) {
-  if (typeof value !== "string" || !RECORD_ID_PATTERN.test(value)) {
     throw stableAssentError();
   }
   return value;
@@ -61,11 +53,10 @@ function reviewedSubtle(subtle) {
 function reviewedPreparation(preparation, verificationMethod) {
   if (!exactKeys(
     preparation,
-    ["agreementRecordId", "verificationMethod", "signingInput"],
+    ["verificationMethod", "signingInput"],
   )) {
     throw stableAssentError();
   }
-  const agreementRecordId = reviewedRecordId(preparation.agreementRecordId);
   if (preparation.verificationMethod !== verificationMethod) {
     throw stableAssentError();
   }
@@ -77,7 +68,6 @@ function reviewedPreparation(preparation, verificationMethod) {
   }
   const signingBytes = Uint8Array.from(preparation.signingInput);
   return Object.freeze({
-    agreementRecordId,
     verificationMethod,
     signingBytes,
   });

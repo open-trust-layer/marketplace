@@ -8,7 +8,6 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "web" / "agreement_ed25519_assent_provider.js"
 TEXT = SOURCE.read_text(encoding="utf-8")
 
-EXPECTED_AGREEMENT_ID = "r1_grS0_HlLNS2A1VqdELEa_daC4IJl_SBGzxcAO6esM5A"
 EXPECTED_METHOD = "urn:example:olp:test-key-1"
 EXPECTED_INPUT_HEX = (
     "89694f4c502d50524f4f46017065646473612d656432353531392d763169617373"
@@ -30,13 +29,11 @@ class ProductWebAgreementAssentProviderContractTests(unittest.TestCase):
         )
         self.assertEqual(len(bytes.fromhex(EXPECTED_INPUT_HEX)), 106)
         self.assertEqual(len(bytes.fromhex(EXPECTED_SIGNATURE_HEX)), 64)
-        self.assertTrue(EXPECTED_AGREEMENT_ID.startswith("r1_"))
         self.assertEqual(EXPECTED_METHOD, "urn:example:olp:test-key-1")
 
     def test_preparation_shape_and_method_binding_are_exact(self) -> None:
         for marker in (
-            '["agreementRecordId", "verificationMethod", "signingInput"]',
-            "reviewedRecordId(preparation.agreementRecordId)",
+            '["verificationMethod", "signingInput"]',
             "preparation.verificationMethod !== verificationMethod",
             "preparation.signingInput instanceof Uint8Array",
             "preparation.signingInput.length < 1",
@@ -81,6 +78,7 @@ class ProductWebAgreementAssentProviderContractTests(unittest.TestCase):
         self.assertNotIn("principal", lowered)
         self.assertNotIn("attribution", lowered)
         self.assertNotIn("assentevidence", lowered)
+        self.assertNotIn("agreementrecordid", lowered)
 
     def test_provider_exposes_only_purpose_specific_operation(self) -> None:
         self.assertIn(
