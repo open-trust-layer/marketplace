@@ -31,7 +31,7 @@ The reference layer owns the pinned OLP integration.
     -> external Ed25519 signature
     -> standard OLPProof
     -> verify_proof()
-    -> exact AssentEvidence
+    -> verified OLP proof result
 
 No direct olp import is added under src/marketplace/application.
 
@@ -89,8 +89,12 @@ builder reconstructs a standard OLP proof and requires:
     cryptographic_validity            VALID
     purpose_status                    MATCH
 
-Only then is AssentEvidence with accepted attribution produced. Attribution is
-therefore derived from trusted application evidence, not caller input.
+The reference layer returns only a cryptographically verified proof plus its
+resolved method. It never creates accepted party attribution. The application
+service separately binds the authenticated/trusted principal to that method via
+the immutable verification-method snapshot and returns the combined trusted
+result. Conversion into formation AssentEvidence remains a later aggregation
+boundary.
 
 ## Frozen cross-runtime vector
 
@@ -121,8 +125,8 @@ migration, trust-anchor mutation, network I/O, Agreement publication, payment,
 settlement, escrow, fulfillment, ownership transfer, runtime activation, or
 deployment.
 
-The verified evidence returned here is one input to the existing Agreement
-formation evaluator. It does not by itself establish formation sufficiency,
+The verified application result returned here is an input to the later
+formation-evidence aggregation boundary. It does not by itself establish formation sufficiency,
 legal enforceability, identity, or universal truth.
 
 ## Rollback

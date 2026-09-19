@@ -10,7 +10,7 @@ from marketplace.application.proposal import BuyerRequestProposalDraft
 from marketplace.reference.agreement_assent_v1 import (
     AgreementAssentProfileError,
     build_product_agreement_assent_signing_input,
-    build_verified_product_agreement_assent_evidence,
+    build_verified_product_agreement_assent_proof,
 )
 from marketplace.reference.agreement_candidate_v1 import (
     ACTION_BUY,
@@ -107,29 +107,27 @@ class ProductAgreementAssentReferenceTests(unittest.TestCase):
         self.assertEqual(len(signing_input), 106)
         self.assertEqual(signing_input.hex(), EXPECTED_INPUT_HEX)
 
-        evidence = build_verified_product_agreement_assent_evidence(
+        result = build_verified_product_agreement_assent_proof(
             agreement,
-            BUYER,
             METHOD,
             PUBLIC_KEY,
             SIGNATURE,
         )
-        self.assertEqual(evidence.principal, BUYER)
-        self.assertEqual(evidence.proof.proofValue, SIGNATURE)
-        self.assertEqual(evidence.proof.verificationMethod, METHOD)
-        self.assertTrue(evidence.attribution_accepted)
+        self.assertEqual(result.proof.proofValue, SIGNATURE)
+        self.assertEqual(result.proof.verificationMethod, METHOD)
         self.assertEqual(
-            proof_identity(evidence.proof).hex(),
+            proof_identity(result.proof).hex(),
             EXPECTED_PROOF_IDENTITY_HEX,
         )
+        self.assertFalse(hasattr(result, "principal"))
+        self.assertFalse(hasattr(result, "attribution_accepted"))
 
     def test_signature_bit_mutation_fails_closed(self) -> None:
         agreement = _records()[3]
         hostile = bytes([SIGNATURE[0] ^ 1]) + SIGNATURE[1:]
         with self.assertRaises(AgreementAssentProfileError) as caught:
-            build_verified_product_agreement_assent_evidence(
+            build_verified_product_agreement_assent_proof(
                 agreement,
-                BUYER,
                 METHOD,
                 PUBLIC_KEY,
                 hostile,
@@ -149,9 +147,8 @@ class ProductAgreementAssentReferenceTests(unittest.TestCase):
             EXPECTED_INPUT_HEX,
         )
         with self.assertRaises(AgreementAssentProfileError) as caught:
-            build_verified_product_agreement_assent_evidence(
+            build_verified_product_agreement_assent_proof(
                 agreement,
-                BUYER,
                 METHOD,
                 PUBLIC_KEY,
                 SIGNATURE,
@@ -164,9 +161,8 @@ class ProductAgreementAssentReferenceTests(unittest.TestCase):
     def test_wrong_method_rejects_frozen_signature(self) -> None:
         agreement = _records()[3]
         with self.assertRaises(AgreementAssentProfileError) as caught:
-            build_verified_product_agreement_assent_evidence(
+            build_verified_product_agreement_assent_proof(
                 agreement,
-                BUYER,
                 "urn:example:olp:other-key",
                 PUBLIC_KEY,
                 SIGNATURE,
@@ -179,9 +175,8 @@ class ProductAgreementAssentReferenceTests(unittest.TestCase):
     def test_invalid_key_and_signature_lengths_fail_before_crypto(self) -> None:
         agreement = _records()[3]
         with self.assertRaises(AgreementAssentProfileError) as key_error:
-            build_verified_product_agreement_assent_evidence(
+            build_verified_product_agreement_assent_proof(
                 agreement,
-                BUYER,
                 METHOD,
                 PUBLIC_KEY[:-1],
                 SIGNATURE,
@@ -192,9 +187,8 @@ class ProductAgreementAssentReferenceTests(unittest.TestCase):
         )
 
         with self.assertRaises(AgreementAssentProfileError) as signature_error:
-            build_verified_product_agreement_assent_evidence(
+            build_verified_product_agreement_assent_proof(
                 agreement,
-                BUYER,
                 METHOD,
                 PUBLIC_KEY,
                 SIGNATURE[:-1],

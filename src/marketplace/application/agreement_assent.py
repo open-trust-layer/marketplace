@@ -18,7 +18,7 @@ _URI_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
 
 AgreementRecordIdentity = Callable[[Any], str]
 AgreementAssentSigningInputBuilder = Callable[[Any, str], bytes]
-AgreementAssentEvidenceBuilder = Callable[[Any, str, str, bytes, bytes], Any]
+AgreementAssentProofBuilder = Callable[[Any, str, bytes, bytes], Any]
 
 
 class AgreementAssentError(RuntimeError):
@@ -81,14 +81,14 @@ class VerifiedAgreementAssent:
     agreement_record_id: str
     principal: str
     verification_method: str
-    evidence: Any
+    proof: Any
 
     def __post_init__(self) -> None:
         _record_id(self.agreement_record_id)
         _uri(self.principal)
         _uri(self.verification_method)
-        if self.evidence is None:
-            raise ValueError("verified Agreement assent evidence MUST be present")
+        if self.proof is None:
+            raise ValueError("verified Agreement assent proof MUST be present")
 
 
 class MarketplaceAgreementAssentProofService:
@@ -100,7 +100,7 @@ class MarketplaceAgreementAssentProofService:
         verification_methods: MarketplaceAuthenticationVerificationMethodSnapshot,
         record_identity: AgreementRecordIdentity,
         build_signing_input: AgreementAssentSigningInputBuilder,
-        build_verified_evidence: AgreementAssentEvidenceBuilder,
+        build_verified_proof: AgreementAssentProofBuilder,
     ) -> None:
         if type(verification_methods) is not MarketplaceAuthenticationVerificationMethodSnapshot:
             raise TypeError(
@@ -110,12 +110,12 @@ class MarketplaceAgreementAssentProofService:
             raise TypeError("record_identity MUST be callable")
         if not callable(build_signing_input):
             raise TypeError("build_signing_input MUST be callable")
-        if not callable(build_verified_evidence):
-            raise TypeError("build_verified_evidence MUST be callable")
+        if not callable(build_verified_proof):
+            raise TypeError("build_verified_proof MUST be callable")
         self._verification_methods = verification_methods
         self._record_identity = record_identity
         self._build_signing_input = build_signing_input
-        self._build_verified_evidence = build_verified_evidence
+        self._build_verified_proof = build_verified_proof
 
     def _candidate_identity(self, candidate: AgreementCandidateBuildResult) -> str:
         if type(candidate) is not AgreementCandidateBuildResult:
@@ -260,9 +260,8 @@ class MarketplaceAgreementAssentProofService:
             )
 
         try:
-            evidence = self._build_verified_evidence(
+            proof = self._build_verified_proof(
                 candidate.record,
-                current.principal,
                 current.verification_method,
                 public_key,
                 signature,
@@ -272,7 +271,7 @@ class MarketplaceAgreementAssentProofService:
                 "AGREEMENT_ASSENT_VERIFICATION_FAILED",
                 "Agreement assent proof verification failed",
             )
-        if evidence is None:
+        if proof is None:
             _fail(
                 "AGREEMENT_ASSENT_PROOF_INVALID",
                 "Agreement assent proof is invalid",
@@ -282,7 +281,7 @@ class MarketplaceAgreementAssentProofService:
                 agreement_record_id=current.agreement_record_id,
                 principal=current.principal,
                 verification_method=current.verification_method,
-                evidence=evidence,
+                proof=proof,
             )
         except Exception:
             _fail(
@@ -293,7 +292,7 @@ class MarketplaceAgreementAssentProofService:
 
 __all__ = [
     "AgreementAssentError",
-    "AgreementAssentEvidenceBuilder",
+    "AgreementAssentProofBuilder",
     "AgreementAssentSigningInputBuilder",
     "AgreementAssentSigningPreparation",
     "AgreementRecordIdentity",

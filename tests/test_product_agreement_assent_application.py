@@ -50,21 +50,28 @@ def _snapshot(principal: str = PRINCIPAL) -> MarketplaceAuthenticationVerificati
 
 
 class ProductAgreementAssentApplicationTests(unittest.TestCase):
-    def service(self, *, snapshot=None, signing_input=None, evidence=None):
-        accepted_evidence = object() if evidence is None else evidence
+    def service(self, *, snapshot=None, signing_input=None, proof=None):
+        accepted_proof = object() if proof is None else proof
         return (
             MarketplaceAgreementAssentProofService(
                 verification_methods=snapshot or _snapshot(),
                 record_identity=lambda _record: AGREEMENT_ID,
                 build_signing_input=signing_input
                 or (lambda _record, _method: b"signing-input"),
-                build_verified_evidence=lambda *_args: accepted_evidence,
+                build_verified_proof=lambda *_args: accepted_proof,
             ),
-            accepted_evidence,
+            accepted_proof,
         )
 
     def test_prepare_and_finalize_bind_trusted_principal_method_and_candidate(self) -> None:
-        service, evidence = self.service()
+        calls = []
+        accepted_proof = object()
+        service = MarketplaceAgreementAssentProofService(
+            verification_methods=_snapshot(),
+            record_identity=lambda _record: AGREEMENT_ID,
+            build_signing_input=lambda _record, _method: b"signing-input",
+            build_verified_proof=lambda *args: calls.append(args) or accepted_proof,
+        )
         candidate = _candidate()
         preparation = service.prepare(
             candidate=candidate,
@@ -84,7 +91,12 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
         self.assertEqual(result.agreement_record_id, AGREEMENT_ID)
         self.assertEqual(result.principal, PRINCIPAL)
         self.assertEqual(result.verification_method, METHOD)
-        self.assertIs(result.evidence, evidence)
+        self.assertIs(result.proof, accepted_proof)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(
+            calls[0],
+            (candidate.record, METHOD, PUBLIC_KEY, SIGNATURE),
+        )
 
     def test_untrusted_principal_method_binding_fails_closed(self) -> None:
         service, _ = self.service(snapshot=_snapshot(OTHER_PRINCIPAL))
@@ -120,7 +132,7 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
             verification_methods=_snapshot(),
             record_identity=lambda _record: "r1_other",
             build_signing_input=lambda *_args: calls.append(True) or b"unexpected",
-            build_verified_evidence=lambda *_args: object(),
+            build_verified_proof=lambda *_args: object(),
         )
         with self.assertRaises(AgreementAssentError) as caught:
             service.prepare(
@@ -161,7 +173,7 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
             verification_methods=_snapshot(),
             record_identity=lambda _record: AGREEMENT_ID,
             build_signing_input=lambda _record, _method: b"signing-input",
-            build_verified_evidence=lambda *_args: calls.append(True),
+            build_verified_proof=lambda *_args: calls.append(True),
         )
         preparation = service.prepare(
             candidate=_candidate(),
@@ -190,7 +202,7 @@ class ProductAgreementAssentApplicationTests(unittest.TestCase):
             verification_methods=_snapshot(),
             record_identity=lambda _record: AGREEMENT_ID,
             build_signing_input=lambda _record, _method: b"signing-input",
-            build_verified_evidence=fail,
+            build_verified_proof=fail,
         )
         preparation = service.prepare(
             candidate=_candidate(),

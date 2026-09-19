@@ -1,6 +1,8 @@
 """Reference OLP proof boundary for one product Agreement party assent."""
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from olp import verify_proof
 from olp.constants import (
     MANDATORY_CRYPTOSUITE,
@@ -18,12 +20,23 @@ from olp.model.verification import (
 )
 
 from .agreement_candidate_v1 import agreement_candidate_record_id
-from .agreement_formation_v1 import AssentEvidence
-
-
 AGREEMENT_ASSENT_PROOF_PURPOSE = "assertion"
 ED25519_PUBLIC_KEY_BYTES = 32
 ED25519_SIGNATURE_BYTES = 64
+
+
+@dataclass(frozen=True, slots=True)
+class VerifiedAgreementAssentProof:
+    """Cryptographically verified OLP proof without application attribution."""
+
+    proof: OLPProof
+    resolved_method: ResolvedVerificationMethod
+
+    def __post_init__(self) -> None:
+        if type(self.proof) is not OLPProof:
+            raise TypeError("proof MUST be exact OLPProof")
+        if type(self.resolved_method) is not ResolvedVerificationMethod:
+            raise TypeError("resolved_method MUST be exact ResolvedVerificationMethod")
 
 
 class AgreementAssentProfileError(ValueError):
@@ -79,14 +92,13 @@ def build_product_agreement_assent_signing_input(
     return encoded
 
 
-def build_verified_product_agreement_assent_evidence(
+def build_verified_product_agreement_assent_proof(
     agreement: object,
-    principal: str,
     verification_method: str,
     public_key: bytes,
     signature: bytes,
-) -> AssentEvidence:
-    """Verify one exact standard OLP proof and return trusted formation evidence."""
+) -> VerifiedAgreementAssentProof:
+    """Verify one exact standard OLP proof without assigning party attribution."""
     reviewed = _candidate(agreement)
     if type(public_key) is not bytes or len(public_key) != ED25519_PUBLIC_KEY_BYTES:
         _fail(
@@ -152,24 +164,23 @@ def build_verified_product_agreement_assent_evidence(
         )
 
     try:
-        return AssentEvidence(
-            principal=principal,
+        return VerifiedAgreementAssentProof(
             proof=proof,
             resolved_method=resolved,
-            attribution_accepted=True,
         )
     except Exception:
         _fail(
             "AGREEMENT_ASSENT_PROOF_INVALID",
-            "Agreement assent evidence is invalid",
+            "Agreement assent proof result is invalid",
         )
 
 
 __all__ = [
     "AGREEMENT_ASSENT_PROOF_PURPOSE",
     "AgreementAssentProfileError",
+    "VerifiedAgreementAssentProof",
     "ED25519_PUBLIC_KEY_BYTES",
     "ED25519_SIGNATURE_BYTES",
     "build_product_agreement_assent_signing_input",
-    "build_verified_product_agreement_assent_evidence",
+    "build_verified_product_agreement_assent_proof",
 ]
