@@ -26,7 +26,7 @@ function reviewedAgreementAssentRoute(path) {
   if (parts[0].includes("?") || parts[0].includes("#")) return false;
   if (parts[1] !== "assent") return false;
   if (parts.length === 2) return true;
-  return parts[2] === "preparation";
+  return parts[2] === "preparation" || parts[2] === "status";
 }
 
 function reviewedAuthenticatedRoute(method, path) {

@@ -140,7 +140,7 @@ def _encode_carrier(value):
 
 
 class AgreementAssentHttpTests(unittest.TestCase):
-    def make_adapter(self):
+    def make_adapter(self, *, required_principals=None):
         api = FakeApi()
         listing = RecordingListingAuthoring()
         proposal_authoring = RecordingProposalAuthoring()
@@ -226,6 +226,11 @@ class AgreementAssentHttpTests(unittest.TestCase):
             ),
         )
         coordination.initialize()
+        required = tuple(
+            required_principals
+            if required_principals is not None
+            else (PRINCIPAL, "did:example:other")
+        )
         formation = MarketplaceAgreementAssentFormationService(
             coordination=coordination,
             verification_methods=methods,
@@ -233,9 +238,9 @@ class AgreementAssentHttpTests(unittest.TestCase):
                 evaluate=lambda _agreement, _evidence: {
                     "agreement": AGREEMENT,
                     "formation_evidence": "EVIDENCE_INCOMPLETE",
-                    "required_principals": [PRINCIPAL, "did:example:other"],
+                    "required_principals": list(required),
                     "covered_principals": [],
-                    "missing_principals": [PRINCIPAL, "did:example:other"],
+                    "missing_principals": list(required),
                     "legal_enforceability": "NOT_EVALUATED",
                     "universal_truth": False,
                     "publishes_agreement": False,
@@ -263,7 +268,12 @@ class AgreementAssentHttpTests(unittest.TestCase):
 
     @staticmethod
     def request(kind, document, *, method="POST"):
-        suffix = "/assent/preparation" if kind == "preparation" else "/assent"
+        if kind == "preparation":
+            suffix = "/assent/preparation"
+        elif kind == "status":
+            suffix = "/assent/status"
+        else:
+            suffix = "/assent"
         return ApplicationHttpRequest(
             method,
             f"/api/agreements/{PROPOSAL}{suffix}",
@@ -311,6 +321,84 @@ class AgreementAssentHttpTests(unittest.TestCase):
         self.assertEqual(builds[0]["listing_record_id"], LISTING)
         self.assertEqual(builds[0]["acceptance_record_id"], ACCEPTANCE)
         self.assertEqual(coordination.for_agreement(AGREEMENT), ())
+
+    def test_status_requires_auth_before_candidate_resolution(self):
+        adapter, _, coordination, reads, _ = self.make_adapter()
+        response = adapter.handle(
+            self.request("status", {"acceptance_record_id": ACCEPTANCE}),
+            session_token=None,
+            session_invalid=False,
+            now=102,
+        )
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(reads, [])
+        self.assertEqual(coordination.for_agreement(AGREEMENT), ())
+
+    def test_status_is_party_only_read_only_and_session_touch_negative(self):
+        adapter, auth, coordination, reads, builds = self.make_adapter()
+        before = auth.validate_session(session_token=TOKEN, now=102)
+        response = adapter.handle(
+            self.request("status", {"acceptance_record_id": ACCEPTANCE}),
+            session_token=TOKEN,
+            session_invalid=False,
+            now=102,
+        )
+        after = auth.validate_session(session_token=TOKEN, now=102)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(before.last_used_at, after.last_used_at)
+        document = self.document(response)
+        self.assertEqual(document["agreement_record_id"], AGREEMENT)
+        self.assertEqual(document["formation_evidence"], "EVIDENCE_INCOMPLETE")
+        self.assertEqual(
+            document["required_principals"],
+            [PRINCIPAL, "did:example:other"],
+        )
+        self.assertEqual(document["covered_principals"], [])
+        self.assertEqual(
+            document["missing_principals"],
+            [PRINCIPAL, "did:example:other"],
+        )
+        self.assertEqual(document["legal_enforceability"], "NOT_EVALUATED")
+        self.assertFalse(document["universal_truth"])
+        self.assertFalse(document["publishes_agreement"])
+        self.assertFalse(document["authorizes_side_effects"])
+        self.assertEqual(reads, [PROPOSAL])
+        self.assertEqual(builds[0]["acceptance_record_id"], ACCEPTANCE)
+        self.assertEqual(coordination.for_agreement(AGREEMENT), ())
+
+    def test_non_party_cannot_prepare_submit_or_read_status(self):
+        cases = (
+            ("preparation", {"acceptance_record_id": ACCEPTANCE}),
+            (
+                "submission",
+                {
+                    "acceptance_record_id": ACCEPTANCE,
+                    "signature": {"bytes": SIGNATURE.hex()},
+                },
+            ),
+            ("status", {"acceptance_record_id": ACCEPTANCE}),
+        )
+        for kind, document in cases:
+            with self.subTest(kind=kind):
+                adapter, auth, coordination, reads, _ = self.make_adapter(
+                    required_principals=("did:example:other",)
+                )
+                before = auth.validate_session(session_token=TOKEN, now=102)
+                response = adapter.handle(
+                    self.request(kind, document),
+                    session_token=TOKEN,
+                    session_invalid=False,
+                    now=102,
+                )
+                after = auth.validate_session(session_token=TOKEN, now=102)
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    self.document(response)["error"]["code"],
+                    "AGREEMENT_ASSENT_PARTY_REQUIRED",
+                )
+                self.assertEqual(before.last_used_at, after.last_used_at)
+                self.assertEqual(reads, [PROPOSAL])
+                self.assertEqual(coordination.for_agreement(AGREEMENT), ())
 
     def test_submission_reprepares_server_binding_and_stores_verified_assent(self):
         adapter, auth, coordination, reads, builds = self.make_adapter()

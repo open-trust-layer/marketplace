@@ -3,7 +3,7 @@
 ## Purpose
 
 This source-only slice adds the browser-side transport/orchestration module for
-the already-reviewed Agreement assent preparation and submission HTTP routes.
+the already-reviewed Agreement assent preparation, submission, and formation-status HTTP routes.
 
 Profile:
 
@@ -15,14 +15,16 @@ app.js, index.html, or auth_bootstrap.js. There is no browser activation.
 ## Exact flow
 
 The unselected client can perform preparation, strict OJVE signing-input decode,
-one injected signer call, strict OJVE signature encode, and submission.
+one injected signer call, strict OJVE signature encode, submission, and a
+separate read-only formation-status request. Status never calls the signer.
 
 The server independently re-prepares and re-verifies all authority.
 
 ## Authorization boundary
 
-MarketplaceMemorySession gains bearer authority only for the two exact POST
-Agreement assent route shapes. This is the exact bearer route scope.
+MarketplaceMemorySession gains bearer authority only for the three exact POST
+Agreement assent route shapes: preparation, submission, and status. This is the
+exact bearer route scope.
 
 Authorization still comes only from session.authorizationFor. The client does
 not receive, expose, persist, or reconstruct the bearer token.

@@ -58,12 +58,33 @@ class ProductWebAgreementAssentClientContractTests(unittest.TestCase):
 
     def test_signer_receives_only_method_and_copied_signing_bytes(self) -> None:
         start = TEXT.index("async function signAndSubmit")
-        end = TEXT.index("return Object.freeze({ prepare, signAndSubmit })", start)
+        end = TEXT.index(
+            "return Object.freeze({ prepare, formationStatus, signAndSubmit })",
+            start,
+        )
         block = TEXT[start:end]
         self.assertEqual(block.count("createAgreementAssentSignature("), 1)
         self.assertIn("verificationMethod: preparation.verificationMethod", block)
         self.assertIn("signingInput: Uint8Array.from(preparation.signingInput)", block)
         self.assertIn("signature.length !== SIGNATURE_BYTES", block)
+
+    def test_formation_status_is_read_only_and_coverage_consistent(self) -> None:
+        for marker in (
+            '"/assent/status"'.replace("\\/", "/"),
+            "reviewedFormationStatusResponse",
+            "requiredPrincipals.length === 0",
+            "covered.size + missing.size !== required.size",
+            'value.legal_enforceability !== "NOT_EVALUATED"',
+            "value.universal_truth !== false",
+            'value.formation_evidence === "EVIDENCE_SUFFICIENT_FOR_PROFILE"',
+            "missing.size === 0",
+        ):
+            self.assertIn(marker, TEXT)
+        start = TEXT.index("async function formationStatus")
+        end = TEXT.index("async function signAndSubmit", start)
+        block = TEXT[start:end]
+        self.assertNotIn("createAgreementAssentSignature", block)
+        self.assertNotIn("signature:", block)
 
     def test_success_response_cannot_claim_publication_or_side_effects(self) -> None:
         self.assertIn("value.publishes_agreement !== false", TEXT)
