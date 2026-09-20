@@ -17,12 +17,25 @@ function reviewedApiPath(path) {
   return path;
 }
 
+function reviewedAgreementAssentRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (parts.length < 2 || parts.length > 3 || parts[0].length === 0 || parts[0].length > 1536) {
+    return false;
+  }
+  if (parts[0].includes("?") || parts[0].includes("#")) return false;
+  if (parts[1] !== "assent") return false;
+  if (parts.length === 2) return true;
+  return parts[2] === "preparation";
+}
+
 function reviewedAuthenticatedRoute(method, path) {
   if (method === "GET") return path === "/api/auth/session";
   if (method !== "POST") return false;
   if (path === "/api/auth/logout") return true;
   if (path === "/api/product-listings") return true;
   if (path === "/api/intents") return true;
+  if (reviewedAgreementAssentRoute(path)) return true;
   if (!path.startsWith("/api/intents/")) return false;
   const parts = path.slice("/api/intents/".length).split("/");
   if (parts.length !== 2 || parts[0].length === 0) return false;
