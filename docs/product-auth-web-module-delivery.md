@@ -10,12 +10,13 @@ This change makes the already-reviewed Marketplace browser authentication module
 - `/auth_establishment.js` -> `web/auth_establishment.js`
 - `/auth_ed25519_proof_provider.js` -> `web/auth_ed25519_proof_provider.js`
 - `/auth_ed25519_key_creation.js` -> `web/auth_ed25519_key_creation.js`
+- `/agreement_ed25519_assent_provider.js` -> `web/agreement_ed25519_assent_provider.js`
 
 The normal and in-memory demo compositions continue to pass the default empty module tuple, so their static surface remains `/`, `/index.html`, `/app.js`, and `/styles.css` only.
 
 ## Selection boundary
 
-Delivery is not execution. `web/index.html` and `web/app.js` do not import, reference, instantiate, or call any authentication module in this change. No WebCrypto operation, key creation, proof signing, challenge request, session establishment, bearer adoption, authenticated write, Proposal acceptance, or agreement creation is activated.
+Delivery is not execution. `web/index.html` and `web/app.js` do not import, reference, instantiate, or call the delivered Agreement-assent signer in this change. `web/auth_bootstrap.js` also does not import it. No Agreement WebCrypto signing operation, Agreement proof creation, Agreement publication, payment, settlement, or fulfillment is activated by this delivery-only slice. Existing authentication behavior is unchanged.
 
 The authenticated localhost bootstrap already requires its exact execution opt-in and explicit startup provisioning directory. This change only injects exact reviewed source bytes into that existing loopback composition. It creates no public-network route, CORS widening, filesystem write, database mutation, service change, dependency change, persistence, retry, timer, worker, or background activity.
 
