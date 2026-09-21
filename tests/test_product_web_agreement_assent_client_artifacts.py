@@ -67,14 +67,15 @@ class ProductWebAgreementAssentClientArtifactTests(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, text)
 
-    def test_document_records_unselected_source_only_boundary(self) -> None:
+    def test_document_records_read_only_activation_and_no_signing_boundary(self) -> None:
         text = DOC.read_text(encoding="utf-8")
         for marker in (
             "MARKETPLACE_WEB_AGREEMENT_ASSENT_CLIENT_V1",
             "strict OJVE",
             "exact bearer route scope",
             "not imported by app.js",
-            "no browser activation",
+            "read-only browser activation",
+            "no signing activation",
             "no Agreement publication",
             "source-only rollback",
         ):

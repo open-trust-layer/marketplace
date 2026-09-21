@@ -127,6 +127,18 @@ window.MarketplaceI18n = (() => {
     "acceptance.accepting": ["Publishing the exact seller acceptance\u2026", "\u041f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u043c \u0442\u043e\u0447\u043d\u043e\u0435 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c\u2026"],
     "acceptance.accepted": ["Acceptance {recordId} published ({disposition}; local change sequence {changeSeq}).", "\u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 {recordId} \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e ({disposition}; \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 {changeSeq})."],
     "acceptance.failed": ["Acceptance failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u044f: {code}"],
+    "agreementStatus.title": ["Agreement formation", "\u0424\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0441\u043e\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u044f"],
+    "agreementStatus.waitingAcceptance": ["Publish seller acceptance first. No Agreement status request has been made.", "\u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u0443\u0439\u0442\u0435 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c. \u0417\u0430\u043f\u0440\u043e\u0441 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 Agreement \u0435\u0449\u0451 \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u043b\u0441\u044f."],
+    "agreementStatus.authRequired": ["Authentication is required to inspect Agreement formation.", "\u0414\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement \u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f."],
+    "agreementStatus.ready": ["Acceptance {recordId} is available. Check current Agreement formation status explicitly.", "\u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 {recordId} \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e. \u042f\u0432\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0442\u0435\u043a\u0443\u0449\u0438\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement."],
+    "agreementStatus.check": ["Check Agreement formation", "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 Agreement"],
+    "agreementStatus.sign": ["Sign Agreement assent", "\u041f\u043e\u0434\u043f\u0438\u0441\u0430\u0442\u044c assent Agreement"],
+    "agreementStatus.checking": ["Checking current Agreement formation evidence\u2026", "\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0442\u0435\u043a\u0443\u0449\u0438\u0435 evidence \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement\u2026"],
+    "agreementStatus.failed": ["Agreement status failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 Agreement: {code}"],
+    "agreementStatus.agreement": ["Agreement candidate: {recordId}", "\u041a\u0430\u043d\u0434\u0438\u0434\u0430\u0442 Agreement: {recordId}"],
+    "agreementStatus.evidence": ["Formation evidence: {evidence}", "Evidence \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f: {evidence}"],
+    "agreementStatus.covered": ["Covered parties: {principals}", "\u041f\u043e\u043a\u0440\u044b\u0442\u044b\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
+    "agreementStatus.missing": ["Missing parties: {principals}", "\u041d\u0435\u0434\u043e\u0441\u0442\u0430\u044e\u0449\u0438\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -172,6 +184,8 @@ window.MarketplaceI18n = (() => {
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
     "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
+    "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
+    "agreement-formation-covered", "agreement-formation-missing",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -341,6 +355,9 @@ const state = {
   proposalAcceptanceResults: new Map(),
   proposalAcceptanceErrors: new Map(),
   proposalAcceptancePending: new Set(),
+  agreementFormationResults: new Map(),
+  agreementFormationErrors: new Map(),
+  agreementFormationPending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -369,6 +386,14 @@ const proposalAcceptanceSeller = byId("proposal-acceptance-seller");
 const proposalAcceptanceParent = byId("proposal-acceptance-parent");
 const proposalAcceptanceProposal = byId("proposal-acceptance-proposal");
 const acceptProposalButton = byId("accept-proposal");
+const agreementFormationHandoff = byId("agreement-formation-handoff");
+const agreementFormationStatus = byId("agreement-formation-status");
+const agreementFormationAgreement = byId("agreement-formation-agreement");
+const agreementFormationEvidence = byId("agreement-formation-evidence");
+const agreementFormationCovered = byId("agreement-formation-covered");
+const agreementFormationMissing = byId("agreement-formation-missing");
+const checkAgreementFormationButton = byId("check-agreement-formation");
+const signAgreementAssentButton = byId("sign-agreement-assent");
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -512,6 +537,9 @@ async function establishAuthenticationSession() {
       authPrincipalInput.value,
       authVerificationMethodInput.value,
     );
+    state.agreementFormationResults.clear();
+    state.agreementFormationErrors.clear();
+    state.agreementFormationPending.clear();
     setAuthStatus("auth.active", { principal: established.principal }, "success");
     renderDetail();
   } catch (error) {
@@ -522,6 +550,9 @@ async function establishAuthenticationSession() {
 function resetAuthentication() {
   if (authBootstrap === null) return;
   authBootstrap.reset();
+  state.agreementFormationResults.clear();
+  state.agreementFormationErrors.clear();
+  state.agreementFormationPending.clear();
   authBrowserPublicKeyValue = null;
   authEvidencePublicKeyValue = null;
   authPrincipalInput.value = "";
@@ -940,6 +971,95 @@ async function acceptSelectedProposal() {
   }
 }
 
+function renderAgreementFormationHandoff(record) {
+  agreementFormationHandoff.hidden = true;
+  checkAgreementFormationButton.disabled = true;
+  signAgreementAssentButton.disabled = true;
+  agreementFormationStatus.textContent = i18n.t("agreementStatus.waitingAcceptance");
+  agreementFormationAgreement.textContent = "";
+  agreementFormationEvidence.textContent = "";
+  agreementFormationCovered.textContent = "";
+  agreementFormationMissing.textContent = "";
+
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
+  agreementFormationHandoff.hidden = false;
+
+  const acceptance = state.proposalAcceptanceResults.get(proposalId);
+  if (acceptance === undefined) return;
+
+  const authSnapshot = authBootstrap === null
+    ? { active: false }
+    : authBootstrap.state();
+  if (!authSnapshot.active) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.authRequired");
+    return;
+  }
+
+  if (state.agreementFormationPending.has(proposalId)) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.checking");
+    return;
+  }
+
+  const result = state.agreementFormationResults.get(proposalId);
+  if (result !== undefined) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.ready", {
+      recordId: acceptance.recordId,
+    });
+    agreementFormationAgreement.textContent = i18n.t("agreementStatus.agreement", {
+      recordId: result.agreementRecordId,
+    });
+    agreementFormationEvidence.textContent = i18n.t("agreementStatus.evidence", {
+      evidence: result.formationEvidence,
+    });
+    agreementFormationCovered.textContent = i18n.t("agreementStatus.covered", {
+      principals: result.coveredPrincipals.join(", ") || "none",
+    });
+    agreementFormationMissing.textContent = i18n.t("agreementStatus.missing", {
+      principals: result.missingPrincipals.join(", ") || "none",
+    });
+    checkAgreementFormationButton.disabled = false;
+    return;
+  }
+
+  const errorCode = state.agreementFormationErrors.get(proposalId);
+  agreementFormationStatus.textContent = errorCode === undefined
+    ? i18n.t("agreementStatus.ready", { recordId: acceptance.recordId })
+    : i18n.t("agreementStatus.failed", { code: errorCode });
+  checkAgreementFormationButton.disabled = false;
+}
+
+async function checkSelectedAgreementFormation() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = state.proposalAcceptanceResults.get(proposalId);
+  if (proposal === null || acceptance === undefined) return;
+  const authSnapshot = authBootstrap.state();
+  if (!authSnapshot.active) {
+    state.agreementFormationErrors.set(proposalId, "AUTH_REQUIRED");
+    renderDetail();
+    return;
+  }
+
+  state.agreementFormationResults.delete(proposalId);
+  state.agreementFormationErrors.delete(proposalId);
+  state.agreementFormationPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementAssentClient();
+    const result = await client.formationStatus(proposalId, acceptance.recordId);
+    state.agreementFormationResults.set(proposalId, result);
+  } catch (error) {
+    state.agreementFormationErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementFormationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
 function renderDetail() {
   const record = state.selectedRecord;
   const canReturnToParent = state.responseParentId !== null
@@ -950,6 +1070,7 @@ function renderDetail() {
   selectedRecordId.textContent = state.selectedId ?? i18n.t("detail.none");
   renderSelectedRecordSummary(record);
   renderProposalAcceptanceHandoff(record);
+  renderAgreementFormationHandoff(record);
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
@@ -1627,6 +1748,7 @@ authGenerateKeyButton.addEventListener("click", () => void generateAuthenticatio
 authEstablishButton.addEventListener("click", () => void establishAuthenticationSession());
 authResetButton.addEventListener("click", resetAuthentication);
 acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal());
+checkAgreementFormationButton.addEventListener("click", () => void checkSelectedAgreementFormation());
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());

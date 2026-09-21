@@ -44,7 +44,7 @@ class ProductMvpProposalAcceptanceHandoffTests(unittest.TestCase):
             APP,
         )
         start = APP.index("async function acceptSelectedProposal()")
-        end = APP.index("function renderDetail()", start)
+        end = APP.index("function renderAgreementFormationHandoff(record)", start)
         body = APP[start:end]
         self.assertIn("authBootstrap.proposalAcceptanceClient()", body)
         self.assertIn("client.acceptProposal(proposalId)", body)
