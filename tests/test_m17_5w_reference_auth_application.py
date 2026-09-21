@@ -15,6 +15,9 @@ from marketplace.application.auth_startup_provisioning import (
 )
 from marketplace.application.composition import MarketplaceApplicationComposition
 from marketplace.application.proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
+from marketplace.application.proposal_acceptance_resolution import (
+    MarketplaceProposalAcceptanceResolutionService,
+)
 from marketplace.application.launch import (
     LOOPBACK_LAUNCH_HOST,
     MAX_LAUNCH_PORT,
@@ -26,6 +29,9 @@ from marketplace.reference.application_record_json_v1 import (
 )
 from marketplace.reference.application_record_v1 import (
     marketplace_record_issuer_principal,
+)
+from marketplace.reference.proposal_acceptance_v1 import (
+    proposal_acceptance_record_id,
 )
 from marketplace.reference.auth_application_v1 import (
     PROFILE_NAME,
@@ -136,6 +142,7 @@ class MarketplaceReferenceAuthenticatedLaunchTests(unittest.TestCase):
                 "decode_record_json",
                 "record_principal",
                 "proposal_acceptance_authoring",
+                "proposal_acceptance_resolution",
             },
         )
         self.assertIs(t_kwargs["application"], plan.composition)
@@ -152,6 +159,20 @@ class MarketplaceReferenceAuthenticatedLaunchTests(unittest.TestCase):
         acceptance = t_kwargs["proposal_acceptance_authoring"]
         self.assertIs(type(acceptance), MarketplaceProposalAcceptanceAuthoringService)
         self.assertIs(acceptance._state, plan.composition.state)
+        resolution = t_kwargs["proposal_acceptance_resolution"]
+        self.assertIs(
+            type(resolution),
+            MarketplaceProposalAcceptanceResolutionService,
+        )
+        self.assertIs(resolution._state, plan.composition.state)
+        self.assertIs(
+            resolution._record_principal,
+            marketplace_record_issuer_principal,
+        )
+        self.assertIs(
+            resolution._record_identity,
+            proposal_acceptance_record_id,
+        )
         startup = t.return_value
         u.assert_called_once()
         kwargs = u.call_args.kwargs

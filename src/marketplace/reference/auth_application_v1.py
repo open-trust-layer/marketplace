@@ -18,6 +18,9 @@ from ..application.auth_startup_provisioning import (
 )
 from ..application.composition import MarketplaceApplicationComposition
 from ..application.proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
+from ..application.proposal_acceptance_resolution import (
+    MarketplaceProposalAcceptanceResolutionService,
+)
 from ..application.launch import (
     LOOPBACK_LAUNCH_HOST,
     MAX_LAUNCH_PORT,
@@ -98,6 +101,16 @@ def build_reference_authenticated_marketplace_launch_plan(
             acceptance_proposal_id=proposal_acceptance_proposal_id,
             record_identity=proposal_acceptance_record_id,
         )
+        proposal_acceptance_resolution = MarketplaceProposalAcceptanceResolutionService(
+            state=application_plan.composition.state,
+            is_proposal_record=is_marketplace_proposal_record,
+            proposal_parent_ids=marketplace_response_parent_ids,
+            extract_product_listing=extract_product_listing,
+            record_principal=marketplace_record_issuer_principal,
+            build_acceptance_record=build_proposal_acceptance_record,
+            acceptance_proposal_id=proposal_acceptance_proposal_id,
+            record_identity=proposal_acceptance_record_id,
+        )
         startup = compose_marketplace_authenticated_startup(
             application=application_plan.composition,
             provisioning=provisioning,
@@ -105,6 +118,7 @@ def build_reference_authenticated_marketplace_launch_plan(
             decode_record_json=decode_marketplace_application_record_json,
             record_principal=marketplace_record_issuer_principal,
             proposal_acceptance_authoring=proposal_acceptance_authoring,
+            proposal_acceptance_resolution=proposal_acceptance_resolution,
         )
         if type(startup) is not MarketplaceAuthenticatedStartupComposition:
             _fail()
