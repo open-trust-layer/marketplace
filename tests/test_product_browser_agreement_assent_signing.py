@@ -31,7 +31,7 @@ class ProductBrowserAgreementAssentSigningTests(unittest.TestCase):
         render_end = APP.index("async function checkSelectedAgreementFormation()", render_start)
         render = APP[render_start:render_end]
         for marker in (
-            "state.proposalAcceptanceResults.get(proposalId)",
+            "proposalAcceptanceEvidence(proposalId)",
             "state.agreementFormationResults.get(proposalId)",
             "state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId",
             "!result.requiredPrincipals.includes(principal)",

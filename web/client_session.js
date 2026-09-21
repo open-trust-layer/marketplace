@@ -30,7 +30,14 @@ function reviewedAgreementAssentRoute(path) {
 }
 
 function reviewedAuthenticatedRoute(method, path) {
-  if (method === "GET") return path === "/api/auth/session";
+  if (method === "GET") {
+    if (path === "/api/auth/session") return true;
+    if (!path.startsWith("/api/intents/")) return false;
+    const parts = path.slice("/api/intents/".length).split("/");
+    if (parts.length !== 2 || parts[0].length === 0) return false;
+    if (parts[0].includes("?") || parts[0].includes("#")) return false;
+    return parts[1] === "acceptance";
+  }
   if (method !== "POST") return false;
   if (path === "/api/auth/logout") return true;
   if (path === "/api/product-listings") return true;

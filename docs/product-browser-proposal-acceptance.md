@@ -60,6 +60,23 @@ A successful 201 response is accepted only with the exact fields:
 Only that bounded public publication metadata is retained in page memory, keyed
 by the exact Proposal identity.
 
+## Read-only acceptance resolution
+
+The same purpose-specific client now also exposes an exact authenticated read:
+
+    GET /api/intents/{proposal_record_id}/acceptance
+
+This operation has no query, body, or Content-Type. It accepts HTTP 200 only
+when the response has exactly `proposal_record_id` and `record_id`, and the
+returned Proposal identity exactly matches the requested Proposal.
+
+GET does not publish acceptance and does not return acceptance record content.
+It exists so another authenticated Proposal party can converge on the exact
+immutable acceptance identity without sharing the seller's browser memory.
+
+Browser selection of this read remains a separate explicit user action from the
+seller-only empty POST publication action.
+
 ## Semantic boundary
 
 A Proposal-acceptance record is one immutable seller-attributed acceptance event.

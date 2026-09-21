@@ -26,8 +26,9 @@ The **Sign Agreement assent** control starts disabled.
 
 It may become enabled only when all of these are true for the selected Proposal:
 
-1. the page holds one exact Proposal-acceptance Record Identity returned by the
-   reviewed seller-acceptance flow;
+1. the page holds one exact published Proposal-acceptance Record Identity from
+   either the reviewed seller-publication result or the explicit authenticated
+   party-gated resolution flow;
 2. authentication is active;
 3. an explicit formation-status request has returned a reviewed result;
 4. that status result is still bound in page memory to the same exact acceptance

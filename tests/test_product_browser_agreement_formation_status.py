@@ -29,7 +29,7 @@ class ProductBrowserAgreementFormationStatusTests(unittest.TestCase):
         end = APP.index("async function checkSelectedAgreementFormation()", start)
         body = APP[start:end]
         self.assertIn("proposalResponseSummary(record)", body)
-        self.assertIn("state.proposalAcceptanceResults.get(proposalId)", body)
+        self.assertIn("proposalAcceptanceEvidence(proposalId)", body)
         self.assertIn("authBootstrap.state()", body)
         self.assertIn("checkAgreementFormationButton.disabled = false", body)
         self.assertIn("signAgreementAssentButton.disabled = true", body)

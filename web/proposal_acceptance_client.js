@@ -62,6 +62,18 @@ function reviewedAcceptanceResponse(value) {
   });
 }
 
+function reviewedResolutionResponse(value, expectedProposalRecordId) {
+  if (!exactKeys(value, ["proposal_record_id", "record_id"])) {
+    throw stableAcceptanceClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+  }
+  const proposalRecordId = reviewedRecordId(value.proposal_record_id);
+  const recordId = reviewedRecordId(value.record_id);
+  if (proposalRecordId !== expectedProposalRecordId) {
+    throw stableAcceptanceClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+  }
+  return Object.freeze({ proposalRecordId, recordId });
+}
+
 async function decodeResponse(response, session) {
   let text;
   try {
@@ -92,8 +104,64 @@ async function decodeResponse(response, session) {
   return reviewedAcceptanceResponse(value);
 }
 
+async function decodeResolutionResponse(response, session, expectedProposalRecordId) {
+  let text;
+  try {
+    text = await response.text();
+  } catch {
+    throw stableAcceptanceClientError("APPLICATION_HTTP_TRANSPORT_FAILED");
+  }
+  if (utf8Bytes(text) > MAX_RESPONSE_BYTES) {
+    throw stableAcceptanceClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+  }
+  let value;
+  try {
+    value = JSON.parse(text);
+  } catch {
+    throw stableAcceptanceClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+  }
+  if (!response.ok) {
+    const serverCode = value?.error?.code;
+    const code = typeof serverCode === "string" && /^[A-Z0-9_]{1,96}$/.test(serverCode)
+      ? serverCode
+      : "HTTP_" + response.status;
+    session.invalidateForServerCode(code);
+    throw stableAcceptanceClientError(code);
+  }
+  if (response.status !== 200) {
+    throw stableAcceptanceClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+  }
+  return reviewedResolutionResponse(value, expectedProposalRecordId);
+}
+
 function createMarketplaceWebProposalAcceptanceClient({ fetchImpl, session }) {
   const reviewed = reviewedConfiguration(fetchImpl, session);
+
+  async function resolveAcceptance(proposalRecordIdValue) {
+    const proposalRecordId = reviewedRecordId(proposalRecordIdValue);
+    const path = "/api/intents/" + encodeURIComponent(proposalRecordId) + "/acceptance";
+    const authorization = reviewed.session.authorizationFor("GET", path);
+    if (typeof authorization !== "string" || !authorization.startsWith("Bearer ")) {
+      throw stableAcceptanceClientError("AUTH_REQUIRED");
+    }
+    let response;
+    try {
+      response = await reviewed.fetchImpl(path, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: authorization,
+        },
+        credentials: "omit",
+        cache: "no-store",
+        redirect: "error",
+        referrerPolicy: "no-referrer",
+      });
+    } catch {
+      throw stableAcceptanceClientError("APPLICATION_HTTP_TRANSPORT_FAILED");
+    }
+    return decodeResolutionResponse(response, reviewed.session, proposalRecordId);
+  }
 
   async function acceptProposal(proposalRecordIdValue) {
     const proposalRecordId = reviewedRecordId(proposalRecordIdValue);
@@ -121,7 +189,7 @@ function createMarketplaceWebProposalAcceptanceClient({ fetchImpl, session }) {
     return decodeResponse(response, reviewed.session);
   }
 
-  return Object.freeze({ acceptProposal });
+  return Object.freeze({ resolveAcceptance, acceptProposal });
 }
 
 export {

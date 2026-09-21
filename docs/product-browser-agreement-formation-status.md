@@ -7,9 +7,10 @@ Risk classification: LOW read-only authenticated product selection.
 This source slice activates only the existing read-only Agreement formation
 status seam in the browser product.
 
-It consumes the exact acceptance Record Identity already returned by the
-explicit seller Proposal-acceptance flow and retains that identity only in
-current page memory.
+It consumes the exact acceptance Record Identity held in current page memory.
+That identity may come directly from the explicit seller Proposal-acceptance
+publication result or from the separately reviewed explicit authenticated
+acceptance-resolution GET.
 
 The browser operation is:
 
@@ -23,8 +24,9 @@ formation**.
 The status control remains disabled unless:
 
 - the selected record is an exact Proposal in the reviewed response flow;
-- the same page has an exact published seller acceptance result for that
-  Proposal;
+- the same page has the exact published seller acceptance Record Identity for
+  that Proposal, either from seller publication or explicit party-gated
+  resolution;
 - the authentication bootstrap still has an active memory-only session/key;
 - no formation-status request for that Proposal is already pending.
 
