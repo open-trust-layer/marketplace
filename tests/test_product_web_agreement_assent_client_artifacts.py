@@ -67,16 +67,18 @@ class ProductWebAgreementAssentClientArtifactTests(unittest.TestCase):
             with self.subTest(forbidden=forbidden):
                 self.assertNotIn(forbidden, text)
 
-    def test_document_records_read_only_activation_and_no_signing_boundary(self) -> None:
+    def test_document_records_guarded_explicit_signing_boundary(self) -> None:
         text = DOC.read_text(encoding="utf-8")
         for marker in (
             "MARKETPLACE_WEB_AGREEMENT_ASSENT_CLIENT_V1",
             "strict OJVE",
             "exact bearer route scope",
-            "not imported by app.js",
-            "read-only browser activation",
-            "no signing activation",
-            "no Agreement publication",
+            "not imported directly by app.js",
+            "Formation status remains an explicit read-only user action",
+            "signAndSubmit(proposalRecordId, acceptanceRecordId, expectedAgreementRecordId)",
+            "AGREEMENT_ASSENT_AGREEMENT_MISMATCH",
+            "no automatic signing",
+            "do not publish an Agreement",
             "source-only rollback",
         ):
             self.assertIn(marker, text)

@@ -114,10 +114,14 @@ browser key after authentication.
 index.html and app.js still do not import the provider, and auth_bootstrap.js
 does not call createAgreementAssentSignature directly. It only constructs the
 purpose-specific signer when agreementAssentClient() is explicitly requested
-after key/session verification. No current page control requests that factory.
+after key/session verification.
 
-Delivery and composition are not browser signing activation. Any active user
-action that calls Agreement prepare/sign/submit remains a later reviewed slice.
+The active page may now request that reviewed client from one explicit
+Agreement-assent signing handler after the exact acceptance-bound formation
+status proves that the authenticated principal is a required missing party.
+The client re-prepares and checks the expected Agreement Record Identity before
+it invokes createAgreementAssentSignature. app.js never receives or calls the
+signer primitive directly.
 
 ## Rollback
 

@@ -40,7 +40,7 @@ class ProductBrowserAgreementFormationStatusTests(unittest.TestCase):
             APP,
         )
         start = APP.index("async function checkSelectedAgreementFormation()")
-        end = APP.index("function renderDetail()", start)
+        end = APP.index("async function signSelectedAgreementAssent()", start)
         body = APP[start:end]
         self.assertIn("authBootstrap.agreementAssentClient()", body)
         self.assertIn("client.formationStatus(proposalId, acceptance.recordId)", body)
@@ -58,10 +58,12 @@ class ProductBrowserAgreementFormationStatusTests(unittest.TestCase):
         body = APP[start:end]
         self.assertIn("state.agreementFormationResults.delete(proposalId)", body)
 
-    def test_signing_remains_unselected_and_handler_negative(self) -> None:
-        self.assertNotIn("signAgreementAssentButton.addEventListener", APP)
-        self.assertNotIn("signAndSubmit(", APP)
-        self.assertNotIn("createAgreementAssentSignature(", APP)
+    def test_formation_status_handler_itself_never_signs(self) -> None:
+        start = APP.index("async function checkSelectedAgreementFormation()")
+        end = APP.index("async function signSelectedAgreementAssent()", start)
+        body = APP[start:end]
+        self.assertNotIn("signAndSubmit(", body)
+        self.assertNotIn("createAgreementAssentSignature(", body)
 
     def test_status_result_is_memory_only_and_bounded_to_reviewed_fields(self) -> None:
         for marker in (
@@ -93,7 +95,7 @@ class ProductBrowserAgreementFormationStatusTests(unittest.TestCase):
             "exact acceptance Record Identity",
             "explicit user click",
             "formationStatus",
-            "no signing",
+            "No signing occurs inside the formation-status",
             "no Agreement publication",
             "memory-only",
             "source-only rollback",

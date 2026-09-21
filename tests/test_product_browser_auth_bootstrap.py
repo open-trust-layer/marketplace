@@ -65,7 +65,7 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
         self.assertIn('authGenerateKeyButton.addEventListener("click"', app)
         self.assertNotIn('import "./auth_bootstrap.js"', app)
 
-    def test_agreement_assent_composition_allows_read_only_status_but_not_signing(self) -> None:
+    def test_agreement_assent_composition_stays_private_while_page_selects_explicit_signing(self) -> None:
         bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
         self.assertIn("function agreementAssentClient()", bootstrap)
         self.assertIn('stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED")', bootstrap)
@@ -89,12 +89,12 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
         ):
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
-        self.assertEqual(app.count("agreementAssentClient()"), 1)
+        self.assertEqual(app.count("agreementAssentClient()"), 2)
         self.assertEqual(app.count(".formationStatus("), 1)
-        self.assertNotIn("signAndSubmit(", app)
+        self.assertEqual(app.count(".signAndSubmit("), 1)
         self.assertNotIn("createAgreementAssentSignature(", app)
         self.assertIn('id="sign-agreement-assent" type="button" disabled', index)
-        self.assertNotIn('signAgreementAssentButton.addEventListener', app)
+        self.assertIn('signAgreementAssentButton.addEventListener("click"', app)
 
     def test_proposal_acceptance_client_is_composed_but_bearer_stays_private(self) -> None:
         bootstrap = BOOTSTRAP.read_text(encoding="utf-8")

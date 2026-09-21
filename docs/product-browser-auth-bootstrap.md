@@ -69,12 +69,14 @@ purpose-specific Agreement signer, and passes the existing in-memory session
 only to the reviewed Agreement client. It returns neither the private key nor
 the bearer token.
 
-This is composition, not an active Agreement-assent user flow. `index.html` and
-`app.js` do not import the Agreement modules, do not call
-`agreementAssentClient()`, and expose no Agreement-signing control. The
-bootstrap itself never calls `prepare`, `formationStatus`, or
-`signAndSubmit`. Browser signing activation remains a later explicit product
-slice.
+The page still does not import the Agreement modules directly. It reaches the
+reviewed capability only through `agreementAssentClient()`.
+
+The active product may now select two explicit operations from that composition:
+read-only formation-status inspection and a separate explicit Agreement-assent
+signing action. The bootstrap itself never calls `prepare`,
+`formationStatus`, `signAndSubmit`, or the signer; it only composes the
+reviewed client after the existing key/session/method preconditions hold.
 
 Resetting authentication clears the key/session state checked by the factory, so
 new Agreement client composition fails closed after reset.

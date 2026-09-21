@@ -47,16 +47,16 @@ and missing parties.
 
 ## Signing boundary
 
-This is read-only browser activation only.
-
-The visible **Sign Agreement assent** button remains disabled and has no event
-handler. The active page does not call:
+The formation-status operation itself remains read-only. Its explicit
+**Check Agreement formation** handler does not call:
 
 - prepare();
 - signAndSubmit();
 - createAgreementAssentSignature().
 
-Therefore this slice performs no signing and emits no assent proof.
+A separate browser signing slice may consume the reviewed result after this
+status operation. No signing occurs inside the formation-status request or
+handler.
 
 ## Authority / activity boundary
 

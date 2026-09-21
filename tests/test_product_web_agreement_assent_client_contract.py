@@ -68,6 +68,29 @@ class ProductWebAgreementAssentClientContractTests(unittest.TestCase):
         self.assertIn("signingInput: Uint8Array.from(preparation.signingInput)", block)
         self.assertIn("signature.length !== SIGNATURE_BYTES", block)
 
+    def test_signing_requires_expected_agreement_identity_before_signer_call(self) -> None:
+        start = TEXT.index("async function signAndSubmit")
+        end = TEXT.index(
+            "return Object.freeze({ prepare, formationStatus, signAndSubmit })",
+            start,
+        )
+        block = TEXT[start:end]
+        self.assertIn("expectedAgreementRecordIdValue", block)
+        self.assertIn(
+            "const expectedAgreementRecordId = reviewedRecordId(expectedAgreementRecordIdValue)",
+            block,
+        )
+        mismatch = block.index(
+            'preparation.agreementRecordId !== expectedAgreementRecordId'
+        )
+        signer = block.index("createAgreementAssentSignature(")
+        self.assertLess(mismatch, signer)
+        self.assertIn('"AGREEMENT_ASSENT_AGREEMENT_MISMATCH"', block)
+        self.assertIn(
+            "reviewedSubmissionResponse(response, expectedAgreementRecordId)",
+            block,
+        )
+
     def test_formation_status_is_read_only_and_coverage_consistent(self) -> None:
         for marker in (
             '"/assent/status"'.replace("\\/", "/"),
