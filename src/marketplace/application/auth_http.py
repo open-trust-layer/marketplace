@@ -1,4 +1,4 @@
-"""M17.5C source-only authenticated HTTP write routing."""
+"""Authenticated HTTP routing for reviewed Marketplace reads and writes."""
 from __future__ import annotations
 
 from typing import Any, Callable
@@ -32,6 +32,11 @@ from .proposal_acceptance import (
     ProposalAcceptancePublicationResult,
 )
 from .proposal_authoring import ProposalAuthoringError
+from .proposal_acceptance_resolution import (
+    MarketplaceProposalAcceptanceResolutionService,
+    ProposalAcceptanceResolutionError,
+    ProposalAcceptanceResolutionResult,
+)
 
 
 RecordPrincipalExtractor = Callable[[Any], str]
@@ -85,6 +90,15 @@ def _acceptance_proposal_path(path: str) -> str | None:
         return None
     return record_id
 
+def _protected_read(request: ApplicationHttpRequest) -> tuple[str, str | None] | None:
+    if request.method != "GET":
+        return None
+    acceptance_proposal = _acceptance_proposal_path(request.path)
+    if acceptance_proposal is not None:
+        return ("acceptance_resolution", acceptance_proposal)
+    return None
+
+
 def _protected_write(request: ApplicationHttpRequest) -> tuple[str, str | None] | None:
     if request.method != "POST":
         return None
@@ -105,7 +119,7 @@ def _protected_write(request: ApplicationHttpRequest) -> tuple[str, str | None] 
 
 
 class MarketplaceAuthenticatedApplicationHttpAdapter:
-    """Protect reviewed write routes with one request-lifetime M17.5B session token."""
+    """Protect reviewed authenticated routes with one request-lifetime session token."""
 
     def __init__(
         self,
@@ -115,6 +129,7 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
         product_listing_authoring: AuthenticatedProductListingAuthoringService,
         proposal_authoring: AuthenticatedProposalAuthoringService,
         proposal_acceptance_authoring: AuthenticatedProposalAcceptanceAuthoringService | None = None,
+        proposal_acceptance_resolution: MarketplaceProposalAcceptanceResolutionService | None = None,
         decode_record_json: RecordJsonDecoder,
         create_intent: RawIntentCreator,
         respond_to_intent: RawResponseCreator,
@@ -133,6 +148,11 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
             and type(proposal_acceptance_authoring) is not AuthenticatedProposalAcceptanceAuthoringService
         ):
             raise TypeError("proposal_acceptance_authoring MUST be exact authenticated acceptance service when supplied")
+        if (
+            proposal_acceptance_resolution is not None
+            and type(proposal_acceptance_resolution) is not MarketplaceProposalAcceptanceResolutionService
+        ):
+            raise TypeError("proposal_acceptance_resolution MUST be exact acceptance resolution service when supplied")
         if not callable(decode_record_json):
             raise TypeError("decode_record_json MUST be callable")
         if not callable(create_intent):
@@ -146,6 +166,7 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
         self._product_listing_authoring = product_listing_authoring
         self._proposal_authoring = proposal_authoring
         self._proposal_acceptance_authoring = proposal_acceptance_authoring
+        self._proposal_acceptance_resolution = proposal_acceptance_resolution
         self._decode_record_json = decode_record_json
         self._create_intent = create_intent
         self._respond_to_intent = respond_to_intent
@@ -165,6 +186,8 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
             raise ValueError("now MUST be a non-negative exact integer")
         protected = _protected_write(request)
         if protected is None:
+            protected = _protected_read(request)
+        if protected is None:
             if session_invalid or session_token is not None:
                 return _auth_invalid()
             return self._base.handle(request)
@@ -175,7 +198,7 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
         if type(session_token) is not bytes or len(session_token) != 32:
             return _auth_invalid()
         try:
-            self._auth.validate_session(session_token=session_token, now=now)
+            session = self._auth.validate_session(session_token=session_token, now=now)
         except ApplicationAuthError as exc:
             return _auth_error(exc)
         kind, parent_id = protected
@@ -194,6 +217,12 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
                 proposal_id=parent_id,
                 session_token=session_token,
                 now=now,
+            )
+        if kind == "acceptance_resolution":
+            return self._proposal_acceptance_resolution_response(
+                request,
+                proposal_id=parent_id,
+                principal=session.principal,
             )
         if kind == "intent":
             return self._raw_intent(request, session_token=session_token, now=now)
@@ -367,6 +396,84 @@ class MarketplaceAuthenticatedApplicationHttpAdapter:
                 "seller Proposal acceptance returned an invalid result",
             )
         return _json_response(201, "Created", result.to_document())
+    def _proposal_acceptance_resolution_response(
+        self,
+        request: ApplicationHttpRequest,
+        *,
+        proposal_id: str | None,
+        principal: str,
+    ) -> ApplicationHttpResponse:
+        if type(proposal_id) is not str or not proposal_id:
+            return _bad_request()
+        if request.query or request.body != b"" or request.content_type is not None:
+            return _bad_request("PROPOSAL_ACCEPTANCE_RESOLUTION_REQUEST_INVALID")
+        if self._proposal_acceptance_resolution is None:
+            return _error_response(
+                503,
+                "Service Unavailable",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_UNAVAILABLE",
+                "Proposal acceptance resolution is not configured",
+            )
+        try:
+            result = self._proposal_acceptance_resolution.resolve(
+                principal=principal,
+                proposal_record_id=proposal_id,
+            )
+        except ProposalAcceptanceResolutionError as exc:
+            if exc.code == "PROPOSAL_ACCEPTANCE_RESOLUTION_PARTY_REQUIRED":
+                return _error_response(
+                    403,
+                    "Forbidden",
+                    exc.code,
+                    "authenticated principal is not a Proposal party",
+                )
+            if exc.code in {
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_PROPOSAL_NOT_FOUND",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_LISTING_NOT_FOUND",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_NOT_FOUND",
+            }:
+                return _error_response(
+                    404,
+                    "Not Found",
+                    exc.code,
+                    "required Proposal acceptance evidence was not found",
+                )
+            if exc.code == "PROPOSAL_ACCEPTANCE_RESOLUTION_STATE_UNAVAILABLE":
+                return _error_response(
+                    503,
+                    "Service Unavailable",
+                    exc.code,
+                    "required Marketplace state is unavailable",
+                )
+            if exc.code in {
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_REQUEST_INVALID",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_PROPOSAL_INVALID",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_PARENT_INVALID",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_LISTING_INVALID",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_DERIVATION_FAILED",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_ACCEPTANCE_INVALID",
+            }:
+                return _error_response(
+                    409,
+                    "Conflict",
+                    exc.code,
+                    "Proposal acceptance resolution preconditions are not satisfied",
+                )
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_FAILED",
+                "Proposal acceptance could not be resolved safely",
+            )
+        if type(result) is not ProposalAcceptanceResolutionResult:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "PROPOSAL_ACCEPTANCE_RESOLUTION_RESULT_INVALID",
+                "Proposal acceptance resolution returned an invalid result",
+            )
+        return _json_response(200, "OK", result.to_document())
+
     def _authorize_raw_record(
         self,
         record: Any,

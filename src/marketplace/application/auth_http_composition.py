@@ -26,6 +26,7 @@ from .auth_session_http import (
 from .auth_static_composition import MarketplaceStaticAuthenticationComposition
 from .composition import MarketplaceApplicationComposition
 from .proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
+from .proposal_acceptance_resolution import MarketplaceProposalAcceptanceResolutionService
 
 
 PROFILE_NAME: Final = "MARKETPLACE_APPLICATION_AUTH_HTTP_COMPOSITION_V1"
@@ -53,6 +54,7 @@ class MarketplaceAuthenticatedHttpComposition:
     application_http: MarketplaceAuthenticatedApplicationHttpAdapter
     session_http: MarketplaceAuthenticationSessionHttpAdapter
     proposal_acceptance_authoring: AuthenticatedProposalAcceptanceAuthoringService | None = None
+    proposal_acceptance_resolution: MarketplaceProposalAcceptanceResolutionService | None = None
 
     def __post_init__(self) -> None:
         if type(self.application) is not MarketplaceApplicationComposition:
@@ -88,6 +90,12 @@ class MarketplaceAuthenticatedHttpComposition:
             is not AuthenticatedProposalAcceptanceAuthoringService
         ):
             _fail()
+        if (
+            self.proposal_acceptance_resolution is not None
+            and type(self.proposal_acceptance_resolution)
+            is not MarketplaceProposalAcceptanceResolutionService
+        ):
+            _fail()
 
 
 def compose_marketplace_authenticated_http(
@@ -98,6 +106,7 @@ def compose_marketplace_authenticated_http(
     decode_record_json: RecordJsonDecoder,
     record_principal: RecordPrincipalExtractor,
     proposal_acceptance_authoring: MarketplaceProposalAcceptanceAuthoringService | None = None,
+    proposal_acceptance_resolution: MarketplaceProposalAcceptanceResolutionService | None = None,
 ) -> MarketplaceAuthenticatedHttpComposition:
     """Compose one inert authenticated HTTP graph from reviewed injected objects."""
 
@@ -113,6 +122,11 @@ def compose_marketplace_authenticated_http(
     if (
         proposal_acceptance_authoring is not None
         and type(proposal_acceptance_authoring) is not MarketplaceProposalAcceptanceAuthoringService
+    ):
+        _fail()
+    if (
+        proposal_acceptance_resolution is not None
+        and type(proposal_acceptance_resolution) is not MarketplaceProposalAcceptanceResolutionService
     ):
         _fail()
 
@@ -143,6 +157,7 @@ def compose_marketplace_authenticated_http(
             product_listing_authoring=product_listing_authoring,
             proposal_authoring=proposal_authoring,
             proposal_acceptance_authoring=guarded_acceptance,
+            proposal_acceptance_resolution=proposal_acceptance_resolution,
             decode_record_json=decode_record_json,
             create_intent=application.api.create_intent,
             respond_to_intent=application.api.respond_to_intent,
@@ -161,6 +176,7 @@ def compose_marketplace_authenticated_http(
             application_http=application_http,
             session_http=session_http,
             proposal_acceptance_authoring=guarded_acceptance,
+            proposal_acceptance_resolution=proposal_acceptance_resolution,
         )
     except MarketplaceAuthenticatedHttpCompositionError:
         raise
