@@ -7,6 +7,8 @@ import {
 } from "./auth_ed25519_key_creation.js";
 import { createMarketplaceWebAuthEd25519ProofProvider } from "./auth_ed25519_proof_provider.js";
 import { createMarketplaceWebAuthEstablishment } from "./auth_establishment.js";
+import { createMarketplaceWebAgreementEd25519AssentProvider } from "./agreement_ed25519_assent_provider.js";
+import { createMarketplaceWebAgreementAssentClient } from "./agreement_assent_client.js";
 
 const BROWSER_PUBLIC_KEY_PREFIX = "mkpk1_";
 const EVIDENCE_PUBLIC_KEY_PREFIX = "mkp1_";
@@ -108,6 +110,22 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     return result;
   }
 
+  function agreementAssentClient() {
+    if (keyResult === null || !session.isActive || activeVerificationMethod === null) {
+      throw stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED");
+    }
+    const signer = createMarketplaceWebAgreementEd25519AssentProvider({
+      subtle: reviewedCrypto,
+      privateKey: keyResult.privateKey,
+      verificationMethod: activeVerificationMethod,
+    });
+    return createMarketplaceWebAgreementAssentClient({
+      fetchImpl: reviewedTransport,
+      session,
+      signer,
+    });
+  }
+
   function state() {
     const active = session.isActive;
     return Object.freeze({
@@ -127,6 +145,7 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   return Object.freeze({
     createAuthenticationKey,
     establishSession,
+    agreementAssentClient,
     state,
     reset,
   });

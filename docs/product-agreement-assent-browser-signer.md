@@ -9,7 +9,9 @@ It accepts exact signing bytes prepared by the reviewed server/application
 boundary and signs those bytes with an already-supplied non-extractable Ed25519
 private CryptoKey.
 
-The provider is deliberately unselected and undelivered in this slice.
+The provider was deliberately unselected and undelivered in its original
+source slice. Later reviewed slices now deliver it and allow composition only
+inside auth_bootstrap.js; app.js and index.html still cannot invoke it directly.
 
 ## Profile
 
@@ -104,14 +106,18 @@ Errors are stable and non-reflective.
 
 ## Delivery and activation
 
-This slice does not add the source to the localhost/authenticated Web module
-allowlist and does not import it from index.html, app.js, auth bootstrap,
-session code or Android.
+A later reviewed delivery slice adds the source to the authenticated same-origin
+module allowlist. The reviewed authentication bootstrap is now the only module
+that imports the provider and may compose it with the existing non-extractable
+browser key after authentication.
 
-Source presence is not browser activation.
+index.html and app.js still do not import the provider, and auth_bootstrap.js
+does not call createAgreementAssentSignature directly. It only constructs the
+purpose-specific signer when agreementAssentClient() is explicitly requested
+after key/session verification. No current page control requests that factory.
 
-A later reviewed slice must separately authorize same-origin delivery and any
-explicit user action that selects the signer.
+Delivery and composition are not browser signing activation. Any active user
+action that calls Agreement prepare/sign/submit remains a later reviewed slice.
 
 ## Rollback
 
