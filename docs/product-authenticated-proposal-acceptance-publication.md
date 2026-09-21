@@ -65,3 +65,14 @@ The existing browser acceptance control remains disabled and has no click handle
 ## Rollback
 
 Repository rollback is source-only: revert the acceptance publication source/composition changes. Runtime activation, external evidence changes, and operational rollback are outside this slice.
+
+
+## Later browser activation
+
+A later reviewed Web slice may select this already-reviewed route through the
+memory-only authenticated browser session. That activation must preserve the
+exact empty POST contract, derive authorization only from the in-memory session,
+require an explicit user click, and keep seller authority server-derived.
+
+Browser activation does not change the semantics above: acceptance remains one
+immutable attributed event, not Agreement formation or settlement authority.

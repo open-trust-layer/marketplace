@@ -41,7 +41,7 @@ function reviewedAuthenticatedRoute(method, path) {
   if (parts.length !== 2 || parts[0].length === 0) return false;
   if (parts[0].includes("?") || parts[0].includes("#")) return false;
   const tail = parts[1];
-  return tail === "responses" || tail === "proposals";
+  return tail === "responses" || tail === "proposals" || tail === "acceptance";
 }
 
 class MarketplaceMemorySession {

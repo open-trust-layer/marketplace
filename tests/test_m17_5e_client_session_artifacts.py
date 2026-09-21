@@ -55,6 +55,7 @@ class M175EClientSessionArtifactTests(unittest.TestCase):
             'path === "/api/intents"',
             'tail === "responses"',
             'tail === "proposals"',
+            'tail === "acceptance"',
             'path.startsWith("/api/agreements/")',
             'parts[1] !== "assent"',
             'parts[2] === "preparation" || parts[2] === "status"',

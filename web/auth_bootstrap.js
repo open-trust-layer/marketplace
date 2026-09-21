@@ -9,6 +9,7 @@ import { createMarketplaceWebAuthEd25519ProofProvider } from "./auth_ed25519_pro
 import { createMarketplaceWebAuthEstablishment } from "./auth_establishment.js";
 import { createMarketplaceWebAgreementEd25519AssentProvider } from "./agreement_ed25519_assent_provider.js";
 import { createMarketplaceWebAgreementAssentClient } from "./agreement_assent_client.js";
+import { createMarketplaceWebProposalAcceptanceClient } from "./proposal_acceptance_client.js";
 
 const BROWSER_PUBLIC_KEY_PREFIX = "mkpk1_";
 const EVIDENCE_PUBLIC_KEY_PREFIX = "mkp1_";
@@ -110,6 +111,16 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     return result;
   }
 
+  function proposalAcceptanceClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("PROPOSAL_ACCEPTANCE_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebProposalAcceptanceClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
   function agreementAssentClient() {
     if (keyResult === null || !session.isActive || activeVerificationMethod === null) {
       throw stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED");
@@ -145,6 +156,7 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   return Object.freeze({
     createAuthenticationKey,
     establishSession,
+    proposalAcceptanceClient,
     agreementAssentClient,
     state,
     reset,
