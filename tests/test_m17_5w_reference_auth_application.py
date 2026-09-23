@@ -14,6 +14,7 @@ from marketplace.application.auth_startup_provisioning import (
     MarketplaceAuthenticationStartupProvisioning,
 )
 from marketplace.application.composition import MarketplaceApplicationComposition
+from marketplace.application.proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
 from marketplace.application.launch import (
     LOOPBACK_LAUNCH_HOST,
     MAX_LAUNCH_PORT,
@@ -124,13 +125,33 @@ class MarketplaceReferenceAuthenticatedLaunchTests(unittest.TestCase):
                 provisioning=provisioning,
                 runtime_inputs=runtime_inputs,
             )
-        t.assert_called_once_with(
-            application=plan.composition,
-            provisioning=provisioning,
-            runtime_inputs=runtime_inputs,
-            decode_record_json=decode_marketplace_application_record_json,
-            record_principal=marketplace_record_issuer_principal,
+        t.assert_called_once()
+        t_kwargs = t.call_args.kwargs
+        self.assertEqual(
+            set(t_kwargs),
+            {
+                "application",
+                "provisioning",
+                "runtime_inputs",
+                "decode_record_json",
+                "record_principal",
+                "proposal_acceptance_authoring",
+            },
         )
+        self.assertIs(t_kwargs["application"], plan.composition)
+        self.assertIs(t_kwargs["provisioning"], provisioning)
+        self.assertIs(t_kwargs["runtime_inputs"], runtime_inputs)
+        self.assertIs(
+            t_kwargs["decode_record_json"],
+            decode_marketplace_application_record_json,
+        )
+        self.assertIs(
+            t_kwargs["record_principal"],
+            marketplace_record_issuer_principal,
+        )
+        acceptance = t_kwargs["proposal_acceptance_authoring"]
+        self.assertIs(type(acceptance), MarketplaceProposalAcceptanceAuthoringService)
+        self.assertIs(acceptance._state, plan.composition.state)
         startup = t.return_value
         u.assert_called_once()
         kwargs = u.call_args.kwargs
