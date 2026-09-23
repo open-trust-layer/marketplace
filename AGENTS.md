@@ -1,19 +1,19 @@
 # Coding Agent Instructions — Open Layer Marketplace
 
-**Development-method baseline:** Constitution v1.3 + Coding Agent Policy v1.3 + portable Repository Governance v1.2 intent + Development Principles v1.6
-**Handbook SHA-256:** `12314b7fc9a4cbb5e93d907ed5c613f29c4895f610356285cc88da52898bcb76`
-**Adopted:** 2026-09-04
-**Adaptation record:** `docs/POLICY_V1_6_ADOPTION.md`
+**Development-method baseline:** Constitution v1.4 + Coding Agent Policy v1.4 + portable Repository Governance v1.3 intent + Development Principles v1.7
+**Handbook SHA-256:** `78b579613b98b388db0cac2a5bf360089b2137e997b6a19a87da44a11acb183c`
+**Adopted:** 2026-09-21
+**Adaptation record:** `docs/POLICY_V1_7_ADOPTION.md`
 
-This repository adopts the portable v1.6 faster-safe-delivery method under the v1.3 Constitution/policy stack. The supplied governance YAML is an `ai-automation-department` repository-specific profile; its paths, workflow/check names, data, credentials, permissions, runtime authority, and provider-admin state are not Marketplace facts.
+This repository adopts the portable v1.7 proportional-delivery method under the v1.4 Constitution/policy stack. The supplied governance YAML is an `ai-automation-department` repository-specific profile; its paths, workflow/check names, data, credentials, permissions, runtime authority, merge-strategy assumptions, and provider-admin state are not Marketplace facts.
 
-`DEVELOPMENT_POLICY.md` is the active Marketplace engineering projection. `docs/POLICY_V1_6_ADOPTION.md` records source hashes, precedence, portable additions, Marketplace-specific governance mapping, and source-specific statements that are intentionally not imported.
+`DEVELOPMENT_POLICY.md` is the active Marketplace engineering projection. `docs/POLICY_V1_7_ADOPTION.md` records source hashes, precedence, task-scoped delivery semantics, Marketplace-specific governance mapping, and source-specific statements that are intentionally not imported.
 
 `PRINCIPLES.md` and numbered Marketplace specifications remain authoritative for Marketplace protocol/semantic constraints.
 
 ## Read before editing
 
-Use the v1.6 minimum-authoritative-surface rule rather than recursively scanning the repository by default. For unfamiliar work, inspect the smallest set sufficient to understand impact:
+Use the v1.7 minimum-authoritative-surface rule rather than recursively scanning the repository by default. For unfamiliar work, inspect the smallest set sufficient to understand impact:
 
 ```text
 target implementation
@@ -38,7 +38,7 @@ Expand outward only when evidence requires it.
 - Never invent cryptography. Use maintained standard constructions, verified encrypted transport, authenticated encryption where required, and strict key separation/lifecycle controls. Encryption never expands retention or authorization.
 - Do not claim CI, review, branch protection, deployment, runtime state, settlement, reproducibility, encryption, deletion, isolation, authorization, or performance without direct evidence appropriate to the claim.
 
-## v1.6 fast execution method
+## v1.7 fast execution method
 
 At the start of meaningful work establish one **work-unit contract**:
 
@@ -75,7 +75,9 @@ Batch independent read-only discovery/validation when safe. Prefer exact lookup 
 
 Plan once before first mutation, then execute the coherent authorized scope. Do not repeatedly ask for unchanged authorization merely because a read-only check, deterministic test rerun, conversation continuation, or non-mutating diagnostic occurred.
 
-Use **bounded authorization reuse** only while project, target/resource, exact head/version where specified, scope, risk, capability class, side-effect class, rollback assumptions, and expiry/exception state remain unchanged. Exact-head authorization becomes stale if the head moves.
+For an explicitly adopted Marketplace delivery task, routine source delivery includes task-branch commit/push, PR creation/update, and merge after required checks and merge preconditions pass. Marketplace has **zero mandatory human PR approvals**; agent diff review and automated validation still apply.
+
+Use **bounded authorization reuse** only while project, target/resource, exact head/version where explicitly specified, scope, risk, capability class, side-effect class, rollback assumptions, and expiry/exception state remain unchanged. Same-scope head changes require revalidation, not renewed task authority, unless the user explicitly pinned authority to the old head.
 
 Use delta-first validation:
 
@@ -99,9 +101,13 @@ Use concise user-facing status around meaningful progress, blockers, authorizati
 
 ## Merge, activation, and rollback boundaries
 
-Merge authorization and runtime activation are **separate** authorities by default. Deployment, dependency installation, environment/secret loading, database migration/activation, service/process restart, browser/server/socket activation, Android build/install, provider administration, and destructive external actions likewise require their own applicable authority unless explicitly combined.
+Routine merge is part of task-scoped Marketplace source delivery after required checks, mergeability, unresolved-feedback review, exact-head guarding, and verified provider preconditions. Do not ask for a separate routine merge confirmation unless the user imposed a narrower delivery limit or explicitly pinned authority to a prior head.
 
-Marketplace exact-head governance remains stricter than generic authorization reuse: if merge authority names an exact head SHA, any head movement invalidates it. Use an exact-head merge guard where supported.
+Marketplace currently requires provider-side protection of `main`. If that required control is verified absent and no applicable explicit exception exists, stop before merge rather than treating local policy/CI as enforcement.
+
+Runtime activation is **separate** from merge by default. Deployment, dependency installation, environment/secret loading, database migration/activation, service/process restart, browser/server/socket activation, Android build/install, provider administration, and destructive external actions likewise require their own applicable authority unless explicitly combined.
+
+Use an exact-head merge guard where supported. If user authority explicitly names a head SHA, any head movement invalidates that pinned authority.
 
 If an authorized mutation includes an exact rollback condition and method, that **preauthorized rollback** may execute without a second approval only when the stated condition becomes true and the rollback remains within the exact target/method. Verify restored state, report the trigger/result, and do not silently retry indefinitely.
 
