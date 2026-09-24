@@ -87,11 +87,29 @@ jobs:
 
       - name: Install reviewed build backend
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
-        run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "setuptools==80.9.0"'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          for ($installAttempt = 1; $installAttempt -le 2; $installAttempt++) {
+            & $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "setuptools==80.9.0"
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($installAttempt -eq 2) {
+              throw 'Reviewed build backend install failed after bounded retry'
+            }
+            Start-Sleep -Seconds 5
+          }
 
       - name: Install reviewed authentication verifier dependency
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
-        run: '& $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "cryptography==50.0.1"'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          for ($installAttempt = 1; $installAttempt -le 2; $installAttempt++) {
+            & $env:MARKETPLACE_CI_PYTHON -m pip install --disable-pip-version-check "cryptography==50.0.1"
+            if ($LASTEXITCODE -eq 0) { break }
+            if ($installAttempt -eq 2) {
+              throw 'Reviewed authentication verifier install failed after bounded retry'
+            }
+            Start-Sleep -Seconds 5
+          }
 
       - name: Install OLP reference dependency
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
