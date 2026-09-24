@@ -15,15 +15,41 @@ jobs:
     env:
       CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PIP_DEFAULT_TIMEOUT: '120'
+      GIT_HTTP_LOW_SPEED_LIMIT: '1024'
+      GIT_HTTP_LOW_SPEED_TIME: '30'
     steps:
       - name: Check out Marketplace
+        id: marketplace_checkout_primary
+        continue-on-error: true
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: marketplace
-          fetch-depth: 0
+          # HEAD^ is required by the acceptance diff check; two commits are sufficient.
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Retry Marketplace checkout once
+        if: steps.marketplace_checkout_primary.outcome == 'failure'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: marketplace
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Check out pinned Open Layer Protocol
+        id: olp_checkout_primary
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: open-trust-layer/protocol
+          ref: 4e57057d5d946797814f33125f77c4b6732cbfda
+          path: olp
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Retry pinned Open Layer Protocol checkout once
+        if: steps.olp_checkout_primary.outcome == 'failure'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: open-trust-layer/protocol

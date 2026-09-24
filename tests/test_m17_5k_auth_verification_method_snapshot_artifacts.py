@@ -127,7 +127,7 @@ class M17AuthVerificationMethodSnapshotArtifactTests(unittest.TestCase):
         self.assertEqual(workflow.count(exact_install), 1)
         self.assertIn("runs-on: [self-hosted, Windows, X64, marketplace-ci]", workflow)
         self.assertIn("permissions:\n  contents: read", workflow)
-        self.assertEqual(workflow.count("persist-credentials: false"), 2)
+        self.assertEqual(workflow.count("persist-credentials: false"), 4)
 
         repository_audit = (ROOT / "tools" / "repository_audit.py").read_text(encoding="utf-8")
         self.assertIn('*repo_root.glob("src/**/*.py")', repository_audit)
