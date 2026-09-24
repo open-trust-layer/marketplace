@@ -44,6 +44,9 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         checkout_sha = "3d3c42e5aac5ba805825da76410c181273ba90b1"
         self.assertEqual(self.workflow.count(f"actions/checkout@{checkout_sha}"), 2)
         self.assertEqual(self.workflow.count("persist-credentials: false"), 2)
+        self.assertEqual(self.workflow.count("fetch-depth: 2"), 1)
+        self.assertEqual(self.workflow.count("fetch-depth: 1"), 1)
+        self.assertNotIn("fetch-depth: 0", self.workflow)
 
 
 if __name__ == "__main__":
