@@ -12,8 +12,9 @@ Profile:
 The module is delivered as a reviewed same-origin asset and remains imported
 only by auth_bootstrap.js so the existing authenticated memory-only session/key
 custody can be reused. app.js and index.html do not import the module directly.
-A later browser slice may call the bootstrap composition factory only for the
-read-only formation-status operation.
+The active page reaches the client only through the reviewed bootstrap
+composition factory for explicit formation-status inspection and explicit
+Agreement-assent signing.
 
 ## Exact flow
 
@@ -48,20 +49,26 @@ exactly 64 bytes.
 ## Browser selection and non-scope
 
 The source is delivered and selected only by the reviewed auth bootstrap
-composition factory. It is not imported by app.js or index.html.
+composition factory. It is not imported directly by app.js or index.html.
 
-A later product slice provides read-only browser activation by invoking only
-`agreementAssentClient().formationStatus(...)` after an explicit user click and
-an exact in-memory Proposal acceptance Record Identity. Status never calls the
+Formation status remains an explicit read-only user action and never calls the
 signer.
 
-There is no signing activation: the active page does not call `prepare`,
-`signAndSubmit`, or `createAgreementAssentSignature`, and the visible signing
-control remains disabled.
+The signing path is a separate explicit browser action. The page calls
+`signAndSubmit(proposalRecordId, acceptanceRecordId, expectedAgreementRecordId)`
+only after a reviewed formation result proves that the authenticated principal
+is a required missing party for the exact in-memory Proposal acceptance.
 
-There is no automatic user action, key creation/import/export, persistent
-storage, timer/worker/background work, or ambient crypto selection. There is
-no Agreement publication, payment, settlement, fulfillment, or deployment.
+Before the signer is called, the client independently re-prepares the exact
+candidate and requires its Agreement Record Identity to match the exact
+`expectedAgreementRecordId` supplied from the reviewed formation-status
+result. A mismatch fails with `AGREEMENT_ASSENT_AGREEMENT_MISMATCH` before any
+signature is created.
+
+There is no automatic signing, key creation/import/export, persistent storage,
+timer/worker/background work, or ambient crypto selection. Signing and assent
+submission do not publish an Agreement and do not authorize payment,
+settlement, fulfillment, transfer, or deployment.
 
 ## Rollback
 

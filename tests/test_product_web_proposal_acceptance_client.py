@@ -64,11 +64,13 @@ class ProductWebProposalAcceptanceClientTests(unittest.TestCase):
         self.assertIn("client.acceptProposal(proposalId)", text)
         self.assertIn("state.proposalAcceptanceResults.set(proposalId, result)", text)
 
-    def test_no_persistence_background_retry_or_agreement_signing(self) -> None:
-        combined = (
-            SOURCE.read_text(encoding="utf-8") + "\n" +
-            APP.read_text(encoding="utf-8")
-        ).lower()
+    def test_no_persistence_background_retry_or_agreement_signing_in_acceptance_path(self) -> None:
+        source = SOURCE.read_text(encoding="utf-8").lower()
+        app = APP.read_text(encoding="utf-8")
+        start = app.index("async function acceptSelectedProposal()")
+        end = app.index("function renderAgreementFormationHandoff(record)", start)
+        acceptance_handler = app[start:end].lower()
+        combined = source + "\n" + acceptance_handler
         for forbidden in (
             "localstorage", "sessionstorage", "indexeddb", "document.cookie",
             "serviceworker", "setinterval", "settimeout", "websocket",

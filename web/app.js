@@ -139,6 +139,14 @@ window.MarketplaceI18n = (() => {
     "agreementStatus.evidence": ["Formation evidence: {evidence}", "Evidence \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f: {evidence}"],
     "agreementStatus.covered": ["Covered parties: {principals}", "\u041f\u043e\u043a\u0440\u044b\u0442\u044b\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
     "agreementStatus.missing": ["Missing parties: {principals}", "\u041d\u0435\u0434\u043e\u0441\u0442\u0430\u044e\u0449\u0438\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
+    "agreementAssent.waitingStatus": ["Check current Agreement formation before signing.", "Перед подписанием проверьте текущий статус формирования Agreement."],
+    "agreementAssent.stale": ["Formation status is stale for the current acceptance. Check Agreement formation again.", "Статус формирования устарел для текущего принятия. Проверьте формирование Agreement ещё раз."],
+    "agreementAssent.notParty": ["Authenticated principal is not a required Agreement party. Signing remains disabled.", "Аутентифицированный principal не является требуемой стороной Agreement. Подписание отключено."],
+    "agreementAssent.alreadyCovered": ["Authenticated principal already has reviewed assent evidence. Signing remains disabled.", "Для аутентифицированного principal уже есть проверенное evidence согласия. Подписание отключено."],
+    "agreementAssent.ready": ["Authenticated principal is a required missing party. Signing will occur only after this explicit button click.", "Аутентифицированный principal является требуемой отсутствующей стороной. Подписание произойдёт только после явного нажатия этой кнопки."],
+    "agreementAssent.signing": ["Creating and submitting Agreement assent for the exact reviewed candidate\u2026", "Создаём и отправляем согласие Agreement для точно проверенного кандидата\u2026"],
+    "agreementAssent.submitted": ["Assent for Agreement {recordId} submitted ({disposition}; expiry value {expiresAt}). Check formation again to refresh party coverage.", "Согласие для Agreement {recordId} отправлено ({disposition}; значение срока действия {expiresAt}). Проверьте формирование ещё раз, чтобы обновить покрытие сторон."],
+    "agreementAssent.failed": ["Agreement assent failed: {code}", "Ошибка согласия Agreement: {code}"],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -185,7 +193,7 @@ window.MarketplaceI18n = (() => {
     "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
     "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
-    "agreement-formation-covered", "agreement-formation-missing",
+    "agreement-formation-covered", "agreement-formation-missing", "agreement-assent-status",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -356,8 +364,12 @@ const state = {
   proposalAcceptanceErrors: new Map(),
   proposalAcceptancePending: new Set(),
   agreementFormationResults: new Map(),
+  agreementFormationAcceptanceIds: new Map(),
   agreementFormationErrors: new Map(),
   agreementFormationPending: new Set(),
+  agreementAssentResults: new Map(),
+  agreementAssentErrors: new Map(),
+  agreementAssentPending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -392,6 +404,7 @@ const agreementFormationAgreement = byId("agreement-formation-agreement");
 const agreementFormationEvidence = byId("agreement-formation-evidence");
 const agreementFormationCovered = byId("agreement-formation-covered");
 const agreementFormationMissing = byId("agreement-formation-missing");
+const agreementAssentStatus = byId("agreement-assent-status");
 const checkAgreementFormationButton = byId("check-agreement-formation");
 const signAgreementAssentButton = byId("sign-agreement-assent");
 const authLoadButton = byId("auth-load");
@@ -538,8 +551,12 @@ async function establishAuthenticationSession() {
       authVerificationMethodInput.value,
     );
     state.agreementFormationResults.clear();
+    state.agreementFormationAcceptanceIds.clear();
     state.agreementFormationErrors.clear();
     state.agreementFormationPending.clear();
+    state.agreementAssentResults.clear();
+    state.agreementAssentErrors.clear();
+    state.agreementAssentPending.clear();
     setAuthStatus("auth.active", { principal: established.principal }, "success");
     renderDetail();
   } catch (error) {
@@ -551,8 +568,12 @@ function resetAuthentication() {
   if (authBootstrap === null) return;
   authBootstrap.reset();
   state.agreementFormationResults.clear();
+  state.agreementFormationAcceptanceIds.clear();
   state.agreementFormationErrors.clear();
   state.agreementFormationPending.clear();
+  state.agreementAssentResults.clear();
+  state.agreementAssentErrors.clear();
+  state.agreementAssentPending.clear();
   authBrowserPublicKeyValue = null;
   authEvidencePublicKeyValue = null;
   authPrincipalInput.value = "";
@@ -962,6 +983,11 @@ async function acceptSelectedProposal() {
     const client = authBootstrap.proposalAcceptanceClient();
     const result = await client.acceptProposal(proposalId);
     state.proposalAcceptanceResults.set(proposalId, result);
+    state.agreementFormationResults.delete(proposalId);
+    state.agreementFormationAcceptanceIds.delete(proposalId);
+    state.agreementFormationErrors.delete(proposalId);
+    state.agreementAssentResults.delete(proposalId);
+    state.agreementAssentErrors.delete(proposalId);
   } catch (error) {
     state.proposalAcceptanceErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
   } finally {
@@ -980,6 +1006,7 @@ function renderAgreementFormationHandoff(record) {
   agreementFormationEvidence.textContent = "";
   agreementFormationCovered.textContent = "";
   agreementFormationMissing.textContent = "";
+  agreementAssentStatus.textContent = i18n.t("agreementAssent.waitingStatus");
 
   const proposal = proposalResponseSummary(record);
   if (proposal === null || state.selectedId === null) return;
@@ -990,7 +1017,7 @@ function renderAgreementFormationHandoff(record) {
   if (acceptance === undefined) return;
 
   const authSnapshot = authBootstrap === null
-    ? { active: false }
+    ? { active: false, principal: null }
     : authBootstrap.state();
   if (!authSnapshot.active) {
     agreementFormationStatus.textContent = i18n.t("agreementStatus.authRequired");
@@ -1019,7 +1046,48 @@ function renderAgreementFormationHandoff(record) {
     agreementFormationMissing.textContent = i18n.t("agreementStatus.missing", {
       principals: result.missingPrincipals.join(", ") || "none",
     });
-    checkAgreementFormationButton.disabled = false;
+
+    const signingPending = state.agreementAssentPending.has(proposalId);
+    checkAgreementFormationButton.disabled = signingPending;
+    if (signingPending) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.signing");
+      return;
+    }
+
+    const submitted = state.agreementAssentResults.get(proposalId);
+    if (submitted !== undefined) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.submitted", {
+        recordId: submitted.agreementRecordId,
+        disposition: submitted.disposition,
+        expiresAt: submitted.expiresAt,
+      });
+      return;
+    }
+
+    if (state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.stale");
+      return;
+    }
+
+    const principal = authSnapshot.principal;
+    if (!result.requiredPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.notParty");
+      return;
+    }
+    if (result.coveredPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.alreadyCovered");
+      return;
+    }
+    if (!result.missingPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.stale");
+      return;
+    }
+
+    const signError = state.agreementAssentErrors.get(proposalId);
+    agreementAssentStatus.textContent = signError === undefined
+      ? i18n.t("agreementAssent.ready")
+      : i18n.t("agreementAssent.failed", { code: signError });
+    signAgreementAssentButton.disabled = false;
     return;
   }
 
@@ -1035,7 +1103,8 @@ async function checkSelectedAgreementFormation() {
   const proposalId = requireRecordId(state.selectedId);
   const proposal = proposalResponseSummary(state.selectedRecord);
   const acceptance = state.proposalAcceptanceResults.get(proposalId);
-  if (proposal === null || acceptance === undefined) return;
+  if (proposal === null || acceptance === undefined ||
+      state.agreementAssentPending.has(proposalId)) return;
   const authSnapshot = authBootstrap.state();
   if (!authSnapshot.active) {
     state.agreementFormationErrors.set(proposalId, "AUTH_REQUIRED");
@@ -1044,17 +1113,68 @@ async function checkSelectedAgreementFormation() {
   }
 
   state.agreementFormationResults.delete(proposalId);
+  state.agreementFormationAcceptanceIds.delete(proposalId);
   state.agreementFormationErrors.delete(proposalId);
+  state.agreementAssentResults.delete(proposalId);
+  state.agreementAssentErrors.delete(proposalId);
   state.agreementFormationPending.add(proposalId);
   renderDetail();
   try {
     const client = authBootstrap.agreementAssentClient();
     const result = await client.formationStatus(proposalId, acceptance.recordId);
     state.agreementFormationResults.set(proposalId, result);
+    state.agreementFormationAcceptanceIds.set(proposalId, acceptance.recordId);
   } catch (error) {
     state.agreementFormationErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
   } finally {
     state.agreementFormationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function signSelectedAgreementAssent() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = state.proposalAcceptanceResults.get(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  if (proposal === null || acceptance === undefined || formation === undefined ||
+      state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId ||
+      state.agreementAssentPending.has(proposalId)) {
+    return;
+  }
+
+  const authSnapshot = authBootstrap.state();
+  const principal = authSnapshot.principal;
+  if (!authSnapshot.active ||
+      !formation.requiredPrincipals.includes(principal) ||
+      formation.coveredPrincipals.includes(principal) ||
+      !formation.missingPrincipals.includes(principal)) {
+    state.agreementAssentErrors.set(proposalId, "AGREEMENT_ASSENT_NOT_ELIGIBLE");
+    renderDetail();
+    return;
+  }
+
+  state.agreementAssentResults.delete(proposalId);
+  state.agreementAssentErrors.delete(proposalId);
+  state.agreementAssentPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementAssentClient();
+    const result = await client.signAndSubmit(
+      proposalId,
+      acceptance.recordId,
+      formation.agreementRecordId,
+    );
+    if (result.agreementRecordId !== formation.agreementRecordId) {
+      throw stableClientError("AGREEMENT_ASSENT_AGREEMENT_MISMATCH");
+    }
+    state.agreementAssentResults.set(proposalId, result);
+  } catch (error) {
+    state.agreementAssentErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementAssentPending.delete(proposalId);
     renderAuthState();
     if (state.selectedId === proposalId) renderDetail();
   }
@@ -1749,6 +1869,7 @@ authEstablishButton.addEventListener("click", () => void establishAuthentication
 authResetButton.addEventListener("click", resetAuthentication);
 acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal());
 checkAgreementFormationButton.addEventListener("click", () => void checkSelectedAgreementFormation());
+signAgreementAssentButton.addEventListener("click", () => void signSelectedAgreementAssent());
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());

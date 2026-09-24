@@ -322,10 +322,18 @@ function createMarketplaceWebAgreementAssentClient({ fetchImpl, session, signer 
     return reviewedFormationStatusResponse(response);
   }
 
-  async function signAndSubmit(proposalRecordIdValue, acceptanceRecordIdValue) {
+  async function signAndSubmit(
+    proposalRecordIdValue,
+    acceptanceRecordIdValue,
+    expectedAgreementRecordIdValue,
+  ) {
     const proposalRecordId = reviewedRecordId(proposalRecordIdValue);
     const acceptanceRecordId = reviewedRecordId(acceptanceRecordIdValue);
+    const expectedAgreementRecordId = reviewedRecordId(expectedAgreementRecordIdValue);
     const preparation = await prepare(proposalRecordId, acceptanceRecordId);
+    if (preparation.agreementRecordId !== expectedAgreementRecordId) {
+      throw stableAssentClientError("AGREEMENT_ASSENT_AGREEMENT_MISMATCH");
+    }
 
     let signature;
     try {
@@ -351,7 +359,7 @@ function createMarketplaceWebAgreementAssentClient({ fetchImpl, session, signer 
         signature: encodeOjveBytes(Uint8Array.from(signature)),
       },
     );
-    return reviewedSubmissionResponse(response, preparation.agreementRecordId);
+    return reviewedSubmissionResponse(response, expectedAgreementRecordId);
   }
 
   return Object.freeze({ prepare, formationStatus, signAndSubmit });
