@@ -16,6 +16,7 @@ AUTH_MODULES = (
     ("/auth_ed25519_proof_provider.js", b"auth-proof"),
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
     ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
+    ("/agreement_assent_client.js", b"agreement-assent-client"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
@@ -96,17 +97,24 @@ class ProductAuthWebModuleDeliveryTests(unittest.TestCase):
         self.assertEqual(app.count('import("./auth_bootstrap.js")'), 1)
         lower_auth_modules = tuple(
             path for path, _ in AUTH_MODULES
-            if path not in {"/auth_bootstrap.js", "/agreement_ed25519_assent_provider.js"}
+            if path not in {
+                "/auth_bootstrap.js",
+                "/agreement_ed25519_assent_provider.js",
+                "/agreement_assent_client.js",
+            }
         )
         for path in lower_auth_modules:
             marker = path.removeprefix("/")
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
             self.assertIn(f'./{marker}', bootstrap)
-        assent_marker = "agreement_ed25519_assent_provider.js"
-        self.assertNotIn(assent_marker, index)
-        self.assertNotIn(assent_marker, app)
-        self.assertNotIn(assent_marker, bootstrap)
+        for assent_marker in (
+            "agreement_ed25519_assent_provider.js",
+            "agreement_assent_client.js",
+        ):
+            self.assertNotIn(assent_marker, index)
+            self.assertNotIn(assent_marker, app)
+            self.assertNotIn(assent_marker, bootstrap)
 
     def test_authenticated_reference_builder_forwards_nonempty_module_bundle_only(self) -> None:
         modules = AUTH_MODULES
