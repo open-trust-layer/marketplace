@@ -22,6 +22,7 @@ AUTH_WEB_ASSETS = {
     "web/auth_ed25519_key_creation.js": b"auth-key-creation",
     "web/agreement_ed25519_assent_provider.js": b"agreement-assent",
     "web/agreement_assent_client.js": b"agreement-assent-client",
+    "web/proposal_acceptance_client.js": b"proposal-acceptance-client",
     "web/auth_bootstrap.js": b"auth-bootstrap",
 }
 AUTH_WEB_MODULES = (
@@ -31,6 +32,7 @@ AUTH_WEB_MODULES = (
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
     ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
     ("/agreement_assent_client.js", b"agreement-assent-client"),
+    ("/proposal_acceptance_client.js", b"proposal-acceptance-client"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
@@ -272,6 +274,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
                 "web/auth_ed25519_key_creation.js",
                 "web/agreement_ed25519_assent_provider.js",
                 "web/agreement_assent_client.js",
+                "web/proposal_acceptance_client.js",
                 "web/auth_bootstrap.js",
                 "postgres-provider",
                 "plan",

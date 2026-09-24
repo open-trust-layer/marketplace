@@ -17,6 +17,7 @@ AUTH_MODULES = (
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
     ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
     ("/agreement_assent_client.js", b"agreement-assent-client"),
+    ("/proposal_acceptance_client.js", b"proposal-acceptance-client"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 

@@ -122,6 +122,11 @@ window.MarketplaceI18n = (() => {
     "acceptance.parent": ["Parent listing: {recordId}", "\u0420\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.proposal": ["Proposal: {recordId}", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.button": ["Accept Proposal", "\u041f\u0440\u0438\u043d\u044f\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435"],
+    "acceptance.ready": ["Authenticated seller matches this listing. Acceptance will publish only after the explicit button click.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u0434\u0430\u0432\u0435\u0446 \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u044d\u0442\u0438\u043c \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435\u043c. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u0431\u0443\u0434\u0435\u0442 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u0441\u043b\u0435 \u044f\u0432\u043d\u043e\u0433\u043e \u043d\u0430\u0436\u0430\u0442\u0438\u044f \u043a\u043d\u043e\u043f\u043a\u0438."],
+    "acceptance.authMismatch": ["The authenticated principal is not the seller of this listing. Acceptance remains disabled.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 principal \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c \u044d\u0442\u043e\u0433\u043e \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043e\u0442\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u043c."],
+    "acceptance.accepting": ["Publishing the exact seller acceptance\u2026", "\u041f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u043c \u0442\u043e\u0447\u043d\u043e\u0435 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c\u2026"],
+    "acceptance.accepted": ["Acceptance {recordId} published ({disposition}; local change sequence {changeSeq}).", "\u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 {recordId} \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e ({disposition}; \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 {changeSeq})."],
+    "acceptance.failed": ["Acceptance failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u044f: {code}"],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -140,7 +145,7 @@ window.MarketplaceI18n = (() => {
     "auth.ready": ["Authentication module ready. Generate one browser key.", "\u041c\u043e\u0434\u0443\u043b\u044c \u0433\u043e\u0442\u043e\u0432. \u0421\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u043e\u0434\u0438\u043d \u043a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430."],
     "auth.keyReady": ["Browser key created. Keep this page open. Provision the public key and separately restart/relaunch authenticated localhost to load that evidence, then enter the bound principal and verification method. Reloading this page destroys the private key.", "Ключ браузера создан. Не закрывайте эту страницу. Добавьте публичный ключ и отдельно перезапустите authenticated localhost, чтобы загрузить эти evidence; затем введите связанные principal и verification method. Перезагрузка этой страницы уничтожит закрытый ключ."],
     "auth.establishing": ["Establishing authenticated session\u2026", "\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u0443\u044e \u0441\u0435\u0441\u0441\u0438\u044e\u2026"],
-    "auth.active": ["Authenticated seller session established for {principal}. Proposal acceptance is still disabled.", "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 {principal} \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 Proposal \u043f\u043e\u043a\u0430 \u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e."],
+    "auth.active": ["Authenticated seller session established for {principal}. Proposal acceptance is available only when the selected listing seller matches this principal.", "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 {principal} \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 Proposal \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u0435\u0441\u043b\u0438 \u043f\u0440\u043e\u0434\u0430\u0432\u0435\u0446 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0433\u043e \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u044d\u0442\u0438\u043c principal."] ,
     "auth.sessionActive": ["Active: {principal}", "\u0410\u043a\u0442\u0438\u0432\u043d\u0430: {principal}"],
     "auth.failed": ["Authentication failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438: {code}"],
     "auth.resetDone": ["In-memory authentication reset. No key or session remains referenced by this page.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u0432 \u043f\u0430\u043c\u044f\u0442\u0438 \u0441\u0431\u0440\u043e\u0448\u0435\u043d\u0430. \u0421\u0442\u0440\u0430\u043d\u0438\u0446\u0430 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0445\u0440\u0430\u043d\u0438\u0442 \u0441\u0441\u044b\u043b\u043e\u043a \u043d\u0430 \u043a\u043b\u044e\u0447 \u0438\u043b\u0438 \u0441\u0435\u0441\u0441\u0438\u044e."],
@@ -333,6 +338,9 @@ const state = {
   responseLoading: false,
   recentProposalId: null,
   recentProposalParentId: null,
+  proposalAcceptanceResults: new Map(),
+  proposalAcceptanceErrors: new Map(),
+  proposalAcceptancePending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -505,6 +513,7 @@ async function establishAuthenticationSession() {
       authVerificationMethodInput.value,
     );
     setAuthStatus("auth.active", { principal: established.principal }, "success");
+    renderDetail();
   } catch (error) {
     setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
@@ -518,6 +527,7 @@ function resetAuthentication() {
   authPrincipalInput.value = "";
   authVerificationMethodInput.value = "";
   setAuthStatus("auth.resetDone");
+  renderDetail();
 }
 
 function requireRecordId(value) {
@@ -852,8 +862,9 @@ function renderProposalAcceptanceHandoff(record) {
   proposalAcceptanceProposal.textContent = "";
   const proposal = proposalResponseSummary(record);
   if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
   proposalAcceptanceHandoff.hidden = false;
-  proposalAcceptanceProposal.textContent = i18n.t("acceptance.proposal", { recordId: state.selectedId });
+  proposalAcceptanceProposal.textContent = i18n.t("acceptance.proposal", { recordId: proposalId });
   if (state.responseParentId === null) {
     proposalAcceptanceStatus.textContent = i18n.t("acceptance.parentUnavailable");
     return;
@@ -867,7 +878,66 @@ function renderProposalAcceptanceHandoff(record) {
   }
   proposalAcceptanceSeller.textContent = i18n.t("acceptance.seller", { seller: parentListing.sellerPrincipal });
   proposalAcceptanceParent.textContent = i18n.t("acceptance.parent", { recordId: parentId });
-  proposalAcceptanceStatus.textContent = i18n.t("acceptance.authRequired");
+
+  const result = state.proposalAcceptanceResults.get(proposalId);
+  if (result !== undefined) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.accepted", {
+      recordId: result.recordId,
+      disposition: result.disposition,
+      changeSeq: result.changeSeq === null ? "none" : result.changeSeq,
+    });
+    return;
+  }
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (!authSnapshot.active) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.authRequired");
+    return;
+  }
+  if (authSnapshot.principal !== parentListing.sellerPrincipal) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.authMismatch");
+    return;
+  }
+  if (state.proposalAcceptancePending.has(proposalId)) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.accepting");
+    return;
+  }
+  const errorCode = state.proposalAcceptanceErrors.get(proposalId);
+  proposalAcceptanceStatus.textContent = errorCode === undefined
+    ? i18n.t("acceptance.ready")
+    : i18n.t("acceptance.failed", { code: errorCode });
+  acceptProposalButton.disabled = false;
+}
+
+async function acceptSelectedProposal() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  if (proposal === null || state.responseParentId === null) return;
+  const parentListing = productListingSummary(state.records.get(state.responseParentId));
+  if (parentListing === null) return;
+  const authSnapshot = authBootstrap.state();
+  if (!authSnapshot.active || authSnapshot.principal !== parentListing.sellerPrincipal) {
+    state.proposalAcceptanceErrors.set(proposalId, "PROPOSAL_ACCEPTANCE_SELLER_MISMATCH");
+    renderDetail();
+    return;
+  }
+
+  state.proposalAcceptanceErrors.delete(proposalId);
+  state.proposalAcceptancePending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.proposalAcceptanceClient();
+    const result = await client.acceptProposal(proposalId);
+    state.proposalAcceptanceResults.set(proposalId, result);
+  } catch (error) {
+    state.proposalAcceptanceErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.proposalAcceptancePending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
 }
 
 function renderDetail() {
@@ -1556,6 +1626,7 @@ authLoadButton.addEventListener("click", () => void startLocalAuthentication());
 authGenerateKeyButton.addEventListener("click", () => void generateAuthenticationKey());
 authEstablishButton.addEventListener("click", () => void establishAuthenticationSession());
 authResetButton.addEventListener("click", resetAuthentication);
+acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal());
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());

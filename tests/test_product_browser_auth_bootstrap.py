@@ -24,6 +24,7 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             './auth_establishment.js',
             './agreement_ed25519_assent_provider.js',
             './agreement_assent_client.js',
+            './proposal_acceptance_client.js',
         ):
             self.assertIn(marker, text)
 
@@ -90,13 +91,21 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
 
-    def test_proposal_acceptance_stays_fail_closed_after_auth_activation(self) -> None:
+    def test_proposal_acceptance_client_is_composed_but_bearer_stays_private(self) -> None:
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn("function proposalAcceptanceClient()", bootstrap)
+        self.assertIn('stableBootstrapError("PROPOSAL_ACCEPTANCE_AUTH_REQUIRED")', bootstrap)
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebProposalAcceptanceClient"),
+            2,
+        )
+        self.assertNotIn("Bearer ", bootstrap)
         index = INDEX.read_text(encoding="utf-8")
         app = APP.read_text(encoding="utf-8")
         self.assertIn('id="accept-proposal" type="button" disabled', index)
-        self.assertNotIn('acceptProposalButton.addEventListener', app)
-        self.assertIn('"auth.active"', app)
-        self.assertIn("Proposal acceptance is still disabled.", app)
+        self.assertIn('acceptProposalButton.addEventListener("click"', app)
+        self.assertNotIn("proposal_acceptance_client.js", index)
+        self.assertNotIn("proposal_acceptance_client.js", app)
 
     def test_bootstrap_route_is_authenticated_localhost_only(self) -> None:
         site = SITE_HOST.read_text(encoding="utf-8")
@@ -118,7 +127,6 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             "memory-only",
             "explicit user action",
             "no mutable enrollment API",
-            "no Proposal acceptance",
             "Reset in-memory authentication",
             "Agreement assent composition",
             "agreementAssentClient()",

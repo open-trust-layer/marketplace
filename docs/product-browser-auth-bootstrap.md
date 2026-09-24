@@ -40,6 +40,21 @@ Module selection, key creation, and network authentication each require a separa
 
 The bearer token remains inside `MarketplaceMemorySession`; it is not returned to `app.js`, rendered, logged, persisted, or copied into application state.
 
+## Proposal acceptance composition boundary
+
+The bootstrap may now compose the reviewed Proposal-acceptance Web client only
+after an application session is active. It does not expose the bearer token.
+
+The active page may request that client only from the explicit **Accept Proposal**
+click path. Before enabling the control, the page requires the exact selected
+Proposal, its exact parent listing, and equality between the authenticated
+session principal and the listing seller. The server independently rechecks the
+same seller authority before publishing the immutable acceptance record.
+
+No page load, authentication completion, navigation, or rendering step publishes
+acceptance automatically. Only the exact returned acceptance Record Identity,
+store disposition, and local change sequence are retained in page memory.
+
 ## Agreement assent composition boundary
 
 The reviewed authentication bootstrap now also contains the only browser
@@ -66,7 +81,7 @@ new Agreement client composition fails closed after reset.
 
 ## Product boundary
 
-Successful authentication proves only that the reviewed server accepted the challenge/proof against its current trust snapshot. The existing **Accept Proposal** control remains disabled. This slice grants no Proposal acceptance, assent, agreement formation, payment, settlement, fulfillment, deployment, public-network exposure, database mutation, configuration mutation, or service restart.
+Successful authentication proves only that the reviewed server accepted the challenge/proof against its current trust snapshot. A later reviewed source slice may enable the existing **Accept Proposal** control only for the exact authenticated seller and explicit user click. Authentication alone grants no Proposal acceptance, assent, agreement formation, payment, settlement, fulfillment, deployment, public-network exposure, database mutation, configuration mutation, or service restart.
 
 ## Reset and rollback
 

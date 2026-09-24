@@ -25,6 +25,7 @@ _REVIEWED_WEB_MODULE_ROUTES = frozenset((
     "/auth_ed25519_key_creation.js",
     "/agreement_ed25519_assent_provider.js",
     "/agreement_assent_client.js",
+    "/proposal_acceptance_client.js",
     "/auth_bootstrap.js",
 ))
 

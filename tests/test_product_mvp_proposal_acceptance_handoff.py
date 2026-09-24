@@ -28,13 +28,29 @@ class ProductMvpProposalAcceptanceHandoffTests(unittest.TestCase):
         self.assertIn("parentListing.sellerPrincipal", body)
         self.assertIn("state.selectedId", body)
 
-    def test_handoff_cannot_publish_or_enable_acceptance(self) -> None:
+    def test_handoff_enables_only_exact_authenticated_seller(self) -> None:
         start = APP.index("function renderProposalAcceptanceHandoff(record)")
         end = APP.index("function renderDetail()", start)
         body = APP[start:end]
         self.assertIn("acceptProposalButton.disabled = true", body)
-        for marker in ("apiFetch(", "fetch(", "respondToIntent", "addEventListener", "PROPOSALS_SUFFIX", "RESPONSES_SUFFIX"):
-            self.assertNotIn(marker, body)
+        self.assertIn("authBootstrap.state()", body)
+        self.assertIn("authSnapshot.principal !== parentListing.sellerPrincipal", body)
+        self.assertIn('i18n.t("acceptance.authMismatch")', body)
+        self.assertIn("acceptProposalButton.disabled = false", body)
+
+    def test_acceptance_requires_explicit_click_and_keeps_exact_result_in_memory(self) -> None:
+        self.assertIn(
+            'acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal())',
+            APP,
+        )
+        start = APP.index("async function acceptSelectedProposal()")
+        end = APP.index("function renderDetail()", start)
+        body = APP[start:end]
+        self.assertIn("authBootstrap.proposalAcceptanceClient()", body)
+        self.assertIn("client.acceptProposal(proposalId)", body)
+        self.assertIn("state.proposalAcceptanceResults.set(proposalId, result)", body)
+        self.assertNotIn("agreementAssentClient()", body)
+        self.assertNotIn("signAndSubmit(", body)
 
     def test_handoff_explains_authentication_boundary_bilingually(self) -> None:
         self.assertIn('"acceptance.authRequired"', APP)
