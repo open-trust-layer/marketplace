@@ -113,7 +113,7 @@ class M17AuthEd25519VerifierArtifactTests(unittest.TestCase):
         self.assertLess(workflow.index(exact_install), workflow.index("Install OLP reference dependency"))
         self.assertIn("runs-on: [self-hosted, Windows, X64, marketplace-ci]", workflow)
         self.assertIn("permissions:\n  contents: read", workflow)
-        self.assertEqual(workflow.count("persist-credentials: false"), 2)
+        self.assertEqual(workflow.count("persist-credentials: false"), 4)
 
     def test_verifier_is_unselected_by_runtime_web_android_and_auth_composition(self):
         for path in UNSELECTED_ENTRY_POINTS:
