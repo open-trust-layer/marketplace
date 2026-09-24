@@ -42,11 +42,18 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertIn("permissions:\n  contents: read", self.workflow)
         self.assertNotIn("secrets.", self.workflow)
         checkout_sha = "3d3c42e5aac5ba805825da76410c181273ba90b1"
-        self.assertEqual(self.workflow.count(f"actions/checkout@{checkout_sha}"), 2)
-        self.assertEqual(self.workflow.count("persist-credentials: false"), 2)
-        self.assertEqual(self.workflow.count("fetch-depth: 2"), 1)
-        self.assertEqual(self.workflow.count("fetch-depth: 1"), 1)
+        self.assertEqual(self.workflow.count(f"actions/checkout@{checkout_sha}"), 4)
+        self.assertEqual(self.workflow.count("persist-credentials: false"), 4)
+        self.assertEqual(self.workflow.count("fetch-depth: 2"), 2)
+        self.assertEqual(self.workflow.count("fetch-depth: 1"), 2)
         self.assertNotIn("fetch-depth: 0", self.workflow)
+        self.assertIn("GIT_HTTP_LOW_SPEED_LIMIT: '1024'", self.workflow)
+        self.assertIn("GIT_HTTP_LOW_SPEED_TIME: '30'", self.workflow)
+        self.assertIn("PIP_DEFAULT_TIMEOUT: '120'", self.workflow)
+        self.assertIn("id: marketplace_checkout_primary", self.workflow)
+        self.assertIn("steps.marketplace_checkout_primary.outcome == 'failure'", self.workflow)
+        self.assertIn("id: olp_checkout_primary", self.workflow)
+        self.assertIn("steps.olp_checkout_primary.outcome == 'failure'", self.workflow)
 
 
 if __name__ == "__main__":
