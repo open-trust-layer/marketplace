@@ -15,6 +15,7 @@ AUTH_MODULES = (
     ("/auth_establishment.js", b"auth-establishment"),
     ("/auth_ed25519_proof_provider.js", b"auth-proof"),
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
+    ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
@@ -93,11 +94,19 @@ class ProductAuthWebModuleDeliveryTests(unittest.TestCase):
         bootstrap = (ROOT / "web" / "auth_bootstrap.js").read_text(encoding="utf-8")
         self.assertNotIn("auth_bootstrap.js", index)
         self.assertEqual(app.count('import("./auth_bootstrap.js")'), 1)
-        for path, _ in AUTH_MODULES[:-1]:
+        lower_auth_modules = tuple(
+            path for path, _ in AUTH_MODULES
+            if path not in {"/auth_bootstrap.js", "/agreement_ed25519_assent_provider.js"}
+        )
+        for path in lower_auth_modules:
             marker = path.removeprefix("/")
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
             self.assertIn(f'./{marker}', bootstrap)
+        assent_marker = "agreement_ed25519_assent_provider.js"
+        self.assertNotIn(assent_marker, index)
+        self.assertNotIn(assent_marker, app)
+        self.assertNotIn(assent_marker, bootstrap)
 
     def test_authenticated_reference_builder_forwards_nonempty_module_bundle_only(self) -> None:
         modules = AUTH_MODULES

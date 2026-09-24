@@ -15,9 +15,13 @@ UNSELECTED_SURFACES = (
     ROOT / "web" / "client_session.js",
     ROOT / "web" / "auth_establishment.js",
     ROOT / "web" / "auth_bootstrap.js",
-    ROOT / "tools" / "marketplace_localhost.py",
     ROOT / "android" / "app" / "src" / "main" / "java"
     / "org" / "opentrustlayer" / "marketplace" / "MainActivity.kt",
+)
+
+DELIVERY_SURFACES = (
+    ROOT / "src" / "marketplace" / "application" / "site_host.py",
+    ROOT / "tools" / "marketplace_localhost.py",
 )
 
 
@@ -26,7 +30,15 @@ class ProductWebAgreementAssentProviderArtifactTests(unittest.TestCase):
         for path in (SOURCE, CONTRACT, DOC):
             self.assertTrue(path.is_file(), str(path))
 
-    def test_provider_remains_undelivered_and_unselected(self) -> None:
+    def test_provider_is_delivered_but_unselected(self) -> None:
+        for path in DELIVERY_SURFACES:
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("agreement_ed25519_assent_provider.js", text, str(path))
+            self.assertNotIn(
+                "createMarketplaceWebAgreementEd25519AssentProvider",
+                text,
+                str(path),
+            )
         for path in UNSELECTED_SURFACES:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("agreement_ed25519_assent_provider.js", text, str(path))
