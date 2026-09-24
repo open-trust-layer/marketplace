@@ -40,6 +40,30 @@ Module selection, key creation, and network authentication each require a separa
 
 The bearer token remains inside `MarketplaceMemorySession`; it is not returned to `app.js`, rendered, logged, persisted, or copied into application state.
 
+## Agreement assent composition boundary
+
+The reviewed authentication bootstrap now also contains the only browser
+composition point for the delivered Agreement-assent signer and Web client.
+
+The factory is named `agreementAssentClient()`. It fails closed unless the same
+memory-only browser key still exists, the Marketplace session is active, and the
+verification-method URI is the exact method that established that session.
+
+The factory passes the existing non-extractable private CryptoKey only to the
+purpose-specific Agreement signer, and passes the existing in-memory session
+only to the reviewed Agreement client. It returns neither the private key nor
+the bearer token.
+
+This is composition, not an active Agreement-assent user flow. `index.html` and
+`app.js` do not import the Agreement modules, do not call
+`agreementAssentClient()`, and expose no Agreement-signing control. The
+bootstrap itself never calls `prepare`, `formationStatus`, or
+`signAndSubmit`. Browser signing activation remains a later explicit product
+slice.
+
+Resetting authentication clears the key/session state checked by the factory, so
+new Agreement client composition fails closed after reset.
+
 ## Product boundary
 
 Successful authentication proves only that the reviewed server accepted the challenge/proof against its current trust snapshot. The existing **Accept Proposal** control remains disabled. This slice grants no Proposal acceptance, assent, agreement formation, payment, settlement, fulfillment, deployment, public-network exposure, database mutation, configuration mutation, or service restart.

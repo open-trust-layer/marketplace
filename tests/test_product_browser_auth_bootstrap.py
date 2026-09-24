@@ -22,6 +22,8 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             './auth_ed25519_key_creation.js',
             './auth_ed25519_proof_provider.js',
             './auth_establishment.js',
+            './agreement_ed25519_assent_provider.js',
+            './agreement_assent_client.js',
         ):
             self.assertIn(marker, text)
 
@@ -62,6 +64,32 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
         self.assertIn('authGenerateKeyButton.addEventListener("click"', app)
         self.assertNotIn('import "./auth_bootstrap.js"', app)
 
+    def test_agreement_assent_composition_is_fail_closed_and_ui_inactive(self) -> None:
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn("function agreementAssentClient()", bootstrap)
+        self.assertIn('stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED")', bootstrap)
+        self.assertIn("keyResult === null", bootstrap)
+        self.assertIn("!session.isActive", bootstrap)
+        self.assertIn("activeVerificationMethod === null", bootstrap)
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementEd25519AssentProvider"),
+            2,
+        )
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementAssentClient"),
+            2,
+        )
+        self.assertNotIn("signAndSubmit(", bootstrap)
+        index = INDEX.read_text(encoding="utf-8")
+        app = APP.read_text(encoding="utf-8")
+        for marker in (
+            "agreement_ed25519_assent_provider.js",
+            "agreement_assent_client.js",
+            "agreementAssentClient(",
+        ):
+            self.assertNotIn(marker, index)
+            self.assertNotIn(marker, app)
+
     def test_proposal_acceptance_stays_fail_closed_after_auth_activation(self) -> None:
         index = INDEX.read_text(encoding="utf-8")
         app = APP.read_text(encoding="utf-8")
@@ -92,6 +120,8 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             "no mutable enrollment API",
             "no Proposal acceptance",
             "Reset in-memory authentication",
+            "Agreement assent composition",
+            "agreementAssentClient()",
         ):
             self.assertIn(marker, text)
 

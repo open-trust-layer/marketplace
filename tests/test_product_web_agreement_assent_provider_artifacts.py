@@ -8,13 +8,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "web" / "agreement_ed25519_assent_provider.js"
 CONTRACT = ROOT / "tests" / "test_product_web_agreement_assent_provider_contract.py"
 DOC = ROOT / "docs" / "product-agreement-assent-browser-signer.md"
+BOOTSTRAP = ROOT / "web" / "auth_bootstrap.js"
 
-UNSELECTED_SURFACES = (
+ACTIVE_UNSELECTED_SURFACES = (
     ROOT / "web" / "index.html",
     ROOT / "web" / "app.js",
     ROOT / "web" / "client_session.js",
     ROOT / "web" / "auth_establishment.js",
-    ROOT / "web" / "auth_bootstrap.js",
     ROOT / "android" / "app" / "src" / "main" / "java"
     / "org" / "opentrustlayer" / "marketplace" / "MainActivity.kt",
 )
@@ -30,7 +30,7 @@ class ProductWebAgreementAssentProviderArtifactTests(unittest.TestCase):
         for path in (SOURCE, CONTRACT, DOC):
             self.assertTrue(path.is_file(), str(path))
 
-    def test_provider_is_delivered_but_unselected(self) -> None:
+    def test_provider_is_delivered_and_selected_only_by_auth_bootstrap(self) -> None:
         for path in DELIVERY_SURFACES:
             text = path.read_text(encoding="utf-8")
             self.assertIn("agreement_ed25519_assent_provider.js", text, str(path))
@@ -39,7 +39,7 @@ class ProductWebAgreementAssentProviderArtifactTests(unittest.TestCase):
                 text,
                 str(path),
             )
-        for path in UNSELECTED_SURFACES:
+        for path in ACTIVE_UNSELECTED_SURFACES:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("agreement_ed25519_assent_provider.js", text, str(path))
             self.assertNotIn(
@@ -47,6 +47,16 @@ class ProductWebAgreementAssentProviderArtifactTests(unittest.TestCase):
                 text,
                 str(path),
             )
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertEqual(
+            bootstrap.count('from "./agreement_ed25519_assent_provider.js"'),
+            1,
+        )
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementEd25519AssentProvider"),
+            2,
+        )
+        self.assertNotIn("createAgreementAssentSignature(", bootstrap)
 
     def test_source_has_no_key_lifecycle_or_persistence_capability(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
@@ -107,7 +117,8 @@ class ProductWebAgreementAssentProviderArtifactTests(unittest.TestCase):
         for marker in (
             "MARKETPLACE_WEB_AGREEMENT_ED25519_ASSENT_PROVIDER_V1",
             "source-only",
-            "unselected",
+            "auth_bootstrap.js",
+            "app.js",
             "non-extractable Ed25519",
             "exact signing bytes",
             "no key generation",

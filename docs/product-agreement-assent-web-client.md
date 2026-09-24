@@ -9,8 +9,11 @@ Profile:
 
     MARKETPLACE_WEB_AGREEMENT_ASSENT_CLIENT_V1
 
-The module is delivered as a reviewed same-origin asset but is not imported by
-app.js, index.html, or auth_bootstrap.js. There is no browser activation.
+The module is delivered as a reviewed same-origin asset. A later composition
+slice imports it only from auth_bootstrap.js so the existing authenticated
+memory-only session/key custody can be reused. app.js and index.html still do
+not import or call the module, and there is no active Agreement-assent user
+action.
 
 ## Exact flow
 
@@ -44,13 +47,15 @@ exactly 64 bytes.
 
 ## Non-selection and non-scope
 
-The source is delivered but not imported by app.js or other active Web entry
-points. There is no browser activation.
+The source is delivered and selected only by the reviewed auth bootstrap
+composition factory. It is still not imported by app.js or index.html, and the
+active page exposes no Agreement-assent action. The bootstrap does not invoke
+prepare, formationStatus, or signAndSubmit by itself.
 
 This slice performs no automatic user action, no key creation/import/export,
 no storage, no timer/worker/background work, and no ambient crypto selection.
 There is no Agreement publication, no payment, no settlement, no fulfillment,
-and no deployment.
+and no deployment. There is no browser activation of Agreement assent in this slice.
 
 ## Rollback
 

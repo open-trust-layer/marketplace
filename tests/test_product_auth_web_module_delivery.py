@@ -114,7 +114,7 @@ class ProductAuthWebModuleDeliveryTests(unittest.TestCase):
         ):
             self.assertNotIn(assent_marker, index)
             self.assertNotIn(assent_marker, app)
-            self.assertNotIn(assent_marker, bootstrap)
+            self.assertEqual(bootstrap.count(f'./{assent_marker}'), 1)
 
     def test_authenticated_reference_builder_forwards_nonempty_module_bundle_only(self) -> None:
         modules = AUTH_MODULES

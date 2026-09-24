@@ -16,7 +16,7 @@ DOC = ROOT / "docs" / "product-agreement-assent-web-client.md"
 
 
 class ProductWebAgreementAssentClientArtifactTests(unittest.TestCase):
-    def test_source_and_delivery_exist_but_active_page_is_unselected(self) -> None:
+    def test_source_is_delivered_and_selected_only_by_auth_bootstrap(self) -> None:
         self.assertTrue(SOURCE.is_file())
         self.assertTrue(DOC.is_file())
         marker = "agreement_assent_client.js"
@@ -24,7 +24,13 @@ class ProductWebAgreementAssentClientArtifactTests(unittest.TestCase):
         self.assertIn(f'"web/{marker}"', LOCALHOST.read_text(encoding="utf-8"))
         self.assertNotIn(marker, INDEX.read_text(encoding="utf-8"))
         self.assertNotIn(marker, APP.read_text(encoding="utf-8"))
-        self.assertNotIn(marker, BOOTSTRAP.read_text(encoding="utf-8"))
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertEqual(bootstrap.count(f'from "./{marker}"'), 1)
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementAssentClient"),
+            2,
+        )
+        self.assertNotIn("signAndSubmit(", bootstrap)
 
     def test_web_session_authorizes_only_exact_assent_post_routes(self) -> None:
         text = SESSION.read_text(encoding="utf-8")
