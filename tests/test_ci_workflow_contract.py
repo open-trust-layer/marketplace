@@ -54,6 +54,21 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertIn("steps.marketplace_checkout_primary.outcome == 'failure'", self.workflow)
         self.assertIn("id: olp_checkout_primary", self.workflow)
         self.assertIn("steps.olp_checkout_primary.outcome == 'failure'", self.workflow)
+        self.assertEqual(
+            self.workflow.count(
+                "for ($installAttempt = 1; $installAttempt -le 2; $installAttempt++)"
+            ),
+            2,
+        )
+        self.assertEqual(self.workflow.count("Start-Sleep -Seconds 5"), 2)
+        self.assertIn(
+            "Reviewed build backend install failed after bounded retry",
+            self.workflow,
+        )
+        self.assertIn(
+            "Reviewed authentication verifier install failed after bounded retry",
+            self.workflow,
+        )
 
 
 if __name__ == "__main__":
