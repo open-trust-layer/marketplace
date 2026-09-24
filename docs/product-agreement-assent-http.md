@@ -3,13 +3,14 @@
 ## Purpose
 
 This source-only slice exposes the already-reviewed Agreement assent workflow
-through two authenticated application HTTP routes without activating any server,
+through three authenticated application HTTP routes without activating any server,
 browser signer, database migration, or Agreement publication.
 
 Routes:
 
     POST /api/agreements/{proposal_record_id}/assent/preparation
     POST /api/agreements/{proposal_record_id}/assent
+    POST /api/agreements/{proposal_record_id}/assent/status
 
 ## Preparation
 
@@ -24,13 +25,29 @@ The active application session supplies both principal and verification method.
 Neither may be supplied by the request.
 
 Preparation validates the session without refreshing its idle lifetime, builds
-the exact candidate, and returns only:
+the exact candidate, evaluates current formation metadata only to require that
+the authenticated principal is one of the exact Agreement parties, and returns
+only:
 
 - Agreement Record Identity;
 - session verification method;
 - exact signing input encoded as canonical OJVE bytes.
 
 Preparation performs no coordination write.
+
+## Formation status
+
+The status request body contains exactly acceptance_record_id. It validates the
+session without refreshing idle lifetime, resolves the same exact candidate,
+and runs the existing read-only formation-status evaluator.
+
+Status is available only when the authenticated session principal is one of the
+exact required Agreement principals. The response is the bounded existing #360
+formation document: Agreement identity, required/covered/missing principals,
+formation evidence, legal_enforceability=NOT_EVALUATED, universal_truth=false,
+publishes_agreement=false, and authorizes_side_effects=false.
+
+Status performs no signing and no coordination write.
 
 ## Submission
 
@@ -40,9 +57,11 @@ The submission body contains exactly:
 - signature as canonical OJVE bytes.
 
 The server does not accept a caller-supplied preparation or signing input.
-After authenticating the session, it resolves the exact candidate and runs
-workflow preparation again from the current session principal/method. It then
-passes the exact decoded 64-byte signature to workflow submission.
+After validating the session, it resolves the exact candidate and requires the
+session principal to be an exact Agreement party before refreshing session idle
+lifetime. Only then does it run workflow preparation again from the current
+session principal/method and pass the exact decoded 64-byte signature to
+workflow submission.
 
 A stored result reports bounded retention metadata and keeps
 publishes_agreement and authorizes_side_effects permanently false.
@@ -60,8 +79,9 @@ No new mk-style carrier or alternate base64 profile is introduced.
 The new adapter wraps the existing authenticated Marketplace HTTP adapter.
 Non-matching routes delegate to the existing adapter unchanged.
 
-This source slice does not add the routes to an ASGI/server composition or
-activate them on localhost/public network. Runtime selection remains separate.
+The adapter may be assembled by the later inert source composition, but it is
+not selected into ASGI, site-host runtime, localhost execution, or a public
+network. Runtime selection remains separate.
 
 ## Security boundary
 
@@ -76,7 +96,10 @@ The request cannot supply:
 - trust evidence.
 
 There is no automatic latest-acceptance selection. The exact acceptance Record
-Identity is required for every preparation/submission.
+Identity is required for every preparation/submission/status request.
+
+An authenticated principal that is not one of the exact Agreement parties is
+rejected before proof preparation, coordination storage, or status disclosure.
 
 No Agreement publication, payment, settlement, escrow, fulfillment, ownership
 transfer, key generation/import/export, browser delivery/selection, deployment,

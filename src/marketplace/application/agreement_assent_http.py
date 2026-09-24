@@ -35,6 +35,7 @@ SigningInputCarrierEncoder = Callable[[bytes], Any]
 SignatureCarrierDecoder = Callable[[Any], bytes]
 
 _PREPARATION_FIELDS = frozenset({"acceptance_record_id"})
+_STATUS_FIELDS = frozenset({"acceptance_record_id"})
 _SUBMISSION_FIELDS = frozenset({"acceptance_record_id", "signature"})
 
 
@@ -51,10 +52,11 @@ def _assent_route(path: str) -> tuple[str, str] | None:
     if (
         len(parts) == 6
         and parts[:3] == ["", "api", "agreements"]
-        and parts[4:] == ["assent", "preparation"]
+        and parts[4] == "assent"
+        and parts[5] in {"preparation", "status"}
     ):
         try:
-            return ("preparation", _record_id(parts[3]))
+            return (parts[5], _record_id(parts[3]))
         except ValueError:
             return None
     if (
@@ -224,6 +226,13 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
                 session_token=session_token,
                 now=now,
             )
+        if kind == "status":
+            return self._status(
+                document,
+                proposal_id=proposal_id,
+                session_token=session_token,
+                now=now,
+            )
         return self._submit(
             document,
             proposal_id=proposal_id,
@@ -265,6 +274,36 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
         except AgreementAssentCandidateResolutionError as exc:
             return _candidate_failure(exc)
 
+    def _formation_for_party(
+        self,
+        *,
+        candidate,
+        principal: str,
+        now: int,
+    ):
+        try:
+            result = self._workflow.formation_status(
+                candidate=candidate,
+                at_time=now,
+            )
+        except AgreementAssentWorkflowError as exc:
+            return _workflow_failure(exc, submission=False)
+        except Exception:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "AGREEMENT_ASSENT_FORMATION_STATUS_FAILED",
+                "Agreement formation status could not be evaluated safely",
+            )
+        if principal not in result.required_principals:
+            return _error_response(
+                403,
+                "Forbidden",
+                "AGREEMENT_ASSENT_PARTY_REQUIRED",
+                "authenticated principal is not an Agreement party",
+            )
+        return result
+
     def _prepare(
         self,
         document: dict[str, Any],
@@ -293,6 +332,13 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
         )
         if type(candidate) is ApplicationHttpResponse:
             return candidate
+        party_status = self._formation_for_party(
+            candidate=candidate,
+            principal=session.principal,
+            now=now,
+        )
+        if type(party_status) is ApplicationHttpResponse:
+            return party_status
 
         try:
             preparation = self._workflow.prepare(
@@ -321,6 +367,51 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
                 "Agreement assent preparation could not be encoded safely",
             )
 
+    def _status(
+        self,
+        document: dict[str, Any],
+        *,
+        proposal_id: str,
+        session_token: bytes,
+        now: int,
+    ) -> ApplicationHttpResponse:
+        if frozenset(document) != _STATUS_FIELDS:
+            return _bad_request("AGREEMENT_ASSENT_REQUEST_INVALID")
+        try:
+            acceptance_id = _record_id(document["acceptance_record_id"])
+        except (KeyError, ValueError):
+            return _bad_request("AGREEMENT_ASSENT_REQUEST_INVALID")
+
+        session = self._session(
+            session_token=session_token,
+            now=now,
+            touch=False,
+        )
+        if type(session) is ApplicationHttpResponse:
+            return session
+        candidate = self._candidate(
+            proposal_id=proposal_id,
+            acceptance_id=acceptance_id,
+        )
+        if type(candidate) is ApplicationHttpResponse:
+            return candidate
+        result = self._formation_for_party(
+            candidate=candidate,
+            principal=session.principal,
+            now=now,
+        )
+        if type(result) is ApplicationHttpResponse:
+            return result
+        try:
+            return _json_response(200, "OK", result.to_document())
+        except Exception:
+            return _error_response(
+                500,
+                "Internal Server Error",
+                "AGREEMENT_ASSENT_FORMATION_STATUS_FAILED",
+                "Agreement formation status could not be encoded safely",
+            )
+
     def _submit(
         self,
         document: dict[str, Any],
@@ -342,7 +433,7 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
         session = self._session(
             session_token=session_token,
             now=now,
-            touch=True,
+            touch=False,
         )
         if type(session) is ApplicationHttpResponse:
             return session
@@ -352,6 +443,20 @@ class MarketplaceAuthenticatedAgreementAssentHttpAdapter:
         )
         if type(candidate) is ApplicationHttpResponse:
             return candidate
+        party_status = self._formation_for_party(
+            candidate=candidate,
+            principal=session.principal,
+            now=now,
+        )
+        if type(party_status) is ApplicationHttpResponse:
+            return party_status
+        session = self._session(
+            session_token=session_token,
+            now=now,
+            touch=True,
+        )
+        if type(session) is ApplicationHttpResponse:
+            return session
 
         try:
             preparation = self._workflow.prepare(

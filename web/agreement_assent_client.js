@@ -158,6 +158,70 @@ function reviewedSubmissionResponse(value, agreementRecordId) {
   });
 }
 
+function reviewedPrincipalCollection(value) {
+  if (!Array.isArray(value) || value.length > 16) {
+    throw stableAssentClientError("AGREEMENT_ASSENT_RESPONSE_INVALID");
+  }
+  const reviewed = value.map(reviewedUri);
+  if (new Set(reviewed).size !== reviewed.length) {
+    throw stableAssentClientError("AGREEMENT_ASSENT_RESPONSE_INVALID");
+  }
+  return Object.freeze(reviewed);
+}
+
+function reviewedFormationStatusResponse(value) {
+  if (!exactKeys(
+    value,
+    [
+      "agreement_record_id",
+      "authorizes_side_effects",
+      "covered_principals",
+      "formation_evidence",
+      "legal_enforceability",
+      "missing_principals",
+      "publishes_agreement",
+      "required_principals",
+      "universal_truth",
+    ],
+  )) {
+    throw stableAssentClientError("AGREEMENT_ASSENT_RESPONSE_INVALID");
+  }
+  const agreementRecordId = reviewedRecordId(value.agreement_record_id);
+  const requiredPrincipals = reviewedPrincipalCollection(value.required_principals);
+  const coveredPrincipals = reviewedPrincipalCollection(value.covered_principals);
+  const missingPrincipals = reviewedPrincipalCollection(value.missing_principals);
+  const required = new Set(requiredPrincipals);
+  const covered = new Set(coveredPrincipals);
+  const missing = new Set(missingPrincipals);
+  if (requiredPrincipals.length === 0 ||
+      coveredPrincipals.some((principal) => !required.has(principal)) ||
+      missingPrincipals.some((principal) => !required.has(principal)) ||
+      coveredPrincipals.some((principal) => missing.has(principal)) ||
+      covered.size + missing.size !== required.size ||
+      value.legal_enforceability !== "NOT_EVALUATED" ||
+      value.universal_truth !== false ||
+      value.publishes_agreement !== false ||
+      value.authorizes_side_effects !== false ||
+      !["EVIDENCE_SUFFICIENT_FOR_PROFILE", "EVIDENCE_INCOMPLETE"].includes(
+        value.formation_evidence,
+      ) ||
+      (value.formation_evidence === "EVIDENCE_SUFFICIENT_FOR_PROFILE") !==
+        (missing.size === 0)) {
+    throw stableAssentClientError("AGREEMENT_ASSENT_RESPONSE_INVALID");
+  }
+  return Object.freeze({
+    agreementRecordId,
+    formationEvidence: value.formation_evidence,
+    requiredPrincipals,
+    coveredPrincipals,
+    missingPrincipals,
+    legalEnforceability: "NOT_EVALUATED",
+    universalTruth: false,
+    publishesAgreement: false,
+    authorizesSideEffects: false,
+  });
+}
+
 function reviewedConfiguration(fetchImpl, session, signer) {
   if (typeof fetchImpl !== "function" || session === null || typeof session !== "object" ||
       typeof session.authorizationFor !== "function" ||
@@ -244,6 +308,20 @@ function createMarketplaceWebAgreementAssentClient({ fetchImpl, session, signer 
     return reviewedPreparationResponse(response);
   }
 
+  async function formationStatus(proposalRecordIdValue, acceptanceRecordIdValue) {
+    const proposalRecordId = reviewedRecordId(proposalRecordIdValue);
+    const acceptanceRecordId = reviewedRecordId(acceptanceRecordIdValue);
+    const path = "/api/agreements/" + encodeURIComponent(proposalRecordId) +
+      "/assent/status";
+    const response = await postJson(
+      reviewed.fetchImpl,
+      reviewed.session,
+      path,
+      { acceptance_record_id: acceptanceRecordId },
+    );
+    return reviewedFormationStatusResponse(response);
+  }
+
   async function signAndSubmit(proposalRecordIdValue, acceptanceRecordIdValue) {
     const proposalRecordId = reviewedRecordId(proposalRecordIdValue);
     const acceptanceRecordId = reviewedRecordId(acceptanceRecordIdValue);
@@ -276,7 +354,7 @@ function createMarketplaceWebAgreementAssentClient({ fetchImpl, session, signer 
     return reviewedSubmissionResponse(response, preparation.agreementRecordId);
   }
 
-  return Object.freeze({ prepare, signAndSubmit });
+  return Object.freeze({ prepare, formationStatus, signAndSubmit });
 }
 
 export {

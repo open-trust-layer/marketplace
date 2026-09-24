@@ -31,7 +31,7 @@ class ProductWebAgreementAssentClientArtifactTests(unittest.TestCase):
         for marker in (
             'path.startsWith("/api/agreements/")',
             'parts[1] !== "assent"',
-            'return parts[2] === "preparation"',
+            'parts[2] === "preparation" || parts[2] === "status"',
         ):
             self.assertIn(marker, text)
 

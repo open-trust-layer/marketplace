@@ -57,7 +57,7 @@ class M175EClientSessionArtifactTests(unittest.TestCase):
             'tail === "proposals"',
             'path.startsWith("/api/agreements/")',
             'parts[1] !== "assent"',
-            'return parts[2] === "preparation"',
+            'parts[2] === "preparation" || parts[2] === "status"',
             'headers.Authorization = authorization',
         ):
             self.assertIn(marker, text)
