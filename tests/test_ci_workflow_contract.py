@@ -47,6 +47,8 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertEqual(self.workflow.count("fetch-depth: 2"), 1)
         self.assertEqual(self.workflow.count("fetch-depth: 1"), 1)
         self.assertNotIn("fetch-depth: 0", self.workflow)
+        self.assertIn("GIT_HTTP_LOW_SPEED_LIMIT: '1024'", self.workflow)
+        self.assertIn("GIT_HTTP_LOW_SPEED_TIME: '30'", self.workflow)
 
 
 if __name__ == "__main__":

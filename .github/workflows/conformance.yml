@@ -15,6 +15,8 @@ jobs:
     env:
       CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      GIT_HTTP_LOW_SPEED_LIMIT: '1024'
+      GIT_HTTP_LOW_SPEED_TIME: '30'
     steps:
       - name: Check out Marketplace
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
