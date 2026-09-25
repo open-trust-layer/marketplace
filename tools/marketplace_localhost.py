@@ -34,6 +34,9 @@ DEMO_LOCALHOST_EXECUTION_OPT_IN: Final = "EXECUTE_MARKETPLACE_IN_MEMORY_DEMO_V1"
 AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN: Final = (
     "EXECUTE_AUTHENTICATED_MARKETPLACE_LOCALHOST_MVP_V1"
 )
+AGREEMENT_ASSENT_AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN: Final = (
+    "EXECUTE_AGREEMENT_ASSENT_AUTHENTICATED_MARKETPLACE_LOCALHOST_V1"
+)
 LOCALHOST_HOST: Final = "127.0.0.1"
 MIN_LOCALHOST_PORT: Final = 1024
 MAX_LOCALHOST_PORT: Final = 65535
@@ -87,6 +90,16 @@ def _validate_demo_execution_opt_in(value: object) -> None:
 def _validate_authenticated_execution_opt_in(value: object) -> None:
     if type(value) is not str or value != AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN:
         raise MarketplaceLocalhostBootstrapError("M17_5Y_EXECUTION_OPT_IN_REQUIRED")
+
+
+def _validate_agreement_assent_authenticated_execution_opt_in(value: object) -> None:
+    if (
+        type(value) is not str
+        or value != AGREEMENT_ASSENT_AUTHENTICATED_LOCALHOST_EXECUTION_OPT_IN
+    ):
+        raise MarketplaceLocalhostBootstrapError(
+            "AGREEMENT_ASSENT_LOCALHOST_EXECUTION_OPT_IN_REQUIRED"
+        )
 
 
 def _validate_authentication_provisioning_directory(value: object) -> str:
@@ -161,6 +174,73 @@ def _build_authenticated_postgres_plan(
         )
     except Exception:
         raise MarketplaceLocalhostBootstrapError("M17_5Y_COMPOSITION_FAILED") from None
+
+
+def _build_agreement_assent_postgres_graph(
+    *,
+    authenticated_plan: object,
+    connection_factory: object,
+    clock: Callable[[], datetime],
+    importer: Callable[[str], object] = importlib.import_module,
+):
+    try:
+        module = importer("marketplace.reference.agreement_assent_postgres_v1")
+        builder = getattr(module, "build_reference_agreement_assent_postgres")
+        if not callable(builder):
+            raise TypeError("builder")
+        return builder(
+            authenticated_plan=authenticated_plan,
+            connection_factory=connection_factory,
+            clock=clock,
+        )
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "AGREEMENT_ASSENT_POSTGRES_COMPOSITION_FAILED"
+        ) from None
+
+
+def _initialize_agreement_assent_coordination(
+    graph: object,
+    *,
+    importer: Callable[[str], object] = importlib.import_module,
+) -> None:
+    try:
+        module = importer("marketplace.reference.agreement_assent_initialization_v1")
+        initialize = getattr(
+            module,
+            "initialize_reference_agreement_assent_coordination",
+        )
+        token = getattr(module, "INITIALIZE_ONE_AGREEMENT_ASSENT_COORDINATION")
+        if not callable(initialize) or type(token) is not str:
+            raise TypeError("initialization")
+        initialize(graph=graph, execute_token=token)
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "AGREEMENT_ASSENT_DATABASE_INITIALIZATION_FAILED"
+        ) from None
+
+
+def _run_agreement_assent_foreground(
+    graph: object,
+    *,
+    provider: object,
+    importer: Callable[[str], object] = importlib.import_module,
+) -> None:
+    try:
+        module = importer("marketplace.application.agreement_assent_runtime_server")
+        runner = getattr(module, "run_marketplace_agreement_assent_foreground")
+        token = getattr(
+            module,
+            "EXECUTE_ONE_AGREEMENT_ASSENT_MARKETPLACE_LOOPBACK_SERVER",
+        )
+        plan = graph.launch.plan
+        if not callable(runner) or type(token) is not str:
+            raise TypeError("runtime")
+        runner(plan=plan, provider=provider, execute_token=token)
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "AGREEMENT_ASSENT_LOOPBACK_SERVER_FAILED"
+        ) from None
 
 
 def _validate_authenticated_plan_before_initialize(
@@ -508,6 +588,55 @@ def _execute_authenticated_localhost(
     _run_authenticated_foreground(plan=plan, provider=provider)
 
 
+def _execute_agreement_assent_authenticated_localhost(
+    port: int,
+    execution_opt_in: object,
+    provisioning_directory: object,
+) -> None:
+    validated_port = _validate_port(port)
+    _validate_agreement_assent_authenticated_execution_opt_in(execution_opt_in)
+    directory = _validate_authentication_provisioning_directory(
+        provisioning_directory
+    )
+    provisioning = _load_authentication_provisioning(directory)
+    runtime_inputs = _compose_authentication_runtime_inputs()
+    getenv = _real_environment_getter()
+    dsn = _read_postgres_dsn(getenv)
+    asset_reader = _real_asset_reader()
+    index_html, app_js, styles_css = _load_web_assets(asset_reader)
+    web_modules = _load_auth_web_modules(asset_reader)
+    connection_factory = _build_psycopg_connection_factory(dsn)
+    authenticated_plan = _build_authenticated_postgres_plan(
+        connection_factory=connection_factory,
+        clock=_utc_clock,
+        host=LOCALHOST_HOST,
+        port=validated_port,
+        index_html=index_html,
+        app_js=app_js,
+        styles_css=styles_css,
+        web_modules=web_modules,
+        provisioning=provisioning,
+        runtime_inputs=runtime_inputs,
+    )
+    application = _validate_authenticated_plan_before_initialize(
+        authenticated_plan
+    )
+    graph = _build_agreement_assent_postgres_graph(
+        authenticated_plan=authenticated_plan,
+        connection_factory=connection_factory,
+        clock=_utc_clock,
+    )
+    provider = _real_uvicorn_provider()
+    try:
+        application.initialize()
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "M17_5Y_DATABASE_INITIALIZATION_FAILED"
+        ) from None
+    _initialize_agreement_assent_coordination(graph)
+    _run_agreement_assent_foreground(graph, provider=provider)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -542,6 +671,14 @@ def _parser() -> argparse.ArgumentParser:
         metavar="TOKEN",
         help="TOKEN must equal the exact documented M17.5Y authenticated localhost execution opt-in",
     )
+    mode.add_argument(
+        "--execute-agreement-assent-localhost",
+        metavar="TOKEN",
+        help=(
+            "TOKEN must equal the exact Agreement-assent authenticated localhost "
+            "execution opt-in"
+        ),
+    )
     parser.add_argument(
         "--authentication-provisioning-directory",
         metavar="ABSOLUTE_DIRECTORY",
@@ -560,6 +697,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if (
         args.execute_authenticated_localhost is None
+        and args.execute_agreement_assent_localhost is None
         and args.authentication_provisioning_directory is not None
     ):
         print("M17_5Y_PROVISIONING_DIRECTORY_MODE_INVALID", file=sys.stderr)
@@ -602,6 +740,27 @@ def main(argv: list[str] | None = None) -> int:
             return 2 if exc.code in preflight_codes else 1
         print(
             "M17_5Y_AUTHENTICATED_LOCALHOST_FOREGROUND_COMPLETE "
+            "public_exposure=false production_deployment=false android_runtime=false"
+        )
+        return 0
+
+    if args.execute_agreement_assent_localhost is not None:
+        try:
+            _execute_agreement_assent_authenticated_localhost(
+                port,
+                args.execute_agreement_assent_localhost,
+                args.authentication_provisioning_directory,
+            )
+        except MarketplaceLocalhostBootstrapError as exc:
+            print(exc.code, file=sys.stderr)
+            preflight_codes = {
+                "M17_2B_PORT_INVALID",
+                "AGREEMENT_ASSENT_LOCALHOST_EXECUTION_OPT_IN_REQUIRED",
+                "M17_5Y_PROVISIONING_DIRECTORY_INVALID",
+            }
+            return 2 if exc.code in preflight_codes else 1
+        print(
+            "AGREEMENT_ASSENT_AUTHENTICATED_LOCALHOST_FOREGROUND_COMPLETE "
             "public_exposure=false production_deployment=false android_runtime=false"
         )
         return 0
