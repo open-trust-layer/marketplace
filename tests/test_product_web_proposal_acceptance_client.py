@@ -35,6 +35,23 @@ class ProductWebProposalAcceptanceClientTests(unittest.TestCase):
         self.assertNotIn("body:", text)
         self.assertNotIn("seller_principal", text)
 
+    def test_client_uses_exact_authenticated_get_for_resolution(self) -> None:
+        text = SOURCE.read_text(encoding="utf-8")
+        start = text.index("async function resolveAcceptance")
+        end = text.index("async function acceptProposal", start)
+        block = text[start:end]
+        self.assertIn('authorizationFor("GET", path)', block)
+        self.assertIn('method: "GET"', block)
+        self.assertIn('Accept: "application/json"', block)
+        self.assertNotIn('"Content-Type"', block)
+        self.assertNotIn("body:", block)
+        self.assertIn("decodeResolutionResponse", block)
+        self.assertIn(
+            '["proposal_record_id", "record_id"]',
+            text,
+        )
+        self.assertIn("proposalRecordId !== expectedProposalRecordId", text)
+
     def test_response_is_exact_bounded_publication_metadata(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
         self.assertIn('["change_seq", "disposition", "record_id"]', text)

@@ -57,7 +57,9 @@ signer.
 The signing path is a separate explicit browser action. The page calls
 `signAndSubmit(proposalRecordId, acceptanceRecordId, expectedAgreementRecordId)`
 only after a reviewed formation result proves that the authenticated principal
-is a required missing party for the exact in-memory Proposal acceptance.
+is a required missing party for the exact in-memory published Proposal
+acceptance identity, whether obtained from seller publication or explicit
+party-gated resolution.
 
 Before the signer is called, the client independently re-prepares the exact
 candidate and requires its Agreement Record Identity to match the exact
