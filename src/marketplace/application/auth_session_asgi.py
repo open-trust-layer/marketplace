@@ -12,6 +12,7 @@ from .asgi import (
     _response_headers,
     _review_scope,
 )
+from .agreement_assent_http import MarketplaceAuthenticatedAgreementAssentHttpAdapter
 from .auth_http import MarketplaceAuthenticatedApplicationHttpAdapter
 from .auth_session_http import AUTH_REQUEST_MAX_BYTES, MarketplaceAuthenticationSessionHttpAdapter
 from .bearer import MarketplaceBearerTransportError, parse_marketplace_bearer_authorization
@@ -25,21 +26,29 @@ from .site_host import MarketplaceSiteHostAdapter
 
 
 class MarketplaceSessionEstablishmentAsgiHttpAdapter:
-    """Route exact auth endpoints plus existing M17.5C protected writes."""
+    """Route exact auth endpoints plus one reviewed authenticated Marketplace HTTP graph."""
 
     __slots__ = ("_site", "_marketplace_http", "_auth_http", "_now")
     def __init__(
         self,
         *,
         site: MarketplaceSiteHostAdapter,
-        marketplace_http: MarketplaceAuthenticatedApplicationHttpAdapter,
+        marketplace_http: (
+            MarketplaceAuthenticatedApplicationHttpAdapter
+            | MarketplaceAuthenticatedAgreementAssentHttpAdapter
+        ),
         auth_http: MarketplaceAuthenticationSessionHttpAdapter,
         now: Callable[[], int],
     ) -> None:
         if type(site) is not MarketplaceSiteHostAdapter:
             raise TypeError("site MUST be exact MarketplaceSiteHostAdapter")
-        if type(marketplace_http) is not MarketplaceAuthenticatedApplicationHttpAdapter:
-            raise TypeError("marketplace_http MUST be exact authenticated HTTP adapter")
+        if type(marketplace_http) not in {
+            MarketplaceAuthenticatedApplicationHttpAdapter,
+            MarketplaceAuthenticatedAgreementAssentHttpAdapter,
+        }:
+            raise TypeError(
+                "marketplace_http MUST be an exact reviewed authenticated HTTP adapter"
+            )
         if type(auth_http) is not MarketplaceAuthenticationSessionHttpAdapter:
             raise TypeError("auth_http MUST be exact authentication-session HTTP adapter")
         if not callable(now):
