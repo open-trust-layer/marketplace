@@ -588,6 +588,57 @@ def _execute_authenticated_localhost(
     _run_authenticated_foreground(plan=plan, provider=provider)
 
 
+def _preflight_agreement_assent_authenticated_localhost(
+    port: int,
+    provisioning_directory: object,
+):
+    validated_port = _validate_port(port)
+    directory = _validate_authentication_provisioning_directory(
+        provisioning_directory
+    )
+    provisioning = _load_authentication_provisioning(directory)
+    runtime_inputs = _compose_authentication_runtime_inputs()
+    getenv = _real_environment_getter()
+    dsn = _read_postgres_dsn(getenv)
+    asset_reader = _real_asset_reader()
+    index_html, app_js, styles_css = _load_web_assets(asset_reader)
+    web_modules = _load_auth_web_modules(asset_reader)
+    connection_factory = _build_psycopg_connection_factory(dsn)
+    authenticated_plan = _build_authenticated_postgres_plan(
+        connection_factory=connection_factory,
+        clock=_utc_clock,
+        host=LOCALHOST_HOST,
+        port=validated_port,
+        index_html=index_html,
+        app_js=app_js,
+        styles_css=styles_css,
+        web_modules=web_modules,
+        provisioning=provisioning,
+        runtime_inputs=runtime_inputs,
+    )
+    _validate_authenticated_plan_before_initialize(authenticated_plan)
+    graph = _build_agreement_assent_postgres_graph(
+        authenticated_plan=authenticated_plan,
+        connection_factory=connection_factory,
+        clock=_utc_clock,
+    )
+    try:
+        coordination = graph.launch.services.coordination
+        if coordination._store is not graph.store:
+            raise TypeError("coordination store")
+        if coordination._initialized is not False:
+            raise TypeError("coordination initialized")
+        if graph.launch.plan.host != LOCALHOST_HOST:
+            raise TypeError("host")
+        if graph.launch.plan.port != validated_port:
+            raise TypeError("port")
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "AGREEMENT_ASSENT_LOCALHOST_PREFLIGHT_FAILED"
+        ) from None
+    return graph
+
+
 def _execute_agreement_assent_authenticated_localhost(
     port: int,
     execution_opt_in: object,
@@ -672,6 +723,14 @@ def _parser() -> argparse.ArgumentParser:
         help="TOKEN must equal the exact documented M17.5Y authenticated localhost execution opt-in",
     )
     mode.add_argument(
+        "--preflight-agreement-assent-localhost",
+        action="store_true",
+        help=(
+            "compose and validate the Agreement-assent authenticated localhost graph "
+            "without database initialization or server execution"
+        ),
+    )
+    mode.add_argument(
         "--execute-agreement-assent-localhost",
         metavar="TOKEN",
         help=(
@@ -697,6 +756,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if (
         args.execute_authenticated_localhost is None
+        and not args.preflight_agreement_assent_localhost
         and args.execute_agreement_assent_localhost is None
         and args.authentication_provisioning_directory is not None
     ):
@@ -720,6 +780,27 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "MVP_DEMO_LOCALHOST_FOREGROUND_COMPLETE "
             "persistence=process_memory public_exposure=false production_deployment=false"
+        )
+        return 0
+
+    if args.preflight_agreement_assent_localhost:
+        try:
+            _preflight_agreement_assent_authenticated_localhost(
+                port,
+                args.authentication_provisioning_directory,
+            )
+        except MarketplaceLocalhostBootstrapError as exc:
+            print(exc.code, file=sys.stderr)
+            preflight_codes = {
+                "M17_2B_PORT_INVALID",
+                "M17_5Y_PROVISIONING_DIRECTORY_INVALID",
+            }
+            return 2 if exc.code in preflight_codes else 1
+        print(
+            "AGREEMENT_ASSENT_AUTHENTICATED_LOCALHOST_PREFLIGHT_READY "
+            f"host={LOCALHOST_HOST} port={port} "
+            "postgres_connection_invoked=false database_initialized=false "
+            "coordination_initialized=false server_invoked=false"
         )
         return 0
 
