@@ -13,7 +13,15 @@ class ProductAgreementAssentLocalhostLifecycleTests(unittest.TestCase):
         application = Mock(name="application")
         application.initialize.side_effect = lambda: events.append("application")
         authenticated_plan = Mock(name="authenticated_plan")
-        graph = SimpleNamespace(launch=SimpleNamespace(plan=Mock(name="agreement_plan")))
+        store = object()
+        coordination = SimpleNamespace(_store=store, _initialized=False)
+        graph = SimpleNamespace(
+            store=store,
+            launch=SimpleNamespace(
+                services=SimpleNamespace(coordination=coordination),
+                plan=SimpleNamespace(host=localhost.LOCALHOST_HOST, port=18446),
+            ),
+        )
         provider = Mock(name="provider")
 
         replacements = {
@@ -62,7 +70,15 @@ class ProductAgreementAssentLocalhostLifecycleTests(unittest.TestCase):
         application = Mock(name="application")
         application.initialize.side_effect = RuntimeError("provider detail")
         authenticated_plan = Mock(name="authenticated_plan")
-        graph = SimpleNamespace(launch=SimpleNamespace(plan=Mock(name="agreement_plan")))
+        store = object()
+        coordination = SimpleNamespace(_store=store, _initialized=False)
+        graph = SimpleNamespace(
+            store=store,
+            launch=SimpleNamespace(
+                services=SimpleNamespace(coordination=coordination),
+                plan=SimpleNamespace(host=localhost.LOCALHOST_HOST, port=18446),
+            ),
+        )
 
         initialize_agreement = Mock(name="initialize_agreement")
         run_server = Mock(name="run_server")
@@ -107,7 +123,15 @@ class ProductAgreementAssentLocalhostLifecycleTests(unittest.TestCase):
     def test_agreement_initialization_failure_blocks_server(self) -> None:
         application = Mock(name="application")
         authenticated_plan = Mock(name="authenticated_plan")
-        graph = SimpleNamespace(launch=SimpleNamespace(plan=Mock(name="agreement_plan")))
+        store = object()
+        coordination = SimpleNamespace(_store=store, _initialized=False)
+        graph = SimpleNamespace(
+            store=store,
+            launch=SimpleNamespace(
+                services=SimpleNamespace(coordination=coordination),
+                plan=SimpleNamespace(host=localhost.LOCALHOST_HOST, port=18446),
+            ),
+        )
 
         run_server = Mock(name="run_server")
         replacements = {
