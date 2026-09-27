@@ -2,7 +2,7 @@
 
 This module turns one exact caller-reviewed enrollment proposal into one canonical
 M17.5L evidence envelope through one injected purpose-specific attestor. It
-performs no signer acquisition, key custody, persistence, network, or runtime
+performs no attestor acquisition, key custody, persistence, network, or runtime
 selection.
 """
 from __future__ import annotations
