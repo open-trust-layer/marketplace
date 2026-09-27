@@ -43,9 +43,9 @@ The coordinator does not generate any of these values.
 
 ## Static validation
 
-Before session authorization or replay consumption, M17.6G validates exact types, sizes, time, lease bounds, proposal public key, controller/verification-method claim shape, and authority/lease semantics using the existing M17.5L evidence types.
+Before session authorization or replay consumption, M17.6G validates exact types, sizes, time, lease bounds, proposal public key, controller/verification-method claim shape, and authority/lease semantics using the existing M17.5L evidence types. It also verifies that the injected replay guard, approval policy, and attestor expose their exact purpose-specific callables without invoking them.
 
-Invalid static inputs therefore cannot consume a nonce or reach policy/signing.
+Invalid static inputs or collaborator configuration therefore cannot touch the session, consume a nonce, or reach policy/signing.
 
 ## Session-principal binding
 
