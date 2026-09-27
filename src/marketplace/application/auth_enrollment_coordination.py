@@ -110,6 +110,27 @@ def _validate_static(
     return expires_at
 
 
+def _resolve_collaborators(
+    *,
+    replay_guard: AuthenticationEnrollmentReplayGuard,
+    policy: AuthenticationEnrollmentApprovalPolicy,
+    attestor: AuthenticationEnrollmentAuthorityAttestor,
+):
+    try:
+        consume = getattr(
+            replay_guard,
+            "consume_authentication_enrollment_nonce",
+            None,
+        )
+        approve = getattr(policy, "approve_authentication_enrollment", None)
+        attest = getattr(attestor, "attest_authentication_enrollment", None)
+    except Exception:
+        _fail()
+    if not callable(consume) or not callable(approve) or not callable(attest):
+        _fail()
+    return consume
+
+
 def coordinate_marketplace_authentication_enrollment(
     *,
     auth: MarketplaceApplicationAuthService,
@@ -135,24 +156,21 @@ def coordinate_marketplace_authentication_enrollment(
         lease_seconds=lease_seconds,
     )
 
+    consume = _resolve_collaborators(
+        replay_guard=replay_guard,
+        policy=policy,
+        attestor=attestor,
+    )
+
     try:
         auth.authorize_principal(
             session_token=session_token,
             claimed_principal=proposal.principal,
             now=now,
         )
-    except (ApplicationAuthError, Exception):
+    except ApplicationAuthError:
         _fail()
-
-    try:
-        consume = getattr(
-            replay_guard,
-            "consume_authentication_enrollment_nonce",
-            None,
-        )
     except Exception:
-        _fail()
-    if not callable(consume):
         _fail()
 
     try:
