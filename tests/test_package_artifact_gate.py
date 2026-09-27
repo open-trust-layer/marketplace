@@ -42,6 +42,7 @@ REQUIRED = {
     "marketplace/application/auth_verifier_ed25519.py": b"# reviewed public-key verifier\n",
     "marketplace/application/auth_evidence_trust_ed25519.py": b"# static public evidence trust verifier\n",
     "marketplace/application/auth_enrollment_authority.py": b"# enrollment authority issuance seam\n",
+    "marketplace/application/auth_enrollment_policy.py": b"# enrollment approval policy gate\n",
     "marketplace/application/auth_asgi_composition.py": b"# static authenticated ASGI composition\n",
     "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
     "marketplace/application/auth_launch.py": b"# inert authenticated loopback launch plan\n",
@@ -178,6 +179,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_enrollment_authority_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_enrollment_authority.py"
+        )
+
+    def test_missing_auth_enrollment_policy_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_policy.py"
         )
 
     def test_missing_auth_asgi_composition_member_is_rejected(self):
