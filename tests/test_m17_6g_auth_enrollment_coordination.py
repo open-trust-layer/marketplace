@@ -175,6 +175,45 @@ class M176GAuthenticationEnrollmentCoordinationTests(unittest.TestCase):
                 self.assertEqual(policy.calls, 0)
                 self.assertEqual(attestor.calls, 0)
 
+    def test_invalid_collaborator_configuration_fails_before_session_touch_or_nonce_burn(self) -> None:
+        cases = ("replay_guard", "policy", "attestor")
+        for invalid_name in cases:
+            auth = authenticated_service()
+            replay = RecordingReplayGuard()
+            policy = RecordingPolicy()
+            attestor = RecordingAttestor()
+            kwargs = {
+                "auth": auth,
+                "session_token": SESSION_TOKEN,
+                "proposal": proposal(),
+                "nonce": NONCE,
+                "now": 101,
+                "authority": AUTHORITY,
+                "lease_seconds": 600,
+                "replay_guard": replay,
+                "policy": policy,
+                "attestor": attestor,
+            }
+            kwargs[invalid_name] = object()
+            with self.subTest(invalid_name=invalid_name):
+                before = auth.validate_session(
+                    session_token=SESSION_TOKEN,
+                    now=101,
+                )
+                self.assertEqual(before.last_used_at, 100)
+                with self.assertRaises(AuthenticationEnrollmentCoordinationError):
+                    coordinate_marketplace_authentication_enrollment(
+                        **kwargs  # type: ignore[arg-type]
+                    )
+                after = auth.validate_session(
+                    session_token=SESSION_TOKEN,
+                    now=101,
+                )
+                self.assertEqual(after.last_used_at, 100)
+                self.assertEqual(replay.calls, 0)
+                self.assertEqual(policy.calls, 0)
+                self.assertEqual(attestor.calls, 0)
+
     def test_session_principal_mismatch_fails_before_replay(self) -> None:
         replay = RecordingReplayGuard()
         policy = RecordingPolicy()
