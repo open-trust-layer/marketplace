@@ -15,7 +15,6 @@ PACKAGE_TESTS = ROOT / "tests" / "test_package_artifact_gate.py"
 NONSELECTING = (
     ROOT / "src" / "marketplace" / "application" / "auth_http.py",
     ROOT / "src" / "marketplace" / "application" / "auth_http_composition.py",
-    ROOT / "src" / "marketplace" / "application" / "auth_session_asgi.py",
     ROOT / "src" / "marketplace" / "application" / "auth_startup_composition.py",
     ROOT / "web" / "auth_bootstrap.js",
     ROOT / "android" / "app" / "src" / "main" / "java" / "org" / "opentrustlayer" / "marketplace" / "MainActivity.kt",
@@ -71,7 +70,7 @@ class M176IAuthenticationEnrollmentHttpArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(marker, text)
 
-    def test_http_carrier_remains_unselected_by_existing_runtime_and_clients(self) -> None:
+    def test_http_carrier_remains_unselected_by_startup_runtime_and_clients(self) -> None:
         for path in NONSELECTING:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("auth_enrollment_http", text, str(path))
@@ -85,6 +84,20 @@ class M176IAuthenticationEnrollmentHttpArtifactTests(unittest.TestCase):
                 text,
                 str(path),
             )
+
+    def test_later_m17_6k_selection_is_explicit_and_exact_route_only(self) -> None:
+        asgi = (
+            ROOT
+            / "src"
+            / "marketplace"
+            / "application"
+            / "auth_session_asgi.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn("MarketplaceAuthenticationEnrollmentHttpAdapter", asgi)
+        self.assertIn("AUTH_ENROLLMENT_NONCE_ROUTE", asgi)
+        self.assertIn("AUTH_ENROLLMENT_EVIDENCE_ROUTE", asgi)
+        self.assertIn("AUTH_ENROLLMENT_HTTP_REQUEST_MAX_BYTES", asgi)
+        self.assertNotIn('startswith("/api/authentication-enrollment/")', asgi)
 
     def test_package_controls_require_new_module(self) -> None:
         gate = PACKAGE_GATE.read_text(encoding="utf-8")

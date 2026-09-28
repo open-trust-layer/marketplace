@@ -90,7 +90,12 @@ def _graph():
 
 
 def _response(status: int = 204) -> ApplicationHttpResponse:
-    return ApplicationHttpResponse(status, "Synthetic", (), b"")
+    return ApplicationHttpResponse(
+        status,
+        "Synthetic",
+        (("Content-Length", "0"),),
+        b"",
+    )
 
 
 class M176KAuthenticationEnrollmentAsgiCompositionTests(unittest.TestCase):
