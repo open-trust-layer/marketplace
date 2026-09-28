@@ -129,12 +129,12 @@ class M176LAuthenticationEnrollmentStartupCompositionTests(unittest.TestCase):
                 side_effect=AssertionError("credential material consumed"),
             ) as material,
             patch.object(
-                nonce_authority,
+                MarketplaceAuthenticationEnrollmentNonceAuthority,
                 "issue_authentication_enrollment_nonce",
                 side_effect=AssertionError("nonce issued"),
             ) as issue_nonce,
             patch.object(
-                nonce_authority,
+                MarketplaceAuthenticationEnrollmentNonceAuthority,
                 "consume_authentication_enrollment_nonce",
                 side_effect=AssertionError("nonce consumed"),
             ) as consume_nonce,
