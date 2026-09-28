@@ -58,7 +58,8 @@ class M176HAuthenticationEnrollmentNonceArtifactTests(unittest.TestCase):
             "os.environ", "getenv", "psycopg", "sqlite", "subprocess",
             "asyncio", "multiprocessing", "Thread(", "ThreadPool",
             "secrets.", "token_bytes", "os.urandom", "random.",
-            "ApplicationHttpRequest", "ApplicationHttpResponse", "/api/", "ASGI",
+            "ApplicationHttpRequest", "ApplicationHttpResponse", "/api/",
+            "MarketplaceSessionEstablishmentAsgiHttpAdapter", "uvicorn",
         ):
             self.assertNotIn(marker, text)
 
