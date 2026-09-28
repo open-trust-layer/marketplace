@@ -47,6 +47,7 @@ REQUIRED = {
     "marketplace/application/auth_enrollment_nonce.py": b"# atomic enrollment nonce authority\n",
     "marketplace/application/auth_enrollment_http.py": b"# authenticated enrollment HTTP carrier\n",
     "marketplace/application/auth_enrollment_http_composition.py": b"# static enrollment HTTP composition\n",
+    "marketplace/application/auth_enrollment_asgi_composition.py": b"# enrollment-aware authenticated ASGI composition\n",
     "marketplace/application/auth_asgi_composition.py": b"# static authenticated ASGI composition\n",
     "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
     "marketplace/application/auth_launch.py": b"# inert authenticated loopback launch plan\n",
@@ -208,6 +209,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_enrollment_http_composition_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_enrollment_http_composition.py"
+        )
+
+    def test_missing_auth_enrollment_asgi_composition_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_asgi_composition.py"
         )
 
     def test_missing_auth_asgi_composition_member_is_rejected(self):

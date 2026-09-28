@@ -456,6 +456,23 @@ class M17SessionEstablishmentHardeningTests(unittest.TestCase):
         self.assertEqual(sent[0]["status"], 400)
         self.assertEqual(response_document(sent)["error"]["code"], "AUTH_REQUEST_INVALID")
 
+    def test_enrollment_routes_remain_legacy_fallthrough_without_optional_slot(self):
+        adapter, _, _, _, _, _ = make_asgi_stack()
+        self.assertIsNone(adapter._enrollment_http)
+        body = b"{}"
+        sent = asyncio.run(
+            invoke(
+                adapter,
+                scope(
+                    method="POST",
+                    path="/api/authentication-enrollment/nonces",
+                    headers=json_headers(body),
+                ),
+                body,
+            )
+        )
+        self.assertEqual(sent[0]["status"], 404)
+
     def test_static_site_does_not_consult_auth_clock(self):
         _, site, protected, auth, source, verifier = make_asgi_stack()
         auth_http = MarketplaceAuthenticationSessionHttpAdapter(

@@ -13,6 +13,12 @@ from .asgi import (
     _review_scope,
 )
 from .agreement_assent_http import MarketplaceAuthenticatedAgreementAssentHttpAdapter
+from .auth_enrollment_http import (
+    AUTH_ENROLLMENT_EVIDENCE_ROUTE,
+    AUTH_ENROLLMENT_HTTP_REQUEST_MAX_BYTES,
+    AUTH_ENROLLMENT_NONCE_ROUTE,
+    MarketplaceAuthenticationEnrollmentHttpAdapter,
+)
 from .auth_http import MarketplaceAuthenticatedApplicationHttpAdapter
 from .auth_session_http import AUTH_REQUEST_MAX_BYTES, MarketplaceAuthenticationSessionHttpAdapter
 from .bearer import MarketplaceBearerTransportError, parse_marketplace_bearer_authorization
@@ -28,7 +34,7 @@ from .site_host import MarketplaceSiteHostAdapter
 class MarketplaceSessionEstablishmentAsgiHttpAdapter:
     """Route exact auth endpoints plus one reviewed authenticated Marketplace HTTP graph."""
 
-    __slots__ = ("_site", "_marketplace_http", "_auth_http", "_now")
+    __slots__ = ("_site", "_marketplace_http", "_auth_http", "_now", "_enrollment_http")
     def __init__(
         self,
         *,
@@ -39,6 +45,7 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
         ),
         auth_http: MarketplaceAuthenticationSessionHttpAdapter,
         now: Callable[[], int],
+        enrollment_http: MarketplaceAuthenticationEnrollmentHttpAdapter | None = None,
     ) -> None:
         if type(site) is not MarketplaceSiteHostAdapter:
             raise TypeError("site MUST be exact MarketplaceSiteHostAdapter")
@@ -51,12 +58,20 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
             )
         if type(auth_http) is not MarketplaceAuthenticationSessionHttpAdapter:
             raise TypeError("auth_http MUST be exact authentication-session HTTP adapter")
+        if (
+            enrollment_http is not None
+            and type(enrollment_http) is not MarketplaceAuthenticationEnrollmentHttpAdapter
+        ):
+            raise TypeError(
+                "enrollment_http MUST be exact authentication-enrollment HTTP adapter when supplied"
+            )
         if not callable(now):
             raise TypeError("now MUST be callable")
         self._site = site
         self._marketplace_http = marketplace_http
         self._auth_http = auth_http
         self._now = now
+        self._enrollment_http = enrollment_http
 
     async def __call__(
         self,
@@ -71,18 +86,44 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
             allow_authorization=True,
         )
         auth_route = path.startswith("/api/auth/")
+        enrollment_route = (
+            self._enrollment_http is not None
+            and path in {
+                AUTH_ENROLLMENT_NONCE_ROUTE,
+                AUTH_ENROLLMENT_EVIDENCE_ROUTE,
+            }
+        )
+        if auth_route:
+            max_body_bytes = AUTH_REQUEST_MAX_BYTES
+        elif enrollment_route:
+            max_body_bytes = AUTH_ENROLLMENT_HTTP_REQUEST_MAX_BYTES
+        else:
+            max_body_bytes = 256 * 1024
         try:
             body = await _read_request_body(
                 receive,
                 expected_length=content_length,
-                max_body_bytes=AUTH_REQUEST_MAX_BYTES if auth_route else 256 * 1024,
+                max_body_bytes=max_body_bytes,
             )
         except AsgiHttpAdapterError as exc:
-            if not auth_route or exc.code != "ASGI_REQUEST_TOO_LARGE":
+            if exc.code != "ASGI_REQUEST_TOO_LARGE":
                 raise
-            response = _error_response(
-                400, "Bad Request", "AUTH_REQUEST_INVALID", "authentication request is invalid"
-            )
+            if auth_route:
+                response = _error_response(
+                    400,
+                    "Bad Request",
+                    "AUTH_REQUEST_INVALID",
+                    "authentication request is invalid",
+                )
+            elif enrollment_route:
+                response = _error_response(
+                    400,
+                    "Bad Request",
+                    "AUTH_ENROLLMENT_REQUEST_INVALID",
+                    "authentication enrollment request is invalid",
+                )
+            else:
+                raise
             headers = _response_headers(response)
             await send({"type": "http.response.start", "status": response.status_code, "headers": headers})
             await send({"type": "http.response.body", "body": response.body, "more_body": False})
@@ -98,12 +139,19 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
                 session_invalid = True
 
         try:
-            if auth_route or path.startswith("/api/") or authorization is not None:
+            if auth_route or enrollment_route or path.startswith("/api/") or authorization is not None:
                 now = self._now()
                 if type(now) is not int or now < 0:
                     _fail("ASGI_AUTH_TIME_INVALID", "application auth clock is invalid")
             if auth_route:
                 response = self._auth_http.handle(
+                    request,
+                    session_token=session_token,
+                    session_invalid=session_invalid,
+                    now=now,
+                )
+            elif enrollment_route:
+                response = self._enrollment_http.handle(
                     request,
                     session_token=session_token,
                     session_invalid=session_invalid,
