@@ -55,6 +55,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/application/auth_enrollment_policy.py",
     "marketplace/application/auth_enrollment_coordination.py",
     "marketplace/application/auth_enrollment_nonce.py",
+    "marketplace/application/auth_enrollment_http.py",
     "marketplace/application/auth_asgi_composition.py",
     "marketplace/application/auth_http_composition.py",
     "marketplace/application/auth_launch.py",
