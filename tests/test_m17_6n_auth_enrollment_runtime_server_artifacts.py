@@ -89,7 +89,7 @@ class M176NAuthenticationEnrollmentRuntimeServerArtifactTests(unittest.TestCase)
         for marker in (
             "MARKETPLACE_APPLICATION_AUTH_ENROLLMENT_FOREGROUND_RUNTIME_V1",
             "HIGH security/privacy",
-            "explicit execution token",
+            "Explicit execution token",
             "deterministic provider probe",
             "unselected",
             "Moon Company",
