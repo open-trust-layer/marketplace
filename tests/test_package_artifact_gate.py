@@ -50,6 +50,7 @@ REQUIRED = {
     "marketplace/application/auth_enrollment_asgi_composition.py": b"# enrollment-aware authenticated ASGI composition\n",
     "marketplace/application/auth_enrollment_startup_composition.py": b"# authenticated enrollment startup overlay\n",
     "marketplace/application/auth_enrollment_launch.py": b"# inert enrollment-aware loopback launch plan\n",
+    "marketplace/application/auth_enrollment_runtime_server.py": b"# explicit enrollment-aware foreground runtime seam\n",
     "marketplace/application/auth_asgi_composition.py": b"# static authenticated ASGI composition\n",
     "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
     "marketplace/application/auth_launch.py": b"# inert authenticated loopback launch plan\n",
@@ -226,6 +227,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_enrollment_launch_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_enrollment_launch.py"
+        )
+
+    def test_missing_auth_enrollment_runtime_server_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_runtime_server.py"
         )
 
     def test_missing_auth_asgi_composition_member_is_rejected(self):
