@@ -92,6 +92,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/runtime/inbound_tcp_socket_factory.py",
     "marketplace/reference/__init__.py",
     "marketplace/reference/auth_application_v1.py",
+    "marketplace/reference/auth_enrollment_launch_v1.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",
     "marketplace/reference/federation_v1.py",
