@@ -72,7 +72,7 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, text)
 
-    def test_marketplace_production_crypto_is_limited_to_exact_public_verifiers(self):
+    def test_marketplace_production_crypto_is_limited_to_exact_reviewed_surfaces(self):
         source_root = ROOT / "src" / "marketplace"
         files = tuple(source_root.rglob("*.py"))
         self.assertTrue(files)
@@ -80,19 +80,35 @@ class M17AuthEd25519SyntheticArtifactTests(unittest.TestCase):
             source_root / "application" / "auth_verifier_ed25519.py",
             source_root / "application" / "auth_evidence_trust_ed25519.py",
         }
+        allowed_private_attestor_path = (
+            source_root
+            / "reference"
+            / "auth_enrollment_attestor_ed25519_v1.py"
+        )
         for path in files:
             text = path.read_text(encoding="utf-8")
             self.assertNotIn("olp.crypto.ed25519", text, str(path))
             self.assertNotIn("import nacl", text, str(path))
             self.assertNotIn("from nacl", text, str(path))
-            self.assertNotIn("Ed25519PrivateKey", text, str(path))
             self.assertNotIn("def sign(", text, str(path))
             if path in allowed_public_verifier_paths:
                 self.assertIn(
                     "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey",
                     text,
                 )
+                self.assertNotIn("Ed25519PrivateKey", text, str(path))
+            elif path == allowed_private_attestor_path:
+                self.assertIn(
+                    "from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey",
+                    text,
+                )
+                self.assertIn(
+                    "Ed25519PrivateKey.from_private_bytes",
+                    text,
+                )
+                self.assertNotIn("Ed25519PublicKey", text, str(path))
             else:
+                self.assertNotIn("Ed25519PrivateKey", text, str(path))
                 self.assertNotIn("from cryptography", text, str(path))
                 self.assertNotIn("import cryptography", text, str(path))
 
