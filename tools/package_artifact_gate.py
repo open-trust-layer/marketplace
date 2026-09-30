@@ -94,6 +94,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/reference/auth_application_v1.py",
     "marketplace/reference/auth_enrollment_approval_policy_v1.py",
     "marketplace/reference/auth_enrollment_launch_v1.py",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_v1.py",
     "marketplace/reference/auth_enrollment_nonce_material_v1.py",
     "marketplace/reference/auth_enrollment_nonce_authority_v1.py",
     "marketplace/reference/record_v1.py",
