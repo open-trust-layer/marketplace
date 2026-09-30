@@ -342,6 +342,11 @@ class PackageArtifactGateTests(unittest.TestCase):
             "marketplace/reference/auth_application_v1.py"
         )
 
+    def test_missing_auth_enrollment_approval_policy_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_approval_policy_v1.py"
+        )
+
     def test_missing_auth_enrollment_launch_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/reference/auth_enrollment_launch_v1.py"
