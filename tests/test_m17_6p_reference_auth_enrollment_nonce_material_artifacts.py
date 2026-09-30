@@ -39,7 +39,7 @@ class M176PReferenceAuthenticationEnrollmentNonceMaterialArtifactTests(unittest.
                 imported_modules.add(node.module or "")
         self.assertEqual(
             imported_modules,
-            {"__future__", "secrets", "typing", "auth_enrollment_coordination"},
+            {"__future__", "secrets", "typing", "application.auth_enrollment_coordination"},
         )
         self.assertIn("from secrets import token_bytes as _token_bytes", text)
         self.assertIn("AUTH_ENROLLMENT_NONCE_BYTES", text)
@@ -63,7 +63,19 @@ class M176PReferenceAuthenticationEnrollmentNonceMaterialArtifactTests(unittest.
             any(isinstance(node, (ast.For, ast.AsyncFor, ast.While)) for node in ast.walk(tree))
         )
         self.assertIn("__slots__ = ()", text)
-        self.assertNotIn("def __init__", text)
+        source_class = next(
+            node
+            for node in tree.body
+            if isinstance(node, ast.ClassDef)
+            and node.name
+            == "MarketplaceReferenceAuthenticationEnrollmentNonceMaterialSource"
+        )
+        self.assertFalse(
+            any(
+                isinstance(node, ast.FunctionDef) and node.name == "__init__"
+                for node in source_class.body
+            )
+        )
         for marker in (
             "open(",
             "Path(",

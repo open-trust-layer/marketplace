@@ -34,7 +34,7 @@ Each explicit `enrollment_nonce_bytes()` call performs exactly one standard-libr
 
 `secrets.token_bytes(AUTH_ENROLLMENT_NONCE_BYTES)`
 
-The exact returned value must be `bytes` and exactly 32 bytes long.
+The exact returned value must be `bytes` and have exact 32-byte length.
 
 Import and construction consume zero entropy.
 
