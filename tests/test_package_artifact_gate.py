@@ -87,6 +87,7 @@ REQUIRED = {
     "marketplace/reference/auth_enrollment_launch_v1.py": b"# inert reference authentication enrollment launch selection\n",
     "marketplace/reference/auth_enrollment_nonce_material_v1.py": b"# unselected reference enrollment nonce material source\n",
     "marketplace/reference/auth_enrollment_nonce_authority_v1.py": b"# unselected reference enrollment nonce authority composition\n",
+    "marketplace/reference/auth_enrollment_approval_policy_v1.py": b"# unselected exact-binding reference enrollment approval policy\n",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
     "marketplace/reference/federation_v1.py": b"# federation\n",
