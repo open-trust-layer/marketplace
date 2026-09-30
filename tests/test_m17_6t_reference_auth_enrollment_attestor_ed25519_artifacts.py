@@ -61,7 +61,7 @@ class M176TReferenceAuthenticationEnrollmentEd25519AttestorArtifactTests(
         for marker in (
             "def sign(",
             ".generate(",
-            "private_bytes(",
+            ".private_bytes(",
             "token_bytes",
             "open(",
             "Path(",
