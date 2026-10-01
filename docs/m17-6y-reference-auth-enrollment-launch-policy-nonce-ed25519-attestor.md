@@ -12,7 +12,7 @@ private-key input and supplies it into the existing M17.6S reference enrollment
 graph.
 
 M17.6X now defines a separately governed local intake that returns an already
-constructed exact T attestor without returning raw key bytes.
+constructed exact T attestor without returning raw private-key bytes.
 
 M17.6Y adds the smallest composition seam:
 
