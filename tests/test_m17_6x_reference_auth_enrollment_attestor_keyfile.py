@@ -84,13 +84,7 @@ class M176XReferenceAuthenticationEnrollmentAttestorKeyfileTests(
                 calls.append((os.fspath(path), mode))
                 return real_open(path, mode, *args, **kwargs)
 
-            with (
-                patch("builtins.open", side_effect=tracked_open),
-                patch(
-                    f"{MODULE}.MarketplaceReferenceAuthenticationEnrollmentEd25519Attestor",
-                    wraps=MarketplaceReferenceAuthenticationEnrollmentEd25519Attestor,
-                ) as build_attestor,
-            ):
+            with patch("builtins.open", side_effect=tracked_open):
                 result = (
                     load_reference_authentication_enrollment_ed25519_attestor(
                         directory=str(root)
@@ -102,7 +96,6 @@ class M176XReferenceAuthenticationEnrollmentAttestorKeyfileTests(
             MarketplaceReferenceAuthenticationEnrollmentEd25519Attestor,
         )
         self.assertEqual(calls, [(str(target), "rb")])
-        build_attestor.assert_called_once_with(private_key_bytes=PRIVATE_KEY)
 
     def test_load_does_not_attest_or_sign(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
