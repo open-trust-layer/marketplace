@@ -90,6 +90,7 @@ REQUIRED = {
     "marketplace/reference/auth_enrollment_launch_policy_nonce_v1.py": b"# inert Q+R-to-O reference enrollment composition\\n",
     "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_v1.py": b"# inert T-to-S reference enrollment composition\\n",
     "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_attestor_v1.py": b"# existing T-to-S-to-U composition\\n",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_keyfile_v1.py": b"# X-to-Y-to-U keyfile composition\\n",
     "marketplace/reference/auth_enrollment_runtime_v1.py": b"# unselected reference enrollment runtime seam\\n",
     "marketplace/reference/auth_enrollment_runtime_uvicorn_v1.py": b"# unselected reference enrollment Uvicorn runtime selection\\n",
     "marketplace/reference/auth_enrollment_nonce_material_v1.py": b"# unselected reference enrollment nonce material source\n",
@@ -383,6 +384,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_enrollment_launch_policy_nonce_ed25519_attestor_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_attestor_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_policy_nonce_ed25519_keyfile_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_keyfile_v1.py"
         )
 
     def test_missing_auth_enrollment_runtime_reference_member_is_rejected(self):
