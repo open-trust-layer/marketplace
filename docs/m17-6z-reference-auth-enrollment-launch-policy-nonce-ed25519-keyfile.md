@@ -37,7 +37,7 @@ The returned value must be the exact existing U type or Z fails closed.
 
 ## Raw-key and local-file boundary
 
-M17.6Z contains no `private_key_bytes` parameter or raw private-key handling.
+M17.6Z contains no `private_key_bytes` parameter or raw private-key bytes.
 
 Z does not construct T and performs no direct file open, stat, path traversal,
 environment/config lookup, key generation/import/export, cryptographic signing,
