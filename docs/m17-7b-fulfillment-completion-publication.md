@@ -15,8 +15,7 @@ reviewed injected builders.
 
 The service resolves the exact Agreement already present in application state,
 builds one requested evidence record, re-verifies the exact Agreement/commitment
-target, derives the exact evidence Record Identity, and then performs **exactly
-one application-state publication**.
+target, derives the exact evidence Record Identity, and then performs exactly one application-state publication.
 
 ## Exact operations
 
