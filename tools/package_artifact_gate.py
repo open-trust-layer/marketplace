@@ -104,6 +104,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/reference/auth_enrollment_runtime_uvicorn_v1.py",
     "marketplace/reference/auth_enrollment_nonce_material_v1.py",
     "marketplace/reference/auth_enrollment_nonce_authority_v1.py",
+    "marketplace/reference/fulfillment_completion_evidence_v1.py",
     "marketplace/reference/record_v1.py",
     "marketplace/reference/matching_v1.py",
     "marketplace/reference/federation_v1.py",

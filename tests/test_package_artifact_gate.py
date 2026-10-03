@@ -96,6 +96,7 @@ REQUIRED = {
     "marketplace/reference/auth_enrollment_nonce_material_v1.py": b"# unselected reference enrollment nonce material source\n",
     "marketplace/reference/auth_enrollment_nonce_authority_v1.py": b"# unselected reference enrollment nonce authority composition\n",
     "marketplace/reference/auth_enrollment_approval_policy_v1.py": b"# unselected exact-binding reference enrollment approval policy\n",
+    "marketplace/reference/fulfillment_completion_evidence_v1.py": b"# reference fulfillment completion evidence authoring\n",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
     "marketplace/reference/federation_v1.py": b"# federation\n",
@@ -409,6 +410,11 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_enrollment_nonce_authority_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/reference/auth_enrollment_nonce_authority_v1.py"
+        )
+
+    def test_missing_fulfillment_completion_evidence_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/fulfillment_completion_evidence_v1.py"
         )
 
     def test_missing_transport_json_reference_member_is_rejected(self):
