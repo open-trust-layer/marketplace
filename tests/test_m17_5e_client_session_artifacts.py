@@ -51,6 +51,8 @@ class M175EClientSessionArtifactTests(unittest.TestCase):
         for marker in (
             'path === "/api/auth/session"',
             'path === "/api/auth/logout"',
+            'path === "/api/authentication-enrollment/nonces"',
+            'path === "/api/authentication-enrollment/evidence"',
             'path === "/api/product-listings"',
             'path === "/api/intents"',
             'tail === "responses"',

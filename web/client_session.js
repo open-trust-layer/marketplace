@@ -40,6 +40,8 @@ function reviewedAuthenticatedRoute(method, path) {
   }
   if (method !== "POST") return false;
   if (path === "/api/auth/logout") return true;
+  if (path === "/api/authentication-enrollment/nonces") return true;
+  if (path === "/api/authentication-enrollment/evidence") return true;
   if (path === "/api/product-listings") return true;
   if (path === "/api/intents") return true;
   if (reviewedAgreementAssentRoute(path)) return true;
