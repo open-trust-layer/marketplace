@@ -49,8 +49,7 @@ Milestone 6 requires a performance/delivery assertion issuer to equal the
 targeted commitment party principal. M17.7A enforces that exact equality before
 building the event.
 
-The record is **attributable evidence**. It **does not establish objective
-performance**.
+The record is **attributable evidence** and does not establish objective performance.
 
 ## Acceptance assertion
 
