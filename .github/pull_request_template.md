@@ -59,12 +59,16 @@ Notes:
 
 Notes:
 
-## Authorization reuse / activation boundary
+## Task-scoped delivery / activation boundary
 
-- Prior authorization reused, if any:
-- Unchanged authorization inputs: project / target / exact head where specified / scope / risk / capability / side-effect class / rollback assumptions / expiry state
-- [ ] no stale exact-head authorization is being reused after head movement
-- [ ] merge authorization is not being treated as runtime activation authority
+- Task-scoped source-delivery authority:
+- Explicit user delivery limit, if any: `NONE` / local-only / draft-only / review-only / exact-head / other
+- Prior operational authorization reused, if any:
+- Unchanged operational authorization inputs: project / target / exact head where specified / scope / risk / capability / side-effect class / rollback assumptions / expiry state
+- [ ] routine task-branch commit/push, PR create/update, and merge-after-required-checks need no separate repeated confirmation
+- [ ] same-scope head movement refreshed affected validation rather than being treated as task-scope loss
+- [ ] explicitly pinned old-head authority is not reused after head movement
+- [ ] merge is not being treated as runtime activation authority
 - [ ] runtime activation is not being treated as deployment or different-release authority
 - [ ] dependency install / database migration / config-service mutation / provider admin / deployment remains separately authorized unless explicitly combined
 - Preauthorized rollback condition/method, if any:
@@ -88,7 +92,7 @@ Notes:
 - [ ] no semantic behavior changed
 - [ ] semantic behavior changed and corresponding specification/vectors/tests are included
 
-## v1.6 Evidence Ledger
+## v1.7 Evidence Ledger
 
 Record only decision-relevant evidence; do not copy project payload into long-lived metadata.
 
@@ -163,11 +167,12 @@ python tools/conformance_gate.py --olp-root <path-to-pinned-olp-checkout>
 
 - Current provider enforcement facts actually verified:
 - Desired but unverified/unavailable provider controls:
-- Independent approval count on exact accepted head:
-- Unresolved review-thread count:
-- Solo-maintainer procedure / governance exception, if applicable:
+- Mandatory human PR approvals required by current Marketplace policy: `0`
+- Optional human/code-owner feedback received, if any:
+- Unresolved blocking review-thread count:
+- Governance exception, if applicable:
 
-Do not describe desired policy, CODEOWNERS, CI, or a self-review as provider enforcement or independent human approval without verification.
+Do not describe desired policy, CODEOWNERS, CI, or a self-review as provider enforcement. Zero mandatory PR approvals does not waive required CI, agent diff review, provider preconditions, or separate operational authority.
 
 ## Completion review
 

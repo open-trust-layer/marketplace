@@ -2,30 +2,30 @@
 
 **Status:** Project engineering policy
 **Applies to:** repository development, coding agents, maintainers, CI, conformance tooling, runtime/application code, adapters, deployment work, and project governance
-**Policy basis:** portable Marketplace projection of Coding Agent Constitution v1.3, Coding Agent Policy v1.3, Repository Governance v1.2 input, and Coding Agent Development Principles v1.6
-**Source SHA-256 (Constitution v1.3):** `c76d3f9b921abdf750f338c73303b0cd1cb31fd998142f635a1a971925f12b5c`
-**Source SHA-256 (Policy v1.3):** `0cba8b4f68c570f2830720b2c1285ea132ab563978fa3ad2c22e152ac76379ca`
-**Source SHA-256 (Governance v1.2 input):** `ec221545c8a7a5e203bf081238faf8b8d0e151087a3c20011255b8bc74ee4859`
-**Source SHA-256 (Development Principles v1.6):** `12314b7fc9a4cbb5e93d907ed5c613f29c4895f610356285cc88da52898bcb76`
-**Adoption record:** `docs/POLICY_V1_6_ADOPTION.md`
+**Policy basis:** portable Marketplace projection of Coding Agent Constitution v1.4, Coding Agent Policy v1.4, Repository Governance v1.3 input, and Coding Agent Development Principles v1.7
+**Source SHA-256 (Constitution v1.4):** `fdc846fd266063aa1388d55ba0e21c4565b24d2ac8d667a5a553dd5ddcc14943`
+**Source SHA-256 (Policy v1.4):** `f741c91014cbb1775716c31e45e3d181c732763b7fe14341f4d47d919bd998a3`
+**Source SHA-256 (Governance v1.3 input):** `e00083ead3e9bc48ced6cee3674c8449ab507f2269711b7c440d008c0ad2497c`
+**Source SHA-256 (Development Principles v1.7):** `78b579613b98b388db0cac2a5bf360089b2137e997b6a19a87da44a11acb183c`
+**Adoption record:** `docs/POLICY_V1_7_ADOPTION.md`
 **Semantic authority:** `PRINCIPLES.md` remains authoritative for Marketplace protocol/semantic constraints
 
 This policy governs **how Marketplace is developed**. It does not redefine Marketplace protocol semantics and MUST NOT weaken `PRINCIPLES.md`, the numbered Marketplace specifications, or applicable Open Layer Protocol requirements.
 
-Repository-specific controls from another project are not imported as facts. The supplied Repository Governance v1.2 profile is for `ai-automation-department`; its repository name, workflow/check names, package/source paths, and provider-admin state are source input only unless Marketplace explicitly adopts an equivalent local rule.
+Repository-specific controls from another project are not imported as facts. The supplied Repository Governance v1.3 profile is for `ai-automation-department`; its repository name, workflow/check names, package/source paths, merge-strategy assumptions, and provider-admin state are source input only unless Marketplace explicitly adopts an equivalent local rule.
 
 The Marketplace engineering-policy stack is:
 
 ```text
 1. applicable law / contractual obligation / authorized incident hold
-2. Coding Agent Constitution v1.3 as adopted by docs/POLICY_V1_6_ADOPTION.md
-3. portable Coding Agent Policy v1.3 requirements projected here
+2. Coding Agent Constitution v1.4 as adopted by docs/POLICY_V1_7_ADOPTION.md
+3. portable Coding Agent Policy v1.4 requirements projected here
 4. docs/REPOSITORY_GOVERNANCE.md for Marketplace repository controls
-5. this DEVELOPMENT_POLICY.md Marketplace projection of Development Principles v1.6
+5. this DEVELOPMENT_POLICY.md Marketplace projection of Development Principles v1.7
 6. project-specific conventions and implementation details
 ```
 
-A lower layer may be stricter but MUST NOT silently weaken a higher layer. Compression in v1.6 does not silently remove a previously adopted v1.5 safety/security/privacy/retention/isolation/authorization/provenance/cryptographic/governance obligation; where this projection is ambiguous, use the stricter higher-precedence or previously adopted interpretation until resolved.
+A lower layer may be stricter but MUST NOT silently weaken a higher layer. Superseded handbook revisions are historical references rather than hidden requirements; this v1.7 projection is self-contained with its named v1.4/v1.3 companions. Existing project-specific safety/security/privacy/retention/isolation/authorization/provenance/cryptographic controls remain in force where they are independently part of current Marketplace policy.
 
 ## 1. SAFETY FIRST
 
@@ -212,7 +212,7 @@ Marketplace recognizes three validation lanes:
 - **FULL** — final ready-for-review head; security/policy/governance-sensitive paths; dependency/lockfile changes; HIGH/CRITICAL risk; ambiguous impact.
 - **RELEASE** — FULL plus applicable packaging/distribution/provenance/release/live acceptance.
 
-The current `.github/workflows/conformance.yml` is deliberately conservative and runs the full acceptance path on pull requests and `main`. This remains compliant; v1.6 adoption does not require immediate lane refactoring.
+The current `.github/workflows/conformance.yml` is deliberately conservative and runs the full acceptance path on pull requests and `main`. This remains compliant; v1.7 adoption does not require immediate lane refactoring.
 
 Run the cheapest high-signal checks first, then broader impacted checks, then FULL once on the final review head when required. Independent deterministic checks may run concurrently when resource-safe.
 
@@ -220,7 +220,7 @@ A successful validation result may be reused only when all relevant validity inp
 
 Superseded non-deployment runs may be cancelled where supported. For a plausibly transient failure with unchanged source, rerun only failed jobs where practical and bounded; repeated identical failure requires root-cause investigation.
 
-## 11. v1.6 FAST EXECUTION KERNEL
+## 11. v1.7 FAST EXECUTION KERNEL
 
 ### 11.1 Work Unit Contract
 
@@ -330,9 +330,9 @@ expiry/exception state
 
 A safe read-only verification, deterministic test rerun, conversation continuation, or non-mutating diagnostic does not by itself require repeated approval.
 
-A material target/head/resource change, scope expansion, risk increase, new privileged/destructive capability, changed rollback assumptions, or expired/closed exception requires renewed authority as applicable.
+For an explicitly adopted project delivery task, ordinary in-scope implementation includes task-branch commit/push, PR creation/update, and routine merge after required checks and merge preconditions pass. A separate confirmation is not required for each of those steps. Same-scope head changes require refreshed affected validation and exact-head merge guarding, not renewed task authorization, unless the user explicitly pinned authority to the old head.
 
-This does not weaken exact-head governance: if an authorization specifies an exact head SHA, head movement makes that authorization stale.
+A material target/resource change, scope expansion, risk increase, new privileged/destructive capability, changed rollback assumptions, expired/closed exception, or an explicitly pinned old head requires renewed authority as applicable.
 
 Privileged/destructive exact targets are still re-verified immediately before execution.
 
@@ -398,24 +398,29 @@ removal_condition
 
 Exceptions are narrow, explicit, reviewable, removable, and expiring. They waive only what they explicitly name and cannot silently extend themselves. Close them immediately when the removal condition is satisfied and verify normal controls are restored.
 
-## 16. Merge authorization, runtime activation, and deployment
+## 16. Task-scoped PR delivery, runtime activation, and deployment
 
-**Merge authorization**, **runtime activation**, configuration/service mutation, dependency installation, and deployment are separate authorities by default.
+For an explicitly adopted Marketplace delivery task, ordinary source delivery includes implementation, tests, task-branch commit/push, PR creation/update, and routine merge after all required checks and merge preconditions pass. Marketplace requires **zero mandatory human PR approvals**. Agent diff review and applicable automated policy/security/governance validation remain required.
 
-Before merge:
+Before routine merge:
 
 ```text
-verify repository / PR / base
-verify exact authorized head where applicable
-verify required CI on that head/tree
-verify approvals or active documented exception/procedure
-verify mergeability and risk
+verify repository / PR / base / current head
+verify task authority and any explicit user delivery limits
+verify required CI on that exact head/tree
+verify mergeability and zero unresolved blocking feedback
+verify provider-side required controls are actually present
+verify no merge-triggered HIGH/CRITICAL operation lacks its own authority
 merge with exact-head guard where supported
 ```
 
+A same-scope correction invalidates affected validation evidence, not task authority, unless authority was explicitly pinned to the previous head.
+
+Marketplace currently requires provider-side protection of `main`; desired local policy is not a substitute for remote enforcement. If that required provider control is absent and no applicable explicit exception exists, merge is blocked even when source CI is green.
+
 After merge, verify merged PR state, new `main` tip, parent/provenance relationship, signature/provenance where required, and merged-main CI or an explicitly allowed exact-tree reuse path. Close temporary governance exceptions.
 
-Do not deploy or activate merely because merge succeeded.
+**Runtime activation**, configuration/service mutation, dependency installation, provider administration, database migration/activation, destructive operations, and deployment remain separate authorities by default. Do not deploy or activate merely because merge succeeded.
 
 Runtime activation is a separate work unit when it changes deployed code, environment, configuration, service state, hardware state, external authority, or user-visible production behavior. Before activation identify exact release/head, current known-good state, rollback, dependencies/health, and authorization. After activation verify service/process identity, health, bounded acceptance, rollback/fallback where relevant, and resource safety.
 

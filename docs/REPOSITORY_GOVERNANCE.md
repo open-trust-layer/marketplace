@@ -2,11 +2,11 @@
 
 **Status:** Desired and repository-enforced governance policy where technically available
 **Provider:** GitHub is the current repository host but is not part of Marketplace semantic authority
-**Current policy adoption:** `docs/POLICY_V1_6_ADOPTION.md`
+**Current policy adoption:** `docs/POLICY_V1_7_ADOPTION.md`
 
 Repository governance is a security control. Repository files define desired policy and review workflow, but they do not by themselves prove provider-side branch protection or rulesets are active.
 
-The supplied Repository Governance v1.2 source is an `ai-automation-department` repository-specific profile. Marketplace adopts its portable governance intent only after path/control review; foreign repository names, workflow/check names, package paths, validator names, and runtime paths are not Marketplace facts.
+The supplied Repository Governance v1.3 source is an `ai-automation-department` repository-specific profile. Marketplace adopts its portable governance intent only after path/control review; foreign repository names, workflow/check names, package paths, validator names, and runtime paths are not Marketplace facts.
 
 ## 1. `main` policy
 
@@ -14,15 +14,15 @@ The desired remote policy for `main` is:
 
 - changes enter through pull requests by default;
 - direct pushes are disabled except an explicitly authorized, scoped emergency procedure;
-- normal changes require at least one approval;
-- security/policy-sensitive paths require code-owner review where provider capabilities support it;
-- stale approvals are dismissed after material changes where supported;
+- mandatory human PR approval count is **zero** at every PR risk level;
+- CODEOWNERS routes optional feedback but is not a mandatory approval gate;
 - review conversations are resolved before merge where supported;
-- the Marketplace conformance/acceptance CI result is required;
+- the exact Marketplace provider check `acceptance` is required;
 - the branch is up to date before merge where supported;
 - force push is disabled;
 - branch deletion is disabled;
-- CRITICAL changes target two independent approvals where technically and practically supported.
+- agent diff review and applicable automated security/policy/governance validation are required;
+- HIGH/CRITICAL operational authority remains separate when merge itself triggers such an operation.
 
 The exact provider check/ruleset identifiers MUST be discovered from GitHub before configuration. Do not substitute a foreign or assumed check name.
 
@@ -38,7 +38,7 @@ The repository contains:
 - `.github/pull_request_template.md` for work-unit/risk/capability/retention/security/activation/performance evidence;
 - `.github/workflows/conformance.yml` for provider-neutral acceptance invocation;
 - `tools/repository_audit.py` and `tools/conformance_gate.py` for local/CI acceptance;
-- `DEVELOPMENT_POLICY.md`, `docs/POLICY_V1_6_ADOPTION.md`, historical adoption records, and `docs/RETENTION_POLICY.md` for engineering policy/provenance/retention.
+- `DEVELOPMENT_POLICY.md`, `docs/POLICY_V1_7_ADOPTION.md`, historical adoption records, and `docs/RETENTION_POLICY.md` for engineering policy/provenance/retention.
 
 These controls are reviewable source artifacts. They do **not** equal GitHub branch protection.
 
@@ -46,16 +46,21 @@ These controls are reviewable source artifacts. They do **not** equal GitHub bra
 
 Provider-side branch protection/ruleset state MUST be independently read and verified through an authorized GitHub administrative control plane.
 
-At exact v1.6 adoption baseline `b1921cb6c744e68f9d2ee8d9c83f5c44bbede4c2`, GitHub reported:
+At the 2026-09-21 v1.7 adoption verification, current `main` was `9a090388143690b0a230433b0b828a3dcaf64fef` and GitHub reported:
 
 ```text
 main protected: false
 branch protection enabled: false
+required status checks: enforcement off
+repository rulesets: []
+current Marketplace check-run identity: acceptance
 ```
 
-Therefore Marketplace MUST NOT claim `main` is remotely protected at this point. The desired protection remains required policy, but enabling/changing it is a separate ADMIN capability and must be separately authorized and verified.
+The detailed branch-protection endpoint was inaccessible to the connected integration, but the branch endpoint directly reports that protection is disabled.
 
-Current exact-head PR discipline, CI, CODEOWNERS, review records, merge-parent verification, and merged-main push verification are compensating/review controls; they are not a substitute for provider-side protection.
+Therefore Marketplace MUST NOT claim `main` is remotely protected. Provider-side protection remains required policy; enabling/changing it is a separate ADMIN capability tracked by Issue #212 and must be separately authorized and independently verified.
+
+Until that required provider control exists, source development and PR validation may continue, but routine merge to `main` is blocked unless an applicable explicit narrow exception authorizes that governance gap. Exact-head discipline, CI, CODEOWNERS, agent review, merge-parent verification, and merged-main push verification are compensating/review controls; they are not substitutes for branch protection.
 
 ## 4. Security-sensitive paths
 
@@ -64,6 +69,7 @@ The following paths are policy/security-sensitive and SHOULD receive explicit ow
 ```text
 PRINCIPLES.md
 DEVELOPMENT_POLICY.md
+docs/POLICY_V1_7_ADOPTION.md
 docs/POLICY_V1_6_ADOPTION.md
 docs/POLICY_V1_5_ADOPTION.md
 docs/POLICY_V1_4_ADOPTION.md
@@ -102,15 +108,17 @@ Each meaningful PR SHOULD record:
 
 Policy/security/governance/dependency changes, final ready-for-review heads, HIGH/CRITICAL work, and ambiguous impact require FULL validation.
 
-The current `.github/workflows/conformance.yml` executes the full Marketplace acceptance path on pull requests and `main`. This conservative behavior remains valid; v1.6 adoption does not require weakening or immediately refactoring it.
+The current `.github/workflows/conformance.yml` executes the full Marketplace acceptance path on pull requests and `main`. This conservative behavior remains valid; v1.7 adoption does not require weakening or immediately refactoring it.
 
 A material performance/resource claim additionally records the operational problem, critical path, metric/budget, representative baseline, bottleneck evidence, hypothesis, candidate measurement under equivalent conditions, resource/tail/saturation effects, cache/concurrency/backpressure effects, limitations, and `KEEP | REVISE | REVERT` result.
 
 A green functional suite does not by itself prove a performance or reproducible-build claim.
 
-## 6. v1.6 delivery method
+material performance/reproducibility claims have evidence adequate to the claim before merge.
 
-Marketplace adopts the v1.6 faster-safe-delivery method:
+## 6. v1.7 delivery method
+
+Marketplace adopts the v1.7 proportional faster-safe-delivery method:
 
 ```text
 work-unit contract
@@ -119,8 +127,9 @@ work-unit contract
 -> one coherent patch with reversible checkpoints
 -> delta-first focused validation
 -> FULL once on final review head when required
--> exact-head review / applicable owner authority
--> exact-head guarded merge or verified merge queue
+-> agent diff review + applicable automated security/policy checks
+-> zero mandatory human PR approvals
+-> exact-head guarded routine merge after provider preconditions and required checks
 -> exact-tree evidence reuse only when integrity-bound
 -> merged-main provenance/CI verification
 -> separately authorized runtime activation or deployment
@@ -134,15 +143,15 @@ Superseded non-deployment CI runs may be cancelled where tooling supports it. Re
 
 ## 7. Bounded authorization reuse and activation separation
 
-Marketplace permits **bounded authorization reuse** for an already authorized work unit while project, target/resource, exact head/version where specified, scope, risk, capability class, side-effect class, rollback/recovery assumptions, and expiry/exception state remain unchanged.
+Marketplace permits **bounded authorization reuse** for an already authorized work unit while project, target/resource, exact head/version where explicitly specified, scope, risk, capability class, side-effect class, rollback/recovery assumptions, and expiry/exception state remain unchanged.
 
-Safe read-only verification, deterministic test reruns, conversation continuation, and non-mutating diagnostics do not require repeated approval merely because time or conversational turns passed.
+For an explicitly adopted Marketplace delivery task, task-branch commit/push, PR creation/update, and routine merge after required checks are included source-delivery actions. Safe read-only verification, deterministic test reruns, conversation continuation, and non-mutating diagnostics likewise do not require repeated approval merely because time or conversational turns passed.
 
-A material change to any authorization input requires renewed authority as applicable. If an authorization names an exact head SHA, head movement invalidates that authorization.
+Same-scope head movement requires affected validation and exact-head merge guards to refresh, not task reauthorization, unless the user explicitly pinned authority to the old head. A material target/resource change, scope expansion, risk increase, new privileged/destructive capability, changed rollback assumptions, or expired exception requires renewed authority.
 
 Privileged/destructive exact targets are still re-verified immediately before execution.
 
-**Merge**, **runtime activation**, dependency installation, configuration/service mutation, database migration/activation, provider administration, and deployment are separate authorities by default. One MUST NOT be inferred from another unless explicitly combined by the approving authority.
+**Runtime activation**, dependency installation, configuration/service mutation, database migration/activation, provider administration, destructive operations, and deployment are separate authorities by default. A merge that triggers one of those operations inherits that operational boundary and must not proceed without its applicable authority.
 
 ## 8. Preauthorized rollback
 
@@ -177,82 +186,26 @@ After emergency use, verify exact resulting state, restore normal controls, docu
 
 Performance targets or CI duration are not sufficient reasons by themselves for an emergency bypass.
 
-## 10. Solo-maintainer review procedure
+## 10. Zero-approval PR review profile
 
-This section preserves Marketplace's standing compensating-control procedure for periods when no eligible independent reviewer is practically available. It is **not independent human review** and does not erase the preference for independent review.
+Marketplace requires **zero mandatory human PR approvals** for LOW, MODERATE, HIGH, and CRITICAL pull requests under the adopted v1.7 source-delivery profile.
 
-This procedure is available only while this section is present on `main`, only in a real solo-maintainer state for the affected change, and only when every applicable condition below is satisfied and recorded.
+This does not remove review obligations. Before merge, the agent/maintainer MUST:
 
-### 10.1 Review provenance
+1. inspect the complete candidate diff;
+2. run the required focused and FULL/RELEASE validation for the actual risk/scope;
+3. resolve blocking review feedback and verify unresolved review-thread state;
+4. verify the exact head/base/mergeability and required provider checks;
+5. verify no known material security/privacy/retention/isolation/governance defect remains unresolved;
+6. verify any merge-triggered HIGH/CRITICAL operational side effect has its own explicit authority;
+7. use an exact-head merge guard where supported;
+8. verify merged-state provenance/CI after merge.
 
-A PR using this procedure records:
+CODEOWNERS may route optional feedback, but provider code-owner approval is not a required gate under this profile.
 
-- author/maintainer availability state;
-- submitted independent approval count for the accepted head;
-- unresolved review-thread count;
-- that maintainer/security self-review and automated CI are not independent human review;
-- exact accepted head SHA and exact base SHA or exact tested synthetic-merge relation;
-- owner-authorization path;
-- risk-specific compensating controls.
+Historical solo-maintainer exceptions and exact-head approval records remain durable provenance for actions performed under prior policy. They do not create a current approval requirement and they do not broaden runtime/deployment/admin authority.
 
-### 10.2 Owner authorization paths
-
-A solo-maintainer PR may proceed through either:
-
-**A. Exact-head authorization** — the project owner explicitly authorizes the exact PR and exact accepted head SHA after that SHA exists. Any head movement invalidates it.
-
-**B. Bounded standing owner mandate** — an explicit, time-bounded mandate may authorize routine repository source-control work when it states owner, repository scope, authorized source-control actions, risk ceiling, issue time, expiry, excluded capabilities/actions, and removal condition.
-
-A standing mandate may cover routine branch commits, file replacement/removal, PR creation/update, and SHA-guarded source merges only after the exact candidate satisfies all required acceptance controls. It does not silently authorize CRITICAL changes, live external network execution, production deployment/service activation, credential/secret/key/certificate mutation, provider administration, force-push of `main`, destructive external data/infrastructure operations, protected settlement/payment/fulfillment, or bypass of an explicit safety stop.
-
-Unless a stricter explicit expiry is stated, a standing mandate has a conservative maximum 24-hour authorization lifetime for source-control actions. Owner withdrawal, scope drift, or availability of an eligible independent reviewer ends it earlier where applicable.
-
-A standing mandate does not preserve stale validation: every new exact head must pass the required acceptance gate before merge.
-
-### 10.3 Eligible risk
-
-LOW and MODERATE source changes may use the procedure when all conditions hold.
-
-HIGH source changes may use it only when the PR itself does not perform production deployment, destructive external data action, credential/secret mutation, provider administration, protected-branch force push, or irreversible infrastructure mutation; external-I/O capability is tested only through deterministic doubles/non-live fixtures unless separately authorized; the PR includes explicit threat-boundary review and negative/security regression coverage; rollback/recovery is documented; and exact-head FULL acceptance is green.
-
-CRITICAL changes are never eligible for the solo-maintainer procedure and require independent human review plus all other applicable controls.
-
-Risk MUST NOT be classified downward to gain eligibility.
-
-### 10.4 Mandatory compensating controls
-
-Before merge under this procedure:
-
-1. PR is open, review-ready, and mergeable;
-2. exact accepted head SHA is recorded;
-3. complete applicable Marketplace acceptance/conformance gate is green for that exact head/tree or a documented equivalent exact synthetic merge candidate;
-4. applicable deterministic unit/security/repository-audit/artifact/package/vector/generator/whitespace/performance-regression checks are green;
-5. unresolved review-thread count is zero;
-6. PR explicitly states automated acceptance/self-review are not independent human review;
-7. no known material security/privacy/retention/isolation/governance defect invalidates the change without a separately applicable explicit exception/compensating procedure;
-8. HIGH changes include exact rollback/recovery and blast-radius/side-effect analysis;
-9. material performance/reproducibility claims have evidence adequate to the claim;
-10. merge uses an exact-head guard;
-11. resulting merged `main` state receives required push acceptance/provenance verification before completion is declared;
-12. provider-side protection claims remain separate and independently verified.
-
-### 10.5 No self-approval fiction
-
-The PR author MUST NOT describe self-review or automated acceptance as independent approval. Provider support for self-approval does not manufacture independence.
-
-### 10.6 Procedure lifecycle
-
-```text
-owner: tehki
-scope: open-trust-layer/marketplace solo-maintainer pull-request review procedure
-risk ceiling: HIGH subject to this section; CRITICAL excluded
-issued_at: 2026-08-27
-next_review: 2026-11-25
-expires_at: 2026-11-25 unless renewed by a later governance change
-removal_condition: an eligible independent reviewer path becomes available for the affected changes, or the project owner withdraws the procedure
-```
-
-Once an eligible independent reviewer becomes available, normal independent review is preferred and the compensating procedure MUST NOT be used merely for convenience.
+The zero-approval profile cannot self-authorize provider administration, bypass a required CI check, waive the required `main` protection control, or convert source-delivery authority into deployment/destructive/secret/admin authority.
 
 ## 11. No false enforcement claims
 
