@@ -94,6 +94,9 @@ function reviewedProposal(value) {
     PUBLIC_KEY_PAYLOAD_CHARS,
     "AUTH_ENROLLMENT_PROPOSAL_INVALID",
   );
+  if (value.publicKey.length !== PUBLIC_KEY_PREFIX.length + PUBLIC_KEY_PAYLOAD_CHARS) {
+    throw stableEnrollmentClientError("AUTH_ENROLLMENT_PROPOSAL_INVALID");
+  }
   return Object.freeze({
     profile: PROPOSAL_PROFILE,
     type: PROPOSAL_TYPE,

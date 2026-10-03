@@ -53,7 +53,7 @@ For one explicit client invocation:
 2. POST exactly
    `{ profile: "MARKETPLACE_APPLICATION_AUTH_ENROLLMENT_HTTP_V1", proposal }`;
 3. validate one 201 nonce response;
-4. keep the `mken1_` nonce internal;
+4. keep the `mken1_` nonce internal; the nonce remains internal to the client;
 5. obtain the exact bearer authorization for the evidence route;
 6. POST exactly
    `{ profile: "MARKETPLACE_APPLICATION_AUTH_ENROLLMENT_HTTP_V1", proposal, nonce }`;

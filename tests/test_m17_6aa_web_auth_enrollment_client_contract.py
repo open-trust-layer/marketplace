@@ -36,6 +36,10 @@ class M176AAWebAuthenticationEnrollmentClientContractTests(unittest.TestCase):
         self.assertIn("reviewedUri(value.principal)", block)
         self.assertIn("reviewedUri(value.verificationMethod)", block)
         self.assertIn("PUBLIC_KEY_PREFIX", block)
+        self.assertIn(
+            "value.publicKey.length !== PUBLIC_KEY_PREFIX.length + PUBLIC_KEY_PAYLOAD_CHARS",
+            block,
+        )
         for marker in (
             "privateKey", "private_key", "seed", "mnemonic", "passphrase",
             "authority", "issuedAt", "expiresAt", "attestation",
