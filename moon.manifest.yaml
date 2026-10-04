@@ -1,0 +1,28 @@
+{
+  "moon_version": "0.1",
+  "service_id": "hello-world-marketplace",
+  "name": "Hello, World! Marketplace",
+  "type": "commerce-marketplace",
+  "owner": "Moon Commerce",
+  "version": "0.0.1.dev0",
+  "environment": "development",
+  "capabilities": [],
+  "actions": [],
+  "dependencies": [
+    "olp-protocol"
+  ],
+  "health": {
+    "kind": "workspace"
+  },
+  "events": {
+    "publish": [],
+    "subscribe": []
+  },
+  "knowledge_domains": [
+    "marketplace-semantics",
+    "economic-coordination",
+    "olp-evidence-integration"
+  ],
+  "repository": "open-trust-layer/marketplace",
+  "documentation": "README.md"
+}
