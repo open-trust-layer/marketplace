@@ -8,6 +8,16 @@
 **MVP status:** the database-free Web demonstrator completes the deterministic two-user journey `CREATED → PUBLISHED → DISCOVERED → ACCEPTED → COMPLETED` with visible listing, agreement, verification, fulfillment, and audit evidence.
 **Production status:** not deployed. Production PostgreSQL, persistent hosting, public-network exposure, production authentication/credentials, payments/settlement, Android runtime/distribution, and other production side effects remain separately governed capabilities.
 
+## Moon Company Awareness metadata
+
+The repository includes a root `moon.manifest.yaml` for Moon Company / Moon Commerce discovery.
+This first integration is metadata-only: it declares the Marketplace workspace, its dependency on
+the OLP protocol service, and its knowledge domains. It exposes no Moon action, endpoint, event,
+permission, production-health, deployment, payment, settlement, or public-network authority.
+
+The manifest uses `workspace` health only. A clean checkout therefore proves repository presence,
+not a running production Marketplace service or a production-ready deployment.
+
 ## Try the MVP locally
 
 The quickest evaluator path is a **loopback-only, database-free, process-memory demo**. It does not read `MARKETPLACE_POSTGRES_DSN` and does not require a PostgreSQL server.
