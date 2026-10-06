@@ -22,7 +22,6 @@ DOC = ROOT / "docs" / "m17-7f-fulfillment-completion-loopback-launch.md"
 
 NONSELECTING = (
     ROOT / "src" / "marketplace" / "application" / "auth_runtime_server.py",
-    ROOT / "tools" / "marketplace_localhost.py",
     ROOT / "web" / "app.js",
     ROOT
     / "android"

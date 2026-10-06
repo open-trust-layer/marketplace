@@ -21,7 +21,6 @@ TESTS = (
 DOC = ROOT / "docs" / "m17-7g-reference-fulfillment-completion-launch.md"
 
 NONSELECTING = (
-    ROOT / "tools" / "marketplace_localhost.py",
     ROOT / "web" / "app.js",
     ROOT
     / "android"
@@ -56,11 +55,11 @@ class M177GReferenceFulfillmentCompletionLaunchArtifactTests(unittest.TestCase):
                 "dataclasses",
                 "typing",
                 "olp.encoding.record_identity",
-                "agreement_publication",
-                "agreement_publication_write",
-                "fulfillment_completion_launch",
-                "fulfillment_completion_publication",
-                "fulfillment_completion_startup_composition",
+                "application.agreement_publication",
+                "application.agreement_publication_write",
+                "application.fulfillment_completion_launch",
+                "application.fulfillment_completion_publication",
+                "application.fulfillment_completion_startup_composition",
                 "agreement_assent_postgres_v1",
                 "agreement_candidate_v1",
                 "fulfillment_completion_evidence_v1",

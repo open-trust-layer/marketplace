@@ -40,6 +40,14 @@ class M177IWebFulfillmentCompletionClientTests(unittest.TestCase):
 
     def test_request_cannot_supply_issuer_or_authority_fields(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
+        start = text.index("async function publishEvidence(")
+        body_start = text.index("const body = JSON.stringify(", start)
+        body_end = text.index("let response;", body_start)
+        request_body = text[body_start:body_end]
+        self.assertIn(
+            "JSON.stringify({ evidence_kind: evidenceKind })",
+            request_body,
+        )
         for forbidden in (
             "issuer:",
             "principal:",
@@ -54,7 +62,7 @@ class M177IWebFulfillmentCompletionClientTests(unittest.TestCase):
             "disposition:",
         ):
             with self.subTest(forbidden=forbidden):
-                self.assertNotIn(forbidden, text)
+                self.assertNotIn(forbidden, request_body)
 
     def test_exact_reviewed_evidence_kind_set(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")

@@ -59,18 +59,33 @@ class ProductAgreementAssentPublicationIsolationTests(unittest.TestCase):
                 with self.subTest(path=path.name, marker=marker):
                     self.assertNotIn(marker, source)
 
-    def test_localhost_agreement_mode_does_not_select_publication_modules(self) -> None:
+    def test_agreement_only_localhost_mode_does_not_select_publication_modules(self) -> None:
         source = (ROOT / "tools" / "marketplace_localhost.py").read_text(
             encoding="utf-8"
         )
+        start = source.index(
+            "def _execute_agreement_assent_authenticated_localhost("
+        )
+        end = source.index(
+            "def _compose_fulfillment_completion_authenticated_localhost(",
+            start,
+        )
+        agreement_only_block = source[start:end]
         for marker in (
             "agreement_publication",
             "agreement_publication_write",
             "publish_agreement",
             "MarketplaceAgreementPublication",
+            "_build_fulfillment_completion_reference",
+            "_run_fulfillment_completion_foreground",
         ):
             with self.subTest(marker=marker):
-                self.assertNotIn(marker, source)
+                self.assertNotIn(marker, agreement_only_block)
+
+        self.assertIn(
+            "def _compose_fulfillment_completion_authenticated_localhost(",
+            source,
+        )
 
     def test_issue_364_stack_remains_assent_and_formation_only(self) -> None:
         expected = {
