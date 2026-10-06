@@ -150,6 +150,35 @@ window.MarketplaceI18n = (() => {
     "agreementAssent.signing": ["Creating and submitting Agreement assent for the exact reviewed candidate\u2026", "Создаём и отправляем согласие Agreement для точно проверенного кандидата\u2026"],
     "agreementAssent.submitted": ["Assent for Agreement {recordId} submitted ({disposition}; expiry value {expiresAt}). Check formation again to refresh party coverage.", "Согласие для Agreement {recordId} отправлено ({disposition}; значение срока действия {expiresAt}). Проверьте формирование ещё раз, чтобы обновить покрытие сторон."],
     "agreementAssent.failed": ["Agreement assent failed: {code}", "Ошибка согласия Agreement: {code}"],
+    "agreementPublication.title": ["Agreement publication and fulfillment evidence", "Публикация Agreement и evidence исполнения"],
+    "agreementPublication.waiting": ["A formed Agreement must be published explicitly before fulfillment evidence can target it.", "Сформированный Agreement нужно явно опубликовать, прежде чем evidence исполнения сможет на него ссылаться."],
+    "agreementPublication.ready": ["Formation evidence is sufficient and this authenticated party is covered. Publish only with the explicit button.", "Evidence формирования достаточно, и текущая аутентифицированная сторона покрыта. Публикуйте только явным нажатием кнопки."],
+    "agreementPublication.publishing": ["Publishing the exact formed Agreement…", "Публикуем точный сформированный Agreement…"],
+    "agreementPublication.published": ["Agreement {recordId} published ({disposition}; local change sequence {changeSeq}).", "Agreement {recordId} опубликован ({disposition}; локальная последовательность изменений {changeSeq})."],
+    "agreementPublication.failed": ["Agreement publication failed: {code}", "Ошибка публикации Agreement: {code}"],
+    "agreementPublication.button": ["Publish Agreement", "Опубликовать Agreement"],
+    "fulfillment.performance.waiting": ["Seller performance claim not published.", "Заявление продавца об исполнении не опубликовано."],
+    "fulfillment.performance.role": ["Authenticate as the listing seller to publish the performance claim.", "Аутентифицируйтесь как продавец объявления, чтобы опубликовать заявление об исполнении."],
+    "fulfillment.performance.ready": ["Seller may explicitly claim the delivery commitment performed completely.", "Продавец может явно заявить о полном исполнении обязательства по доставке."],
+    "fulfillment.performance.publishing": ["Publishing seller claimed-complete performance evidence…", "Публикуем evidence заявления продавца о полном исполнении…"],
+    "fulfillment.performance.published": ["Seller performance evidence {recordId} published ({disposition}).", "Evidence исполнения продавца {recordId} опубликован ({disposition})."],
+    "fulfillment.performance.failed": ["Seller performance evidence failed: {code}", "Ошибка evidence исполнения продавца: {code}"],
+    "fulfillment.performance.button": ["Claim delivery complete", "Заявить о завершении доставки"],
+    "fulfillment.acceptance.waiting": ["Buyer acceptance evidence not published.", "Evidence принятия покупателем не опубликован."],
+    "fulfillment.acceptance.role": ["Authenticate as the Proposal buyer to publish acceptance evidence.", "Аутентифицируйтесь как покупатель Proposal, чтобы опубликовать evidence принятия."],
+    "fulfillment.acceptance.ready": ["Buyer may explicitly accept the delivered commitment.", "Покупатель может явно принять исполненное обязательство."],
+    "fulfillment.acceptance.publishing": ["Publishing buyer acceptance evidence…", "Публикуем evidence принятия покупателем…"],
+    "fulfillment.acceptance.published": ["Buyer acceptance evidence {recordId} published ({disposition}).", "Evidence принятия покупателем {recordId} опубликован ({disposition})."],
+    "fulfillment.acceptance.failed": ["Buyer acceptance evidence failed: {code}", "Ошибка evidence принятия покупателем: {code}"],
+    "fulfillment.acceptance.button": ["Accept delivered commitment", "Принять исполненное обязательство"],
+    "fulfillment.completion.waiting": ["Completion assertion not published.", "Утверждение о завершении не опубликовано."],
+    "fulfillment.completion.role": ["Authenticate as the listing seller to publish the completion assertion.", "Аутентифицируйтесь как продавец объявления, чтобы опубликовать утверждение о завершении."],
+    "fulfillment.completion.ready": ["Seller may explicitly publish a completion assertion for the commitment.", "Продавец может явно опубликовать утверждение о завершении обязательства."],
+    "fulfillment.completion.publishing": ["Publishing commitment completion assertion…", "Публикуем утверждение о завершении обязательства…"],
+    "fulfillment.completion.published": ["Completion assertion {recordId} published ({disposition}).", "Утверждение о завершении {recordId} опубликовано ({disposition})."],
+    "fulfillment.completion.failed": ["Completion assertion failed: {code}", "Ошибка утверждения о завершении: {code}"],
+    "fulfillment.completion.button": ["Assert commitment complete", "Подтвердить завершение обязательства"],
+    "fulfillment.boundary": ["These are attributable records only. No single action establishes universal completion, payment, settlement, legal effect, or absence of dispute.", "Это только атрибутируемые записи. Ни одно отдельное действие не устанавливает универсальное завершение, платёж, расчёт, юридический эффект или отсутствие спора."],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -197,6 +226,7 @@ window.MarketplaceI18n = (() => {
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
     "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
     "agreement-formation-covered", "agreement-formation-missing", "agreement-assent-status",
+    "agreement-publication-status", "fulfillment-performance-status", "fulfillment-acceptance-status", "fulfillment-completion-status",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -307,6 +337,10 @@ const API_INTENTS = "/api/intents";
 const API_PRODUCT_LISTINGS = "/api/product-listings";
 const API_SYNC = "/api/sync";
 const API_MVP_FLIGHT = "/api/mvp-flight";
+const FULFILLMENT_COMMITMENT_ID = "seller-delivery";
+const FULFILLMENT_CLAIMED_COMPLETE = "CLAIMED_COMPLETE_PERFORMANCE";
+const FULFILLMENT_ACCEPTANCE = "COMMITMENT_ACCEPTANCE";
+const FULFILLMENT_COMPLETION = "COMMITMENT_COMPLETION";
 const RESPONSES_SUFFIX = "/responses";
 const PROPOSALS_SUFFIX = "/proposals";
 const PAGE_LIMIT = 64;
@@ -376,6 +410,12 @@ const state = {
   agreementAssentResults: new Map(),
   agreementAssentErrors: new Map(),
   agreementAssentPending: new Set(),
+  agreementPublicationResults: new Map(),
+  agreementPublicationErrors: new Map(),
+  agreementPublicationPending: new Set(),
+  fulfillmentEvidenceResults: new Map(),
+  fulfillmentEvidenceErrors: new Map(),
+  fulfillmentEvidencePending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -414,6 +454,15 @@ const agreementAssentStatus = byId("agreement-assent-status");
 const resolveProposalAcceptanceButton = byId("resolve-proposal-acceptance");
 const checkAgreementFormationButton = byId("check-agreement-formation");
 const signAgreementAssentButton = byId("sign-agreement-assent");
+const agreementPublicationHandoff = byId("agreement-publication-handoff");
+const agreementPublicationStatus = byId("agreement-publication-status");
+const publishAgreementButton = byId("publish-agreement");
+const fulfillmentPerformanceStatus = byId("fulfillment-performance-status");
+const claimDeliveryCompleteButton = byId("claim-delivery-complete");
+const fulfillmentAcceptanceStatus = byId("fulfillment-acceptance-status");
+const acceptDeliveredCommitmentButton = byId("accept-delivered-commitment");
+const fulfillmentCompletionStatus = byId("fulfillment-completion-status");
+const assertCommitmentCompleteButton = byId("assert-commitment-complete");
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
