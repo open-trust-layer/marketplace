@@ -150,6 +150,27 @@ window.MarketplaceI18n = (() => {
     "agreementAssent.signing": ["Creating and submitting Agreement assent for the exact reviewed candidate\u2026", "Создаём и отправляем согласие Agreement для точно проверенного кандидата\u2026"],
     "agreementAssent.submitted": ["Assent for Agreement {recordId} submitted ({disposition}; expiry value {expiresAt}). Check formation again to refresh party coverage.", "Согласие для Agreement {recordId} отправлено ({disposition}; значение срока действия {expiresAt}). Проверьте формирование ещё раз, чтобы обновить покрытие сторон."],
     "agreementAssent.failed": ["Agreement assent failed: {code}", "Ошибка согласия Agreement: {code}"],
+    "agreementPublication.eyebrow": ["Explicit completion evidence", "Явные evidence завершения"],
+    "agreementPublication.title": ["Agreement publication & delivery", "Публикация Agreement и доставка"],
+    "agreementPublication.button": ["Publish Agreement", "Опубликовать Agreement"],
+    "agreementPublication.waitingFormation": ["Check current Agreement formation first. Publication stays disabled.", "Сначала проверьте текущее формирование Agreement. Публикация остаётся отключённой."],
+    "agreementPublication.incomplete": ["Agreement publication requires sufficient formation evidence with no missing parties.", "Для публикации Agreement требуется достаточное evidence формирования без отсутствующих сторон."],
+    "agreementPublication.authRequired": ["Authentication is required to publish the Agreement.", "Для публикации Agreement требуется аутентификация."],
+    "agreementPublication.notCovered": ["The authenticated principal is not a covered required Agreement party. Publication remains disabled.", "Аутентифицированный principal не является покрытой обязательной стороной Agreement. Публикация остаётся отключённой."],
+    "agreementPublication.ready": ["Formation evidence is sufficient. Publish the exact Agreement only after this explicit button click.", "Evidence формирования достаточно. Опубликуйте точный Agreement только явным нажатием этой кнопки."],
+    "agreementPublication.publishing": ["Publishing the exact reviewed Agreement…", "Публикуем точный проверенный Agreement…"],
+    "agreementPublication.published": ["Agreement {recordId} published ({disposition}; local change sequence {changeSeq}).", "Agreement {recordId} опубликован ({disposition}; локальная последовательность изменений {changeSeq})."],
+    "agreementPublication.failed": ["Agreement publication failed: {code}", "Ошибка публикации Agreement: {code}"],
+    "fulfillment.button": ["Claim delivery complete", "Заявить о завершении доставки"],
+    "fulfillment.note": ["Completion creates seller-attributed evidence only. It does not prove universal truth or trigger payment or settlement.", "Завершение создаёт только evidence, атрибутированное продавцу. Оно не доказывает универсальную истину и не запускает оплату или расчёт."],
+    "fulfillment.waitingPublication": ["Publish the Agreement first. No completion evidence has been authored.", "Сначала опубликуйте Agreement. Evidence завершения ещё не создано."],
+    "fulfillment.parentRequired": ["Open this Proposal from its exact parent listing before claiming delivery complete.", "Откройте этот Proposal из его точного родительского объявления перед заявлением о завершении доставки."],
+    "fulfillment.authRequired": ["Authenticate the listing seller before claiming delivery complete.", "Аутентифицируйте продавца объявления перед заявлением о завершении доставки."],
+    "fulfillment.sellerRequired": ["Only the exact listing seller can author the reviewed claimed-complete performance evidence.", "Только точный продавец объявления может создать проверенное evidence заявленного завершения исполнения."],
+    "fulfillment.ready": ["Authenticated seller matches the delivery commitment. Completion evidence will be published only after this explicit button click.", "Аутентифицированный продавец соответствует обязательству доставки. Evidence завершения будет опубликовано только после явного нажатия этой кнопки."],
+    "fulfillment.publishing": ["Publishing seller-attributed claimed-complete performance evidence…", "Публикуем атрибутированное продавцу evidence заявленного завершения исполнения…"],
+    "fulfillment.published": ["Completion evidence {recordId} published ({disposition}; local change sequence {changeSeq}). This remains an attributable claim, not universal truth.", "Evidence завершения {recordId} опубликовано ({disposition}; локальная последовательность изменений {changeSeq}). Это остаётся атрибутированным заявлением, а не универсальной истиной."],
+    "fulfillment.failed": ["Completion evidence failed: {code}", "Ошибка evidence завершения: {code}"],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -197,6 +218,7 @@ window.MarketplaceI18n = (() => {
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
     "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
     "agreement-formation-covered", "agreement-formation-missing", "agreement-assent-status",
+    "agreement-publication-status", "fulfillment-completion-status",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -309,6 +331,8 @@ const API_SYNC = "/api/sync";
 const API_MVP_FLIGHT = "/api/mvp-flight";
 const RESPONSES_SUFFIX = "/responses";
 const PROPOSALS_SUFFIX = "/proposals";
+const SELLER_DELIVERY_COMMITMENT_ID = "seller-delivery";
+const CLAIMED_COMPLETE_PERFORMANCE = "CLAIMED_COMPLETE_PERFORMANCE";
 const PAGE_LIMIT = 64;
 const SYNC_LIMIT = 64;
 const MAX_SYNC_PAGES = 4;
@@ -376,6 +400,12 @@ const state = {
   agreementAssentResults: new Map(),
   agreementAssentErrors: new Map(),
   agreementAssentPending: new Set(),
+  agreementPublicationResults: new Map(),
+  agreementPublicationErrors: new Map(),
+  agreementPublicationPending: new Set(),
+  fulfillmentCompletionResults: new Map(),
+  fulfillmentCompletionErrors: new Map(),
+  fulfillmentCompletionPending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -414,6 +444,11 @@ const agreementAssentStatus = byId("agreement-assent-status");
 const resolveProposalAcceptanceButton = byId("resolve-proposal-acceptance");
 const checkAgreementFormationButton = byId("check-agreement-formation");
 const signAgreementAssentButton = byId("sign-agreement-assent");
+const agreementPublicationCompletionHandoff = byId("agreement-publication-completion-handoff");
+const agreementPublicationStatus = byId("agreement-publication-status");
+const publishAgreementButton = byId("publish-agreement");
+const fulfillmentCompletionStatus = byId("fulfillment-completion-status");
+const claimDeliveryCompleteButton = byId("claim-delivery-complete");
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -567,6 +602,7 @@ async function establishAuthenticationSession() {
     state.agreementAssentResults.clear();
     state.agreementAssentErrors.clear();
     state.agreementAssentPending.clear();
+    clearAgreementPublicationCompletionState();
     setAuthStatus("auth.active", { principal: established.principal }, "success");
     renderDetail();
   } catch (error) {
@@ -587,12 +623,29 @@ function resetAuthentication() {
   state.agreementAssentResults.clear();
   state.agreementAssentErrors.clear();
   state.agreementAssentPending.clear();
+  clearAgreementPublicationCompletionState();
   authBrowserPublicKeyValue = null;
   authEvidencePublicKeyValue = null;
   authPrincipalInput.value = "";
   authVerificationMethodInput.value = "";
   setAuthStatus("auth.resetDone");
   renderDetail();
+}
+
+function clearAgreementPublicationCompletionState(proposalId = null) {
+  const collections = [
+    state.agreementPublicationResults,
+    state.agreementPublicationErrors,
+    state.agreementPublicationPending,
+    state.fulfillmentCompletionResults,
+    state.fulfillmentCompletionErrors,
+    state.fulfillmentCompletionPending,
+  ];
+  if (proposalId === null) {
+    for (const collection of collections) collection.clear();
+    return;
+  }
+  for (const collection of collections) collection.delete(proposalId);
 }
 
 function requireRecordId(value) {
@@ -1003,6 +1056,7 @@ async function acceptSelectedProposal() {
     state.agreementFormationErrors.delete(proposalId);
     state.agreementAssentResults.delete(proposalId);
     state.agreementAssentErrors.delete(proposalId);
+    clearAgreementPublicationCompletionState(proposalId);
   } catch (error) {
     state.proposalAcceptanceErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
   } finally {
@@ -1129,6 +1183,184 @@ function renderAgreementFormationHandoff(record) {
     ? i18n.t("agreementStatus.ready", { recordId: acceptance.recordId })
     : i18n.t("agreementStatus.failed", { code: errorCode });
   checkAgreementFormationButton.disabled = false;
+}
+
+function renderAgreementPublicationCompletionHandoff(record) {
+  agreementPublicationCompletionHandoff.hidden = true;
+  publishAgreementButton.disabled = true;
+  claimDeliveryCompleteButton.disabled = true;
+  agreementPublicationStatus.textContent = i18n.t("agreementPublication.waitingFormation");
+  fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.waitingPublication");
+
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
+  const formation = state.agreementFormationResults.get(proposalId);
+  if (formation === undefined) return;
+
+  agreementPublicationCompletionHandoff.hidden = false;
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  const publication = state.agreementPublicationResults.get(proposalId);
+
+  if (publication !== undefined) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.published", {
+      recordId: publication.agreementRecordId,
+      disposition: publication.disposition,
+      changeSeq: publication.changeSeq === null ? "none" : publication.changeSeq,
+    });
+  } else if (state.agreementPublicationPending.has(proposalId)) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.publishing");
+  } else if (
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0
+  ) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.incomplete");
+  } else if (!authSnapshot.active) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.authRequired");
+  } else if (
+    !formation.requiredPrincipals.includes(authSnapshot.principal) ||
+    !formation.coveredPrincipals.includes(authSnapshot.principal)
+  ) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.notCovered");
+  } else {
+    const errorCode = state.agreementPublicationErrors.get(proposalId);
+    agreementPublicationStatus.textContent = errorCode === undefined
+      ? i18n.t("agreementPublication.ready")
+      : i18n.t("agreementPublication.failed", { code: errorCode });
+    publishAgreementButton.disabled = false;
+  }
+
+  if (publication === undefined) return;
+  const completion = state.fulfillmentCompletionResults.get(proposalId);
+  if (completion !== undefined) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.published", {
+      recordId: completion.recordId,
+      disposition: completion.disposition,
+      changeSeq: completion.changeSeq === null ? "none" : completion.changeSeq,
+    });
+    return;
+  }
+  if (state.fulfillmentCompletionPending.has(proposalId)) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.publishing");
+    return;
+  }
+
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  if (parentListing === null) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.parentRequired");
+    return;
+  }
+  if (!authSnapshot.active) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.authRequired");
+    return;
+  }
+  if (authSnapshot.principal !== parentListing.sellerPrincipal) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.sellerRequired");
+    return;
+  }
+
+  const errorCode = state.fulfillmentCompletionErrors.get(proposalId);
+  fulfillmentCompletionStatus.textContent = errorCode === undefined
+    ? i18n.t("fulfillment.ready")
+    : i18n.t("fulfillment.failed", { code: errorCode });
+  claimDeliveryCompleteButton.disabled = false;
+}
+
+async function publishSelectedAgreement() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  const authSnapshot = authBootstrap.state();
+  if (
+    proposal === null ||
+    acceptance === undefined ||
+    formation === undefined ||
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0 ||
+    !authSnapshot.active ||
+    !formation.requiredPrincipals.includes(authSnapshot.principal) ||
+    !formation.coveredPrincipals.includes(authSnapshot.principal) ||
+    state.agreementPublicationPending.has(proposalId)
+  ) {
+    return;
+  }
+
+  state.agreementPublicationErrors.delete(proposalId);
+  state.agreementPublicationPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementPublicationClient();
+    const result = await client.publishAgreement(
+      proposalId,
+      acceptance.recordId,
+      formation.agreementRecordId,
+    );
+    if (result.agreementRecordId !== formation.agreementRecordId) {
+      throw stableClientError("AGREEMENT_PUBLICATION_AGREEMENT_MISMATCH");
+    }
+    state.agreementPublicationResults.set(proposalId, result);
+    state.fulfillmentCompletionResults.delete(proposalId);
+    state.fulfillmentCompletionErrors.delete(proposalId);
+  } catch (error) {
+    state.agreementPublicationErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementPublicationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function claimSelectedDeliveryComplete() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const publication = state.agreementPublicationResults.get(proposalId);
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  const authSnapshot = authBootstrap.state();
+  if (
+    proposal === null ||
+    publication === undefined ||
+    parentListing === null ||
+    !authSnapshot.active ||
+    authSnapshot.principal !== parentListing.sellerPrincipal ||
+    state.fulfillmentCompletionPending.has(proposalId)
+  ) {
+    return;
+  }
+
+  state.fulfillmentCompletionErrors.delete(proposalId);
+  state.fulfillmentCompletionPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.fulfillmentCompletionClient();
+    const result = await client.publishEvidence(
+      publication.agreementRecordId,
+      SELLER_DELIVERY_COMMITMENT_ID,
+      CLAIMED_COMPLETE_PERFORMANCE,
+    );
+    if (
+      result.agreementRecordId !== publication.agreementRecordId ||
+      result.commitmentId !== SELLER_DELIVERY_COMMITMENT_ID ||
+      result.evidenceKind !== CLAIMED_COMPLETE_PERFORMANCE
+    ) {
+      throw stableClientError("FULFILLMENT_COMPLETION_RESPONSE_INVALID");
+    }
+    state.fulfillmentCompletionResults.set(proposalId, result);
+  } catch (error) {
+    state.fulfillmentCompletionErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.fulfillmentCompletionPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
 }
 
 async function resolveSelectedProposalAcceptance() {
@@ -1266,6 +1498,7 @@ function renderDetail() {
   renderSelectedRecordSummary(record);
   renderProposalAcceptanceHandoff(record);
   renderAgreementFormationHandoff(record);
+  renderAgreementPublicationCompletionHandoff(record);
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
@@ -1946,6 +2179,8 @@ acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal
 resolveProposalAcceptanceButton.addEventListener("click", () => void resolveSelectedProposalAcceptance());
 checkAgreementFormationButton.addEventListener("click", () => void checkSelectedAgreementFormation());
 signAgreementAssentButton.addEventListener("click", () => void signSelectedAgreementAssent());
+publishAgreementButton.addEventListener("click", () => void publishSelectedAgreement());
+claimDeliveryCompleteButton.addEventListener("click", () => void claimSelectedDeliveryComplete());
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
