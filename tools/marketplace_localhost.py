@@ -462,11 +462,7 @@ def _wrap_marketplace_provider_with_moon_heartbeat(
         wrapper = getattr(module, "wrap_marketplace_server_provider_from_env")
         if not callable(wrapper):
             raise TypeError("wrapper")
-        wrapped = wrapper(provider)
-        run = getattr(wrapped, "run")
-        if not callable(run):
-            raise TypeError("provider")
-        return wrapped
+        return wrapper(provider)
     except Exception:
         raise MarketplaceLocalhostBootstrapError(
             "MOON_RUNTIME_HEARTBEAT_CONFIGURATION_FAILED"

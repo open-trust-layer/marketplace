@@ -286,12 +286,8 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
     def test_moon_heartbeat_wrapper_is_lazy_and_preserves_provider_contract(self):
         events: list[str] = []
 
-        class Provider:
-            def run(self, *, application: object, host: str, port: int) -> None:
-                del application, host, port
-
-        provider = Provider()
-        wrapped = Provider()
+        provider = object()
+        wrapped = object()
 
         def wrapper(candidate: object):
             events.append("wrap")
