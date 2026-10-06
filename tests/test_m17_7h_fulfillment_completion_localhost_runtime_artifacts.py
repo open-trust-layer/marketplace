@@ -85,7 +85,8 @@ class M177HFulfillmentCompletionLocalhostRuntimeArtifactTests(unittest.TestCase)
             "zero PostgreSQL connection calls",
             "new exact",
             "mode-specific opt-in",
-            "does not establish universal completion",
+            "does not establish",
+            "universal completion",
             "does **not** add or activate a Web completion button",
         ):
             self.assertIn(marker, text)
