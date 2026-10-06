@@ -10,6 +10,8 @@ import { createMarketplaceWebAuthEstablishment } from "./auth_establishment.js";
 import { createMarketplaceWebAgreementEd25519AssentProvider } from "./agreement_ed25519_assent_provider.js";
 import { createMarketplaceWebAgreementAssentClient } from "./agreement_assent_client.js";
 import { createMarketplaceWebProposalAcceptanceClient } from "./proposal_acceptance_client.js";
+import { createMarketplaceWebAgreementPublicationClient } from "./agreement_publication_client.js";
+import { createMarketplaceWebFulfillmentCompletionClient } from "./fulfillment_completion_client.js";
 
 const BROWSER_PUBLIC_KEY_PREFIX = "mkpk1_";
 const EVIDENCE_PUBLIC_KEY_PREFIX = "mkp1_";
@@ -137,6 +139,26 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     });
   }
 
+  function agreementPublicationClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("AGREEMENT_PUBLICATION_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebAgreementPublicationClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
+  function fulfillmentCompletionClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("FULFILLMENT_COMPLETION_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebFulfillmentCompletionClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
   function state() {
     const active = session.isActive;
     return Object.freeze({
@@ -158,6 +180,8 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     establishSession,
     proposalAcceptanceClient,
     agreementAssentClient,
+    agreementPublicationClient,
+    fulfillmentCompletionClient,
     state,
     reset,
   });
