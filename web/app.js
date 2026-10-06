@@ -1120,6 +1120,9 @@ function renderFulfillmentEvidenceAction({
   if (errorCode !== undefined) {
     statusElement.textContent = i18n.t(failedKey, { code: errorCode });
     statusElement.className = "error";
+    if (authSnapshot.active && authSnapshot.principal === rolePrincipal) {
+      button.disabled = false;
+    }
   } else if (!authSnapshot.active || authSnapshot.principal !== rolePrincipal) {
     statusElement.textContent = i18n.t(
       authSnapshot.active ? roleKey : waitingKey,
@@ -1163,6 +1166,17 @@ function renderAgreementPublicationAndFulfillmentHandoff(record) {
         "agreementPublication.publishing",
       );
     } else {
+      const acceptance = proposalAcceptanceEvidence(proposalId);
+      const formation = state.agreementFormationResults.get(proposalId);
+      const principal = authSnapshot.principal;
+      const eligible = authSnapshot.active &&
+        acceptance !== undefined &&
+        formation !== undefined &&
+        state.agreementFormationAcceptanceIds.get(proposalId) === acceptance.recordId &&
+        formation.formationEvidence === "EVIDENCE_SUFFICIENT_FOR_PROFILE" &&
+        formation.missingPrincipals.length === 0 &&
+        formation.requiredPrincipals.includes(principal) &&
+        formation.coveredPrincipals.includes(principal);
       const errorCode = state.agreementPublicationErrors.get(proposalId);
       if (errorCode !== undefined) {
         agreementPublicationStatus.textContent = i18n.t(
@@ -1170,24 +1184,12 @@ function renderAgreementPublicationAndFulfillmentHandoff(record) {
           { code: errorCode },
         );
         agreementPublicationStatus.className = "error";
-      } else {
-        const acceptance = proposalAcceptanceEvidence(proposalId);
-        const formation = state.agreementFormationResults.get(proposalId);
-        const principal = authSnapshot.principal;
-        const eligible = authSnapshot.active &&
-          acceptance !== undefined &&
-          formation !== undefined &&
-          state.agreementFormationAcceptanceIds.get(proposalId) === acceptance.recordId &&
-          formation.formationEvidence === "EVIDENCE_SUFFICIENT_FOR_PROFILE" &&
-          formation.missingPrincipals.length === 0 &&
-          formation.requiredPrincipals.includes(principal) &&
-          formation.coveredPrincipals.includes(principal);
-        if (eligible) {
-          agreementPublicationStatus.textContent = i18n.t(
-            "agreementPublication.ready",
-          );
-          publishAgreementButton.disabled = false;
-        }
+        publishAgreementButton.disabled = !eligible;
+      } else if (eligible) {
+        agreementPublicationStatus.textContent = i18n.t(
+          "agreementPublication.ready",
+        );
+        publishAgreementButton.disabled = false;
       }
     }
     return;
