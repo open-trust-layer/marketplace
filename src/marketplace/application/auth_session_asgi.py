@@ -20,6 +20,7 @@ from .auth_enrollment_http import (
     MarketplaceAuthenticationEnrollmentHttpAdapter,
 )
 from .auth_http import MarketplaceAuthenticatedApplicationHttpAdapter
+from .fulfillment_completion_http import MarketplaceAuthenticatedFulfillmentCompletionHttpAdapter
 from .auth_session_http import AUTH_REQUEST_MAX_BYTES, MarketplaceAuthenticationSessionHttpAdapter
 from .bearer import MarketplaceBearerTransportError, parse_marketplace_bearer_authorization
 from .http import (
@@ -42,6 +43,7 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
         marketplace_http: (
             MarketplaceAuthenticatedApplicationHttpAdapter
             | MarketplaceAuthenticatedAgreementAssentHttpAdapter
+            | MarketplaceAuthenticatedFulfillmentCompletionHttpAdapter
         ),
         auth_http: MarketplaceAuthenticationSessionHttpAdapter,
         now: Callable[[], int],
@@ -52,6 +54,7 @@ class MarketplaceSessionEstablishmentAsgiHttpAdapter:
         if type(marketplace_http) not in {
             MarketplaceAuthenticatedApplicationHttpAdapter,
             MarketplaceAuthenticatedAgreementAssentHttpAdapter,
+            MarketplaceAuthenticatedFulfillmentCompletionHttpAdapter,
         }:
             raise TypeError(
                 "marketplace_http MUST be an exact reviewed authenticated HTTP adapter"
