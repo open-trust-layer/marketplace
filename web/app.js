@@ -1045,6 +1045,7 @@ async function acceptSelectedProposal() {
     const client = authBootstrap.proposalAcceptanceClient();
     const result = await client.acceptProposal(proposalId);
     state.proposalAcceptanceResults.set(proposalId, result);
+    clearAgreementPublicationAndFulfillment(proposalId);
     state.proposalAcceptanceResolutionResults.delete(proposalId);
     state.proposalAcceptanceResolutionErrors.delete(proposalId);
     state.agreementFormationResults.delete(proposalId);
@@ -1065,6 +1066,190 @@ function proposalAcceptanceEvidence(proposalId) {
   const published = state.proposalAcceptanceResults.get(proposalId);
   if (published !== undefined) return published;
   return state.proposalAcceptanceResolutionResults.get(proposalId);
+}
+
+function fulfillmentEvidenceKey(proposalId, evidenceKind) {
+  return JSON.stringify([proposalId, evidenceKind]);
+}
+
+function clearAgreementPublicationAndFulfillment(proposalId) {
+  state.agreementPublicationResults.delete(proposalId);
+  state.agreementPublicationErrors.delete(proposalId);
+  state.agreementPublicationPending.delete(proposalId);
+  for (const evidenceKind of (
+    [FULFILLMENT_CLAIMED_COMPLETE, FULFILLMENT_ACCEPTANCE, FULFILLMENT_COMPLETION]
+  )) {
+    const key = fulfillmentEvidenceKey(proposalId, evidenceKind);
+    state.fulfillmentEvidenceResults.delete(key);
+    state.fulfillmentEvidenceErrors.delete(key);
+    state.fulfillmentEvidencePending.delete(key);
+  }
+}
+
+function renderFulfillmentEvidenceAction({
+  proposalId,
+  evidenceKind,
+  statusElement,
+  button,
+  rolePrincipal,
+  authSnapshot,
+  waitingKey,
+  roleKey,
+  readyKey,
+  publishingKey,
+  publishedKey,
+  failedKey,
+}) {
+  button.disabled = true;
+  const key = fulfillmentEvidenceKey(proposalId, evidenceKind);
+  const result = state.fulfillmentEvidenceResults.get(key);
+  if (result !== undefined) {
+    statusElement.textContent = i18n.t(publishedKey, {
+      recordId: result.recordId,
+      disposition: result.disposition,
+    });
+    statusElement.className = "success";
+    return;
+  }
+  if (state.fulfillmentEvidencePending.has(key)) {
+    statusElement.textContent = i18n.t(publishingKey);
+    statusElement.className = "muted";
+    return;
+  }
+  const errorCode = state.fulfillmentEvidenceErrors.get(key);
+  if (errorCode !== undefined) {
+    statusElement.textContent = i18n.t(failedKey, { code: errorCode });
+    statusElement.className = "error";
+  } else if (!authSnapshot.active || authSnapshot.principal !== rolePrincipal) {
+    statusElement.textContent = i18n.t(
+      authSnapshot.active ? roleKey : waitingKey,
+    );
+    statusElement.className = "muted";
+  } else {
+    statusElement.textContent = i18n.t(readyKey);
+    statusElement.className = "muted";
+    button.disabled = false;
+  }
+}
+
+function renderAgreementPublicationAndFulfillmentHandoff(record) {
+  agreementPublicationHandoff.hidden = true;
+  publishAgreementButton.disabled = true;
+  claimDeliveryCompleteButton.disabled = true;
+  acceptDeliveredCommitmentButton.disabled = true;
+  assertCommitmentCompleteButton.disabled = true;
+  agreementPublicationStatus.textContent = i18n.t("agreementPublication.waiting");
+  agreementPublicationStatus.className = "muted";
+  fulfillmentPerformanceStatus.textContent = i18n.t("fulfillment.performance.waiting");
+  fulfillmentPerformanceStatus.className = "muted";
+  fulfillmentAcceptanceStatus.textContent = i18n.t("fulfillment.acceptance.waiting");
+  fulfillmentAcceptanceStatus.className = "muted";
+  fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.completion.waiting");
+  fulfillmentCompletionStatus.className = "muted";
+
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
+  agreementPublicationHandoff.hidden = false;
+
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  const publication = state.agreementPublicationResults.get(proposalId);
+
+  if (publication === undefined) {
+    if (state.agreementPublicationPending.has(proposalId)) {
+      agreementPublicationStatus.textContent = i18n.t(
+        "agreementPublication.publishing",
+      );
+    } else {
+      const errorCode = state.agreementPublicationErrors.get(proposalId);
+      if (errorCode !== undefined) {
+        agreementPublicationStatus.textContent = i18n.t(
+          "agreementPublication.failed",
+          { code: errorCode },
+        );
+        agreementPublicationStatus.className = "error";
+      } else {
+        const acceptance = proposalAcceptanceEvidence(proposalId);
+        const formation = state.agreementFormationResults.get(proposalId);
+        const principal = authSnapshot.principal;
+        const eligible = authSnapshot.active &&
+          acceptance !== undefined &&
+          formation !== undefined &&
+          state.agreementFormationAcceptanceIds.get(proposalId) === acceptance.recordId &&
+          formation.formationEvidence === "EVIDENCE_SUFFICIENT_FOR_PROFILE" &&
+          formation.missingPrincipals.length === 0 &&
+          formation.requiredPrincipals.includes(principal) &&
+          formation.coveredPrincipals.includes(principal);
+        if (eligible) {
+          agreementPublicationStatus.textContent = i18n.t(
+            "agreementPublication.ready",
+          );
+          publishAgreementButton.disabled = false;
+        }
+      }
+    }
+    return;
+  }
+
+  agreementPublicationStatus.textContent = i18n.t(
+    "agreementPublication.published",
+    {
+      recordId: publication.agreementRecordId,
+      disposition: publication.disposition,
+      changeSeq: publication.changeSeq,
+    },
+  );
+  agreementPublicationStatus.className = "success";
+
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  if (parentListing === null) return;
+
+  renderFulfillmentEvidenceAction({
+    proposalId,
+    evidenceKind: FULFILLMENT_CLAIMED_COMPLETE,
+    statusElement: fulfillmentPerformanceStatus,
+    button: claimDeliveryCompleteButton,
+    rolePrincipal: parentListing.sellerPrincipal,
+    authSnapshot,
+    waitingKey: "fulfillment.performance.waiting",
+    roleKey: "fulfillment.performance.role",
+    readyKey: "fulfillment.performance.ready",
+    publishingKey: "fulfillment.performance.publishing",
+    publishedKey: "fulfillment.performance.published",
+    failedKey: "fulfillment.performance.failed",
+  });
+  renderFulfillmentEvidenceAction({
+    proposalId,
+    evidenceKind: FULFILLMENT_ACCEPTANCE,
+    statusElement: fulfillmentAcceptanceStatus,
+    button: acceptDeliveredCommitmentButton,
+    rolePrincipal: proposal.buyerPrincipal,
+    authSnapshot,
+    waitingKey: "fulfillment.acceptance.waiting",
+    roleKey: "fulfillment.acceptance.role",
+    readyKey: "fulfillment.acceptance.ready",
+    publishingKey: "fulfillment.acceptance.publishing",
+    publishedKey: "fulfillment.acceptance.published",
+    failedKey: "fulfillment.acceptance.failed",
+  });
+  renderFulfillmentEvidenceAction({
+    proposalId,
+    evidenceKind: FULFILLMENT_COMPLETION,
+    statusElement: fulfillmentCompletionStatus,
+    button: assertCommitmentCompleteButton,
+    rolePrincipal: parentListing.sellerPrincipal,
+    authSnapshot,
+    waitingKey: "fulfillment.completion.waiting",
+    roleKey: "fulfillment.completion.role",
+    readyKey: "fulfillment.completion.ready",
+    publishingKey: "fulfillment.completion.publishing",
+    publishedKey: "fulfillment.completion.published",
+    failedKey: "fulfillment.completion.failed",
+  });
 }
 
 function renderAgreementFormationHandoff(record) {
@@ -1205,6 +1390,7 @@ async function resolveSelectedProposalAcceptance() {
       throw stableClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
     }
     state.proposalAcceptanceResolutionResults.set(proposalId, result);
+    clearAgreementPublicationAndFulfillment(proposalId);
     state.agreementFormationResults.delete(proposalId);
     state.agreementFormationAcceptanceIds.delete(proposalId);
     state.agreementFormationErrors.delete(proposalId);
@@ -1304,6 +1490,128 @@ async function signSelectedAgreementAssent() {
   }
 }
 
+async function publishSelectedAgreement() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  if (
+    proposal === null ||
+    acceptance === undefined ||
+    formation === undefined ||
+    state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId ||
+    state.agreementPublicationPending.has(proposalId)
+  ) {
+    return;
+  }
+
+  const authSnapshot = authBootstrap.state();
+  const principal = authSnapshot.principal;
+  if (
+    !authSnapshot.active ||
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0 ||
+    !formation.requiredPrincipals.includes(principal) ||
+    !formation.coveredPrincipals.includes(principal)
+  ) {
+    state.agreementPublicationErrors.set(
+      proposalId,
+      "AGREEMENT_PUBLICATION_NOT_ELIGIBLE",
+    );
+    renderDetail();
+    return;
+  }
+
+  state.agreementPublicationErrors.delete(proposalId);
+  state.agreementPublicationPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementPublicationClient();
+    const result = await client.publishAgreement(
+      proposalId,
+      acceptance.recordId,
+      formation.agreementRecordId,
+    );
+    state.agreementPublicationResults.set(proposalId, result);
+    for (const evidenceKind of (
+      [FULFILLMENT_CLAIMED_COMPLETE, FULFILLMENT_ACCEPTANCE, FULFILLMENT_COMPLETION]
+    )) {
+      const key = fulfillmentEvidenceKey(proposalId, evidenceKind);
+      state.fulfillmentEvidenceResults.delete(key);
+      state.fulfillmentEvidenceErrors.delete(key);
+      state.fulfillmentEvidencePending.delete(key);
+    }
+  } catch (error) {
+    state.agreementPublicationErrors.set(
+      proposalId,
+      error.code ?? "CLIENT_FAILURE",
+    );
+  } finally {
+    state.agreementPublicationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function publishSelectedFulfillmentEvidence(evidenceKind) {
+  if (authBootstrap === null || state.selectedId === null) return;
+  if (![
+    FULFILLMENT_CLAIMED_COMPLETE,
+    FULFILLMENT_ACCEPTANCE,
+    FULFILLMENT_COMPLETION,
+  ].includes(evidenceKind)) {
+    throw stableClientError("FULFILLMENT_EVIDENCE_KIND_INVALID");
+  }
+
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const publication = state.agreementPublicationResults.get(proposalId);
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  if (proposal === null || publication === undefined || parentListing === null) {
+    return;
+  }
+
+  const authSnapshot = authBootstrap.state();
+  const expectedPrincipal = evidenceKind === FULFILLMENT_ACCEPTANCE
+    ? proposal.buyerPrincipal
+    : parentListing.sellerPrincipal;
+  const key = fulfillmentEvidenceKey(proposalId, evidenceKind);
+  if (!authSnapshot.active || authSnapshot.principal !== expectedPrincipal) {
+    state.fulfillmentEvidenceErrors.set(
+      key,
+      "FULFILLMENT_EVIDENCE_ROLE_MISMATCH",
+    );
+    renderDetail();
+    return;
+  }
+  if (state.fulfillmentEvidencePending.has(key)) return;
+
+  state.fulfillmentEvidenceErrors.delete(key);
+  state.fulfillmentEvidencePending.add(key);
+  renderDetail();
+  try {
+    const client = authBootstrap.fulfillmentCompletionClient();
+    const result = await client.publishEvidence(
+      publication.agreementRecordId,
+      FULFILLMENT_COMMITMENT_ID,
+      evidenceKind,
+    );
+    state.fulfillmentEvidenceResults.set(key, result);
+  } catch (error) {
+    state.fulfillmentEvidenceErrors.set(
+      key,
+      error.code ?? "CLIENT_FAILURE",
+    );
+  } finally {
+    state.fulfillmentEvidencePending.delete(key);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
 function renderDetail() {
   const record = state.selectedRecord;
   const canReturnToParent = state.responseParentId !== null
@@ -1315,6 +1623,7 @@ function renderDetail() {
   renderSelectedRecordSummary(record);
   renderProposalAcceptanceHandoff(record);
   renderAgreementFormationHandoff(record);
+  renderAgreementPublicationAndFulfillmentHandoff(record);
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
@@ -1995,6 +2304,10 @@ acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal
 resolveProposalAcceptanceButton.addEventListener("click", () => void resolveSelectedProposalAcceptance());
 checkAgreementFormationButton.addEventListener("click", () => void checkSelectedAgreementFormation());
 signAgreementAssentButton.addEventListener("click", () => void signSelectedAgreementAssent());
+publishAgreementButton.addEventListener("click", () => void publishSelectedAgreement());
+claimDeliveryCompleteButton.addEventListener("click", () => void publishSelectedFulfillmentEvidence(FULFILLMENT_CLAIMED_COMPLETE));
+acceptDeliveredCommitmentButton.addEventListener("click", () => void publishSelectedFulfillmentEvidence(FULFILLMENT_ACCEPTANCE));
+assertCommitmentCompleteButton.addEventListener("click", () => void publishSelectedFulfillmentEvidence(FULFILLMENT_COMPLETION));
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
