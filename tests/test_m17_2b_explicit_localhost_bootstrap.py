@@ -283,6 +283,46 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
         )
         connection_factory.assert_not_called()
 
+    def test_moon_heartbeat_wrapper_is_lazy_and_preserves_provider_contract(self):
+        events: list[str] = []
+
+        provider = object()
+        wrapped = object()
+
+        def wrapper(candidate: object):
+            events.append("wrap")
+            self.assertIs(candidate, provider)
+            return wrapped
+
+        def importer(name: str):
+            events.append(name)
+            return types.SimpleNamespace(
+                wrap_marketplace_server_provider_from_env=wrapper
+            )
+
+        result = tool._wrap_marketplace_provider_with_moon_heartbeat(
+            provider, importer=importer
+        )
+
+        self.assertIs(result, wrapped)
+        self.assertEqual(
+            events, ["marketplace.application.moon_runtime", "wrap"]
+        )
+
+    def test_moon_heartbeat_wrapper_failure_is_nonreflective(self):
+        def importer(_name: str):
+            raise RuntimeError("SECRET-HEARTBEAT-CONFIG")
+
+        with self.assertRaises(tool.MarketplaceLocalhostBootstrapError) as caught:
+            tool._wrap_marketplace_provider_with_moon_heartbeat(
+                object(), importer=importer
+            )
+
+        self.assertEqual(
+            caught.exception.code, "MOON_RUNTIME_HEARTBEAT_CONFIGURATION_FAILED"
+        )
+        self.assertNotIn("SECRET-HEARTBEAT-CONFIG", str(caught.exception))
+
     def test_initialization_failure_prevents_server_and_reflects_no_provider_text(self):
         stderr = io.StringIO()
         events: list[str] = []
@@ -373,6 +413,11 @@ class MarketplaceLocalhostBootstrapSourceTests(unittest.TestCase):
         self.assertIn("EXECUTE_ONE_MARKETPLACE_LOOPBACK_SERVER", source)
         self.assertIn('importer("psycopg")', source)
         self.assertIn('importer("marketplace.application.uvicorn_provider")', source)
+        self.assertIn('importer("marketplace.application.moon_runtime")', source)
+        self.assertEqual(
+            source.count("_wrap_marketplace_provider_with_moon_heartbeat(_real_uvicorn_provider())"),
+            4,
+        )
 
 
 if __name__ == "__main__":
