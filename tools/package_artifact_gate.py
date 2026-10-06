@@ -72,6 +72,7 @@ _REQUIRED_PACKAGE_MEMBERS = {
     "marketplace/application/auth_trust_anchor_manifest.py",
     "marketplace/application/auth_verification_method_snapshot.py",
     "marketplace/application/auth_verification_method_evidence.py",
+    "marketplace/application/fulfillment_completion_publication.py",
     "marketplace/application/uvicorn_provider.py",
     "marketplace/runtime/__init__.py",
     "marketplace/runtime/composition.py",
