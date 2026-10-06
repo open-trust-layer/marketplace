@@ -18,6 +18,8 @@ AUTH_MODULES = (
     ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
     ("/agreement_assent_client.js", b"agreement-assent-client"),
     ("/proposal_acceptance_client.js", b"proposal-acceptance-client"),
+    ("/agreement_publication_client.js", b"agreement-publication-client"),
+    ("/fulfillment_completion_client.js", b"fulfillment-completion-client"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
