@@ -36,6 +36,14 @@ class M177JWebAgreementPublicationClientTests(unittest.TestCase):
 
     def test_request_cannot_supply_actor_or_authority_fields(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
+        start = text.index("async function publishAgreement(")
+        body_start = text.index("const body = JSON.stringify(", start)
+        body_end = text.index("let response;", body_start)
+        request_body = text[body_start:body_end]
+        self.assertIn(
+            "acceptance_record_id: acceptanceRecordId",
+            request_body,
+        )
         for forbidden in (
             "principal:",
             "issuer:",
@@ -48,7 +56,7 @@ class M177JWebAgreementPublicationClientTests(unittest.TestCase):
             "change_seq:",
         ):
             with self.subTest(forbidden=forbidden):
-                self.assertNotIn(forbidden, text)
+                self.assertNotIn(forbidden, request_body)
 
     def test_expected_agreement_identity_is_local_validation_only(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
