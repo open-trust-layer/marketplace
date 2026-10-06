@@ -1393,6 +1393,7 @@ async function resolveSelectedProposalAcceptance() {
     state.agreementFormationErrors.delete(proposalId);
     state.agreementAssentResults.delete(proposalId);
     state.agreementAssentErrors.delete(proposalId);
+    clearAgreementPublicationCompletionState(proposalId);
   } catch (error) {
     state.proposalAcceptanceResolutionErrors.set(
       proposalId,
@@ -1424,6 +1425,7 @@ async function checkSelectedAgreementFormation() {
   state.agreementFormationErrors.delete(proposalId);
   state.agreementAssentResults.delete(proposalId);
   state.agreementAssentErrors.delete(proposalId);
+  clearAgreementPublicationCompletionState(proposalId);
   state.agreementFormationPending.add(proposalId);
   renderDetail();
   try {
