@@ -78,7 +78,7 @@ class M177HFulfillmentCompletionLocalhostRuntimeArtifactTests(unittest.TestCase)
         self.assertNotIn("fulfillment_completion", text)
 
     def test_document_records_high_loopback_only_boundary(self) -> None:
-        text = DOC.read_text(encoding="utf-8")
+        text = " ".join(DOC.read_text(encoding="utf-8").split())
         for marker in (
             "HIGH local runtime execution",
             "127.0.0.1",
