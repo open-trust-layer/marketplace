@@ -21,7 +21,6 @@ TESTS = (
 DOC = ROOT / "docs" / "m17-7g-reference-fulfillment-completion-launch.md"
 
 NONSELECTING = (
-    ROOT / "tools" / "marketplace_localhost.py",
     ROOT / "web" / "app.js",
     ROOT
     / "android"
