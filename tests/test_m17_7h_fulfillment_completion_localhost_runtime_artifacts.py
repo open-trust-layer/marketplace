@@ -83,8 +83,10 @@ class M177HFulfillmentCompletionLocalhostRuntimeArtifactTests(unittest.TestCase)
             "HIGH local runtime execution",
             "127.0.0.1",
             "zero PostgreSQL connection calls",
-            "exact new token",
-            "does not establish universal completion",
+            "new exact",
+            "mode-specific opt-in",
+            "does not establish",
+            "universal completion",
             "does **not** add or activate a Web completion button",
         ):
             self.assertIn(marker, text)
