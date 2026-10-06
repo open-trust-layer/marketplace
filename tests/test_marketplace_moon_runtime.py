@@ -48,6 +48,34 @@ class _RequestingProvider:
         asyncio.run(exercise())
 
 
+
+
+class _LifespanOnlyProvider:
+    def run(self, *, application: object, host: str, port: int) -> None:
+        del host, port
+
+        async def exercise() -> None:
+            received = False
+
+            async def receive():
+                nonlocal received
+                if received:
+                    return {"type": "lifespan.shutdown"}
+                received = True
+                return {"type": "lifespan.startup"}
+
+            async def send(_message):
+                return None
+
+            await application(  # type: ignore[operator]
+                {"type": "lifespan"},
+                receive,
+                send,
+            )
+
+        asyncio.run(exercise())
+
+
 class _FailBeforeRequestProvider:
     def run(self, *, application: object, host: str, port: int) -> None:
         del application, host, port
@@ -144,6 +172,17 @@ class MarketplaceMoonRuntimeTests(unittest.TestCase):
 
         self.assertEqual(lease.events, ["started", "closed"])
         self.assertEqual(len(delegate.calls), 1)
+
+    def test_lifespan_scope_does_not_admit_runtime_health(self) -> None:
+        lease = _FakeLease()
+        provider = MarketplaceMoonHeartbeatServerProvider(
+            _LifespanOnlyProvider(),
+            lease,  # type: ignore[arg-type]
+        )
+
+        provider.run(application=_asgi_application, host="127.0.0.1", port=18080)
+
+        self.assertEqual(lease.events, ["closed"])
 
     def test_provider_bind_failure_never_starts_heartbeat(self) -> None:
         lease = _FakeLease()

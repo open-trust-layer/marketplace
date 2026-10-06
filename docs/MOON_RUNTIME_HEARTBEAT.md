@@ -18,7 +18,7 @@ The provider wrapper is intentionally conservative:
 
 1. constructing the wrapper creates no heartbeat;
 2. calling the underlying foreground provider creates no heartbeat by itself;
-3. the first real ASGI request starts the heartbeat;
+3. the first real HTTP request starts the heartbeat;
 4. normal provider return or failure closes the lease and removes the active record.
 
 This means a provider failure before request handling, including a socket-bind failure, cannot create
@@ -58,6 +58,6 @@ Unset or `0` heartbeat enablement is inert. Other enablement values fail closed.
 ## Future integration gate
 
 Before the root Moon manifest can move from `workspace` to heartbeat health, a reviewed runtime
-entrypoint must wire this primitive into an explicitly authorized loopback server, and a real run
+entrypoint must wire this primitive into an explicitly authorized loopback server, and a real HTTP-serving run
 must prove end-to-end heartbeat delivery to Moon Core. Until then, Moon should continue reporting
 Marketplace runtime health as not declared.

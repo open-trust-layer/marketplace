@@ -452,6 +452,27 @@ def _real_uvicorn_provider(*, importer: Callable[[str], object] = importlib.impo
     return provider
 
 
+def _wrap_marketplace_provider_with_moon_heartbeat(
+    provider: object,
+    *,
+    importer: Callable[[str], object] = importlib.import_module,
+):
+    try:
+        module = importer("marketplace.application.moon_runtime")
+        wrapper = getattr(module, "wrap_marketplace_server_provider_from_env")
+        if not callable(wrapper):
+            raise TypeError("wrapper")
+        wrapped = wrapper(provider)
+        run = getattr(wrapped, "run")
+        if not callable(run):
+            raise TypeError("provider")
+        return wrapped
+    except Exception:
+        raise MarketplaceLocalhostBootstrapError(
+            "MOON_RUNTIME_HEARTBEAT_CONFIGURATION_FAILED"
+        ) from None
+
+
 def _validate_plan_before_initialize(plan: object) -> MarketplaceApplicationLaunchPlan:
     if type(plan) is not MarketplaceApplicationLaunchPlan:
         raise MarketplaceLocalhostBootstrapError("M17_2B_LAUNCH_PLAN_INVALID")
@@ -494,7 +515,7 @@ def _execute_localhost(port: int, execution_opt_in: object) -> None:
         raise MarketplaceLocalhostBootstrapError("M17_2B_COMPOSITION_FAILED") from None
     plan = _validate_plan_before_initialize(plan)
 
-    provider = _real_uvicorn_provider()
+    provider = _wrap_marketplace_provider_with_moon_heartbeat(_real_uvicorn_provider())
     try:
         plan.composition.initialize()
     except Exception:
@@ -529,7 +550,7 @@ def _execute_demo_localhost(port: int, execution_opt_in: object) -> None:
     except Exception:
         raise MarketplaceLocalhostBootstrapError("MVP_DEMO_COMPOSITION_FAILED") from None
     plan = _validate_plan_before_initialize(plan)
-    provider = _real_uvicorn_provider()
+    provider = _wrap_marketplace_provider_with_moon_heartbeat(_real_uvicorn_provider())
     try:
         plan.composition.initialize()
     except Exception:
@@ -576,7 +597,7 @@ def _execute_authenticated_localhost(
         runtime_inputs=runtime_inputs,
     )
     application = _validate_authenticated_plan_before_initialize(plan)
-    provider = _real_uvicorn_provider()
+    provider = _wrap_marketplace_provider_with_moon_heartbeat(_real_uvicorn_provider())
 
     try:
         application.initialize()
@@ -663,7 +684,7 @@ def _execute_agreement_assent_authenticated_localhost(
         validated_port,
         provisioning_directory,
     )
-    provider = _real_uvicorn_provider()
+    provider = _wrap_marketplace_provider_with_moon_heartbeat(_real_uvicorn_provider())
     try:
         application.initialize()
     except Exception:

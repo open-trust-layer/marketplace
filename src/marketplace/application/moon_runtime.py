@@ -126,7 +126,8 @@ class _HeartbeatAsgiApplication:
         self._lease = lease
 
     async def __call__(self, scope, receive, send) -> None:
-        self._lease.ensure_started()
+        if isinstance(scope, Mapping) and scope.get("type") == "http":
+            self._lease.ensure_started()
         await self._application(scope, receive, send)
 
 
