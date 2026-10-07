@@ -9,7 +9,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Final
 
@@ -490,7 +490,8 @@ def _build_psycopg_connection_factory(
 
 
 def _utc_clock() -> datetime:
-    return datetime.now(timezone.utc)
+    current = datetime.now(timezone.utc)
+    return current - timedelta(microseconds=current.microsecond)
 
 
 def _real_uvicorn_provider(*, importer: Callable[[str], object] = importlib.import_module):
