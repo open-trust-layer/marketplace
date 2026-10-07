@@ -39,3 +39,55 @@ python tools/marketplace_localhost.py --port 18080 --execute-demo-localhost EXEC
 Then browse to `http://127.0.0.1:18080/` and select **Run complete local MVP journey**. The page shows the lifecycle, participants, listing/agreement identities, verification results, completion timestamp, and audit identities.
 
 The demo state is bounded and process-local only. The command starts a real loopback server, so repository tests and CI never invoke this live path and its execution remains a separate runtime-authorization boundary.
+
+## Authenticated PostgreSQL-capable completion path
+
+This is a **separate evaluator lane** from the database-free demo above. Merged M17.7H-M provide the source/runtime/Web path and full-conformance acceptance, but the repository does not claim that this real PostgreSQL-backed browser lane has already been executed.
+
+Prerequisites are intentionally explicit:
+
+- the reviewed `local-server`, `auth-verify`, and PostgreSQL client dependencies;
+- `MARKETPLACE_POSTGRES_DSN` set locally to the evaluator PostgreSQL DSN;
+- an absolute local authentication provisioning directory that satisfies M17.5S/M17.5Y;
+- the pinned OLP source on `PYTHONPATH`;
+- separate operator authorization for live runtime execution.
+
+Do not place DSN text, provisioning bytes, keys, session material, or other credentials in committed files or acceptance transcripts.
+
+### Inert server/database preflight
+
+The fulfillment-completion preflight reads the explicit local provisioning, environment configuration, and reviewed Web assets so it can compose the exact graph. It does **not** connect to PostgreSQL, initialize application/coordination state, bind a socket, or run a server.
+
+```powershell
+$env:PYTHONPATH = "src;tools;C:\path\to\pinned-olp\src"
+$env:MARKETPLACE_POSTGRES_DSN = "<local evaluator DSN>"
+python tools/marketplace_localhost.py --port 18080 --preflight-fulfillment-completion-localhost --authentication-provisioning-directory "C:\absolute\path\to\marketplace-auth"
+```
+
+Expected readiness marker:
+
+```text
+FULFILLMENT_COMPLETION_AUTHENTICATED_LOCALHOST_PREFLIGHT_READY host=127.0.0.1 port=18080 postgres_connection_invoked=false database_initialized=false coordination_initialized=false server_invoked=false
+```
+
+### Explicit live loopback runtime
+
+Only after separate runtime authorization, start the reviewed foreground path with its exact mode-specific token:
+
+```powershell
+python tools/marketplace_localhost.py --port 18080 --execute-fulfillment-completion-localhost EXECUTE_FULFILLMENT_COMPLETION_AUTHENTICATED_MARKETPLACE_LOCALHOST_V1 --authentication-provisioning-directory "C:\absolute\path\to\marketplace-auth"
+```
+
+The reviewed runtime remains bound to exact IPv4 loopback `127.0.0.1`. Open `http://127.0.0.1:18080/` in the evaluator browser and complete the authenticated flow through explicit **Publish Agreement** and **Claim delivery complete** actions.
+
+A valid evaluator record should capture only non-secret observable evidence:
+
+- successful authentication state without token/key disclosure;
+- selected Proposal and exact Agreement Record Identity;
+- successful Agreement publication metadata;
+- seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` for commitment `seller-delivery`;
+- resulting immutable Record Identity / disposition / local change-sequence metadata;
+- confirmation that the page still states completion is attributable evidence, not universal truth, payment, or settlement;
+- confirmation that the runtime was loopback-only and no public deployment was involved.
+
+Until that operator-authorized run is actually executed and recorded, authenticated local product flight is **source/CI accepted, live-runtime pending**.
