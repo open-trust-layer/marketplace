@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import unittest
 from pathlib import Path
 
@@ -31,7 +32,7 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
             "real PostgreSQL-backed localhost server + browser run remains a separate, not-yet-executed runtime acceptance gate",
             text,
         )
-        self.assertIn("Production status: not deployed.", text)
+        self.assertIn("**Production status:** not deployed.", text)
 
     def test_flight_report_removes_stale_web_gap_and_records_exact_remaining_gate(self) -> None:
         text = normalized(REPORT)
@@ -43,7 +44,7 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
             "Accept -> Agreement -> Complete",
             "M17.7M proves the final Bearer/session-aware ASGI overlay",
             "in-process/source acceptance",
-            "one operator-authorized authenticated loopback run",
+            "One operator-authorized authenticated loopback run",
             "source/CI flight-ready but not yet live-runtime accepted",
             "M17.7M merged at",
             "7e356b7259b4736772e15da434f9a237b5c88b63",
@@ -101,18 +102,25 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
 
     def test_n_is_documentation_contract_only(self) -> None:
         source = Path(__file__).read_text(encoding="utf-8")
-        for forbidden in (
-            "subprocess",
-            "socket.",
-            "psycopg",
-            "requests.",
-            "httpx",
-            "urlopen",
-            "Popen",
-            "os.environ",
-        ):
-            with self.subTest(forbidden=forbidden):
-                self.assertNotIn(forbidden, source)
+        tree = ast.parse(source)
+        modules: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                modules.update(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                modules.add(node.module or "")
+        self.assertEqual(
+            modules,
+            {"__future__", "ast", "pathlib", "unittest"},
+        )
+        self.assertEqual(
+            list((ROOT / "src").rglob("*m17_7n*")),
+            [],
+        )
+        self.assertEqual(
+            list((ROOT / "tools").glob("*m17_7n*")),
+            [],
+        )
 
 
 if __name__ == "__main__":
