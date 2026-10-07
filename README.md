@@ -6,7 +6,7 @@
 
 **Project status:** local MVP demonstrator implemented and end-to-end accepted on merged `main`
 **MVP status:** the database-free Web demonstrator completes the deterministic two-user journey `CREATED → PUBLISHED → DISCOVERED → ACCEPTED → COMPLETED` with visible listing, agreement, verification, fulfillment, and audit evidence.
-**Authenticated product-path status:** merged source and full-conformance acceptance now cover explicit authenticated Agreement publication and seller-attributed delivery-completion evidence through the loopback-only PostgreSQL-capable path. A real PostgreSQL-backed localhost server + browser run remains a separate, not-yet-executed runtime acceptance gate.
+**Authenticated product-path status:** merged source and full-conformance acceptance cover explicit authenticated Agreement publication and seller-attributed delivery-completion evidence through the loopback-only PostgreSQL-capable path. Real PostgreSQL-backed localhost/browser execution is now partially exercised through the M17.7O/M17.7P live findings; a fresh post-P browser repeat through explicit Agreement publication and seller-attributed completion remains the final runtime acceptance gate.
 **Production status:** not deployed. Production PostgreSQL, persistent hosting, public-network exposure, production authentication/credentials, payments/settlement, Android runtime/distribution, and other production side effects remain separately governed capabilities.
 
 ## Moon Company Awareness metadata

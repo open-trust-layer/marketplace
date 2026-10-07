@@ -35,7 +35,7 @@ The original database-free flight remains deliberately local and synthetic. It d
 
 The active authenticated Web source now exposes the reviewed `Accept -> Agreement -> Complete` continuation: explicit Agreement publication followed by explicit seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` evidence for `seller-delivery`. M17.7M proves the final Bearer/session-aware ASGI overlay, Web client selection, explicit-click behavior, and localhost runtime/module wiring in the full conformance lane.
 
-That evidence is still **in-process/source acceptance**, not a claim that a real PostgreSQL-backed localhost server and browser have been executed together. One operator-authorized authenticated loopback run with real local provisioning and PostgreSQL remains the final local product-flight evidence gap.
+The authenticated lane is now **live-runtime partially exercised**. The first real PostgreSQL-backed loopback/browser acceptance exposed two bounded defects that were corrected by M17.7O (whole-second localhost clock) and M17.7P (authenticated Web structured-authoring session binding), both merged with green exact-head and merged-main conformance. A fresh **post-P** browser repeat remains the final local product-flight evidence gap; no completion claim is made until explicit Agreement publication and seller-attributed completion evidence are observed.
 
 The local flight identities and authentication evidence remain local MVP evidence only; they are not production trust, legal identity, universal ownership, payment, settlement, or universal-truth claims.
 
@@ -103,4 +103,4 @@ Merged M17.7H-M additionally establish the explicit authenticated completion pat
 
 M17.7M merged at `7e356b7259b4736772e15da434f9a237b5c88b63` after exact-head full conformance run **#946** succeeded.
 
-The remaining evidence gap is intentionally explicit: **no claim is made here that the PostgreSQL-backed authenticated localhost server and a real browser have yet been executed together.**
+The remaining evidence gap is intentionally explicit: M17.7O and M17.7P were driven by real PostgreSQL-backed localhost/browser findings, so the lane is **live-runtime partially exercised**. It is not yet live-runtime accepted: a fresh **post-P** browser repeat must still record explicit Agreement publication and exact seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` evidence for `seller-delivery`.

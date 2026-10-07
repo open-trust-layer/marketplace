@@ -29,7 +29,7 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
             text,
         )
         self.assertIn(
-            "real PostgreSQL-backed localhost server + browser run remains a separate, not-yet-executed runtime acceptance gate",
+            "Real PostgreSQL-backed localhost/browser execution is now partially exercised through the M17.7O/M17.7P live findings",
             text,
         )
         self.assertIn("**Production status:** not deployed.", text)
@@ -43,13 +43,13 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
         for marker in (
             "Accept -> Agreement -> Complete",
             "M17.7M proves the final Bearer/session-aware ASGI overlay",
-            "in-process/source acceptance",
-            "One operator-authorized authenticated loopback run",
+            "live-runtime partially exercised",
+            "fresh **post-P** browser repeat remains the final local product-flight evidence gap",
             "source/CI flight-ready but not yet live-runtime accepted",
             "M17.7M merged at",
             "7e356b7259b4736772e15da434f9a237b5c88b63",
             "run **#946** succeeded",
-            "no claim is made here that the PostgreSQL-backed authenticated localhost server and a real browser have yet been executed together",
+            "M17.7O and M17.7P were driven by real PostgreSQL-backed localhost/browser findings",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -74,12 +74,13 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
             doc,
         )
 
-    def test_live_evaluator_lane_remains_explicitly_unexecuted_by_repo_acceptance(self) -> None:
+    def test_live_evaluator_lane_remains_explicitly_incomplete_after_partial_execution(self) -> None:
         text = normalized(ACCEPTANCE)
         for marker in (
-            "the repository does not claim that this real PostgreSQL-backed browser lane has already been executed",
+            "live-runtime partially exercised",
+            "fresh **post-P** browser repeat is still required before live-runtime acceptance",
             "separate operator authorization for live runtime execution",
-            "source/CI accepted, live-runtime pending",
+            "source/CI accepted, live-runtime partially exercised",
             "completion is attributable evidence, not universal truth, payment, or settlement",
             "loopback-only and no public deployment was involved",
         ):

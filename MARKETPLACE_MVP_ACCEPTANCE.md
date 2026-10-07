@@ -42,7 +42,7 @@ The demo state is bounded and process-local only. The command starts a real loop
 
 ## Authenticated PostgreSQL-capable completion path
 
-This is a **separate evaluator lane** from the database-free demo above. Merged M17.7H-M provide the source/runtime/Web path and full-conformance acceptance, but the repository does not claim that this real PostgreSQL-backed browser lane has already been executed.
+This is a **separate evaluator lane** from the database-free demo above. Merged M17.7H-P provide the source/runtime/Web path and full-conformance acceptance. The real PostgreSQL-backed browser lane is now **live-runtime partially exercised**: M17.7O corrected the whole-second localhost clock after a live initialization failure, and M17.7P corrected authenticated Web structured authoring after a live `AUTH_REQUIRED` finding. A fresh **post-P** browser repeat is still required before live-runtime acceptance.
 
 Prerequisites are intentionally explicit:
 
@@ -90,4 +90,4 @@ A valid evaluator record should capture only non-secret observable evidence:
 - confirmation that the page still states completion is attributable evidence, not universal truth, payment, or settlement;
 - confirmation that the runtime was loopback-only and no public deployment was involved.
 
-Until that operator-authorized run is actually executed and recorded, authenticated local product flight is **source/CI accepted, live-runtime pending**.
+Until the fresh **post-P** operator-authorized run reaches and records explicit Agreement publication plus seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` for `seller-delivery`, authenticated local product flight remains **source/CI accepted, live-runtime partially exercised** rather than live-runtime accepted.
