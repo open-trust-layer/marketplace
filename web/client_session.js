@@ -1,3 +1,4 @@
+
 "use strict";
 
 const SESSION_TOKEN = /^mkt1_[A-Za-z0-9_-]{43}$/;
@@ -190,11 +191,18 @@ async function decodeResponse(response, session) {
   return documentValue;
 }
 
-function createMarketplaceSessionClient(fetchImpl, rawIssuerPrincipal) {
-  if (typeof fetchImpl !== "function" || typeof rawIssuerPrincipal !== "function") {
+function createMarketplaceSessionClient(
+  fetchImpl,
+  rawIssuerPrincipal,
+  session = new MarketplaceMemorySession(),
+) {
+  if (
+    typeof fetchImpl !== "function" ||
+    typeof rawIssuerPrincipal !== "function" ||
+    !(session instanceof MarketplaceMemorySession)
+  ) {
     throw stableClientError("CLIENT_CONFIGURATION_INVALID");
   }
-  const session = new MarketplaceMemorySession();
 
   async function request(path, { method = "GET", body = null } = {}) {
     const reviewedPath = reviewedApiPath(path);

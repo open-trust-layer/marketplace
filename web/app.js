@@ -1,3 +1,4 @@
+
 "use strict";
 
 window.MarketplaceI18n = (() => {
@@ -511,6 +512,16 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
     throw stableClientError(typeof code === "string" ? code : `HTTP_${response.status}`);
   }
   return documentValue;
+}
+
+function structuredAuthoringSession() {
+  if (authBootstrap === null) return null;
+  const snapshot = authBootstrap.state();
+  if (!snapshot.active) return null;
+  return Object.freeze({
+    principal: snapshot.principal,
+    client: authBootstrap.structuredAuthoringClient(),
+  });
 }
 
 function authUriLooksReady(value) {
@@ -1932,7 +1943,17 @@ async function createProductListing(event) {
     const previousIds = new Set(state.records.keys());
     const previousViewWasCurrent = state.syncCursor !== null && state.truncated === false;
     setFormStatus("create-status", "listing.submitting");
-    await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
+    const authoring = structuredAuthoringSession();
+    if (authoring === null) {
+      await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
+    } else {
+      const fields = JSON.parse(body);
+      if (fields.seller_principal !== authoring.principal) {
+        throw stableClientError("AUTH_PRINCIPAL_MISMATCH");
+      }
+      delete fields.seller_principal;
+      await authoring.client.createProductListing(fields);
+    }
     try {
       await fullResync();
     } catch (error) {
@@ -1979,10 +2000,20 @@ async function createProposal(event) {
     state.recentProposalId = null;
     state.recentProposalParentId = null;
     setFormStatus("response-status", "proposal.submitting");
-    await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
-      method: "POST",
-      body,
-    });
+    const authoring = structuredAuthoringSession();
+    if (authoring === null) {
+      await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
+        method: "POST",
+        body,
+      });
+    } else {
+      const fields = JSON.parse(body);
+      if (fields.buyer_principal !== authoring.principal) {
+        throw stableClientError("AUTH_PRINCIPAL_MISMATCH");
+      }
+      delete fields.buyer_principal;
+      await authoring.client.createProposal(parentId, fields);
+    }
     try {
       await fullResync();
     } catch (error) {
