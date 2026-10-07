@@ -1,6 +1,10 @@
+
 "use strict";
 
-import { MarketplaceMemorySession } from "./client_session.js";
+import {
+  MarketplaceMemorySession,
+  createMarketplaceSessionClient,
+} from "./client_session.js";
 import {
   PROFILE as KEY_CREATION_PROFILE,
   createMarketplaceWebAuthEd25519KeyCreation,
@@ -113,6 +117,23 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     return result;
   }
 
+  function structuredAuthoringClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("STRUCTURED_AUTHORING_AUTH_REQUIRED");
+    }
+    const client = createMarketplaceSessionClient(
+      reviewedTransport,
+      () => {
+        throw stableBootstrapError("RAW_AUTHORING_UNAVAILABLE");
+      },
+      session,
+    );
+    return Object.freeze({
+      createProductListing: client.createProductListing,
+      createProposal: client.createProposal,
+    });
+  }
+
   function proposalAcceptanceClient() {
     if (!session.isActive) {
       throw stableBootstrapError("PROPOSAL_ACCEPTANCE_AUTH_REQUIRED");
@@ -178,6 +199,7 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   return Object.freeze({
     createAuthenticationKey,
     establishSession,
+    structuredAuthoringClient,
     proposalAcceptanceClient,
     agreementAssentClient,
     agreementPublicationClient,
