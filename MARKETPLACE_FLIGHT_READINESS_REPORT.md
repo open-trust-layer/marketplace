@@ -31,11 +31,13 @@ The `MARKETPLACE_MVP_FLIGHT_ACCEPTANCE_V1` work unit composes those reviewed cap
 
 ## Current limitations
 
-This flight slice is deliberately local and synthetic. It does not activate PostgreSQL, loopback HTTP, browser/WebCrypto selection, production authentication provisioning, Android, federation, payment, settlement, ownership transfer, public networking, deployment, or publishing.
+The original database-free flight remains deliberately local and synthetic. It does not activate PostgreSQL, production authentication provisioning, Android, federation, payment, settlement, ownership transfer, public networking, deployment, or publishing.
 
-The active Web UI currently reaches listing and Proposal authoring but does not yet expose the full Accept -> Agreement -> Complete journey. That UI composition is the next product slice after the local flight acceptance is green.
+The active authenticated Web source now exposes the reviewed `Accept -> Agreement -> Complete` continuation: explicit Agreement publication followed by explicit seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` evidence for `seller-delivery`. M17.7M proves the final Bearer/session-aware ASGI overlay, Web client selection, explicit-click behavior, and localhost runtime/module wiring in the full conformance lane.
 
-The local flight derives identity URIs from public keys and proves possession through agreement assent. This is local MVP identity evidence only; it is not a production trust, legal identity, or universal ownership claim.
+That evidence is still **in-process/source acceptance**, not a claim that a real PostgreSQL-backed localhost server and browser have been executed together. One operator-authorized authenticated loopback run with real local provisioning and PostgreSQL remains the final local product-flight evidence gap.
+
+The local flight identities and authentication evidence remain local MVP evidence only; they are not production trust, legal identity, universal ownership, payment, settlement, or universal-truth claims.
 
 ## Frozen MVP definition
 
@@ -51,11 +53,12 @@ These labels are an application projection over immutable Marketplace/OLP eviden
 
 ## Shortest path to usable product
 
-1. Make `MARKETPLACE_MVP_FLIGHT_ACCEPTANCE_V1` pass in the existing full conformance lane.
-2. Add reviewed application/API seams for Proposal acceptance, agreement materialization/assent, and completion evidence.
-3. Expose those seams in the existing Web UI with explicit current-state and audit evidence.
-4. Run one loopback-only local acceptance with two user identities.
-5. Only after that evidence is green, consider persistence/runtime activation or broader identity enrollment.
+1. **DONE** — `MARKETPLACE_MVP_FLIGHT_ACCEPTANCE_V1` passes in the full conformance lane.
+2. **DONE** — reviewed application/API seams cover Proposal acceptance, Agreement materialization/assent/publication, and fulfillment-completion evidence.
+3. **DONE** — the authenticated Web surface exposes the reviewed continuation through explicit user actions without automatic publication/completion.
+4. **DONE** — M17.7M exercises the final session-aware ASGI completion path plus active Web/runtime delivery contracts in full conformance.
+5. **NEXT RUNTIME GATE** — run one operator-authorized PostgreSQL-backed, loopback-only browser acceptance using real local authentication provisioning; record exact observable Agreement-publication and seller-attributed completion evidence.
+6. Only after that evidence is green, consider broader persistence/runtime activation, identity enrollment, or any separately governed production capability.
 
 ## Deferred work
 
@@ -63,7 +66,9 @@ Defer federation expansion, new cryptographic primitives, economic/payment syste
 
 ## Product flight criterion
 
-Marketplace is flight-ready when a fresh local demonstration proves that User A can publish a verified listing, User B can discover and propose, both parties can establish a verified agreement, completion evidence reaches `FULFILLED_UNDER_METHOD`, and the application can show the resulting audit trail without claiming universal truth.
+The database-free demonstrator already satisfies its frozen local MVP criterion: User A can publish a verified listing, User B can discover and propose, both parties can establish a verified Agreement, completion evidence reaches `FULFILLED_UNDER_METHOD`, and the application shows the resulting audit trail without claiming universal truth.
+
+The authenticated PostgreSQL-capable product path is **source/CI flight-ready but not yet live-runtime accepted**. Its remaining criterion is one fresh operator-authorized loopback demonstration proving that the active browser can authenticate, publish the reviewed Agreement, and author exact seller-attributed completion evidence through the merged runtime while remaining on `127.0.0.1`.
 
 ## Executed MVP evidence
 
@@ -82,3 +87,20 @@ python tools/marketplace_mvp_flight_acceptance.py
 ```
 
 Expected terminal completion evidence includes `final_state=COMPLETED`, `agreement_formation=EVIDENCE_SUFFICIENT_FOR_PROFILE`, `fulfillment_conclusion=FULFILLED_UNDER_METHOD`, `universal_truth=false`, and `payment_or_settlement_evaluated=false`.
+
+### Authenticated completion source/CI evidence
+
+Merged M17.7H-M additionally establish the explicit authenticated completion path without claiming a live browser run:
+
+- fulfillment localhost runtime remains exact IPv4 loopback only;
+- Agreement publication and completion are distinct explicit Web clicks;
+- completion targets exact commitment `seller-delivery`;
+- completion authors exact evidence kind `CLAIMED_COMPLETE_PERFORMANCE`;
+- the authenticated session principal is the only fulfillment issuer;
+- caller-supplied issuer/authority injection is rejected before publication;
+- the completion overlay preserves the existing Agreement-publication route;
+- Web completion copy remains seller-attributed evidence rather than universal truth, payment, or settlement.
+
+M17.7M merged at `7e356b7259b4736772e15da434f9a237b5c88b63` after exact-head full conformance run **#946** succeeded.
+
+The remaining evidence gap is intentionally explicit: **no claim is made here that the PostgreSQL-backed authenticated localhost server and a real browser have yet been executed together.**
