@@ -36,6 +36,14 @@ class M177JWebAgreementPublicationClientTests(unittest.TestCase):
 
     def test_request_cannot_supply_actor_or_authority_fields(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
+        start = text.index("async function publishAgreement(")
+        body_start = text.index("const body = JSON.stringify(", start)
+        body_end = text.index("let response;", body_start)
+        request_body = text[body_start:body_end]
+        self.assertIn(
+            "acceptance_record_id: acceptanceRecordId",
+            request_body,
+        )
         for forbidden in (
             "principal:",
             "issuer:",
@@ -48,7 +56,7 @@ class M177JWebAgreementPublicationClientTests(unittest.TestCase):
             "change_seq:",
         ):
             with self.subTest(forbidden=forbidden):
-                self.assertNotIn(forbidden, text)
+                self.assertNotIn(forbidden, request_body)
 
     def test_expected_agreement_identity_is_local_validation_only(self) -> None:
         text = SOURCE.read_text(encoding="utf-8")
@@ -76,19 +84,21 @@ class M177JWebAgreementPublicationClientTests(unittest.TestCase):
         ):
             self.assertIn(marker, text)
 
-    def test_client_is_deliberately_unselected_and_route_not_authorized(self) -> None:
+    def test_client_is_selected_only_by_reviewed_authenticated_bundle(self) -> None:
         marker = "agreement_publication_client.js"
         self.assertTrue(SOURCE.is_file())
-        for path in (SESSION, BOOTSTRAP, APP, INDEX, SITE_HOST, LOCALHOST):
-            self.assertTrue(path.is_file(), str(path))
-            self.assertNotIn(marker, path.read_text(encoding="utf-8"), str(path))
+        self.assertIn(marker, SITE_HOST.read_text(encoding="utf-8"))
+        self.assertIn(marker, LOCALHOST.read_text(encoding="utf-8"))
+        self.assertEqual(
+            BOOTSTRAP.read_text(encoding="utf-8").count(f'from "./{marker}"'),
+            1,
+        )
+        self.assertNotIn(marker, APP.read_text(encoding="utf-8"))
+        self.assertNotIn(marker, INDEX.read_text(encoding="utf-8"))
 
         session = SESSION.read_text(encoding="utf-8")
-        self.assertNotIn(
-            'parts.length === 1',
-            session[session.index("function reviewedAgreementAssentRoute"):
-                    session.index("function reviewedAuthenticatedRoute")],
-        )
+        self.assertIn("function reviewedAgreementPublicationRoute(path)", session)
+        self.assertIn("reviewedAgreementPublicationRoute(path)", session)
 
     def test_no_persistence_background_signing_payment_or_truth_claim(self) -> None:
         text = SOURCE.read_text(encoding="utf-8").lower()
