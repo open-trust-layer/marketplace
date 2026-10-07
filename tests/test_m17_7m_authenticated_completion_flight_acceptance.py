@@ -390,7 +390,7 @@ class M177MAuthenticatedCompletionFlightAcceptanceTests(unittest.TestCase):
         self.assertIn("payment or settlement", app)
         for marker in (
             "the authenticated principal to be the only fulfillment issuer",
-            "explicit user clicks",
+            "is an explicit button",
             "no browser automation dependency",
             "no public-network exposure",
             "no payment or settlement authority",
