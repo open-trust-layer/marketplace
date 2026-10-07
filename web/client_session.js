@@ -29,6 +29,34 @@ function reviewedAgreementAssentRoute(path) {
   return parts[2] === "preparation" || parts[2] === "status";
 }
 
+function reviewedAgreementPublicationRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (parts.length !== 1 || parts[0].length === 0 || parts[0].length > 1536) {
+    return false;
+  }
+  return !parts[0].includes("?") && !parts[0].includes("#");
+}
+
+function reviewedFulfillmentCompletionRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (
+    parts.length !== 4 ||
+    parts[0].length === 0 ||
+    parts[0].length > 1536 ||
+    parts[1] !== "commitments" ||
+    parts[2].length === 0 ||
+    parts[2].length > 64 ||
+    parts[3] !== "completion-evidence"
+  ) {
+    return false;
+  }
+  if (parts[0].includes("?") || parts[0].includes("#")) return false;
+  if (parts[2].includes("?") || parts[2].includes("#")) return false;
+  return /^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(parts[2]);
+}
+
 function reviewedAuthenticatedRoute(method, path) {
   if (method === "GET") {
     if (path === "/api/auth/session") return true;
@@ -45,6 +73,8 @@ function reviewedAuthenticatedRoute(method, path) {
   if (path === "/api/product-listings") return true;
   if (path === "/api/intents") return true;
   if (reviewedAgreementAssentRoute(path)) return true;
+  if (reviewedAgreementPublicationRoute(path)) return true;
+  if (reviewedFulfillmentCompletionRoute(path)) return true;
   if (!path.startsWith("/api/intents/")) return false;
   const parts = path.slice("/api/intents/".length).split("/");
   if (parts.length !== 2 || parts[0].length === 0) return false;
@@ -260,5 +290,7 @@ export {
   createMarketplaceSessionClient,
   productListingForSession,
   proposalForSession,
+  reviewedAgreementPublicationRoute,
+  reviewedFulfillmentCompletionRoute,
   reviewedAuthenticatedRoute,
 };

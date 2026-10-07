@@ -92,14 +92,19 @@ class M177IWebFulfillmentCompletionClientTests(unittest.TestCase):
         ):
             self.assertIn(marker, text)
 
-    def test_client_is_deliberately_unselected(self) -> None:
+    def test_client_is_selected_only_by_reviewed_authenticated_bundle(self) -> None:
         marker = "fulfillment_completion_client.js"
         self.assertTrue(SOURCE.is_file())
-        for path in (SESSION, BOOTSTRAP, APP, INDEX, SITE_HOST, LOCALHOST):
-            self.assertTrue(path.is_file(), str(path))
-            self.assertNotIn(marker, path.read_text(encoding="utf-8"), str(path))
+        self.assertIn(marker, SITE_HOST.read_text(encoding="utf-8"))
+        self.assertIn(marker, LOCALHOST.read_text(encoding="utf-8"))
+        self.assertEqual(
+            BOOTSTRAP.read_text(encoding="utf-8").count(f'from "./{marker}"'),
+            1,
+        )
+        self.assertNotIn(marker, APP.read_text(encoding="utf-8"))
+        self.assertNotIn(marker, INDEX.read_text(encoding="utf-8"))
         route_marker = "completion-evidence"
-        self.assertNotIn(route_marker, SESSION.read_text(encoding="utf-8"))
+        self.assertIn(route_marker, SESSION.read_text(encoding="utf-8"))
         self.assertNotIn(route_marker, APP.read_text(encoding="utf-8"))
         self.assertNotIn(route_marker, INDEX.read_text(encoding="utf-8"))
 
