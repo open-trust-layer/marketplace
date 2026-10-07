@@ -25,6 +25,7 @@ AUTH_WEB_ASSETS = {
     "web/proposal_acceptance_client.js": b"proposal-acceptance-client",
     "web/agreement_publication_client.js": b"agreement-publication-client",
     "web/fulfillment_completion_client.js": b"fulfillment-completion-client",
+    "web/authenticated_local_flight_evidence.js": b"authenticated-local-flight-evidence",
     "web/auth_bootstrap.js": b"auth-bootstrap",
 }
 AUTH_WEB_MODULES = (
@@ -37,6 +38,7 @@ AUTH_WEB_MODULES = (
     ("/proposal_acceptance_client.js", b"proposal-acceptance-client"),
     ("/agreement_publication_client.js", b"agreement-publication-client"),
     ("/fulfillment_completion_client.js", b"fulfillment-completion-client"),
+    ("/authenticated_local_flight_evidence.js", b"authenticated-local-flight-evidence"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
@@ -281,6 +283,7 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
                 "web/proposal_acceptance_client.js",
                 "web/agreement_publication_client.js",
                 "web/fulfillment_completion_client.js",
+                "web/authenticated_local_flight_evidence.js",
                 "web/auth_bootstrap.js",
                 "postgres-provider",
                 "plan",

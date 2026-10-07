@@ -58,6 +58,7 @@ _AUTH_WEB_MODULE_ASSETS: Final = (
     ("/proposal_acceptance_client.js", "web/proposal_acceptance_client.js"),
     ("/agreement_publication_client.js", "web/agreement_publication_client.js"),
     ("/fulfillment_completion_client.js", "web/fulfillment_completion_client.js"),
+    ("/authenticated_local_flight_evidence.js", "web/authenticated_local_flight_evidence.js"),
     ("/auth_bootstrap.js", "web/auth_bootstrap.js"),
 )
 _ALLOWED_ASSETS: Final = frozenset((
