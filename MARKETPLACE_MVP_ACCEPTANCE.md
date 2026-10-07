@@ -91,3 +91,15 @@ A valid evaluator record should capture only non-secret observable evidence:
 - confirmation that the runtime was loopback-only and no public deployment was involved.
 
 Until the fresh **post-P** operator-authorized run reaches and records explicit Agreement publication plus seller-attributed `CLAIMED_COMPLETE_PERFORMANCE` for `seller-delivery`, authenticated local product flight remains **source/CI accepted, live-runtime partially exercised** rather than live-runtime accepted.
+
+### Validate the recorded post-P evidence offline
+
+After the operator-authorized browser flight has produced its non-secret evidence JSON, validate that record separately:
+
+```powershell
+python tools/marketplace_authenticated_local_flight_evidence.py .\authenticated-local-flight-evidence.json
+```
+
+The validator requires profile `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_V1`, exact loopback host `127.0.0.1`, both authenticated parties, sufficient Agreement formation with no missing principals, matching Agreement publication/completion references, commitment `seller-delivery`, and evidence kind `CLAIMED_COMPLETE_PERFORMANCE`. It also requires the universal-truth, payment/settlement, public-network, and public-deployment claims to remain false.
+
+The validator is offline acceptance tooling only. It does not start the server or browser, connect to PostgreSQL, generate the evidence record, or change the requirement for a fresh post-P live browser run.
