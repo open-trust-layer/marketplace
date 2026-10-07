@@ -490,7 +490,7 @@ def _build_psycopg_connection_factory(
 
 
 def _utc_clock() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def _real_uvicorn_provider(*, importer: Callable[[str], object] = importlib.import_module):
