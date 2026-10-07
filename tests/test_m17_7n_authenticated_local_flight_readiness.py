@@ -9,6 +9,7 @@ README = ROOT / "README.md"
 REPORT = ROOT / "MARKETPLACE_FLIGHT_READINESS_REPORT.md"
 ACCEPTANCE = ROOT / "MARKETPLACE_MVP_ACCEPTANCE.md"
 LOCALHOST = ROOT / "tools" / "marketplace_localhost.py"
+DOC = ROOT / "docs" / "m17-7n-authenticated-local-flight-readiness.md"
 
 
 def normalized(path: Path) -> str:
@@ -80,6 +81,20 @@ class M177NAuthenticatedLocalFlightReadinessTests(unittest.TestCase):
             "source/CI accepted, live-runtime pending",
             "completion is attributable evidence, not universal truth, payment, or settlement",
             "loopback-only and no public deployment was involved",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, text)
+
+    def test_milestone_document_freezes_truth_and_non_authority(self) -> None:
+        text = normalized(DOC)
+        for marker in (
+            "MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_READINESS_V1",
+            "documentation/acceptance-contract only",
+            "source/CI accepted, **live-runtime pending**",
+            "exact-head full conformance run **#946** succeeded",
+            "separate operator runtime authorization",
+            "performs no PostgreSQL connection or initialization",
+            "documentation-only rollback",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
