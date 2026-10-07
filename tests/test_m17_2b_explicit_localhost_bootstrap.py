@@ -76,6 +76,16 @@ class MarketplaceLocalhostBootstrapTests(unittest.TestCase):
             "environment_invoked=false postgres_invoked=false server_invoked=false",
         )
 
+    def test_utc_clock_returns_whole_aware_utc_seconds_for_postgres_coordination(self):
+        source = datetime(2030, 1, 2, 3, 4, 5, 654321, tzinfo=timezone.utc)
+        with patch.object(tool, "datetime") as datetime_type:
+            datetime_type.now.return_value = source
+            value = tool._utc_clock()
+        datetime_type.now.assert_called_once_with(timezone.utc)
+        self.assertEqual(value, source.replace(microsecond=0))
+        self.assertEqual(value.microsecond, 0)
+        self.assertEqual(value.tzinfo, timezone.utc)
+
     def test_bad_execution_token_fails_before_every_external_provider(self):
         stderr = io.StringIO()
         with patch.object(tool, "_real_environment_getter") as environment_provider, patch.object(
