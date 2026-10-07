@@ -73,20 +73,34 @@ class M177KSelectWebPublicationFulfillmentClientsTests(unittest.TestCase):
         self.assertNotIn("publishEvidence(", text)
         self.assertNotIn("Bearer ", text)
 
-    def test_active_page_remains_unselected(self) -> None:
+    def test_later_active_page_selection_remains_explicit_and_indirect(self) -> None:
         index = INDEX.read_text(encoding="utf-8")
         app = APP.read_text(encoding="utf-8")
         for marker in (
             "agreement_publication_client.js",
             "fulfillment_completion_client.js",
-            "agreementPublicationClient()",
-            "fulfillmentCompletionClient()",
             "completion-evidence",
-            "publish-agreement",
-            "claim-delivery-complete",
         ):
             self.assertNotIn(marker, index)
             self.assertNotIn(marker, app)
+        for marker in (
+            "agreementPublicationClient()",
+            "fulfillmentCompletionClient()",
+        ):
+            self.assertIn(marker, app)
+        for marker in (
+            'id="publish-agreement"',
+            'id="claim-delivery-complete"',
+        ):
+            self.assertIn(marker, index)
+        self.assertIn(
+            'publishAgreementButton.addEventListener("click"',
+            app,
+        )
+        self.assertIn(
+            'claimDeliveryCompleteButton.addEventListener("click"',
+            app,
+        )
 
     def test_no_public_network_runtime_or_automatic_background_capability(self) -> None:
         combined = (
