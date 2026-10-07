@@ -30,7 +30,7 @@ from marketplace.application.fulfillment_completion_publication import (
     FulfillmentEvidencePublicationResult,
     MarketplaceFulfillmentCompletionPublicationService,
 )
-from marketplace.application.http import ApplicationHttpResponse
+from marketplace.application.http import _json_response
 from marketplace.application.postgres_state import StoreDisposition
 from marketplace.application.site_host import MarketplaceSiteHostAdapter
 
@@ -149,17 +149,14 @@ def final_asgi():
                 "now": now,
             }
         )
-        return ApplicationHttpResponse(
+        return _json_response(
             201,
             "Created",
-            (),
-            json_body(
-                {
-                    "agreement_record_id": AGREEMENT,
-                    "change_seq": 40,
-                    "disposition": "STORED",
-                }
-            ),
+            {
+                "agreement_record_id": AGREEMENT,
+                "change_seq": 40,
+                "disposition": "STORED",
+            },
         )
 
     base.handle = handle_base
@@ -387,12 +384,12 @@ class M177MAuthenticatedCompletionFlightAcceptanceTests(unittest.TestCase):
 
     def test_semantic_and_operational_boundaries_remain_explicit(self) -> None:
         app = APP.read_text(encoding="utf-8")
-        doc = DOC.read_text(encoding="utf-8")
+        doc = " ".join(DOC.read_text(encoding="utf-8").split())
         self.assertIn("seller-attributed evidence only", app)
         self.assertIn("does not prove universal truth", app)
         self.assertIn("payment or settlement", app)
         for marker in (
-            "authenticated principal is the only fulfillment issuer",
+            "the authenticated principal to be the only fulfillment issuer",
             "explicit user clicks",
             "no browser automation dependency",
             "no public-network exposure",
