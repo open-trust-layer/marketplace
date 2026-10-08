@@ -104,9 +104,10 @@
           <input id="evidence-ci-run-number" type="number" min="1" step="1">
           <label><input id="evidence-buyer-auth-observed" type="checkbox"> <span>Buyer authentication was separately observed in this local flight</span></label>
           <button id="prepare-authenticated-flight-evidence" type="button" disabled>Prepare non-secret evidence preview</button>
+          <button id="download-authenticated-flight-evidence" type="button" class="secondary" disabled>Download evidence JSON</button>
           <p id="authenticated-flight-evidence-status" class="muted" aria-live="polite">Complete Agreement publication and seller delivery evidence first.</p>
           <pre id="authenticated-flight-evidence-json" class="record-json">{}</pre>
-          <p class="muted small">Preview only. No file, clipboard, payment, deployment, or public-network action occurs.</p>
+          <p class="muted small">Preview stays memory-only unless you explicitly download this non-secret JSON. No clipboard, upload, payment, deployment, or public-network action occurs.</p>
         </div>
       </div>
     </section>

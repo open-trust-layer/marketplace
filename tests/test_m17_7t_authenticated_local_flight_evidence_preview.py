@@ -19,7 +19,7 @@ class M177TAuthenticatedLocalFlightEvidencePreviewTests(unittest.TestCase):
             'id="authenticated-flight-evidence-status"',
             'id="authenticated-flight-evidence-json"',
             "Prepare non-secret evidence preview",
-            "Preview only. No file, clipboard, payment, deployment, or public-network action occurs.",
+            "Preview stays memory-only unless you explicitly download this non-secret JSON. No clipboard, upload, payment, deployment, or public-network action occurs.",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
@@ -68,14 +68,14 @@ class M177TAuthenticatedLocalFlightEvidencePreviewTests(unittest.TestCase):
         self.assertIn("clearAuthenticatedFlightEvidenceDocument();", text)
         self.assertIn("JSON.stringify(documentValue, null, 2)", text)
 
-    def test_preview_does_not_add_persistence_export_or_runtime_authority(self) -> None:
+    def test_preview_preparation_does_not_perform_persistence_or_export_runtime_actions(self) -> None:
         block = APP.read_text(encoding="utf-8")
         start = block.index("function clearAuthenticatedFlightEvidenceDocument()")
         end = block.index("async function publishSelectedAgreement()", start)
         preview = block[start:end].lower()
         for forbidden in (
             "localstorage", "sessionstorage", "indexeddb", "document.cookie",
-            "clipboard", "download", "createobjecturl", "filesystem",
+            "clipboard", "createobjecturl", "filesystem",
             "websocket", "eventsource", "settimeout", "setinterval", "fetch(",
             "authorization", "bearer ", "privatekey", "postgres", "payment(", "settlement(",
         ):
