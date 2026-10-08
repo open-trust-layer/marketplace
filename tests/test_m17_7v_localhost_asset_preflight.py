@@ -1,6 +1,7 @@
 """Offline contracts for the M17.7V public localhost asset preflight."""
 from io import BytesIO
 from pathlib import Path
+from subprocess import CompletedProcess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -12,6 +13,7 @@ from tools.marketplace_localhost_asset_preflight import (
     AssetPreflightError,
     _NoRedirect,
     _read_asset,
+    _checkout_head,
     verify_assets,
 )
 
@@ -69,6 +71,29 @@ class M177VLocalhostAssetPreflightTests(unittest.TestCase):
         with self.assertRaises(AssetPreflightError) as caught:
             self._verify()
         self.assertEqual(caught.exception.asset, "/app.js")
+
+    def test_checkout_head_requires_clean_committed_assets(self):
+        for diff_exit, expected in ((0, None), (1, "CHECKOUT_ASSETS_DIRTY"), (128, "CHECKOUT_ASSETS_DIRTY")):
+            with self.subTest(diff_exit=diff_exit):
+                with patch(
+                    "tools.marketplace_localhost_asset_preflight.subprocess.run",
+                    side_effect=[
+                        CompletedProcess(args=[], returncode=0, stdout=SHA, stderr=""),
+                        CompletedProcess(args=[], returncode=diff_exit, stdout="", stderr=""),
+                    ],
+                ) as runner:
+                    if expected is None:
+                        self.assertEqual(_checkout_head(self.root), SHA)
+                    else:
+                        with self.assertRaises(AssetPreflightError) as caught:
+                            _checkout_head(self.root)
+                        self.assertEqual(caught.exception.code, expected)
+                    self.assertEqual(runner.call_count, 2)
+                    diff_args = runner.call_args.args[0]
+                    self.assertEqual(diff_args[:7], [
+                        "git", "-C", str(self.root), "diff", "--quiet", "HEAD", "--",
+                    ])
+                    self.assertEqual(diff_args[7:], [relative for _, relative in ASSETS])
 
     def test_head_mismatch_fails_before_any_http(self):
         with self.assertRaises(AssetPreflightError) as caught:
