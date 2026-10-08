@@ -18,7 +18,7 @@ From the *exact expected release checkout* (and using a Python 3.11+ interpreter
 python tools/marketplace_localhost_asset_preflight.py --port 18080 --expected-main-sha edd822b6574230ddd846985708a2011ae8cb8634
 ```
 
-Replace the expected SHA with the **freshly verified full merged-main SHA** when the target release changes. The check first requires that the current Git checkout has precisely that SHA. It then performs bounded unauthenticated static GETs on **`127.0.0.1` only**, without proxy or redirect following, for:
+Replace the expected SHA with the **freshly verified full merged-main SHA** when the target release changes. The check first requires that the current Git checkout has precisely that SHA **and that none of the seven selected tracked assets has staged or unstaged modifications relative to HEAD**. It then performs bounded unauthenticated static GETs on **`127.0.0.1` only**, without proxy or redirect following, for:
 
 - `/` ↔ `web/index.html`
 - `/app.js` ↔ `web/app.js`
@@ -32,7 +32,7 @@ The checker compares SHA-256 digests over **exact raw bytes**. Each response is 
 
 On parity, output is `status=PASS host=127.0.0.1 port=18080 checked_assets=7 public_static_only=true runtime_activated=false`.
 
-Missing routes, HTTP failure, redirect, non-identity content encoding, oversize content, a stale local checkout, or any byte mismatch produces a stable non-zero `status=FAIL` outcome and the public asset path only. The check must fail rather than silently fallback to an old runtime.
+Missing routes, HTTP failure, redirect, non-identity content encoding, oversize content, a stale or locally modified checkout asset, or any byte mismatch produces a stable non-zero `status=FAIL` outcome and the public asset path only. The check must fail rather than silently fallback to an old runtime.
 
 ## Acceptance boundary
 
