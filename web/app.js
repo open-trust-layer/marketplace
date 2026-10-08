@@ -172,6 +172,21 @@ window.MarketplaceI18n = (() => {
     "fulfillment.publishing": ["Publishing seller-attributed claimed-complete performance evidence…", "Публикуем атрибутированное продавцу evidence заявленного завершения исполнения…"],
     "fulfillment.published": ["Completion evidence {recordId} published ({disposition}; local change sequence {changeSeq}). This remains an attributable claim, not universal truth.", "Evidence завершения {recordId} опубликовано ({disposition}; локальная последовательность изменений {changeSeq}). Это остаётся атрибутированным заявлением, а не универсальной истиной."],
     "fulfillment.failed": ["Completion evidence failed: {code}", "Ошибка evidence завершения: {code}"],
+    "evidence.eyebrow": ["Evaluator evidence preview", "Предпросмотр evidence для приёмки"],
+    "evidence.title": ["Authenticated local-flight evidence", "Evidence аутентифицированного локального прогона"],
+    "evidence.mainCommit": ["Exact merged main commit", "Точный commit объединённой main"],
+    "evidence.ciRun": ["Successful CI run number", "Номер успешного CI запуска"],
+    "evidence.buyerObserved": ["Buyer authentication was separately observed in this local flight", "Аутентификация покупателя была отдельно подтверждена в этом локальном прогоне"],
+    "evidence.prepare": ["Prepare non-secret evidence preview", "Подготовить предпросмотр несекретного evidence"],
+    "evidence.waitingCompletion": ["Complete authenticated Agreement publication and seller delivery evidence first.", "Сначала завершите аутентифицированную публикацию Agreement и evidence доставки продавца."],
+    "evidence.loopbackRequired": ["Evidence preview requires the reviewed 127.0.0.1 loopback origin.", "Для предпросмотра evidence требуется проверенный loopback-адрес 127.0.0.1."],
+    "evidence.metadataRequired": ["Enter the exact merged main commit and successful CI run number.", "Введите точный commit объединённой main и номер успешного CI запуска."],
+    "evidence.buyerRequired": ["Confirm the separately observed buyer authentication before preparing evidence.", "Перед подготовкой evidence подтвердите отдельно наблюдавшуюся аутентификацию покупателя."],
+    "evidence.ready": ["Reviewed non-secret evidence is ready to preview after an explicit click.", "Проверенное несекретное evidence готово к предпросмотру после явного нажатия."],
+    "evidence.preparing": ["Preparing non-secret evidence preview…", "Подготавливаем предпросмотр несекретного evidence…"],
+    "evidence.prepared": ["Non-secret evidence preview prepared. Validate this exact JSON offline with the M17.7R validator.", "Предпросмотр несекретного evidence подготовлен. Проверьте этот точный JSON офлайн валидатором M17.7R."],
+    "evidence.failed": ["Evidence preview failed: {code}", "Ошибка предпросмотра evidence: {code}"],
+    "evidence.note": ["Preview only. No file, clipboard, payment, deployment, or public-network action occurs.", "Только предпросмотр. Не выполняются действия с файлами, буфером обмена, платежами, развёртыванием или публичной сетью."],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -220,6 +235,7 @@ window.MarketplaceI18n = (() => {
     "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
     "agreement-formation-covered", "agreement-formation-missing", "agreement-assent-status",
     "agreement-publication-status", "fulfillment-completion-status",
+    "authenticated-flight-evidence-status", "authenticated-flight-evidence-json",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -450,6 +466,12 @@ const agreementPublicationStatus = byId("agreement-publication-status");
 const publishAgreementButton = byId("publish-agreement");
 const fulfillmentCompletionStatus = byId("fulfillment-completion-status");
 const claimDeliveryCompleteButton = byId("claim-delivery-complete");
+const evidenceMainCommitInput = byId("evidence-main-commit");
+const evidenceCiRunNumberInput = byId("evidence-ci-run-number");
+const evidenceBuyerAuthObservedInput = byId("evidence-buyer-auth-observed");
+const prepareAuthenticatedFlightEvidenceButton = byId("prepare-authenticated-flight-evidence");
+const authenticatedFlightEvidenceStatus = byId("authenticated-flight-evidence-status");
+const authenticatedFlightEvidenceJson = byId("authenticated-flight-evidence-json");
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -644,6 +666,7 @@ function resetAuthentication() {
 }
 
 function clearAgreementPublicationCompletionState(proposalId = null) {
+  clearAuthenticatedFlightEvidenceDocument();
   const collections = [
     state.agreementPublicationResults,
     state.agreementPublicationErrors,
@@ -1281,6 +1304,134 @@ function renderAgreementPublicationCompletionHandoff(record) {
   claimDeliveryCompleteButton.disabled = false;
 }
 
+function clearAuthenticatedFlightEvidenceDocument() {
+  authenticatedFlightEvidenceJson.textContent = "{}";
+}
+
+function authenticatedFlightEvidenceInputs() {
+  if (state.selectedId === null || state.responseParentId === null) return null;
+  if (proposalResponseSummary(state.selectedRecord) === null) return null;
+  const proposalId = state.selectedId;
+  const parentListing = productListingSummary(state.records.get(state.responseParentId));
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  const publication = state.agreementPublicationResults.get(proposalId);
+  const completion = state.fulfillmentCompletionResults.get(proposalId);
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (
+    parentListing === null ||
+    acceptance === undefined ||
+    formation === undefined ||
+    publication === undefined ||
+    completion === undefined ||
+    !authSnapshot.active ||
+    authSnapshot.principal !== parentListing.sellerPrincipal ||
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0
+  ) {
+    return null;
+  }
+  return {
+    proposalId,
+    listingRecordId: state.responseParentId,
+    acceptance,
+    formation,
+    publication,
+    completion,
+  };
+}
+
+function renderAuthenticatedFlightEvidencePreview() {
+  const observed = authenticatedFlightEvidenceInputs();
+  const mainCommitReady = /^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim());
+  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
+  const ciReady = Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0;
+  const buyerReady = evidenceBuyerAuthObservedInput.checked === true;
+  prepareAuthenticatedFlightEvidenceButton.disabled = (
+    observed === null ||
+    !mainCommitReady ||
+    !ciReady ||
+    !buyerReady ||
+    location.hostname !== "127.0.0.1"
+  );
+  if (observed === null) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.waitingCompletion");
+  } else if (location.hostname !== "127.0.0.1") {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.loopbackRequired");
+  } else if (!mainCommitReady || !ciReady) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.metadataRequired");
+  } else if (!buyerReady) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.buyerRequired");
+  } else {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.ready");
+  }
+}
+
+async function prepareAuthenticatedFlightEvidence() {
+  const observed = authenticatedFlightEvidenceInputs();
+  if (observed === null || prepareAuthenticatedFlightEvidenceButton.disabled) return;
+  const mainCommit = evidenceMainCommitInput.value.trim();
+  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
+  const buyerAuthenticated = evidenceBuyerAuthObservedInput.checked === true;
+  const proposalId = observed.proposalId;
+  const listingRecordId = observed.listingRecordId;
+  const acceptanceRecordId = observed.acceptance.recordId;
+  const agreementRecordId = observed.formation.agreementRecordId;
+  const completionRecordId = observed.completion.recordId;
+
+  prepareAuthenticatedFlightEvidenceButton.disabled = true;
+  authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.preparing");
+  let prepared = false;
+  try {
+    const module = await import("./authenticated_local_flight_evidence.js");
+    const current = authenticatedFlightEvidenceInputs();
+    if (
+      current === null ||
+      current.proposalId !== proposalId ||
+      current.listingRecordId !== listingRecordId ||
+      current.acceptance.recordId !== acceptanceRecordId ||
+      current.formation.agreementRecordId !== agreementRecordId ||
+      current.completion.recordId !== completionRecordId ||
+      evidenceMainCommitInput.value.trim() !== mainCommit ||
+      Number(evidenceCiRunNumberInput.value) !== ciRunNumber ||
+      evidenceBuyerAuthObservedInput.checked !== buyerAuthenticated ||
+      location.hostname !== "127.0.0.1"
+    ) {
+      throw stableClientError("EVIDENCE_PREVIEW_STALE");
+    }
+    const documentValue = module.createMarketplaceAuthenticatedLocalFlightEvidence({
+      mainCommit,
+      ciRunNumber,
+      runtimeHost: location.hostname,
+      sellerAuthenticated: true,
+      buyerAuthenticated,
+      listingRecordId,
+      proposalRecordId: proposalId,
+      acceptanceRecordId,
+      formation: current.formation,
+      publication: current.publication,
+      completion: current.completion,
+    });
+    authenticatedFlightEvidenceJson.textContent = JSON.stringify(documentValue, null, 2);
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.prepared");
+    prepared = true;
+  } catch (error) {
+    clearAuthenticatedFlightEvidenceDocument();
+    authenticatedFlightEvidenceStatus.textContent = i18n.t(
+      "evidence.failed",
+      { code: error.code ?? "CLIENT_FAILURE" },
+    );
+  } finally {
+    if (prepared) {
+      prepareAuthenticatedFlightEvidenceButton.disabled = false;
+    } else {
+      renderAuthenticatedFlightEvidencePreview();
+    }
+  }
+}
+
 async function publishSelectedAgreement() {
   if (authBootstrap === null || state.selectedId === null) return;
   const proposalId = requireRecordId(state.selectedId);
@@ -1512,6 +1663,7 @@ function renderDetail() {
   renderProposalAcceptanceHandoff(record);
   renderAgreementFormationHandoff(record);
   renderAgreementPublicationCompletionHandoff(record);
+  renderAuthenticatedFlightEvidencePreview();
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
@@ -2214,6 +2366,17 @@ checkAgreementFormationButton.addEventListener("click", () => void checkSelected
 signAgreementAssentButton.addEventListener("click", () => void signSelectedAgreementAssent());
 publishAgreementButton.addEventListener("click", () => void publishSelectedAgreement());
 claimDeliveryCompleteButton.addEventListener("click", () => void claimSelectedDeliveryComplete());
+prepareAuthenticatedFlightEvidenceButton.addEventListener("click", () => void prepareAuthenticatedFlightEvidence());
+for (const input of [evidenceMainCommitInput, evidenceCiRunNumberInput, evidenceBuyerAuthObservedInput]) {
+  input.addEventListener("input", () => {
+    clearAuthenticatedFlightEvidenceDocument();
+    renderAuthenticatedFlightEvidencePreview();
+  });
+  input.addEventListener("change", () => {
+    clearAuthenticatedFlightEvidenceDocument();
+    renderAuthenticatedFlightEvidencePreview();
+  });
+}
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
@@ -2248,6 +2411,7 @@ renderList();
 renderDetail();
 renderMvpFlightState();
 renderAuthState();
+renderAuthenticatedFlightEvidencePreview();
 void fullResync().catch((error) => {
   setStatus("sync.initialFailed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
 });

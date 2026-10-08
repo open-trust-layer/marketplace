@@ -95,6 +95,19 @@
         <p id="fulfillment-completion-status" class="muted" aria-live="polite">Publish the Agreement first. No completion evidence has been authored.</p>
         <button id="claim-delivery-complete" type="button" disabled>Claim delivery complete</button>
         <p class="muted small">Completion creates seller-attributed evidence only. It does not prove universal truth or trigger payment or settlement.</p>
+        <div id="authenticated-flight-evidence-preview" class="intent-card">
+          <p class="eyebrow">Evaluator evidence preview</p>
+          <h3>Authenticated local-flight evidence</h3>
+          <label for="evidence-main-commit">Exact merged main commit</label>
+          <input id="evidence-main-commit" type="text" autocomplete="off" maxlength="40">
+          <label for="evidence-ci-run-number">Successful CI run number</label>
+          <input id="evidence-ci-run-number" type="number" min="1" step="1">
+          <label><input id="evidence-buyer-auth-observed" type="checkbox"> <span>Buyer authentication was separately observed in this local flight</span></label>
+          <button id="prepare-authenticated-flight-evidence" type="button" disabled>Prepare non-secret evidence preview</button>
+          <p id="authenticated-flight-evidence-status" class="muted" aria-live="polite">Complete Agreement publication and seller delivery evidence first.</p>
+          <pre id="authenticated-flight-evidence-json" class="record-json">{}</pre>
+          <p class="muted small">Preview only. No file, clipboard, payment, deployment, or public-network action occurs.</p>
+        </div>
       </div>
     </section>
 
