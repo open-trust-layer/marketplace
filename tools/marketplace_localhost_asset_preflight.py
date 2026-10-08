@@ -57,6 +57,15 @@ def _checkout_head(root: Path) -> str:
         sha = result.stdout.strip()
         if re.fullmatch(r"[0-9a-f]{40}", sha) is None:
             raise ValueError("invalid checkout head")
+        # HEAD alone does not prove the served-asset comparison uses committed bytes.
+        # Verify both staged and unstaged changes against HEAD before any HTTP.
+        integrity = subprocess.run(
+            ["git", "-C", str(root), "diff", "--quiet", "HEAD", "--",
+             *(relative for _, relative in ASSETS)],
+            check=False, capture_output=True, text=True, timeout=5,
+        )
+        if integrity.returncode != 0:
+            raise AssetPreflightError("CHECKOUT_ASSETS_DIRTY")
         return sha
     except (OSError, subprocess.SubprocessError, ValueError):
         raise AssetPreflightError("CHECKOUT_HEAD_UNAVAILABLE") from None
