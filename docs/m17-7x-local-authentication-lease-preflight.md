@@ -1,4 +1,4 @@
-# M17.7X — Local authenticated-provisioning lease preflight
+# M17.7X/Y — Local authenticated-provisioning lease preflight
 
 Profile: `MARKETPLACE_LOCAL_AUTHENTICATION_LEASE_PREFLIGHT_V1`
 
@@ -13,8 +13,10 @@ full source composition refused it as designed. This is not justification to
 relax authentication verification.
 
 M17.7X adds a **separate, deliberate, source-only** preflight to identify this
-condition before starting or stopping a service. It does **not** change runtime
-authentication behavior or bootstrap failure semantics.
+condition before starting or stopping a service. M17.7Y also checks **each signed
+identity verification-method interval**, because seller and buyer methods may
+have shorter validity windows than the envelope itself. Neither change modifies
+runtime authentication behavior or bootstrap failure semantics.
 
 ## Usage
 
@@ -44,8 +46,9 @@ Successful output has the form:
 status=PASS lease_remaining_seconds=2400 identities=2 signature_verified=true server_invoked=false postgres_invoked=false
 ```
 
-The remaining time and identity count are **not guaranteed values**; they depend
-on the valid local evidence. An invalid invocation prints only
+The remaining time is the **minimum usable validity across the signed envelope
+and all identities** (not simply the envelope expiry). The values depend on the
+verified local evidence. An invalid invocation prints only
 `status=FAIL code=<stable-code>` and exits nonzero. Failure codes are:
 
 - `PROVISIONING_DIRECTORY_INVALID` for non-absolute, empty, or invalid path shape.
@@ -56,9 +59,18 @@ on the valid local evidence. An invalid invocation prints only
 - `LEASE_EXPIRED` for verified claims at or after the lease end.
 - `LEASE_TOO_SHORT` for verified current evidence with less validity remaining
   than the chosen threshold.
+- `IDENTITY_NOT_YET_VALID` when at least one signed verification method is not
+  yet valid at the sampled clock time.
+- `IDENTITY_EXPIRED` when a signed verification method has already expired
+  even though the overall signed envelope is still current.
+- `IDENTITY_LEASE_TOO_SHORT` when an identity's signed validity expires
+  sooner than the required flight-duration threshold.
 
 The expiry classification occurs **only after signature verification**, preventing
 unsigned or tampered claims from being treated as a routine renewal situation.
+The tool also exercises the existing exact principal/method binding verifier
+at the sampled time for every signed identity. It fails closed if any identity
+is unusable, without revealing which principal failed.
 The script never prints a principal, public key, claims body, attestation,
 private key, token, DSN, or provisioning path.
 
