@@ -20,10 +20,17 @@ ASSETS = (
     ("/", "web/index.html"),
     ("/app.js", "web/app.js"),
     ("/styles.css", "web/styles.css"),
-    ("/auth_bootstrap.js", "web/auth_bootstrap.js"),
+    ("/client_session.js", "web/client_session.js"),
+    ("/auth_establishment.js", "web/auth_establishment.js"),
+    ("/auth_ed25519_proof_provider.js", "web/auth_ed25519_proof_provider.js"),
+    ("/auth_ed25519_key_creation.js", "web/auth_ed25519_key_creation.js"),
+    ("/agreement_ed25519_assent_provider.js", "web/agreement_ed25519_assent_provider.js"),
+    ("/agreement_assent_client.js", "web/agreement_assent_client.js"),
+    ("/proposal_acceptance_client.js", "web/proposal_acceptance_client.js"),
     ("/agreement_publication_client.js", "web/agreement_publication_client.js"),
     ("/fulfillment_completion_client.js", "web/fulfillment_completion_client.js"),
     ("/authenticated_local_flight_evidence.js", "web/authenticated_local_flight_evidence.js"),
+    ("/auth_bootstrap.js", "web/auth_bootstrap.js"),
 )
 
 
@@ -105,7 +112,7 @@ def verify_assets(
 ) -> int:
     """Compare local exact-head static files against public loopback responses.
 
-    The check proves byte parity for the selected assets, not process provenance,
+    The check proves byte parity for the complete reviewed Web asset set, not process provenance,
     database state, authentication, or acceptance of the live browser flight.
     """
     _validate_inputs(expected_sha, port)
