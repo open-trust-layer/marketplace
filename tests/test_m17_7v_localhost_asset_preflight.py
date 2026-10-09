@@ -1,4 +1,5 @@
-"""Offline contracts for the M17.7V public localhost asset preflight."""
+"""Offline contracts for M17.7V/W public localhost asset preflight."""
+import ast
 from io import BytesIO
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -8,6 +9,7 @@ from unittest.mock import patch
 
 from tools.marketplace_localhost_asset_preflight import (
     ASSETS,
+    ROOT,
     HOST,
     MAX_ASSET_BYTES,
     AssetPreflightError,
@@ -50,6 +52,51 @@ class M177VLocalhostAssetPreflightTests(unittest.TestCase):
         self.assertEqual(self._verify(), len(ASSETS))
         self.assertEqual(self.requests, [(18080, path) for path, _ in ASSETS])
         self.assertEqual(HOST, "127.0.0.1")
+
+    def test_asset_map_exactly_covers_reviewed_server_web_allowlist(self):
+        # Read syntax only; never import/initialize the live runtime.
+        source = (ROOT / "tools" / "marketplace_localhost.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        required = {
+            "_INDEX_ASSET", "_APP_JS_ASSET", "_STYLES_ASSET",
+            "_AUTH_WEB_MODULE_ASSETS",
+        }
+        constants = {}
+        for statement in tree.body:
+            if (
+                isinstance(statement, ast.AnnAssign)
+                and isinstance(statement.target, ast.Name)
+                and statement.target.id in required
+            ):
+                constants[statement.target.id] = ast.literal_eval(statement.value)
+        self.assertEqual(set(constants), required)
+        expected = (
+            ("/", constants["_INDEX_ASSET"]),
+            ("/app.js", constants["_APP_JS_ASSET"]),
+            ("/styles.css", constants["_STYLES_ASSET"]),
+            *constants["_AUTH_WEB_MODULE_ASSETS"],
+        )
+        self.assertEqual(len(expected), 14)
+        self.assertEqual(ASSETS, expected)
+        self.assertEqual(len({path for path, _ in ASSETS}), len(ASSETS))
+        self.assertEqual(len({path for _, path in ASSETS}), len(ASSETS))
+
+    def test_stale_secondary_auth_module_fails_closed(self):
+        asset = "/agreement_ed25519_assent_provider.js"
+        self.payloads[asset] += b"// unexpected old module"
+        with self.assertRaises(AssetPreflightError) as caught:
+            self._verify()
+        self.assertEqual((caught.exception.code, caught.exception.asset), ("ASSET_MISMATCH", asset))
+
+    def test_missing_buyer_session_module_fails_closed(self):
+        asset = "/client_session.js"
+        def missing(port, path):
+            if path == asset:
+                raise AssetPreflightError("HTTP_FAILED", asset)
+            return self._asset(port, path)
+        with self.assertRaises(AssetPreflightError) as caught:
+            verify_assets(self.root, SHA, 18080, head_reader=self._head, asset_reader=missing)
+        self.assertEqual((caught.exception.code, caught.exception.asset), ("HTTP_FAILED", asset))
 
     def test_stale_served_html_fails_closed(self):
         self.payloads["/"] = b"<html>older Marketplace UI</html>"
