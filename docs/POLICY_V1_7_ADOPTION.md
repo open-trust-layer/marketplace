@@ -88,6 +88,8 @@ For an explicitly adopted Marketplace delivery task, source-delivery authority i
 
 Marketplace now requires **zero mandatory human PR approvals at every PR risk level**.
 
+This specifies the GitHub approval-count gate, **not** a waiver of independent safety review. The separately retained CRITICAL-risk review requirement in `DEVELOPMENT_POLICY.md` applies where supported, including to disabling a material control. Reviewer evidence, reversible alternatives, and post-action verification remain necessary where the risk classification requires them; CI, agent self-review, and standing source-merge permission do not satisfy independent review.
+
 This does not remove review or validation:
 
 - agent diff review remains required;
