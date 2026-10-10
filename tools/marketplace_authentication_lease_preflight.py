@@ -21,6 +21,7 @@ from marketplace.application.auth_trust_anchor_manifest import (
     materialize_marketplace_authentication_evidence_trust_anchor_snapshot,
 )
 from marketplace.application.auth_verification_method_evidence import (
+    AUTH_EVIDENCE_MAX_ENTRIES,
     VerifiedAuthenticationVerificationMethodEvidence,
     decode_marketplace_authentication_verification_method_evidence_claims,
     materialize_marketplace_authentication_verification_method_snapshot,
@@ -42,12 +43,14 @@ def check_provisioning_lease(
     *,
     at_time: int,
     minimum_remaining_seconds: int = 1_800,
+    minimum_distinct_principals: int = 1,
 ) -> tuple[int, int]:
-    """Return (shortest usable identity lease, identity count) after verification.
+    """Return (shortest usable identity lease, method count) after verification.
 
-    Expiry categories are emitted *only* after canonical parsing and signature
-    verification. A cryptographically invalid bundle must not be described as
-    merely expired, even if its untrusted claims contain an expired timestamp.
+    Optional two-party readiness requires separate signed controller principals,
+    not merely two verification methods. This is not proof of browser login.
+    Expiry and cardinality categories are emitted only after cryptographic
+    verification of the canonical bundle.
     """
     if (
         type(directory) is not str
@@ -63,6 +66,11 @@ def check_provisioning_lease(
         or not 0 <= minimum_remaining_seconds <= MAX_MINIMUM_REMAINING_SECONDS
     ):
         raise ProvisioningLeasePreflightError("MINIMUM_REMAINING_INVALID")
+    if (
+        type(minimum_distinct_principals) is not int
+        or not 1 <= minimum_distinct_principals <= AUTH_EVIDENCE_MAX_ENTRIES
+    ):
+        raise ProvisioningLeasePreflightError("MINIMUM_PRINCIPALS_INVALID")
 
     try:
         provisioning = load_marketplace_authentication_startup_provisioning(
@@ -142,6 +150,12 @@ def check_provisioning_lease(
         if end - at_time < minimum_remaining_seconds:
             raise ProvisioningLeasePreflightError("IDENTITY_LEASE_TOO_SHORT")
         effective_remaining = min(effective_remaining, end - at_time)
+    # Several verification methods may legitimately belong to one controller.
+    # Requiring at least two *distinct* signed controllers prevents a misleading
+    # two-method PASS for a seller/buyer acceptance flight.
+    controllers = {entry.controller_principal for entry in claims.entries}
+    if len(controllers) < minimum_distinct_principals:
+        raise ProvisioningLeasePreflightError("DISTINCT_PRINCIPALS_INSUFFICIENT")
     return effective_remaining, len(claims.entries)
 
 
@@ -151,12 +165,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--authentication-provisioning-directory", required=True)
     parser.add_argument("--minimum-remaining-seconds", type=int, default=1_800)
+    parser.add_argument("--minimum-distinct-principals", type=int, default=1)
     args = parser.parse_args(argv)
     try:
         remaining, identities = check_provisioning_lease(
             args.authentication_provisioning_directory,
             at_time=int(time.time()),
             minimum_remaining_seconds=args.minimum_remaining_seconds,
+            minimum_distinct_principals=args.minimum_distinct_principals,
         )
     except ProvisioningLeasePreflightError as exc:
         print(f"status=FAIL code={exc.code}", file=sys.stderr)
