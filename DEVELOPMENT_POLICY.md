@@ -344,7 +344,7 @@ Repository controls are defined in `docs/REPOSITORY_GOVERNANCE.md`.
 
 `.github/CODEOWNERS`, PR templates, CI, repository audits, exact-head merge discipline, and source policy are governance-as-code. They do not prove remote GitHub branch protection/rulesets are active.
 
-Desired provider configuration and verified provider state are separate facts. At the v1.6 adoption baseline, GitHub reported `main` unprotected; do not claim otherwise until an authorized admin control plane configures and independently verifies the required rule.
+Desired provider configuration and verified provider state are separate facts. At the v1.6 adoption baseline, GitHub reported `main` unprotected. Following the authorized Issue #212 configuration, an independent provider readback on 2026-10-10 reported `main` protected with strict required `acceptance`, resolved conversations, admin enforcement, and force-push/deletion prohibited. Both are time-scoped observations; provider state must be rechecked before a merge. Zero mandatory GitHub PR approvals does not waive CRITICAL independent human safety review where supported.
 
 Policy/security/governance changes require FULL validation and security-sensitive review. CI/performance pressure does not authorize governance bypass.
 
