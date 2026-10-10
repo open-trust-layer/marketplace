@@ -65,6 +65,18 @@ class PolicyV17AdoptionTests(unittest.TestCase):
         self.assertNotIn("normal changes require at least one approval", text)
         self.assertNotIn("## 10. Solo-maintainer review procedure", text)
 
+    def test_zero_github_approvals_preserve_critical_safety_review(self) -> None:
+        governance = (ROOT / "docs" / "REPOSITORY_GOVERNANCE.md").read_text(encoding="utf-8")
+        development = (ROOT / "DEVELOPMENT_POLICY.md").read_text(encoding="utf-8")
+        adoption = (ROOT / "docs" / "POLICY_V1_7_ADOPTION.md").read_text(encoding="utf-8")
+        agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("Zero required GitHub PR approvals does not waive", governance)
+        self.assertIn("CRITICAL actions still need independent human safety review", governance)
+        self.assertIn("CRITICAL adds dry-run/reversible-alternative review, independent human review", development)
+        self.assertIn("not** a waiver of independent safety review", adoption)
+        self.assertIn("A zero provider-approval count never waives CRITICAL independent safety review", agents)
+        self.assertIn("provider state must be rechecked before a merge", development)
+
     def test_codeowners_and_pr_template_point_to_current_profile(self) -> None:
         codeowners = (ROOT / ".github" / "CODEOWNERS").read_text(encoding="utf-8")
         template = (ROOT / ".github" / "pull_request_template.md").read_text(encoding="utf-8")
