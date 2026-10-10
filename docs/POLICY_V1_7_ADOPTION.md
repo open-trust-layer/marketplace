@@ -118,9 +118,7 @@ A merge that itself triggers one of those operations inherits that operational b
 
 ## Provider-control truthfulness
 
-Current provider state was re-read during this adoption.
-
-At baseline `9a090388143690b0a230433b0b828a3dcaf64fef`, GitHub reported:
+At adoption baseline `9a090388143690b0a230433b0b828a3dcaf64fef` on 2026-09-21, the GitHub branch endpoint reported an *unprotected* `main`:
 
 ```text
 main protected: false
@@ -130,13 +128,22 @@ repository rulesets: []
 Marketplace check-run identity on main: acceptance
 ```
 
-The detailed branch-protection endpoint is inaccessible to the connected GitHub integration, but the branch endpoint directly reports protection disabled.
+This is historical provider evidence, **not the current state**. At that time the detailed protection endpoint was inaccessible to the connected integration.
 
-Therefore this adoption makes **no claim that `main` is remotely protected**.
+After explicit owner ADMIN authorization, Issue [#212](https://github.com/open-trust-layer/marketplace/issues/212) recorded the 2026-09-27 protection configuration and independent readback. A separate read-only GitHub provider query on 2026-10-10 confirmed:
 
-The adopted policy requires provider-side protection where supported. Until that control is configured and independently verified, source development and PR validation may continue, but routine merge to `main` is blocked unless an explicit narrow governance exception applies.
+```text
+main protected: true
+required Marketplace status check: acceptance
+required checks strict/up-to-date: true
+required approving human review count: 0
+conversation resolution required: true
+admin enforcement: true
+force pushes allowed: false
+branch deletion allowed: false
+```
 
-Provider-side adoption is tracked by Issue #212 and is a separate HIGH/ADMIN control-plane action.
+The 2026-10-10 readback was at `main` SHA `fd12304319938ac0b5a6130ec85feea1bc217c44`; it does not establish eternal provider state. Branch protection is an independently administered GitHub control, not a source-code or CODEOWNERS guarantee. This policy PR makes **no provider ADMIN mutation**. Before each routine merge, verify the relevant required check, protection and merge preconditions. If the required provider-side control is later absent, routine merge to `main` is blocked until a separately approved correction or explicit narrow governance exception applies.
 
 ## Retention, isolation, crypto, and supply chain
 
