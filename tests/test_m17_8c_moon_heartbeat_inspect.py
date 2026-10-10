@@ -86,6 +86,10 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
         self.record(observed=NOW + timedelta(seconds=6))
         self.assertEqual(self.check(), ("SOURCE_FUTURE", 0, 1))
 
+    def test_valid_development_version_is_mismatched_not_malformed(self) -> None:
+        self.record(version="0.0.1.dev0")
+        self.assertEqual(self.check(), ("RELEASE_MISMATCH", 0, 1))
+
     def test_older_stale_record_does_not_erase_newer_fresh_record(self) -> None:
         self.record(observed=NOW - timedelta(days=2), version=OLD_SHA)
         self.record(observed=NOW - timedelta(seconds=5))
@@ -141,6 +145,14 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
             self.check()
         self.assertEqual(caught.exception.code, "TOO_MANY_FILES")
 
+    def test_bounded_directory_entries_including_temporary_files(self) -> None:
+        self.directory.mkdir(parents=True)
+        for index in range(65):
+            (self.directory / f"old-{index}.tmp").write_bytes(b"")
+        with self.assertRaises(HeartbeatInspectionError) as caught:
+            self.check()
+        self.assertEqual(caught.exception.code, "TOO_MANY_FILES")
+
     def test_inputs_rejected(self) -> None:
         cases = (
             ({"expected_release_sha": "wrong"}, "RELEASE_SHA_INVALID"),
@@ -173,7 +185,7 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
         self.assertEqual(stderr.getvalue(), "")
 
     def test_cli_reports_stale_without_any_content_or_path(self) -> None:
-        self.record(observed=NOW)
+        self.record(observed=NOW - timedelta(days=3))
         stdout = io.StringIO()
         stderr = io.StringIO()
         with redirect_stdout(stdout), redirect_stderr(stderr):
