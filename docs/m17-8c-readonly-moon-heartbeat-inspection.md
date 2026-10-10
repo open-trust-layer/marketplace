@@ -25,7 +25,7 @@ python tools/marketplace_moon_heartbeat_inspect.py `
 The operator supplies the **release being evaluated**. A repository HEAD,
 a stale file's claimed version, and a running server are independent facts.
 
-The tool reads at most 32 source JSON records of 4096 bytes each, requires
+The tool scans at most 64 directory entries and reads at most 32 source JSON records of 4096 bytes each, requires
 regular files, strict exact JSON fields, duplicate-free standard JSON, a
 canonical UUID filename matching `instance_id`, well-formed UTC timestamps,
 Marketplace service ID, positive integer process ID and bounded version and
