@@ -19,6 +19,7 @@ _REQUIRED_GOVERNANCE_FILES = (
     Path("DEVELOPMENT_POLICY.md"),
     Path("docs/RETENTION_POLICY.md"),
     Path("docs/REPOSITORY_GOVERNANCE.md"),
+    Path("docs/POLICY_V1_7_ADOPTION.md"),
     Path(".github/CODEOWNERS"),
     Path(".github/pull_request_template.md"),
 )

@@ -16,13 +16,13 @@ def _read(relative_path: str) -> str:
 
 
 class PolicyV15AdoptionTests(unittest.TestCase):
-    def test_v15_history_is_retained_while_agent_baseline_advances_to_v16(self):
+    def test_v15_history_is_retained_while_agent_baseline_advances_to_v17(self):
         agents = _read("AGENTS.md")
         record = _read("docs/POLICY_V1_5_ADOPTION.md")
-        self.assertIn("Constitution v1.3", agents)
-        self.assertIn("Coding Agent Policy v1.3", agents)
-        self.assertIn("Development Principles v1.6", agents)
-        self.assertIn("docs/POLICY_V1_6_ADOPTION.md", agents)
+        self.assertIn("Constitution v1.4", agents)
+        self.assertIn("Coding Agent Policy v1.4", agents)
+        self.assertIn("Development Principles v1.7", agents)
+        self.assertIn("docs/POLICY_V1_7_ADOPTION.md", agents)
         self.assertIn(_HANDBOOK_SHA256, record)
         self.assertIn("one coherent work-unit PR", agents)
         self.assertIn("delta-first validation", agents)
@@ -34,12 +34,12 @@ class PolicyV15AdoptionTests(unittest.TestCase):
         )
         self.assertIn("without adequate evidence", agents)
 
-    def test_v15_history_and_optimization_gate_semantics_survive_v16(self):
+    def test_v15_history_and_optimization_gate_semantics_survive_v17(self):
         policy = _read("DEVELOPMENT_POLICY.md")
         record = _read("docs/POLICY_V1_5_ADOPTION.md")
-        self.assertIn("Coding Agent Constitution v1.3", policy)
-        self.assertIn("Coding Agent Policy v1.3", policy)
-        self.assertIn("Development Principles v1.6", policy)
+        self.assertIn("Coding Agent Constitution v1.4", policy)
+        self.assertIn("Coding Agent Policy v1.4", policy)
+        self.assertIn("Development Principles v1.7", policy)
         for digest in (
             _CONSTITUTION_SHA256,
             _POLICY_SHA256,
@@ -95,19 +95,17 @@ class PolicyV15AdoptionTests(unittest.TestCase):
         self.assertIn("independent matching reproduction", template)
         self.assertIn("required quality/security/integration/governance/conformance gates", template)
 
-    def test_repository_governance_preserves_final_full_and_merged_main_verification(self):
+    def test_repository_governance_preserves_full_review_and_merged_main_verification(self):
         governance = _read("docs/REPOSITORY_GOVERNANCE.md")
         self.assertIn("docs/POLICY_V1_5_ADOPTION.md", governance)
         self.assertIn("material performance/resource claim", governance)
         self.assertIn("KEEP | REVISE | REVERT", governance)
-        self.assertIn("No self-approval fiction", governance)
+        self.assertIn("agent diff review", governance)
+        self.assertIn("zero mandatory human PR approvals", governance)
         self.assertIn("FULL once on final review head when required", governance)
-        self.assertIn("exact-head guarded merge", governance)
-        self.assertIn(
-            "resulting merged `main` state receives required push acceptance/provenance verification",
-            governance,
-        )
-        self.assertIn("reproducibility claims have evidence adequate to the claim", governance)
+        self.assertIn("exact-head guarded routine merge", governance)
+        self.assertIn("merged-main provenance/CI verification", governance)
+        self.assertIn("material performance/reproducibility claims have evidence adequate to the claim", governance)
 
     def test_adoption_record_maps_foreign_governance_without_importing_authority(self):
         record = _read("docs/POLICY_V1_5_ADOPTION.md")
