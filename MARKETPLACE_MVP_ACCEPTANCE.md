@@ -103,3 +103,5 @@ python tools/marketplace_authenticated_local_flight_evidence.py .\authenticated-
 The validator requires profile `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_V1`, exact loopback host `127.0.0.1`, both authenticated parties, sufficient Agreement formation with no missing principals, matching Agreement publication/completion references, commitment `seller-delivery`, and evidence kind `CLAIMED_COMPLETE_PERFORMANCE`. It also requires the universal-truth, payment/settlement, public-network, and public-deployment claims to remain false.
 
 The validator is offline acceptance tooling only. It does not start the server or browser, connect to PostgreSQL, generate the evidence record, or change the requirement for a fresh post-P live browser run.
+
+For input safety, the offline validator accepts at most **64 KiB** of UTF-8 JSON evidence. It reads at most **64 KiB plus one sentinel byte** from the specified local file, rejecting larger inputs with stable non-secret `EVIDENCE_FILE_TOO_LARGE` rather than loading the entire file first. This is not an authorization to inspect secrets or to create or execute a flight.
