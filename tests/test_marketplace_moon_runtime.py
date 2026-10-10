@@ -88,6 +88,43 @@ async def _asgi_application(scope, receive, send) -> None:
     await send({"type": "http.response.body", "body": b""})
 
 
+def _http_response_application(
+    *, status: int, final_body: bool = True, raise_after: bool = False,
+):
+    async def application(scope, receive, send) -> None:
+        del scope, receive
+        await send({"type": "http.response.start", "status": status, "headers": []})
+        await send({
+            "type": "http.response.body",
+            "body": b"",
+            "more_body": not final_body,
+        })
+        if raise_after:
+            raise RuntimeError("synthetic application failure")
+
+    return application
+
+
+class _SendFailureProvider:
+    def run(self, *, application: object, host: str, port: int) -> None:
+        del host, port
+
+        async def exercise() -> None:
+            async def receive():
+                return {"type": "http.request", "body": b"", "more_body": False}
+
+            async def reject_send(_message):
+                raise RuntimeError("synthetic transport failure")
+
+            await application(  # type: ignore[operator]
+                {"type": "http", "method": "GET", "path": "/"},
+                receive,
+                reject_send,
+            )
+
+        asyncio.run(exercise())
+
+
 class MarketplaceMoonRuntimeTests(unittest.TestCase):
     def test_heartbeat_is_opt_in_and_rejects_ambiguous_configuration(self) -> None:
         self.assertIsNone(marketplace_moon_heartbeat_from_env({}))
@@ -172,6 +209,60 @@ class MarketplaceMoonRuntimeTests(unittest.TestCase):
 
         self.assertEqual(lease.events, ["started", "closed"])
         self.assertEqual(len(delegate.calls), 1)
+
+    def test_heartbeat_requires_completed_non_5xx_http_response(self) -> None:
+        for status, admitted in ((200, True), (204, True), (404, True),
+                                 (499, True), (500, False), (503, False)):
+            with self.subTest(status=status):
+                lease = _FakeLease()
+                provider = MarketplaceMoonHeartbeatServerProvider(
+                    _RequestingProvider(),
+                    lease,  # type: ignore[arg-type]
+                )
+                provider.run(
+                    application=_http_response_application(status=status),
+                    host="127.0.0.1",
+                    port=18080,
+                )
+                self.assertEqual(
+                    lease.events,
+                    ["started", "closed"] if admitted else ["closed"],
+                )
+
+    def test_incomplete_http_stream_does_not_admit_heartbeat(self) -> None:
+        lease = _FakeLease()
+        provider = MarketplaceMoonHeartbeatServerProvider(
+            _RequestingProvider(), lease,  # type: ignore[arg-type]
+        )
+        provider.run(
+            application=_http_response_application(status=200, final_body=False),
+            host="127.0.0.1", port=18080,
+        )
+        self.assertEqual(lease.events, ["closed"])
+
+    def test_app_failure_after_final_body_does_not_admit_heartbeat(self) -> None:
+        lease = _FakeLease()
+        provider = MarketplaceMoonHeartbeatServerProvider(
+            _RequestingProvider(), lease,  # type: ignore[arg-type]
+        )
+        with self.assertRaisesRegex(RuntimeError, "synthetic application failure"):
+            provider.run(
+                application=_http_response_application(status=200, raise_after=True),
+                host="127.0.0.1", port=18080,
+            )
+        self.assertEqual(lease.events, ["closed"])
+
+    def test_failed_asgi_send_does_not_admit_heartbeat(self) -> None:
+        lease = _FakeLease()
+        provider = MarketplaceMoonHeartbeatServerProvider(
+            _SendFailureProvider(), lease,  # type: ignore[arg-type]
+        )
+        with self.assertRaisesRegex(RuntimeError, "synthetic transport failure"):
+            provider.run(
+                application=_http_response_application(status=200),
+                host="127.0.0.1", port=18080,
+            )
+        self.assertEqual(lease.events, ["closed"])
 
     def test_lifespan_scope_does_not_admit_runtime_health(self) -> None:
         lease = _FakeLease()

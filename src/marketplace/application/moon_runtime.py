@@ -126,9 +126,36 @@ class _HeartbeatAsgiApplication:
         self._lease = lease
 
     async def __call__(self, scope, receive, send) -> None:
-        if isinstance(scope, Mapping) and scope.get("type") == "http":
+        if not isinstance(scope, Mapping) or scope.get("type") != "http":
+            await self._application(scope, receive, send)
+            return
+
+        # A received request is not evidence of a functioning application.
+        # Start the opt-in heartbeat only once the app has successfully
+        # completed a non-server-error HTTP response through the ASGI sender.
+        response_status: int | None = None
+        response_completed = False
+
+        async def observe_send(message) -> None:
+            nonlocal response_status, response_completed
+            await send(message)
+            if not isinstance(message, Mapping):
+                return
+            if message.get("type") == "http.response.start":
+                status = message.get("status")
+                response_status = status if type(status) is int else None
+                response_completed = False
+            elif (
+                message.get("type") == "http.response.body"
+                and message.get("more_body", False) is False
+                and response_status is not None
+                and 200 <= response_status < 500
+            ):
+                response_completed = True
+
+        await self._application(scope, receive, observe_send)
+        if response_completed:
             self._lease.ensure_started()
-        await self._application(scope, receive, send)
 
 
 class MarketplaceMoonHeartbeatServerProvider:
