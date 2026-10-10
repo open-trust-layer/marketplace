@@ -187,6 +187,21 @@ def validate_authenticated_local_flight_evidence(value: object) -> dict[str, obj
     return document
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Reject duplicate member names at any nesting depth without echoing them."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            _fail("EVIDENCE_JSON_DUPLICATE_KEY")
+        result[key] = value
+    return result
+
+
+def _reject_json_constant(_value: str) -> None:
+    """Python accepts NaN and Infinity by default; canonical evidence may not."""
+    _fail("EVIDENCE_JSON_INVALID")
+
+
 def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str, object]:
     path = Path(path_value)
     try:
@@ -196,8 +211,16 @@ def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str
     if len(payload) > MAX_EVIDENCE_BYTES:
         _fail("EVIDENCE_FILE_TOO_LARGE")
     try:
-        value = json.loads(payload.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError):
+        value = json.loads(
+            payload.decode("utf-8"),
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_json_constant,
+        )
+    except AuthenticatedLocalFlightEvidenceError:
+        # Preserve the specific non-secret duplicate-key and constant codes.
+        raise
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        # Python may raise ValueError for an excessively long JSON integer.
         _fail("EVIDENCE_JSON_INVALID")
     return validate_authenticated_local_flight_evidence(value)
 

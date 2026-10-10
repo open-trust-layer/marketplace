@@ -193,5 +193,84 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
             self.assertIn("status=FAIL code=EVIDENCE_JSON_INVALID", failure_err.getvalue())
 
 
+    def test_duplicate_top_level_json_key_rejected_before_mapping_validation(self) -> None:
+        document = valid_evidence()
+        payload = json.dumps(document)
+        marker = '"seller_authenticated": true'
+        self.assertEqual(payload.count(marker), 1)
+        payload = payload.replace(
+            marker,
+            '"seller_authenticated": false, "seller_authenticated": true',
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_DUPLICATE_KEY")
+            self.assertNotIn("seller_authenticated", str(caught.exception))
+
+    def test_duplicate_nested_json_key_rejected_without_reflection(self) -> None:
+        document = valid_evidence()
+        payload = json.dumps(document)
+        marker = '"agreement_publication": {"agreement_record_id": "rid_agreement_01", "disposition": "STORED"'
+        self.assertIn(marker, payload)
+        payload = payload.replace(
+            marker,
+            '"agreement_publication": {"agreement_record_id": "rid_agreement_01", "disposition": "DUPLICATE", "disposition": "STORED"',
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_DUPLICATE_KEY")
+            self.assertNotIn("rid_agreement_01", str(caught.exception))
+
+    def test_nonstandard_json_numeric_constants_rejected(self) -> None:
+        document = valid_evidence()
+        canonical = json.dumps(document)
+        for token in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(token=token), tempfile.TemporaryDirectory() as directory:
+                payload = canonical.replace('"ci_run_number": 958', f'"ci_run_number": {token}')
+                self.assertNotEqual(payload, canonical)
+                path = Path(directory) / "evidence.json"
+                path.write_text(payload, encoding="utf-8")
+                with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                    load_authenticated_local_flight_evidence(path)
+                self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
+
+    def test_excessive_json_integer_returns_stable_invalid_code(self) -> None:
+        canonical = json.dumps(valid_evidence())
+        payload = canonical.replace(
+            '"ci_run_number": 958',
+            '"ci_run_number": ' + '9' * 5_000,
+        )
+        self.assertNotEqual(payload, canonical)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
+
+    def test_cli_reports_duplicate_key_with_stable_nonsecret_code(self) -> None:
+        canonical = json.dumps(valid_evidence())
+        payload = canonical.replace(
+            '"seller_authenticated": true',
+            '"seller_authenticated": false, "seller_authenticated": true',
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            success_out = io.StringIO()
+            failure_err = io.StringIO()
+            with redirect_stdout(success_out), redirect_stderr(failure_err):
+                code = main([str(path)])
+            self.assertEqual(code, 1)
+            self.assertEqual(success_out.getvalue(), "")
+            self.assertEqual(failure_err.getvalue().strip(), "status=FAIL code=EVIDENCE_JSON_DUPLICATE_KEY")
+            self.assertNotIn(str(path), failure_err.getvalue())
+
 if __name__ == "__main__":
     unittest.main()
