@@ -63,7 +63,9 @@ def _read_record(path: Path) -> tuple[str, datetime]:
         metadata = path.lstat()
         if not stat.S_ISREG(metadata.st_mode) or metadata.st_size > MAX_BYTES:
             raise HeartbeatInspectionError("SOURCE_INVALID")
-        raw = path.read_bytes()
+        # Bound the actual read as well as lstat: a file may grow after stat.
+        with path.open("rb") as handle:
+            raw = handle.read(MAX_BYTES + 1)
         if len(raw) > MAX_BYTES:
             raise HeartbeatInspectionError("SOURCE_INVALID")
         value = json.loads(
