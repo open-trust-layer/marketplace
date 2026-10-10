@@ -203,6 +203,8 @@ Performance targets or CI duration are not sufficient reasons by themselves for 
 
 Marketplace requires **zero mandatory human PR approvals** for LOW, MODERATE, HIGH, and CRITICAL pull requests under the adopted v1.7 source-delivery profile.
 
+**Distinguish provider approval count from independent safety review.** Zero required GitHub PR approvals does not waive `DEVELOPMENT_POLICY.md` risk requirements: CRITICAL actions still need independent human safety review where supported, reversible-alternative assessment, and explicit post-action verification. If an applicable CRITICAL review or other control cannot be satisfied, stop; a self-review, owner blanket merge authorization, or passing CI is not a substitute. Record the independent reviewer/evidence or the specific blocking constraint. A change that disables a material safety control is CRITICAL regardless of its source-only packaging.
+
 This does not remove review obligations. Before merge, the agent/maintainer MUST:
 
 1. inspect the complete candidate diff;
