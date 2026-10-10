@@ -26,6 +26,22 @@ seller delivery completion result from current in-memory state.
 The preview is enabled only on exact 127.0.0.1, after sufficient formation with no missing
 parties and after both explicit Agreement publication and exact seller-attributed completion exist.
 
+### M17.7AA — Two-party observation guard
+
+The operator-facing preview and explicit export now additionally require that the
+selected Proposal's **record-derived buyer principal differs from the parent
+Listing's seller principal**. The already-observed Agreement formation result
+must list **both exact principals** in its required and covered principals arrays.
+Any missing, malformed or inconsistent arrays fail closed before evidence preparation;
+the existing export currentness check re-evaluates the same guard.
+
+This is a strict UI evidence-readiness requirement, not a change to Agreement formation,
+server-side principal binding, authentication, persistence, or the offline JSON schema.
+A manually checked buyer-authentication observation still does **not** prove that the
+buyer logged in; the operator must observe that separate authenticated browser
+session during the authorized flight. A source-only preview success is not evidence
+of live acceptance.
+
 ## Output
 
 The explicit Prepare non-secret evidence preview click dynamically selects M17.7S and renders its

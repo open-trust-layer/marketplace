@@ -43,6 +43,46 @@ class M177TAuthenticatedLocalFlightEvidencePreviewTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
 
+    def test_preview_requires_distinct_seller_buyer_and_formation_coverage(self) -> None:
+        text = APP.read_text(encoding="utf-8")
+        start = text.index("function authenticatedFlightEvidenceInputs()")
+        end = text.index("function renderAuthenticatedFlightEvidencePreview()", start)
+        block = text[start:end]
+        for required in (
+            "const proposal = proposalResponseSummary(state.selectedRecord);",
+            "if (proposal === null) return null;",
+            "authSnapshot.principal !== parentListing.sellerPrincipal",
+            "proposal.buyerPrincipal === parentListing.sellerPrincipal",
+            "!Array.isArray(formation.requiredPrincipals)",
+            "!Array.isArray(formation.coveredPrincipals)",
+            "!Array.isArray(formation.missingPrincipals)",
+            "!formation.requiredPrincipals.includes(parentListing.sellerPrincipal)",
+            "!formation.requiredPrincipals.includes(proposal.buyerPrincipal)",
+            "!formation.coveredPrincipals.includes(parentListing.sellerPrincipal)",
+            "!formation.coveredPrincipals.includes(proposal.buyerPrincipal)",
+            "formation.missingPrincipals.length !== 0",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, block)
+        self.assertLess(
+            block.index("proposal.buyerPrincipal === parentListing.sellerPrincipal"),
+            block.index("return {"),
+        )
+
+    def test_preview_preparation_and_download_reuse_two_party_guard(self) -> None:
+        text = APP.read_text(encoding="utf-8")
+        begin = text.index("function authenticatedFlightEvidenceInputs()")
+        finish = text.index("async function publishSelectedAgreement()", begin)
+        preview = text[begin:finish]
+        self.assertIn("const observed = authenticatedFlightEvidenceInputs();", preview)
+        self.assertIn("const current = authenticatedFlightEvidenceInputs();", preview)
+        export_start = text.index("function authenticatedFlightEvidenceDocumentIsCurrent()")
+        export_end = text.index("function downloadAuthenticatedFlightEvidence()", export_start)
+        self.assertIn(
+            "const current = authenticatedFlightEvidenceInputs();",
+            text[export_start:export_end],
+        )
+
     def test_preview_requires_exact_loopback_and_explicit_main_ci_metadata(self) -> None:
         text = APP.read_text(encoding="utf-8")
         for marker in (
