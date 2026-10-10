@@ -478,6 +478,7 @@ const downloadAuthenticatedFlightEvidenceButton = byId("download-authenticated-f
 const authenticatedFlightEvidenceStatus = byId("authenticated-flight-evidence-status");
 const authenticatedFlightEvidenceJson = byId("authenticated-flight-evidence-json");
 let authenticatedFlightEvidenceDocument = null;
+let buyerAuthenticationObservation = null;
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -1316,6 +1317,45 @@ function clearAuthenticatedFlightEvidenceDocument() {
   downloadAuthenticatedFlightEvidenceButton.disabled = true;
 }
 
+// Buyer authentication is separately observed by the operator in another browser.
+// Bind that manual observation to the exact selected Proposal, Listing and
+// active seller session; never carry a checked box into another transaction.
+function currentBuyerAuthenticationObservationContext() {
+  if (state.selectedId === null || state.responseParentId === null) return null;
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const listing = productListingSummary(state.records.get(state.responseParentId));
+  const auth = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (proposal === null || listing === null || !auth.active ||
+      auth.principal !== listing.sellerPrincipal ||
+      proposal.buyerPrincipal === listing.sellerPrincipal) return null;
+  return {
+    proposalId: state.selectedId,
+    listingRecordId: state.responseParentId,
+    sellerPrincipal: listing.sellerPrincipal,
+    buyerPrincipal: proposal.buyerPrincipal,
+  };
+}
+
+function buyerAuthenticationObservationIsCurrent() {
+  if (evidenceBuyerAuthObservedInput.checked !== true ||
+      buyerAuthenticationObservation === null) return false;
+  const current = currentBuyerAuthenticationObservationContext();
+  const stored = buyerAuthenticationObservation;
+  if (current !== null &&
+      current.proposalId === stored.proposalId &&
+      current.listingRecordId === stored.listingRecordId &&
+      current.sellerPrincipal === stored.sellerPrincipal &&
+      current.buyerPrincipal === stored.buyerPrincipal) return true;
+  // Invalidate the checkbox itself, not just the export: returning to an
+  // earlier selection must still require a new explicit buyer observation.
+  buyerAuthenticationObservation = null;
+  evidenceBuyerAuthObservedInput.checked = false;
+  clearAuthenticatedFlightEvidenceDocument();
+  return false;
+}
+
 function authenticatedFlightEvidenceInputs() {
   if (state.selectedId === null || state.responseParentId === null) return null;
   const proposal = proposalResponseSummary(state.selectedRecord);
@@ -1366,7 +1406,8 @@ function renderAuthenticatedFlightEvidencePreview() {
   const mainCommitReady = /^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim());
   const ciRunNumber = Number(evidenceCiRunNumberInput.value);
   const ciReady = Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0;
-  const buyerReady = evidenceBuyerAuthObservedInput.checked === true;
+  const buyerReady = evidenceBuyerAuthObservedInput.checked === true &&
+    buyerAuthenticationObservationIsCurrent();
   prepareAuthenticatedFlightEvidenceButton.disabled = (
     observed === null ||
     !mainCommitReady ||
@@ -1415,6 +1456,7 @@ async function prepareAuthenticatedFlightEvidence() {
       evidenceMainCommitInput.value.trim() !== mainCommit ||
       Number(evidenceCiRunNumberInput.value) !== ciRunNumber ||
       evidenceBuyerAuthObservedInput.checked !== buyerAuthenticated ||
+      !buyerAuthenticationObservationIsCurrent() ||
       location.hostname !== "127.0.0.1"
     ) {
       throw stableClientError("EVIDENCE_PREVIEW_STALE");
@@ -1559,6 +1601,7 @@ function authenticatedFlightEvidenceDocumentIsCurrent() {
     documentValue.seller_authenticated === true &&
     documentValue.buyer_authenticated === (evidenceBuyerAuthObservedInput.checked === true) &&
     evidenceBuyerAuthObservedInput.checked === true &&
+    buyerAuthenticationObservationIsCurrent() &&
     documentValue.listing_record_id === current.listingRecordId &&
     documentValue.proposal_record_id === current.proposalId &&
     documentValue.acceptance_record_id === current.acceptance.recordId &&
@@ -2458,7 +2501,7 @@ publishAgreementButton.addEventListener("click", () => void publishSelectedAgree
 claimDeliveryCompleteButton.addEventListener("click", () => void claimSelectedDeliveryComplete());
 prepareAuthenticatedFlightEvidenceButton.addEventListener("click", () => void prepareAuthenticatedFlightEvidence());
 downloadAuthenticatedFlightEvidenceButton.addEventListener("click", downloadAuthenticatedFlightEvidence);
-for (const input of [evidenceMainCommitInput, evidenceCiRunNumberInput, evidenceBuyerAuthObservedInput]) {
+for (const input of [evidenceMainCommitInput, evidenceCiRunNumberInput]) {
   input.addEventListener("input", () => {
     clearAuthenticatedFlightEvidenceDocument();
     renderAuthenticatedFlightEvidencePreview();
@@ -2468,6 +2511,16 @@ for (const input of [evidenceMainCommitInput, evidenceCiRunNumberInput, evidence
     renderAuthenticatedFlightEvidencePreview();
   });
 }
+function recordBuyerAuthenticationObservation() {
+  buyerAuthenticationObservation = evidenceBuyerAuthObservedInput.checked === true
+    ? currentBuyerAuthenticationObservationContext()
+    : null;
+  if (buyerAuthenticationObservation === null) evidenceBuyerAuthObservedInput.checked = false;
+  clearAuthenticatedFlightEvidenceDocument();
+  renderAuthenticatedFlightEvidencePreview();
+}
+evidenceBuyerAuthObservedInput.addEventListener("input", recordBuyerAuthenticationObservation);
+evidenceBuyerAuthObservedInput.addEventListener("change", recordBuyerAuthenticationObservation);
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
