@@ -38,7 +38,8 @@ database access, dependency, user-facing UI, runtime launch or deployment.
 It does not fix any separately governed enrollment, agreement assent or
 server-side URI-validation paths. The external transport and signature
 capabilities already exist; for malformed identifiers the new behavior is
-to reject **before** either external side effect.
+to reject **before** either external side effect: no signature is requested
+and no network request is issued for malformed identity strings.
 
 ## Qualification / rollback
 
