@@ -216,7 +216,11 @@ def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str
             object_pairs_hook=_unique_json_object,
             parse_constant=_reject_json_constant,
         )
-    except (UnicodeDecodeError, json.JSONDecodeError):
+    except AuthenticatedLocalFlightEvidenceError:
+        # Preserve the specific non-secret duplicate-key and constant codes.
+        raise
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
+        # Python may raise ValueError for an excessively long JSON integer.
         _fail("EVIDENCE_JSON_INVALID")
     return validate_authenticated_local_flight_evidence(value)
 
