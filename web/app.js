@@ -1318,7 +1318,8 @@ function clearAuthenticatedFlightEvidenceDocument() {
 
 function authenticatedFlightEvidenceInputs() {
   if (state.selectedId === null || state.responseParentId === null) return null;
-  if (proposalResponseSummary(state.selectedRecord) === null) return null;
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  if (proposal === null) return null;
   const proposalId = state.selectedId;
   const parentListing = productListingSummary(state.records.get(state.responseParentId));
   const acceptance = proposalAcceptanceEvidence(proposalId);
@@ -1336,7 +1337,15 @@ function authenticatedFlightEvidenceInputs() {
     completion === undefined ||
     !authSnapshot.active ||
     authSnapshot.principal !== parentListing.sellerPrincipal ||
+    proposal.buyerPrincipal === parentListing.sellerPrincipal ||
     formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    !Array.isArray(formation.requiredPrincipals) ||
+    !Array.isArray(formation.coveredPrincipals) ||
+    !Array.isArray(formation.missingPrincipals) ||
+    !formation.requiredPrincipals.includes(parentListing.sellerPrincipal) ||
+    !formation.requiredPrincipals.includes(proposal.buyerPrincipal) ||
+    !formation.coveredPrincipals.includes(parentListing.sellerPrincipal) ||
+    !formation.coveredPrincipals.includes(proposal.buyerPrincipal) ||
     formation.missingPrincipals.length !== 0
   ) {
     return null;
