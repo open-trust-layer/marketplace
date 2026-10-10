@@ -30,6 +30,7 @@ class M178ABuyerObservationBindingTests(unittest.TestCase):
             "listingRecordId: state.responseParentId",
             "sellerPrincipal: listing.sellerPrincipal",
             "buyerPrincipal: proposal.buyerPrincipal",
+            "sellerSessionEpoch: sellerAuthenticationSessionEpoch",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, segment)
@@ -46,17 +47,37 @@ class M178ABuyerObservationBindingTests(unittest.TestCase):
             "current.listingRecordId === stored.listingRecordId",
             "current.sellerPrincipal === stored.sellerPrincipal",
             "current.buyerPrincipal === stored.buyerPrincipal",
-            "buyerAuthenticationObservation = null;",
-            "evidenceBuyerAuthObservedInput.checked = false;",
-            "clearAuthenticatedFlightEvidenceDocument();",
+            "current.sellerSessionEpoch === stored.sellerSessionEpoch",
+            "invalidateBuyerAuthenticationObservation();",
             "return false;",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, segment)
+        invalidate = src[
+            src.index("function invalidateBuyerAuthenticationObservation()"):
+            src.index("function currentBuyerAuthenticationObservationContext()")
+        ]
+        self.assertIn("buyerAuthenticationObservation = null;", invalidate)
+        self.assertIn("evidenceBuyerAuthObservedInput.checked = false;", invalidate)
+        self.assertIn("clearAuthenticatedFlightEvidenceDocument();", invalidate)
         self.assertLess(
-            segment.index("buyerAuthenticationObservation = null;"),
-            segment.index("evidenceBuyerAuthObservedInput.checked = false;"),
+            invalidate.index("buyerAuthenticationObservation = null;"),
+            invalidate.index("evidenceBuyerAuthObservedInput.checked = false;"),
         )
+
+    def test_session_transition_invalidates_even_the_same_seller_principal(self):
+        src = self.source
+        establish = src[
+            src.index("async function establishAuthenticationSession()"):
+            src.index("function resetAuthentication()")
+        ]
+        reset = src[
+            src.index("function resetAuthentication()"):
+            src.index("function ", src.index("function resetAuthentication()") + 9)
+        ]
+        for block in (establish, reset):
+            self.assertIn("sellerAuthenticationSessionEpoch += 1;", block)
+            self.assertIn("invalidateBuyerAuthenticationObservation();", block)
 
     def test_preview_async_boundary_and_export_recheck_current_observation(self):
         src = self.source
