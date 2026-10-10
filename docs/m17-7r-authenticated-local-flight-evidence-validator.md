@@ -51,6 +51,23 @@ Unknown top-level or nested fields are rejected. This keeps the final acceptance
 record narrow and prevents unrelated runtime material from becoming part of the
 reviewed evidence shape.
 
+### M17.7AB — Strict JSON member uniqueness
+
+Python's permissive default JSON decoder silently keeps only the last value of
+a repeated object member. That could erase a contradictory earlier seller-
+authentication, Agreement-disposition or completion field **before** the exact
+evidence schema is checked. The offline loader now uses a fail-closed parser
+which rejects duplicate JSON object names at every nesting depth with
+`EVIDENCE_JSON_DUPLICATE_KEY`. It also rejects the nonstandard `NaN`,
+`Infinity`, and `-Infinity` tokens with `EVIDENCE_JSON_INVALID`.
+The parser never includes a member name, value or file content in its failure
+message. The existing 64 KiB file bound, strict expected keys and offline
+non-authority remain unchanged.
+
+This validation improvement does **not** authenticate the file's origin or
+turn self-reported login booleans into cryptographic proof. Final acceptance
+still requires the actual operator-observed seller/buyer browser flight.
+
 ## Usage
 
 After an operator-authorized post-P browser flight has produced the non-secret
