@@ -14,9 +14,11 @@ confirmation checked and make the new transaction appear buyer-observed.
 When the evaluator explicitly checks the buyer observation, the Marketplace
 records **in memory only** the currently selected Proposal Record Identity,
 parent Listing Record Identity, exact record-derived buyer principal, and
-active seller session's principal. The context is accepted only if the buyer
-differs from the seller and the currently established seller session matches
-the parent Listing.
+active seller session's principal plus a local seller-session epoch. The context
+is accepted only if the buyer differs from the seller and the currently
+established seller session matches the parent Listing. Every successful
+seller-session establishment or explicit session reset advances the epoch and
+clears the checkbox immediately, even if the same principal logs in again.
 
 Before preview readiness, after the asynchronous projector import, and before
 any explicit evidence download, the browser re-evaluates those four values
