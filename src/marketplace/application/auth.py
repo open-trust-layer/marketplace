@@ -13,6 +13,10 @@ from typing import Any, Protocol
 
 from .authoring import ProductListingAuthoringFields
 from .proposal import BuyerRequestProposalDraft
+from .proposal_acceptance import (
+    MarketplaceProposalAcceptanceAuthoringService,
+    ProposalAcceptancePublicationResult,
+)
 
 
 AUTH_CHALLENGE_BYTES = 32
@@ -476,6 +480,37 @@ class AuthenticatedProposalAuthoringService:
         )
         return self._create_buyer_request_proposal(draft)
 
+class AuthenticatedProposalAcceptanceAuthoringService:
+    """Derive the seller only from one active session before acceptance authoring."""
+
+    def __init__(
+        self,
+        *,
+        auth: MarketplaceApplicationAuthService,
+        authoring: MarketplaceProposalAcceptanceAuthoringService,
+    ) -> None:
+        if type(auth) is not MarketplaceApplicationAuthService:
+            raise TypeError("auth MUST be exact MarketplaceApplicationAuthService")
+        if type(authoring) is not MarketplaceProposalAcceptanceAuthoringService:
+            raise TypeError("authoring MUST be exact MarketplaceProposalAcceptanceAuthoringService")
+        self._auth = auth
+        self._authoring = authoring
+
+    def accept_proposal(
+        self,
+        *,
+        session_token: bytes,
+        proposal_record_id: str,
+        now: int,
+    ) -> ProposalAcceptancePublicationResult:
+        session = self._auth.authenticate_session(
+            session_token=session_token,
+            now=now,
+        )
+        return self._authoring.accept_proposal(
+            seller_principal=session.principal,
+            proposal_record_id=proposal_record_id,
+        )
 
 __all__ = [
     "AUTH_CHALLENGE_BYTES",
@@ -494,6 +529,7 @@ __all__ = [
     "ApplicationSessionView",
     "AuthenticatedProductListingAuthoringService",
     "AuthenticatedProposalAuthoringService",
+    "AuthenticatedProposalAcceptanceAuthoringService",
     "MarketplaceApplicationAuthService",
     "PrincipalBindingVerifier",
     "VerifiedAuthenticationProof",

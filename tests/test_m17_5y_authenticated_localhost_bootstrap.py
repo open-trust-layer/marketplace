@@ -20,6 +20,12 @@ AUTH_WEB_ASSETS = {
     "web/auth_establishment.js": b"auth-establishment",
     "web/auth_ed25519_proof_provider.js": b"auth-proof",
     "web/auth_ed25519_key_creation.js": b"auth-key-creation",
+    "web/agreement_ed25519_assent_provider.js": b"agreement-assent",
+    "web/agreement_assent_client.js": b"agreement-assent-client",
+    "web/proposal_acceptance_client.js": b"proposal-acceptance-client",
+    "web/agreement_publication_client.js": b"agreement-publication-client",
+    "web/fulfillment_completion_client.js": b"fulfillment-completion-client",
+    "web/authenticated_local_flight_evidence.js": b"authenticated-local-flight-evidence",
     "web/auth_bootstrap.js": b"auth-bootstrap",
 }
 AUTH_WEB_MODULES = (
@@ -27,6 +33,12 @@ AUTH_WEB_MODULES = (
     ("/auth_establishment.js", b"auth-establishment"),
     ("/auth_ed25519_proof_provider.js", b"auth-proof"),
     ("/auth_ed25519_key_creation.js", b"auth-key-creation"),
+    ("/agreement_ed25519_assent_provider.js", b"agreement-assent"),
+    ("/agreement_assent_client.js", b"agreement-assent-client"),
+    ("/proposal_acceptance_client.js", b"proposal-acceptance-client"),
+    ("/agreement_publication_client.js", b"agreement-publication-client"),
+    ("/fulfillment_completion_client.js", b"fulfillment-completion-client"),
+    ("/authenticated_local_flight_evidence.js", b"authenticated-local-flight-evidence"),
     ("/auth_bootstrap.js", b"auth-bootstrap"),
 )
 
@@ -266,6 +278,12 @@ class MarketplaceAuthenticatedLocalhostBootstrapTests(unittest.TestCase):
                 "web/auth_establishment.js",
                 "web/auth_ed25519_proof_provider.js",
                 "web/auth_ed25519_key_creation.js",
+                "web/agreement_ed25519_assent_provider.js",
+                "web/agreement_assent_client.js",
+                "web/proposal_acceptance_client.js",
+                "web/agreement_publication_client.js",
+                "web/fulfillment_completion_client.js",
+                "web/authenticated_local_flight_evidence.js",
                 "web/auth_bootstrap.js",
                 "postgres-provider",
                 "plan",

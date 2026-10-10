@@ -1,3 +1,4 @@
+
 "use strict";
 
 const SESSION_TOKEN = /^mkt1_[A-Za-z0-9_-]{43}$/;
@@ -17,18 +18,70 @@ function reviewedApiPath(path) {
   return path;
 }
 
+function reviewedAgreementAssentRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (parts.length < 2 || parts.length > 3 || parts[0].length === 0 || parts[0].length > 1536) {
+    return false;
+  }
+  if (parts[0].includes("?") || parts[0].includes("#")) return false;
+  if (parts[1] !== "assent") return false;
+  if (parts.length === 2) return true;
+  return parts[2] === "preparation" || parts[2] === "status";
+}
+
+function reviewedAgreementPublicationRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (parts.length !== 1 || parts[0].length === 0 || parts[0].length > 1536) {
+    return false;
+  }
+  return !parts[0].includes("?") && !parts[0].includes("#");
+}
+
+function reviewedFulfillmentCompletionRoute(path) {
+  if (!path.startsWith("/api/agreements/")) return false;
+  const parts = path.slice("/api/agreements/".length).split("/");
+  if (
+    parts.length !== 4 ||
+    parts[0].length === 0 ||
+    parts[0].length > 1536 ||
+    parts[1] !== "commitments" ||
+    parts[2].length === 0 ||
+    parts[2].length > 64 ||
+    parts[3] !== "completion-evidence"
+  ) {
+    return false;
+  }
+  if (parts[0].includes("?") || parts[0].includes("#")) return false;
+  if (parts[2].includes("?") || parts[2].includes("#")) return false;
+  return /^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(parts[2]);
+}
+
 function reviewedAuthenticatedRoute(method, path) {
-  if (method === "GET") return path === "/api/auth/session";
+  if (method === "GET") {
+    if (path === "/api/auth/session") return true;
+    if (!path.startsWith("/api/intents/")) return false;
+    const parts = path.slice("/api/intents/".length).split("/");
+    if (parts.length !== 2 || parts[0].length === 0) return false;
+    if (parts[0].includes("?") || parts[0].includes("#")) return false;
+    return parts[1] === "acceptance";
+  }
   if (method !== "POST") return false;
   if (path === "/api/auth/logout") return true;
+  if (path === "/api/authentication-enrollment/nonces") return true;
+  if (path === "/api/authentication-enrollment/evidence") return true;
   if (path === "/api/product-listings") return true;
   if (path === "/api/intents") return true;
+  if (reviewedAgreementAssentRoute(path)) return true;
+  if (reviewedAgreementPublicationRoute(path)) return true;
+  if (reviewedFulfillmentCompletionRoute(path)) return true;
   if (!path.startsWith("/api/intents/")) return false;
   const parts = path.slice("/api/intents/".length).split("/");
   if (parts.length !== 2 || parts[0].length === 0) return false;
   if (parts[0].includes("?") || parts[0].includes("#")) return false;
   const tail = parts[1];
-  return tail === "responses" || tail === "proposals";
+  return tail === "responses" || tail === "proposals" || tail === "acceptance";
 }
 
 class MarketplaceMemorySession {
@@ -138,11 +191,18 @@ async function decodeResponse(response, session) {
   return documentValue;
 }
 
-function createMarketplaceSessionClient(fetchImpl, rawIssuerPrincipal) {
-  if (typeof fetchImpl !== "function" || typeof rawIssuerPrincipal !== "function") {
+function createMarketplaceSessionClient(
+  fetchImpl,
+  rawIssuerPrincipal,
+  session = new MarketplaceMemorySession(),
+) {
+  if (
+    typeof fetchImpl !== "function" ||
+    typeof rawIssuerPrincipal !== "function" ||
+    !(session instanceof MarketplaceMemorySession)
+  ) {
     throw stableClientError("CLIENT_CONFIGURATION_INVALID");
   }
-  const session = new MarketplaceMemorySession();
 
   async function request(path, { method = "GET", body = null } = {}) {
     const reviewedPath = reviewedApiPath(path);
@@ -238,5 +298,7 @@ export {
   createMarketplaceSessionClient,
   productListingForSession,
   proposalForSession,
+  reviewedAgreementPublicationRoute,
+  reviewedFulfillmentCompletionRoute,
   reviewedAuthenticatedRoute,
 };

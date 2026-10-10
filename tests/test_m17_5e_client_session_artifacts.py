@@ -51,10 +51,16 @@ class M175EClientSessionArtifactTests(unittest.TestCase):
         for marker in (
             'path === "/api/auth/session"',
             'path === "/api/auth/logout"',
+            'path === "/api/authentication-enrollment/nonces"',
+            'path === "/api/authentication-enrollment/evidence"',
             'path === "/api/product-listings"',
             'path === "/api/intents"',
             'tail === "responses"',
             'tail === "proposals"',
+            'tail === "acceptance"',
+            'path.startsWith("/api/agreements/")',
+            'parts[1] !== "assent"',
+            'parts[2] === "preparation" || parts[2] === "status"',
             'headers.Authorization = authorization',
         ):
             self.assertIn(marker, text)

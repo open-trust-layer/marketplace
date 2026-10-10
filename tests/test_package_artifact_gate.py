@@ -41,6 +41,16 @@ REQUIRED = {
     "marketplace/__init__.py": b"",
     "marketplace/application/auth_verifier_ed25519.py": b"# reviewed public-key verifier\n",
     "marketplace/application/auth_evidence_trust_ed25519.py": b"# static public evidence trust verifier\n",
+    "marketplace/application/auth_enrollment_authority.py": b"# enrollment authority issuance seam\n",
+    "marketplace/application/auth_enrollment_policy.py": b"# enrollment approval policy gate\n",
+    "marketplace/application/auth_enrollment_coordination.py": b"# authenticated enrollment coordination\n",
+    "marketplace/application/auth_enrollment_nonce.py": b"# atomic enrollment nonce authority\n",
+    "marketplace/application/auth_enrollment_http.py": b"# authenticated enrollment HTTP carrier\n",
+    "marketplace/application/auth_enrollment_http_composition.py": b"# static enrollment HTTP composition\n",
+    "marketplace/application/auth_enrollment_asgi_composition.py": b"# enrollment-aware authenticated ASGI composition\n",
+    "marketplace/application/auth_enrollment_startup_composition.py": b"# authenticated enrollment startup overlay\n",
+    "marketplace/application/auth_enrollment_launch.py": b"# inert enrollment-aware loopback launch plan\n",
+    "marketplace/application/auth_enrollment_runtime_server.py": b"# explicit enrollment-aware foreground runtime seam\n",
     "marketplace/application/auth_asgi_composition.py": b"# static authenticated ASGI composition\n",
     "marketplace/application/auth_http_composition.py": b"# static authenticated HTTP composition\n",
     "marketplace/application/auth_launch.py": b"# inert authenticated loopback launch plan\n",
@@ -54,6 +64,7 @@ REQUIRED = {
     "marketplace/application/auth_trust_anchor_manifest.py": b"# canonical static trust-anchor manifest intake\n",
     "marketplace/application/auth_verification_method_snapshot.py": b"# immutable verification-method snapshot\n",
     "marketplace/application/auth_verification_method_evidence.py": b"# canonical verification-method evidence intake\n",
+    "marketplace/application/fulfillment_completion_publication.py": b"# unselected fulfillment completion publication service\n",
     "marketplace/application/uvicorn_provider.py": b"# inert reviewed provider adapter\n",
     "marketplace/runtime/__init__.py": b"",
     "marketplace/runtime/composition.py": b"# runtime\n",
@@ -74,6 +85,19 @@ REQUIRED = {
     "marketplace/runtime/inbound_tcp_socket_factory.py": b"# bounded Python TCP socket factory\n",
     "marketplace/reference/__init__.py": b"",
     "marketplace/reference/auth_application_v1.py": b"# inert reference authenticated launch composition\n",
+    "marketplace/reference/auth_enrollment_attestor_ed25519_v1.py": b"# unselected purpose-specific Ed25519 enrollment attestor\n",
+    "marketplace/reference/auth_enrollment_attestor_keyfile_v1.py": b"# bounded local Ed25519 enrollment-attestor keyfile intake\\n",
+    "marketplace/reference/auth_enrollment_launch_v1.py": b"# inert reference authentication enrollment launch selection\n",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_v1.py": b"# inert Q+R-to-O reference enrollment composition\\n",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_v1.py": b"# inert T-to-S reference enrollment composition\\n",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_attestor_v1.py": b"# existing T-to-S-to-U composition\\n",
+    "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_keyfile_v1.py": b"# X-to-Y-to-U keyfile composition\\n",
+    "marketplace/reference/auth_enrollment_runtime_v1.py": b"# unselected reference enrollment runtime seam\\n",
+    "marketplace/reference/auth_enrollment_runtime_uvicorn_v1.py": b"# unselected reference enrollment Uvicorn runtime selection\\n",
+    "marketplace/reference/auth_enrollment_nonce_material_v1.py": b"# unselected reference enrollment nonce material source\n",
+    "marketplace/reference/auth_enrollment_nonce_authority_v1.py": b"# unselected reference enrollment nonce authority composition\n",
+    "marketplace/reference/auth_enrollment_approval_policy_v1.py": b"# unselected exact-binding reference enrollment approval policy\n",
+    "marketplace/reference/fulfillment_completion_evidence_v1.py": b"# reference fulfillment completion evidence authoring\n",
     "marketplace/reference/record_v1.py": b"# record\n",
     "marketplace/reference/matching_v1.py": b"# matching\n",
     "marketplace/reference/federation_v1.py": b"# federation\n",
@@ -174,6 +198,56 @@ class PackageArtifactGateTests(unittest.TestCase):
             "marketplace/application/auth_evidence_trust_ed25519.py"
         )
 
+    def test_missing_auth_enrollment_authority_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_authority.py"
+        )
+
+    def test_missing_auth_enrollment_policy_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_policy.py"
+        )
+
+    def test_missing_auth_enrollment_coordination_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_coordination.py"
+        )
+
+    def test_missing_auth_enrollment_nonce_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_nonce.py"
+        )
+
+    def test_missing_auth_enrollment_http_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_http.py"
+        )
+
+    def test_missing_auth_enrollment_http_composition_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_http_composition.py"
+        )
+
+    def test_missing_auth_enrollment_asgi_composition_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_asgi_composition.py"
+        )
+
+    def test_missing_auth_enrollment_startup_composition_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_startup_composition.py"
+        )
+
+    def test_missing_auth_enrollment_launch_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_launch.py"
+        )
+
+    def test_missing_auth_enrollment_runtime_server_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/auth_enrollment_runtime_server.py"
+        )
+
     def test_missing_auth_asgi_composition_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/application/auth_asgi_composition.py"
@@ -229,6 +303,11 @@ class PackageArtifactGateTests(unittest.TestCase):
             "marketplace/application/auth_verification_method_evidence.py"
         )
 
+    def test_missing_fulfillment_completion_publication_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/application/fulfillment_completion_publication.py"
+        )
+
     def test_missing_uvicorn_provider_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing("marketplace/application/uvicorn_provider.py")
 
@@ -277,6 +356,71 @@ class PackageArtifactGateTests(unittest.TestCase):
     def test_missing_auth_application_reference_member_is_rejected(self):
         self._assert_required_member_rejected_when_missing(
             "marketplace/reference/auth_application_v1.py"
+        )
+
+    def test_missing_auth_enrollment_attestor_ed25519_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_attestor_ed25519_v1.py"
+        )
+
+    def test_missing_auth_enrollment_attestor_keyfile_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_attestor_keyfile_v1.py"
+        )
+
+    def test_missing_auth_enrollment_approval_policy_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_approval_policy_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_policy_nonce_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_policy_nonce_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_policy_nonce_ed25519_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_policy_nonce_ed25519_attestor_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_attestor_v1.py"
+        )
+
+    def test_missing_auth_enrollment_launch_policy_nonce_ed25519_keyfile_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_launch_policy_nonce_ed25519_keyfile_v1.py"
+        )
+
+    def test_missing_auth_enrollment_runtime_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_runtime_v1.py"
+        )
+
+    def test_missing_auth_enrollment_runtime_uvicorn_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_runtime_uvicorn_v1.py"
+        )
+
+    def test_missing_auth_enrollment_nonce_material_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_nonce_material_v1.py"
+        )
+
+    def test_missing_auth_enrollment_nonce_authority_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/auth_enrollment_nonce_authority_v1.py"
+        )
+
+    def test_missing_fulfillment_completion_evidence_reference_member_is_rejected(self):
+        self._assert_required_member_rejected_when_missing(
+            "marketplace/reference/fulfillment_completion_evidence_v1.py"
         )
 
     def test_missing_transport_json_reference_member_is_rejected(self):

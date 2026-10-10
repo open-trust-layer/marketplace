@@ -1,0 +1,116 @@
+# M17.7X/Y/Z — Local authenticated-provisioning lease preflight
+
+Profile: `MARKETPLACE_LOCAL_AUTHENTICATION_LEASE_PREFLIGHT_V1`
+
+Linked acceptance: #510.
+
+## Background
+
+The operator-authorized M17.7V localhost acceptance preflight originally failed with
+the broad error `M17_5Y_COMPOSITION_FAILED`. Read-only tracing identified that the
+reused, correctly signed local development identity evidence was **expired**. The
+full source composition refused it as designed. This is not justification to
+relax authentication verification.
+
+M17.7X adds a **separate, deliberate, source-only** preflight to identify this
+condition before starting or stopping a service. M17.7Y also checks **each signed
+identity verification-method interval**, because seller and buyer methods may
+have shorter validity windows than the envelope itself. M17.7Z adds an optional
+two-party readiness guard requiring **two distinct signed controllers**, not
+merely two verification methods controlled by the same principal. None of these
+changes modifies runtime authentication behavior or bootstrap failure semantics.
+
+## Usage
+
+From a clean, reviewed Marketplace checkout with its pinned Python dependencies
+and `src` on the Python module search path:
+
+```powershell
+$env:PYTHONPATH = "src"
+python tools/marketplace_authentication_lease_preflight.py `
+  --authentication-provisioning-directory "C:\MarketplaceRuntime\auth-0a621c4-flight" `
+  --minimum-remaining-seconds 1800 `
+  --minimum-distinct-principals 2
+```
+
+The path above is an illustrative already-known local development provisioning
+directory, not a new authority or embedded secret. The operator must use their
+own explicitly approved **absolute** local path and an appropriately reviewed
+lease threshold. The default threshold is **1,800 seconds** (30 minutes).
+The default distinct-controller minimum is 1 for backwards compatibility;
+use `--minimum-distinct-principals 2` for seller/buyer acceptance readiness.
+
+The diagnostic uses the **existing canonical bounded loader** and exact
+Ed25519 trust-anchor signature verifier. It checks that the signed claims hash
+and authority agree with the verifier result, and finally exercises the
+existing verification-method projection at the sampled clock time.
+
+Successful output has the form:
+
+```text
+status=PASS lease_remaining_seconds=2400 identities=2 signature_verified=true server_invoked=false postgres_invoked=false
+```
+
+The remaining time is the **minimum usable validity across the signed envelope
+and all identities** (not simply the envelope expiry). The values depend on the
+verified local evidence. An invalid invocation prints only
+`status=FAIL code=<stable-code>` and exits nonzero. Failure codes are:
+
+- `PROVISIONING_DIRECTORY_INVALID` for non-absolute, empty, or invalid path shape.
+- `TIME_INVALID` or `MINIMUM_REMAINING_INVALID` for invalid guard parameters.
+- `PROVISIONING_INVALID` for missing, malformed, unverifiable, or invalidly
+  signed evidence, without reflection of the underlying private error.
+- `LEASE_NOT_YET_VALID` for verified claims whose lease has not started.
+- `LEASE_EXPIRED` for verified claims at or after the lease end.
+- `LEASE_TOO_SHORT` for verified current evidence with less validity remaining
+  than the chosen threshold.
+- `IDENTITY_NOT_YET_VALID` when at least one signed verification method is not
+  yet valid at the sampled clock time.
+- `IDENTITY_EXPIRED` when a signed verification method has already expired
+  even though the overall signed envelope is still current.
+- `IDENTITY_LEASE_TOO_SHORT` when an identity's signed validity expires
+  sooner than the required flight-duration threshold.
+- `MINIMUM_PRINCIPALS_INVALID` when the requested distinct count is invalid.
+- `DISTINCT_PRINCIPALS_INSUFFICIENT` when the signed, valid methods have fewer
+  distinct controller principals than the explicitly requested minimum.
+
+The expiry classification occurs **only after signature verification**, preventing
+unsigned or tampered claims from being treated as a routine renewal situation.
+The tool also exercises the existing exact principal/method binding verifier
+at the sampled time for every signed identity. It fails closed if any identity
+is unusable, without revealing which principal failed. The distinct-controller
+guard is evaluated after all signed method leases and principal/method bindings
+pass. No controller names or method IDs are emitted.
+The script never prints a principal, public key, claims body, attestation,
+private key, token, DSN, or provisioning path.
+
+## Capabilities and non-authority
+
+- **Risk:** LOW, bounded local read-only authentication material diagnostics.
+- No issuance, renewal, persistence, database connection, listener, process
+  restart, browser automation, transport, payment, or public deployment.
+- No external network call or new dependency; existing pinned authentication
+  verification dependency remains required.
+- No implicit permission to use an expired lease or to bypass cryptographic
+  verification. Renewal needs separate approved provisioning handling.
+- Requiring two distinct signed controllers is an optional prerequisite for
+  two-party readiness, not evidence of successful seller/buyer login or roles.
+- The diagnostic is an *additional prerequisite*; PASS does not prove database
+  availability, server readiness, buyer/seller authentication, completed
+  Agreement/fulfillment, or accepted evidence JSON.
+- The script does not supersede the required clean exact merged-main checkout,
+  merged-main CI, full 14-asset parity check, browser flight, or offline M17.7R
+  evidence validator.
+- For accepted local flight, verify sufficient remaining lease time **immediately
+  before runtime activation**, and repeat if the lease approaches expiry.
+
+## Recovery
+
+A failure should stop the planned local flight *before* stopping any existing
+Marketplace service. Renew the local development signed evidence through the
+separately approved controlled generator, use an isolated directory and re-run
+this check; do not modify or weaken the clock or signature verifier.
+
+There are no runtime changes to roll back. Source-only rollback is a revert of
+this tool, test and documentation change. The existing guarded bootstrap remains
+unchanged throughout.

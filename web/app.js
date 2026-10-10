@@ -1,3 +1,4 @@
+
 "use strict";
 
 window.MarketplaceI18n = (() => {
@@ -122,6 +123,74 @@ window.MarketplaceI18n = (() => {
     "acceptance.parent": ["Parent listing: {recordId}", "\u0420\u043e\u0434\u0438\u0442\u0435\u043b\u044c\u0441\u043a\u043e\u0435 \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.proposal": ["Proposal: {recordId}", "\u041f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435: {recordId}"],
     "acceptance.button": ["Accept Proposal", "\u041f\u0440\u0438\u043d\u044f\u0442\u044c \u043f\u0440\u0435\u0434\u043b\u043e\u0436\u0435\u043d\u0438\u0435"],
+    "acceptance.ready": ["Authenticated seller matches this listing. Acceptance will publish only after the explicit button click.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043f\u0440\u043e\u0434\u0430\u0432\u0435\u0446 \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u044d\u0442\u0438\u043c \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u0435\u043c. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u0431\u0443\u0434\u0435\u0442 \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u0441\u043b\u0435 \u044f\u0432\u043d\u043e\u0433\u043e \u043d\u0430\u0436\u0430\u0442\u0438\u044f \u043a\u043d\u043e\u043f\u043a\u0438."],
+    "acceptance.authMismatch": ["The authenticated principal is not the seller of this listing. Acceptance remains disabled.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 principal \u043d\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c \u044d\u0442\u043e\u0433\u043e \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043e\u0442\u043a\u043b\u044e\u0447\u0451\u043d\u043d\u044b\u043c."],
+    "acceptance.accepting": ["Publishing the exact seller acceptance\u2026", "\u041f\u0443\u0431\u043b\u0438\u043a\u0443\u0435\u043c \u0442\u043e\u0447\u043d\u043e\u0435 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u043e\u043c\u2026"],
+    "acceptance.accepted": ["Acceptance {recordId} published ({disposition}; local change sequence {changeSeq}).", "\u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 {recordId} \u043e\u043f\u0443\u0431\u043b\u0438\u043a\u043e\u0432\u0430\u043d\u043e ({disposition}; \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0430\u044f \u043f\u043e\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u043d\u043e\u0441\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 {changeSeq})."],
+    "acceptance.failed": ["Acceptance failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438\u043d\u044f\u0442\u0438\u044f: {code}"],
+    "agreementStatus.title": ["Agreement formation", "\u0424\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 \u0441\u043e\u0433\u043b\u0430\u0448\u0435\u043d\u0438\u044f"],
+    "agreementStatus.waitingAcceptance": ["Publish or resolve seller acceptance first. No Agreement status request has been made.", "Сначала опубликуйте или разрешите принятие продавцом. Запрос статуса Agreement ещё не выполнялся."],
+    "agreementStatus.resolveReady": ["Acceptance identity is not in this session. Resolve the exact published acceptance explicitly.", "Идентификатора принятия нет в этой сессии. Явно разрешите точное опубликованное принятие."],
+    "agreementStatus.resolving": ["Resolving the exact published Proposal acceptance\u2026", "Разрешаем точное опубликованное принятие Proposal\u2026"],
+    "agreementStatus.resolveFailed": ["Acceptance resolution failed: {code}", "Ошибка разрешения принятия: {code}"],
+    "agreementStatus.authRequired": ["Authentication is required to inspect Agreement formation.", "\u0414\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement \u0442\u0440\u0435\u0431\u0443\u0435\u0442\u0441\u044f \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f."],
+    "agreementStatus.ready": ["Acceptance {recordId} is available. Check current Agreement formation status explicitly.", "\u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 {recordId} \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e. \u042f\u0432\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0442\u0435\u043a\u0443\u0449\u0438\u0439 \u0441\u0442\u0430\u0442\u0443\u0441 \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement."],
+    "agreementStatus.check": ["Check Agreement formation", "\u041f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u0435 Agreement"],
+    "agreementStatus.sign": ["Sign Agreement assent", "\u041f\u043e\u0434\u043f\u0438\u0441\u0430\u0442\u044c assent Agreement"],
+    "agreementStatus.checking": ["Checking current Agreement formation evidence\u2026", "\u041f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c \u0442\u0435\u043a\u0443\u0449\u0438\u0435 evidence \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f Agreement\u2026"],
+    "agreementStatus.failed": ["Agreement status failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 Agreement: {code}"],
+    "agreementStatus.agreement": ["Agreement candidate: {recordId}", "\u041a\u0430\u043d\u0434\u0438\u0434\u0430\u0442 Agreement: {recordId}"],
+    "agreementStatus.evidence": ["Formation evidence: {evidence}", "Evidence \u0444\u043e\u0440\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f: {evidence}"],
+    "agreementStatus.covered": ["Covered parties: {principals}", "\u041f\u043e\u043a\u0440\u044b\u0442\u044b\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
+    "agreementStatus.missing": ["Missing parties: {principals}", "\u041d\u0435\u0434\u043e\u0441\u0442\u0430\u044e\u0449\u0438\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u044b: {principals}"],
+    "agreementAssent.waitingStatus": ["Check current Agreement formation before signing.", "Перед подписанием проверьте текущий статус формирования Agreement."],
+    "agreementAssent.stale": ["Formation status is stale for the current acceptance. Check Agreement formation again.", "Статус формирования устарел для текущего принятия. Проверьте формирование Agreement ещё раз."],
+    "agreementAssent.notParty": ["Authenticated principal is not a required Agreement party. Signing remains disabled.", "Аутентифицированный principal не является требуемой стороной Agreement. Подписание отключено."],
+    "agreementAssent.alreadyCovered": ["Authenticated principal already has reviewed assent evidence. Signing remains disabled.", "Для аутентифицированного principal уже есть проверенное evidence согласия. Подписание отключено."],
+    "agreementAssent.ready": ["Authenticated principal is a required missing party. Signing will occur only after this explicit button click.", "Аутентифицированный principal является требуемой отсутствующей стороной. Подписание произойдёт только после явного нажатия этой кнопки."],
+    "agreementAssent.signing": ["Creating and submitting Agreement assent for the exact reviewed candidate\u2026", "Создаём и отправляем согласие Agreement для точно проверенного кандидата\u2026"],
+    "agreementAssent.submitted": ["Assent for Agreement {recordId} submitted ({disposition}; expiry value {expiresAt}). Check formation again to refresh party coverage.", "Согласие для Agreement {recordId} отправлено ({disposition}; значение срока действия {expiresAt}). Проверьте формирование ещё раз, чтобы обновить покрытие сторон."],
+    "agreementAssent.failed": ["Agreement assent failed: {code}", "Ошибка согласия Agreement: {code}"],
+    "agreementPublication.eyebrow": ["Explicit completion evidence", "Явные evidence завершения"],
+    "agreementPublication.title": ["Agreement publication & delivery", "Публикация Agreement и доставка"],
+    "agreementPublication.button": ["Publish Agreement", "Опубликовать Agreement"],
+    "agreementPublication.waitingFormation": ["Check current Agreement formation first. Publication stays disabled.", "Сначала проверьте текущее формирование Agreement. Публикация остаётся отключённой."],
+    "agreementPublication.incomplete": ["Agreement publication requires sufficient formation evidence with no missing parties.", "Для публикации Agreement требуется достаточное evidence формирования без отсутствующих сторон."],
+    "agreementPublication.authRequired": ["Authentication is required to publish the Agreement.", "Для публикации Agreement требуется аутентификация."],
+    "agreementPublication.notCovered": ["The authenticated principal is not a covered required Agreement party. Publication remains disabled.", "Аутентифицированный principal не является покрытой обязательной стороной Agreement. Публикация остаётся отключённой."],
+    "agreementPublication.ready": ["Formation evidence is sufficient. Publish the exact Agreement only after this explicit button click.", "Evidence формирования достаточно. Опубликуйте точный Agreement только явным нажатием этой кнопки."],
+    "agreementPublication.publishing": ["Publishing the exact reviewed Agreement…", "Публикуем точный проверенный Agreement…"],
+    "agreementPublication.published": ["Agreement {recordId} published ({disposition}; local change sequence {changeSeq}).", "Agreement {recordId} опубликован ({disposition}; локальная последовательность изменений {changeSeq})."],
+    "agreementPublication.failed": ["Agreement publication failed: {code}", "Ошибка публикации Agreement: {code}"],
+    "fulfillment.button": ["Claim delivery complete", "Заявить о завершении доставки"],
+    "fulfillment.note": ["Completion creates seller-attributed evidence only. It does not prove universal truth or trigger payment or settlement.", "Завершение создаёт только evidence, атрибутированное продавцу. Оно не доказывает универсальную истину и не запускает оплату или расчёт."],
+    "fulfillment.waitingPublication": ["Publish the Agreement first. No completion evidence has been authored.", "Сначала опубликуйте Agreement. Evidence завершения ещё не создано."],
+    "fulfillment.parentRequired": ["Open this Proposal from its exact parent listing before claiming delivery complete.", "Откройте этот Proposal из его точного родительского объявления перед заявлением о завершении доставки."],
+    "fulfillment.authRequired": ["Authenticate the listing seller before claiming delivery complete.", "Аутентифицируйте продавца объявления перед заявлением о завершении доставки."],
+    "fulfillment.sellerRequired": ["Only the exact listing seller can author the reviewed claimed-complete performance evidence.", "Только точный продавец объявления может создать проверенное evidence заявленного завершения исполнения."],
+    "fulfillment.ready": ["Authenticated seller matches the delivery commitment. Completion evidence will be published only after this explicit button click.", "Аутентифицированный продавец соответствует обязательству доставки. Evidence завершения будет опубликовано только после явного нажатия этой кнопки."],
+    "fulfillment.publishing": ["Publishing seller-attributed claimed-complete performance evidence…", "Публикуем атрибутированное продавцу evidence заявленного завершения исполнения…"],
+    "fulfillment.published": ["Completion evidence {recordId} published ({disposition}; local change sequence {changeSeq}). This remains an attributable claim, not universal truth.", "Evidence завершения {recordId} опубликовано ({disposition}; локальная последовательность изменений {changeSeq}). Это остаётся атрибутированным заявлением, а не универсальной истиной."],
+    "fulfillment.failed": ["Completion evidence failed: {code}", "Ошибка evidence завершения: {code}"],
+    "evidence.eyebrow": ["Evaluator evidence preview", "Предпросмотр evidence для приёмки"],
+    "evidence.title": ["Authenticated local-flight evidence", "Evidence аутентифицированного локального прогона"],
+    "evidence.mainCommit": ["Exact merged main commit", "Точный commit объединённой main"],
+    "evidence.ciRun": ["Successful CI run number", "Номер успешного CI запуска"],
+    "evidence.buyerObserved": ["Buyer authentication was separately observed in this local flight", "Аутентификация покупателя была отдельно подтверждена в этом локальном прогоне"],
+    "evidence.prepare": ["Prepare non-secret evidence preview", "Подготовить предпросмотр несекретного evidence"],
+    "evidence.download": ["Download evidence JSON", "Скачать JSON evidence"],
+    "evidence.waitingCompletion": ["Complete authenticated Agreement publication and seller delivery evidence first.", "Сначала завершите аутентифицированную публикацию Agreement и evidence доставки продавца."],
+    "evidence.loopbackRequired": ["Evidence preview requires the reviewed 127.0.0.1 loopback origin.", "Для предпросмотра evidence требуется проверенный loopback-адрес 127.0.0.1."],
+    "evidence.metadataRequired": ["Enter the exact merged main commit and successful CI run number.", "Введите точный commit объединённой main и номер успешного CI запуска."],
+    "evidence.buyerRequired": ["Confirm the separately observed buyer authentication before preparing evidence.", "Перед подготовкой evidence подтвердите отдельно наблюдавшуюся аутентификацию покупателя."],
+    "evidence.ready": ["Reviewed non-secret evidence is ready to preview after an explicit click.", "Проверенное несекретное evidence готово к предпросмотру после явного нажатия."],
+    "evidence.preparing": ["Preparing non-secret evidence preview…", "Подготавливаем предпросмотр несекретного evidence…"],
+    "evidence.prepared": ["Non-secret evidence preview prepared. Validate this exact JSON offline with the M17.7R validator.", "Предпросмотр несекретного evidence подготовлен. Проверьте этот точный JSON офлайн валидатором M17.7R."],
+    "evidence.downloaded": ["Non-secret evidence JSON downloaded locally. Validate that exact file offline with M17.7R.", "Несекретный JSON evidence скачан локально. Проверьте именно этот файл офлайн валидатором M17.7R."],
+    "evidence.exportStale": ["Evidence changed before export. Prepare a fresh preview before downloading.", "Evidence изменилось перед экспортом. Подготовьте новый предпросмотр перед скачиванием."],
+    "evidence.exportFailed": ["Evidence download failed: {code}", "Ошибка скачивания evidence: {code}"],
+    "evidence.failed": ["Evidence preview failed: {code}", "Ошибка предпросмотра evidence: {code}"],
+    "evidence.note": ["Preview stays memory-only unless you explicitly download this non-secret JSON. No clipboard, upload, payment, deployment, or public-network action occurs.", "Предпросмотр остаётся только в памяти, пока вы явно не скачаете этот несекретный JSON. Не выполняются действия с буфером обмена, загрузкой в сеть, платежами, развёртыванием или публичной сетью."],
     "auth.eyebrow": ["Authenticated localhost", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 localhost"],
     "auth.title": ["Seller authentication", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430"],
     "auth.inactive": ["Inactive", "\u041d\u0435\u0430\u043a\u0442\u0438\u0432\u043d\u043e"],
@@ -140,7 +209,7 @@ window.MarketplaceI18n = (() => {
     "auth.ready": ["Authentication module ready. Generate one browser key.", "\u041c\u043e\u0434\u0443\u043b\u044c \u0433\u043e\u0442\u043e\u0432. \u0421\u043e\u0437\u0434\u0430\u0439\u0442\u0435 \u043e\u0434\u0438\u043d \u043a\u043b\u044e\u0447 \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430."],
     "auth.keyReady": ["Browser key created. Keep this page open. Provision the public key and separately restart/relaunch authenticated localhost to load that evidence, then enter the bound principal and verification method. Reloading this page destroys the private key.", "Ключ браузера создан. Не закрывайте эту страницу. Добавьте публичный ключ и отдельно перезапустите authenticated localhost, чтобы загрузить эти evidence; затем введите связанные principal и verification method. Перезагрузка этой страницы уничтожит закрытый ключ."],
     "auth.establishing": ["Establishing authenticated session\u2026", "\u0421\u043e\u0437\u0434\u0430\u0451\u043c \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u0443\u044e \u0441\u0435\u0441\u0441\u0438\u044e\u2026"],
-    "auth.active": ["Authenticated seller session established for {principal}. Proposal acceptance is still disabled.", "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 {principal} \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 Proposal \u043f\u043e\u043a\u0430 \u043e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e."],
+    "auth.active": ["Authenticated seller session established for {principal}. Proposal acceptance is available only when the selected listing seller matches this principal.", "\u0421\u0435\u0441\u0441\u0438\u044f \u043f\u0440\u043e\u0434\u0430\u0432\u0446\u0430 {principal} \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u043e\u0432\u0430\u043d\u0430. \u041f\u0440\u0438\u043d\u044f\u0442\u0438\u0435 Proposal \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e \u0442\u043e\u043b\u044c\u043a\u043e \u0435\u0441\u043b\u0438 \u043f\u0440\u043e\u0434\u0430\u0432\u0435\u0446 \u0432\u044b\u0431\u0440\u0430\u043d\u043d\u043e\u0433\u043e \u043e\u0431\u044a\u044f\u0432\u043b\u0435\u043d\u0438\u044f \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0435\u0442 \u0441 \u044d\u0442\u0438\u043c principal."] ,
     "auth.sessionActive": ["Active: {principal}", "\u0410\u043a\u0442\u0438\u0432\u043d\u0430: {principal}"],
     "auth.failed": ["Authentication failed: {code}", "\u041e\u0448\u0438\u0431\u043a\u0430 \u0430\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u0438: {code}"],
     "auth.resetDone": ["In-memory authentication reset. No key or session remains referenced by this page.", "\u0410\u0443\u0442\u0435\u043d\u0442\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f \u0432 \u043f\u0430\u043c\u044f\u0442\u0438 \u0441\u0431\u0440\u043e\u0448\u0435\u043d\u0430. \u0421\u0442\u0440\u0430\u043d\u0438\u0446\u0430 \u0431\u043e\u043b\u044c\u0448\u0435 \u043d\u0435 \u0445\u0440\u0430\u043d\u0438\u0442 \u0441\u0441\u044b\u043b\u043e\u043a \u043d\u0430 \u043a\u043b\u044e\u0447 \u0438\u043b\u0438 \u0441\u0435\u0441\u0441\u0438\u044e."],
@@ -167,6 +236,10 @@ window.MarketplaceI18n = (() => {
     "mvp-flight-verification", "mvp-flight-completed-at", "mvp-flight-audit", "create-status", "response-status",
     "create-price-preview", "create-quantity-preview", "create-location-preview", "create-readiness", "proposal-readiness",
     "proposal-acceptance-status", "proposal-acceptance-seller", "proposal-acceptance-parent", "proposal-acceptance-proposal",
+    "agreement-formation-status", "agreement-formation-agreement", "agreement-formation-evidence",
+    "agreement-formation-covered", "agreement-formation-missing", "agreement-assent-status",
+    "agreement-publication-status", "fulfillment-completion-status",
+    "authenticated-flight-evidence-status", "authenticated-flight-evidence-json",
     "auth-session-state", "auth-browser-public-key", "auth-evidence-public-key", "auth-status",
   ]);
   let language = "en";
@@ -279,6 +352,8 @@ const API_SYNC = "/api/sync";
 const API_MVP_FLIGHT = "/api/mvp-flight";
 const RESPONSES_SUFFIX = "/responses";
 const PROPOSALS_SUFFIX = "/proposals";
+const SELLER_DELIVERY_COMMITMENT_ID = "seller-delivery";
+const CLAIMED_COMPLETE_PERFORMANCE = "CLAIMED_COMPLETE_PERFORMANCE";
 const PAGE_LIMIT = 64;
 const SYNC_LIMIT = 64;
 const MAX_SYNC_PAGES = 4;
@@ -333,6 +408,25 @@ const state = {
   responseLoading: false,
   recentProposalId: null,
   recentProposalParentId: null,
+  proposalAcceptanceResults: new Map(),
+  proposalAcceptanceErrors: new Map(),
+  proposalAcceptancePending: new Set(),
+  proposalAcceptanceResolutionResults: new Map(),
+  proposalAcceptanceResolutionErrors: new Map(),
+  proposalAcceptanceResolutionPending: new Set(),
+  agreementFormationResults: new Map(),
+  agreementFormationAcceptanceIds: new Map(),
+  agreementFormationErrors: new Map(),
+  agreementFormationPending: new Set(),
+  agreementAssentResults: new Map(),
+  agreementAssentErrors: new Map(),
+  agreementAssentPending: new Set(),
+  agreementPublicationResults: new Map(),
+  agreementPublicationErrors: new Map(),
+  agreementPublicationPending: new Set(),
+  fulfillmentCompletionResults: new Map(),
+  fulfillmentCompletionErrors: new Map(),
+  fulfillmentCompletionPending: new Set(),
   responseRequestSerial: 0,
   detailRequestSerial: 0,
   mvpFlightDocument: null,
@@ -361,6 +455,31 @@ const proposalAcceptanceSeller = byId("proposal-acceptance-seller");
 const proposalAcceptanceParent = byId("proposal-acceptance-parent");
 const proposalAcceptanceProposal = byId("proposal-acceptance-proposal");
 const acceptProposalButton = byId("accept-proposal");
+const agreementFormationHandoff = byId("agreement-formation-handoff");
+const agreementFormationStatus = byId("agreement-formation-status");
+const agreementFormationAgreement = byId("agreement-formation-agreement");
+const agreementFormationEvidence = byId("agreement-formation-evidence");
+const agreementFormationCovered = byId("agreement-formation-covered");
+const agreementFormationMissing = byId("agreement-formation-missing");
+const agreementAssentStatus = byId("agreement-assent-status");
+const resolveProposalAcceptanceButton = byId("resolve-proposal-acceptance");
+const checkAgreementFormationButton = byId("check-agreement-formation");
+const signAgreementAssentButton = byId("sign-agreement-assent");
+const agreementPublicationCompletionHandoff = byId("agreement-publication-completion-handoff");
+const agreementPublicationStatus = byId("agreement-publication-status");
+const publishAgreementButton = byId("publish-agreement");
+const fulfillmentCompletionStatus = byId("fulfillment-completion-status");
+const claimDeliveryCompleteButton = byId("claim-delivery-complete");
+const evidenceMainCommitInput = byId("evidence-main-commit");
+const evidenceCiRunNumberInput = byId("evidence-ci-run-number");
+const evidenceBuyerAuthObservedInput = byId("evidence-buyer-auth-observed");
+const prepareAuthenticatedFlightEvidenceButton = byId("prepare-authenticated-flight-evidence");
+const downloadAuthenticatedFlightEvidenceButton = byId("download-authenticated-flight-evidence");
+const authenticatedFlightEvidenceStatus = byId("authenticated-flight-evidence-status");
+const authenticatedFlightEvidenceJson = byId("authenticated-flight-evidence-json");
+let authenticatedFlightEvidenceDocument = null;
+let buyerAuthenticationObservation = null;
+let sellerAuthenticationSessionEpoch = 0;
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -423,6 +542,16 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
     throw stableClientError(typeof code === "string" ? code : `HTTP_${response.status}`);
   }
   return documentValue;
+}
+
+function structuredAuthoringSession() {
+  if (authBootstrap === null) return null;
+  const snapshot = authBootstrap.state();
+  if (!snapshot.active) return null;
+  return Object.freeze({
+    principal: snapshot.principal,
+    client: authBootstrap.structuredAuthoringClient(),
+  });
 }
 
 function authUriLooksReady(value) {
@@ -504,7 +633,21 @@ async function establishAuthenticationSession() {
       authPrincipalInput.value,
       authVerificationMethodInput.value,
     );
+    sellerAuthenticationSessionEpoch += 1;
+    invalidateBuyerAuthenticationObservation();
+    state.proposalAcceptanceResolutionResults.clear();
+    state.proposalAcceptanceResolutionErrors.clear();
+    state.proposalAcceptanceResolutionPending.clear();
+    state.agreementFormationResults.clear();
+    state.agreementFormationAcceptanceIds.clear();
+    state.agreementFormationErrors.clear();
+    state.agreementFormationPending.clear();
+    state.agreementAssentResults.clear();
+    state.agreementAssentErrors.clear();
+    state.agreementAssentPending.clear();
+    clearAgreementPublicationCompletionState();
     setAuthStatus("auth.active", { principal: established.principal }, "success");
+    renderDetail();
   } catch (error) {
     setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
@@ -513,11 +656,42 @@ async function establishAuthenticationSession() {
 function resetAuthentication() {
   if (authBootstrap === null) return;
   authBootstrap.reset();
+  sellerAuthenticationSessionEpoch += 1;
+  invalidateBuyerAuthenticationObservation();
+  state.proposalAcceptanceResolutionResults.clear();
+  state.proposalAcceptanceResolutionErrors.clear();
+  state.proposalAcceptanceResolutionPending.clear();
+  state.agreementFormationResults.clear();
+  state.agreementFormationAcceptanceIds.clear();
+  state.agreementFormationErrors.clear();
+  state.agreementFormationPending.clear();
+  state.agreementAssentResults.clear();
+  state.agreementAssentErrors.clear();
+  state.agreementAssentPending.clear();
+  clearAgreementPublicationCompletionState();
   authBrowserPublicKeyValue = null;
   authEvidencePublicKeyValue = null;
   authPrincipalInput.value = "";
   authVerificationMethodInput.value = "";
   setAuthStatus("auth.resetDone");
+  renderDetail();
+}
+
+function clearAgreementPublicationCompletionState(proposalId = null) {
+  clearAuthenticatedFlightEvidenceDocument();
+  const collections = [
+    state.agreementPublicationResults,
+    state.agreementPublicationErrors,
+    state.agreementPublicationPending,
+    state.fulfillmentCompletionResults,
+    state.fulfillmentCompletionErrors,
+    state.fulfillmentCompletionPending,
+  ];
+  if (proposalId === null) {
+    for (const collection of collections) collection.clear();
+    return;
+  }
+  for (const collection of collections) collection.delete(proposalId);
 }
 
 function requireRecordId(value) {
@@ -852,8 +1026,9 @@ function renderProposalAcceptanceHandoff(record) {
   proposalAcceptanceProposal.textContent = "";
   const proposal = proposalResponseSummary(record);
   if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
   proposalAcceptanceHandoff.hidden = false;
-  proposalAcceptanceProposal.textContent = i18n.t("acceptance.proposal", { recordId: state.selectedId });
+  proposalAcceptanceProposal.textContent = i18n.t("acceptance.proposal", { recordId: proposalId });
   if (state.responseParentId === null) {
     proposalAcceptanceStatus.textContent = i18n.t("acceptance.parentUnavailable");
     return;
@@ -867,7 +1042,757 @@ function renderProposalAcceptanceHandoff(record) {
   }
   proposalAcceptanceSeller.textContent = i18n.t("acceptance.seller", { seller: parentListing.sellerPrincipal });
   proposalAcceptanceParent.textContent = i18n.t("acceptance.parent", { recordId: parentId });
-  proposalAcceptanceStatus.textContent = i18n.t("acceptance.authRequired");
+
+  const result = state.proposalAcceptanceResults.get(proposalId);
+  if (result !== undefined) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.accepted", {
+      recordId: result.recordId,
+      disposition: result.disposition,
+      changeSeq: result.changeSeq === null ? "none" : result.changeSeq,
+    });
+    return;
+  }
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (!authSnapshot.active) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.authRequired");
+    return;
+  }
+  if (authSnapshot.principal !== parentListing.sellerPrincipal) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.authMismatch");
+    return;
+  }
+  if (state.proposalAcceptancePending.has(proposalId)) {
+    proposalAcceptanceStatus.textContent = i18n.t("acceptance.accepting");
+    return;
+  }
+  const errorCode = state.proposalAcceptanceErrors.get(proposalId);
+  proposalAcceptanceStatus.textContent = errorCode === undefined
+    ? i18n.t("acceptance.ready")
+    : i18n.t("acceptance.failed", { code: errorCode });
+  acceptProposalButton.disabled = false;
+}
+
+async function acceptSelectedProposal() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  if (proposal === null || state.responseParentId === null) return;
+  const parentListing = productListingSummary(state.records.get(state.responseParentId));
+  if (parentListing === null) return;
+  const authSnapshot = authBootstrap.state();
+  if (!authSnapshot.active || authSnapshot.principal !== parentListing.sellerPrincipal) {
+    state.proposalAcceptanceErrors.set(proposalId, "PROPOSAL_ACCEPTANCE_SELLER_MISMATCH");
+    renderDetail();
+    return;
+  }
+
+  state.proposalAcceptanceErrors.delete(proposalId);
+  state.proposalAcceptancePending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.proposalAcceptanceClient();
+    const result = await client.acceptProposal(proposalId);
+    state.proposalAcceptanceResults.set(proposalId, result);
+    state.proposalAcceptanceResolutionResults.delete(proposalId);
+    state.proposalAcceptanceResolutionErrors.delete(proposalId);
+    state.agreementFormationResults.delete(proposalId);
+    state.agreementFormationAcceptanceIds.delete(proposalId);
+    state.agreementFormationErrors.delete(proposalId);
+    state.agreementAssentResults.delete(proposalId);
+    state.agreementAssentErrors.delete(proposalId);
+    clearAgreementPublicationCompletionState(proposalId);
+  } catch (error) {
+    state.proposalAcceptanceErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.proposalAcceptancePending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+function proposalAcceptanceEvidence(proposalId) {
+  const published = state.proposalAcceptanceResults.get(proposalId);
+  if (published !== undefined) return published;
+  return state.proposalAcceptanceResolutionResults.get(proposalId);
+}
+
+function renderAgreementFormationHandoff(record) {
+  agreementFormationHandoff.hidden = true;
+  resolveProposalAcceptanceButton.disabled = true;
+  checkAgreementFormationButton.disabled = true;
+  signAgreementAssentButton.disabled = true;
+  agreementFormationStatus.textContent = i18n.t("agreementStatus.waitingAcceptance");
+  agreementFormationAgreement.textContent = "";
+  agreementFormationEvidence.textContent = "";
+  agreementFormationCovered.textContent = "";
+  agreementFormationMissing.textContent = "";
+  agreementAssentStatus.textContent = i18n.t("agreementAssent.waitingStatus");
+
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
+  agreementFormationHandoff.hidden = false;
+
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (!authSnapshot.active) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.authRequired");
+    return;
+  }
+
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  if (acceptance === undefined) {
+    if (state.proposalAcceptanceResolutionPending.has(proposalId)) {
+      agreementFormationStatus.textContent = i18n.t("agreementStatus.resolving");
+      return;
+    }
+    const resolutionError = state.proposalAcceptanceResolutionErrors.get(proposalId);
+    agreementFormationStatus.textContent = resolutionError === undefined
+      ? i18n.t("agreementStatus.resolveReady")
+      : i18n.t("agreementStatus.resolveFailed", { code: resolutionError });
+    resolveProposalAcceptanceButton.disabled = false;
+    return;
+  }
+
+  if (state.agreementFormationPending.has(proposalId)) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.checking");
+    return;
+  }
+
+  const result = state.agreementFormationResults.get(proposalId);
+  if (result !== undefined) {
+    agreementFormationStatus.textContent = i18n.t("agreementStatus.ready", {
+      recordId: acceptance.recordId,
+    });
+    agreementFormationAgreement.textContent = i18n.t("agreementStatus.agreement", {
+      recordId: result.agreementRecordId,
+    });
+    agreementFormationEvidence.textContent = i18n.t("agreementStatus.evidence", {
+      evidence: result.formationEvidence,
+    });
+    agreementFormationCovered.textContent = i18n.t("agreementStatus.covered", {
+      principals: result.coveredPrincipals.join(", ") || "none",
+    });
+    agreementFormationMissing.textContent = i18n.t("agreementStatus.missing", {
+      principals: result.missingPrincipals.join(", ") || "none",
+    });
+
+    const signingPending = state.agreementAssentPending.has(proposalId);
+    checkAgreementFormationButton.disabled = signingPending;
+    if (signingPending) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.signing");
+      return;
+    }
+
+    const submitted = state.agreementAssentResults.get(proposalId);
+    if (submitted !== undefined) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.submitted", {
+        recordId: submitted.agreementRecordId,
+        disposition: submitted.disposition,
+        expiresAt: submitted.expiresAt,
+      });
+      return;
+    }
+
+    if (state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.stale");
+      return;
+    }
+
+    const principal = authSnapshot.principal;
+    if (!result.requiredPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.notParty");
+      return;
+    }
+    if (result.coveredPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.alreadyCovered");
+      return;
+    }
+    if (!result.missingPrincipals.includes(principal)) {
+      agreementAssentStatus.textContent = i18n.t("agreementAssent.stale");
+      return;
+    }
+
+    const signError = state.agreementAssentErrors.get(proposalId);
+    agreementAssentStatus.textContent = signError === undefined
+      ? i18n.t("agreementAssent.ready")
+      : i18n.t("agreementAssent.failed", { code: signError });
+    signAgreementAssentButton.disabled = false;
+    return;
+  }
+
+  const errorCode = state.agreementFormationErrors.get(proposalId);
+  agreementFormationStatus.textContent = errorCode === undefined
+    ? i18n.t("agreementStatus.ready", { recordId: acceptance.recordId })
+    : i18n.t("agreementStatus.failed", { code: errorCode });
+  checkAgreementFormationButton.disabled = false;
+}
+
+function renderAgreementPublicationCompletionHandoff(record) {
+  agreementPublicationCompletionHandoff.hidden = true;
+  publishAgreementButton.disabled = true;
+  claimDeliveryCompleteButton.disabled = true;
+  agreementPublicationStatus.textContent = i18n.t("agreementPublication.waitingFormation");
+  fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.waitingPublication");
+
+  const proposal = proposalResponseSummary(record);
+  if (proposal === null || state.selectedId === null) return;
+  const proposalId = state.selectedId;
+  const formation = state.agreementFormationResults.get(proposalId);
+  if (formation === undefined) return;
+
+  agreementPublicationCompletionHandoff.hidden = false;
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  const publication = state.agreementPublicationResults.get(proposalId);
+
+  if (publication !== undefined) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.published", {
+      recordId: publication.agreementRecordId,
+      disposition: publication.disposition,
+      changeSeq: publication.changeSeq === null ? "none" : publication.changeSeq,
+    });
+  } else if (state.agreementPublicationPending.has(proposalId)) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.publishing");
+  } else if (
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0
+  ) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.incomplete");
+  } else if (!authSnapshot.active) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.authRequired");
+  } else if (
+    !formation.requiredPrincipals.includes(authSnapshot.principal) ||
+    !formation.coveredPrincipals.includes(authSnapshot.principal)
+  ) {
+    agreementPublicationStatus.textContent = i18n.t("agreementPublication.notCovered");
+  } else {
+    const errorCode = state.agreementPublicationErrors.get(proposalId);
+    agreementPublicationStatus.textContent = errorCode === undefined
+      ? i18n.t("agreementPublication.ready")
+      : i18n.t("agreementPublication.failed", { code: errorCode });
+    publishAgreementButton.disabled = false;
+  }
+
+  if (publication === undefined) return;
+  const completion = state.fulfillmentCompletionResults.get(proposalId);
+  if (completion !== undefined) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.published", {
+      recordId: completion.recordId,
+      disposition: completion.disposition,
+      changeSeq: completion.changeSeq === null ? "none" : completion.changeSeq,
+    });
+    return;
+  }
+  if (state.fulfillmentCompletionPending.has(proposalId)) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.publishing");
+    return;
+  }
+
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  if (parentListing === null) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.parentRequired");
+    return;
+  }
+  if (!authSnapshot.active) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.authRequired");
+    return;
+  }
+  if (authSnapshot.principal !== parentListing.sellerPrincipal) {
+    fulfillmentCompletionStatus.textContent = i18n.t("fulfillment.sellerRequired");
+    return;
+  }
+
+  const errorCode = state.fulfillmentCompletionErrors.get(proposalId);
+  fulfillmentCompletionStatus.textContent = errorCode === undefined
+    ? i18n.t("fulfillment.ready")
+    : i18n.t("fulfillment.failed", { code: errorCode });
+  claimDeliveryCompleteButton.disabled = false;
+}
+
+function clearAuthenticatedFlightEvidenceDocument() {
+  authenticatedFlightEvidenceDocument = null;
+  authenticatedFlightEvidenceJson.textContent = "{}";
+  downloadAuthenticatedFlightEvidenceButton.disabled = true;
+}
+
+// Buyer authentication is separately observed by the operator in another browser.
+// Bind that manual observation to the exact selected Proposal, Listing and
+// active seller session; never carry a checked box into another transaction.
+function invalidateBuyerAuthenticationObservation() {
+  buyerAuthenticationObservation = null;
+  evidenceBuyerAuthObservedInput.checked = false;
+  clearAuthenticatedFlightEvidenceDocument();
+}
+
+function currentBuyerAuthenticationObservationContext() {
+  if (state.selectedId === null || state.responseParentId === null) return null;
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const listing = productListingSummary(state.records.get(state.responseParentId));
+  const auth = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (proposal === null || listing === null || !auth.active ||
+      auth.principal !== listing.sellerPrincipal ||
+      proposal.buyerPrincipal === listing.sellerPrincipal) return null;
+  return {
+    proposalId: state.selectedId,
+    listingRecordId: state.responseParentId,
+    sellerPrincipal: listing.sellerPrincipal,
+    buyerPrincipal: proposal.buyerPrincipal,
+    sellerSessionEpoch: sellerAuthenticationSessionEpoch,
+  };
+}
+
+function buyerAuthenticationObservationIsCurrent() {
+  if (evidenceBuyerAuthObservedInput.checked !== true ||
+      buyerAuthenticationObservation === null) return false;
+  const current = currentBuyerAuthenticationObservationContext();
+  const stored = buyerAuthenticationObservation;
+  if (current !== null &&
+      current.proposalId === stored.proposalId &&
+      current.listingRecordId === stored.listingRecordId &&
+      current.sellerPrincipal === stored.sellerPrincipal &&
+      current.buyerPrincipal === stored.buyerPrincipal &&
+      current.sellerSessionEpoch === stored.sellerSessionEpoch) return true;
+  // Invalidate the checkbox itself, not just the export: returning to an
+  // earlier selection must still require a new explicit buyer observation.
+  invalidateBuyerAuthenticationObservation();
+  return false;
+}
+
+function authenticatedFlightEvidenceInputs() {
+  if (state.selectedId === null || state.responseParentId === null) return null;
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  if (proposal === null) return null;
+  const proposalId = state.selectedId;
+  const parentListing = productListingSummary(state.records.get(state.responseParentId));
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  const publication = state.agreementPublicationResults.get(proposalId);
+  const completion = state.fulfillmentCompletionResults.get(proposalId);
+  const authSnapshot = authBootstrap === null
+    ? { active: false, principal: null }
+    : authBootstrap.state();
+  if (
+    parentListing === null ||
+    acceptance === undefined ||
+    formation === undefined ||
+    publication === undefined ||
+    completion === undefined ||
+    !authSnapshot.active ||
+    authSnapshot.principal !== parentListing.sellerPrincipal ||
+    proposal.buyerPrincipal === parentListing.sellerPrincipal ||
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    !Array.isArray(formation.requiredPrincipals) ||
+    !Array.isArray(formation.coveredPrincipals) ||
+    !Array.isArray(formation.missingPrincipals) ||
+    !formation.requiredPrincipals.includes(parentListing.sellerPrincipal) ||
+    !formation.requiredPrincipals.includes(proposal.buyerPrincipal) ||
+    !formation.coveredPrincipals.includes(parentListing.sellerPrincipal) ||
+    !formation.coveredPrincipals.includes(proposal.buyerPrincipal) ||
+    formation.missingPrincipals.length !== 0
+  ) {
+    return null;
+  }
+  return {
+    proposalId,
+    listingRecordId: state.responseParentId,
+    acceptance,
+    formation,
+    publication,
+    completion,
+  };
+}
+
+function renderAuthenticatedFlightEvidencePreview() {
+  const observed = authenticatedFlightEvidenceInputs();
+  downloadAuthenticatedFlightEvidenceButton.disabled = !authenticatedFlightEvidenceDocumentIsCurrent();
+  const mainCommitReady = /^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim());
+  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
+  const ciReady = Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0;
+  const buyerReady = evidenceBuyerAuthObservedInput.checked === true &&
+    buyerAuthenticationObservationIsCurrent();
+  prepareAuthenticatedFlightEvidenceButton.disabled = (
+    observed === null ||
+    !mainCommitReady ||
+    !ciReady ||
+    !buyerReady ||
+    location.hostname !== "127.0.0.1"
+  );
+  if (observed === null) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.waitingCompletion");
+  } else if (location.hostname !== "127.0.0.1") {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.loopbackRequired");
+  } else if (!mainCommitReady || !ciReady) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.metadataRequired");
+  } else if (!buyerReady) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.buyerRequired");
+  } else {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.ready");
+  }
+}
+
+async function prepareAuthenticatedFlightEvidence() {
+  const observed = authenticatedFlightEvidenceInputs();
+  if (observed === null || prepareAuthenticatedFlightEvidenceButton.disabled) return;
+  const mainCommit = evidenceMainCommitInput.value.trim();
+  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
+  const buyerAuthenticated = evidenceBuyerAuthObservedInput.checked === true;
+  const proposalId = observed.proposalId;
+  const listingRecordId = observed.listingRecordId;
+  const acceptanceRecordId = observed.acceptance.recordId;
+  const agreementRecordId = observed.formation.agreementRecordId;
+  const completionRecordId = observed.completion.recordId;
+
+  prepareAuthenticatedFlightEvidenceButton.disabled = true;
+  authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.preparing");
+  let prepared = false;
+  try {
+    const module = await import("./authenticated_local_flight_evidence.js");
+    const current = authenticatedFlightEvidenceInputs();
+    if (
+      current === null ||
+      current.proposalId !== proposalId ||
+      current.listingRecordId !== listingRecordId ||
+      current.acceptance.recordId !== acceptanceRecordId ||
+      current.formation.agreementRecordId !== agreementRecordId ||
+      current.completion.recordId !== completionRecordId ||
+      evidenceMainCommitInput.value.trim() !== mainCommit ||
+      Number(evidenceCiRunNumberInput.value) !== ciRunNumber ||
+      evidenceBuyerAuthObservedInput.checked !== buyerAuthenticated ||
+      !buyerAuthenticationObservationIsCurrent() ||
+      location.hostname !== "127.0.0.1"
+    ) {
+      throw stableClientError("EVIDENCE_PREVIEW_STALE");
+    }
+    const documentValue = module.createMarketplaceAuthenticatedLocalFlightEvidence({
+      mainCommit,
+      ciRunNumber,
+      runtimeHost: location.hostname,
+      sellerAuthenticated: true,
+      buyerAuthenticated,
+      listingRecordId,
+      proposalRecordId: proposalId,
+      acceptanceRecordId,
+      formation: current.formation,
+      publication: current.publication,
+      completion: current.completion,
+    });
+    authenticatedFlightEvidenceDocument = documentValue;
+    authenticatedFlightEvidenceJson.textContent = JSON.stringify(documentValue, null, 2);
+    downloadAuthenticatedFlightEvidenceButton.disabled = false;
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.prepared");
+    prepared = true;
+  } catch (error) {
+    clearAuthenticatedFlightEvidenceDocument();
+    authenticatedFlightEvidenceStatus.textContent = i18n.t(
+      "evidence.failed",
+      { code: error.code ?? "CLIENT_FAILURE" },
+    );
+  } finally {
+    if (prepared) {
+      prepareAuthenticatedFlightEvidenceButton.disabled = false;
+    } else {
+      renderAuthenticatedFlightEvidencePreview();
+    }
+  }
+}
+
+async function publishSelectedAgreement() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  const authSnapshot = authBootstrap.state();
+  if (
+    proposal === null ||
+    acceptance === undefined ||
+    formation === undefined ||
+    formation.formationEvidence !== "EVIDENCE_SUFFICIENT_FOR_PROFILE" ||
+    formation.missingPrincipals.length !== 0 ||
+    !authSnapshot.active ||
+    !formation.requiredPrincipals.includes(authSnapshot.principal) ||
+    !formation.coveredPrincipals.includes(authSnapshot.principal) ||
+    state.agreementPublicationPending.has(proposalId)
+  ) {
+    return;
+  }
+
+  state.agreementPublicationErrors.delete(proposalId);
+  state.agreementPublicationPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementPublicationClient();
+    const result = await client.publishAgreement(
+      proposalId,
+      acceptance.recordId,
+      formation.agreementRecordId,
+    );
+    if (result.agreementRecordId !== formation.agreementRecordId) {
+      throw stableClientError("AGREEMENT_PUBLICATION_AGREEMENT_MISMATCH");
+    }
+    state.agreementPublicationResults.set(proposalId, result);
+    state.fulfillmentCompletionResults.delete(proposalId);
+    state.fulfillmentCompletionErrors.delete(proposalId);
+  } catch (error) {
+    state.agreementPublicationErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementPublicationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function claimSelectedDeliveryComplete() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const publication = state.agreementPublicationResults.get(proposalId);
+  const parentListing = state.responseParentId === null
+    ? null
+    : productListingSummary(state.records.get(state.responseParentId));
+  const authSnapshot = authBootstrap.state();
+  if (
+    proposal === null ||
+    publication === undefined ||
+    parentListing === null ||
+    !authSnapshot.active ||
+    authSnapshot.principal !== parentListing.sellerPrincipal ||
+    state.fulfillmentCompletionPending.has(proposalId)
+  ) {
+    return;
+  }
+
+  state.fulfillmentCompletionErrors.delete(proposalId);
+  state.fulfillmentCompletionPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.fulfillmentCompletionClient();
+    const result = await client.publishEvidence(
+      publication.agreementRecordId,
+      SELLER_DELIVERY_COMMITMENT_ID,
+      CLAIMED_COMPLETE_PERFORMANCE,
+    );
+    if (
+      result.agreementRecordId !== publication.agreementRecordId ||
+      result.commitmentId !== SELLER_DELIVERY_COMMITMENT_ID ||
+      result.evidenceKind !== CLAIMED_COMPLETE_PERFORMANCE
+    ) {
+      throw stableClientError("FULFILLMENT_COMPLETION_RESPONSE_INVALID");
+    }
+    state.fulfillmentCompletionResults.set(proposalId, result);
+  } catch (error) {
+    state.fulfillmentCompletionErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.fulfillmentCompletionPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+function authenticatedFlightEvidenceDocumentIsCurrent() {
+  const documentValue = authenticatedFlightEvidenceDocument;
+  const current = authenticatedFlightEvidenceInputs();
+  if (documentValue === null || current === null) return false;
+  const publication = documentValue.agreement_publication;
+  const completion = documentValue.completion;
+  return (
+    location.hostname === "127.0.0.1" &&
+    documentValue.main_commit === evidenceMainCommitInput.value.trim() &&
+    documentValue.ci_run_number === Number(evidenceCiRunNumberInput.value) &&
+    documentValue.runtime_host === location.hostname &&
+    documentValue.seller_authenticated === true &&
+    documentValue.buyer_authenticated === (evidenceBuyerAuthObservedInput.checked === true) &&
+    evidenceBuyerAuthObservedInput.checked === true &&
+    buyerAuthenticationObservationIsCurrent() &&
+    documentValue.listing_record_id === current.listingRecordId &&
+    documentValue.proposal_record_id === current.proposalId &&
+    documentValue.acceptance_record_id === current.acceptance.recordId &&
+    documentValue.agreement_record_id === current.formation.agreementRecordId &&
+    documentValue.formation_evidence === current.formation.formationEvidence &&
+    Array.isArray(documentValue.missing_principals) &&
+    documentValue.missing_principals.length === 0 &&
+    current.formation.missingPrincipals.length === 0 &&
+    publication?.agreement_record_id === current.publication.agreementRecordId &&
+    publication?.disposition === current.publication.disposition &&
+    publication?.change_seq === current.publication.changeSeq &&
+    completion?.record_id === current.completion.recordId &&
+    completion?.agreement_record_id === current.completion.agreementRecordId &&
+    completion?.commitment_id === current.completion.commitmentId &&
+    completion?.evidence_kind === current.completion.evidenceKind &&
+    completion?.disposition === current.completion.disposition &&
+    completion?.change_seq === current.completion.changeSeq &&
+    documentValue.universal_truth === false &&
+    documentValue.payment_or_settlement_evaluated === false &&
+    documentValue.public_network_exposed === false &&
+    documentValue.public_deployment === false
+  );
+}
+
+function downloadAuthenticatedFlightEvidence() {
+  if (!authenticatedFlightEvidenceDocumentIsCurrent()) {
+    clearAuthenticatedFlightEvidenceDocument();
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.exportStale");
+    return;
+  }
+  const filename = "marketplace-authenticated-local-flight-evidence.json";
+  const payload = `${JSON.stringify(authenticatedFlightEvidenceDocument, null, 2)}\n`;
+  let objectUrl = null;
+  let anchor = null;
+  try {
+    const blob = new Blob([payload], { type: "application/json;charset=utf-8" });
+    objectUrl = URL.createObjectURL(blob);
+    anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    anchor.hidden = true;
+    document.body.append(anchor);
+    anchor.click();
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.downloaded");
+  } catch (error) {
+    authenticatedFlightEvidenceStatus.textContent = i18n.t(
+      "evidence.exportFailed",
+      { code: error.code ?? "CLIENT_FAILURE" },
+    );
+  } finally {
+    if (anchor !== null) anchor.remove();
+    if (objectUrl !== null) URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function resolveSelectedProposalAcceptance() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  if (proposalResponseSummary(state.selectedRecord) === null ||
+      proposalAcceptanceEvidence(proposalId) !== undefined ||
+      state.proposalAcceptanceResolutionPending.has(proposalId)) {
+    return;
+  }
+  const authSnapshot = authBootstrap.state();
+  if (!authSnapshot.active) {
+    state.proposalAcceptanceResolutionErrors.set(proposalId, "AUTH_REQUIRED");
+    renderDetail();
+    return;
+  }
+
+  state.proposalAcceptanceResolutionErrors.delete(proposalId);
+  state.proposalAcceptanceResolutionPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.proposalAcceptanceClient();
+    const result = await client.resolveAcceptance(proposalId);
+    if (result.proposalRecordId !== proposalId) {
+      throw stableClientError("PROPOSAL_ACCEPTANCE_RESOLUTION_RESPONSE_INVALID");
+    }
+    state.proposalAcceptanceResolutionResults.set(proposalId, result);
+    state.agreementFormationResults.delete(proposalId);
+    state.agreementFormationAcceptanceIds.delete(proposalId);
+    state.agreementFormationErrors.delete(proposalId);
+    state.agreementAssentResults.delete(proposalId);
+    state.agreementAssentErrors.delete(proposalId);
+    clearAgreementPublicationCompletionState(proposalId);
+  } catch (error) {
+    state.proposalAcceptanceResolutionErrors.set(
+      proposalId,
+      error.code ?? "CLIENT_FAILURE",
+    );
+  } finally {
+    state.proposalAcceptanceResolutionPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function checkSelectedAgreementFormation() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  if (proposal === null || acceptance === undefined ||
+      state.agreementAssentPending.has(proposalId)) return;
+  const authSnapshot = authBootstrap.state();
+  if (!authSnapshot.active) {
+    state.agreementFormationErrors.set(proposalId, "AUTH_REQUIRED");
+    renderDetail();
+    return;
+  }
+
+  state.agreementFormationResults.delete(proposalId);
+  state.agreementFormationAcceptanceIds.delete(proposalId);
+  state.agreementFormationErrors.delete(proposalId);
+  state.agreementAssentResults.delete(proposalId);
+  state.agreementAssentErrors.delete(proposalId);
+  clearAgreementPublicationCompletionState(proposalId);
+  state.agreementFormationPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementAssentClient();
+    const result = await client.formationStatus(proposalId, acceptance.recordId);
+    state.agreementFormationResults.set(proposalId, result);
+    state.agreementFormationAcceptanceIds.set(proposalId, acceptance.recordId);
+  } catch (error) {
+    state.agreementFormationErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementFormationPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
+}
+
+async function signSelectedAgreementAssent() {
+  if (authBootstrap === null || state.selectedId === null) return;
+  const proposalId = requireRecordId(state.selectedId);
+  const proposal = proposalResponseSummary(state.selectedRecord);
+  const acceptance = proposalAcceptanceEvidence(proposalId);
+  const formation = state.agreementFormationResults.get(proposalId);
+  if (proposal === null || acceptance === undefined || formation === undefined ||
+      state.agreementFormationAcceptanceIds.get(proposalId) !== acceptance.recordId ||
+      state.agreementAssentPending.has(proposalId)) {
+    return;
+  }
+
+  const authSnapshot = authBootstrap.state();
+  const principal = authSnapshot.principal;
+  if (!authSnapshot.active ||
+      !formation.requiredPrincipals.includes(principal) ||
+      formation.coveredPrincipals.includes(principal) ||
+      !formation.missingPrincipals.includes(principal)) {
+    state.agreementAssentErrors.set(proposalId, "AGREEMENT_ASSENT_NOT_ELIGIBLE");
+    renderDetail();
+    return;
+  }
+
+  state.agreementAssentResults.delete(proposalId);
+  state.agreementAssentErrors.delete(proposalId);
+  state.agreementAssentPending.add(proposalId);
+  renderDetail();
+  try {
+    const client = authBootstrap.agreementAssentClient();
+    const result = await client.signAndSubmit(
+      proposalId,
+      acceptance.recordId,
+      formation.agreementRecordId,
+    );
+    if (result.agreementRecordId !== formation.agreementRecordId) {
+      throw stableClientError("AGREEMENT_ASSENT_AGREEMENT_MISMATCH");
+    }
+    state.agreementAssentResults.set(proposalId, result);
+  } catch (error) {
+    state.agreementAssentErrors.set(proposalId, error.code ?? "CLIENT_FAILURE");
+  } finally {
+    state.agreementAssentPending.delete(proposalId);
+    renderAuthState();
+    if (state.selectedId === proposalId) renderDetail();
+  }
 }
 
 function renderDetail() {
@@ -880,6 +1805,9 @@ function renderDetail() {
   selectedRecordId.textContent = state.selectedId ?? i18n.t("detail.none");
   renderSelectedRecordSummary(record);
   renderProposalAcceptanceHandoff(record);
+  renderAgreementFormationHandoff(record);
+  renderAgreementPublicationCompletionHandoff(record);
+  renderAuthenticatedFlightEvidencePreview();
   selectedRecordJson.textContent = record === undefined || record === null
     ? i18n.t("detail.inspect")
     : JSON.stringify(record, null, 2);
@@ -1311,7 +2239,17 @@ async function createProductListing(event) {
     const previousIds = new Set(state.records.keys());
     const previousViewWasCurrent = state.syncCursor !== null && state.truncated === false;
     setFormStatus("create-status", "listing.submitting");
-    await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
+    const authoring = structuredAuthoringSession();
+    if (authoring === null) {
+      await apiFetch(API_PRODUCT_LISTINGS, { method: "POST", body });
+    } else {
+      const fields = JSON.parse(body);
+      if (fields.seller_principal !== authoring.principal) {
+        throw stableClientError("AUTH_PRINCIPAL_MISMATCH");
+      }
+      delete fields.seller_principal;
+      await authoring.client.createProductListing(fields);
+    }
     try {
       await fullResync();
     } catch (error) {
@@ -1358,10 +2296,20 @@ async function createProposal(event) {
     state.recentProposalId = null;
     state.recentProposalParentId = null;
     setFormStatus("response-status", "proposal.submitting");
-    await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
-      method: "POST",
-      body,
-    });
+    const authoring = structuredAuthoringSession();
+    if (authoring === null) {
+      await apiFetch(`${API_INTENTS}/${encodeURIComponent(parentId)}${PROPOSALS_SUFFIX}`, {
+        method: "POST",
+        body,
+      });
+    } else {
+      const fields = JSON.parse(body);
+      if (fields.buyer_principal !== authoring.principal) {
+        throw stableClientError("AUTH_PRINCIPAL_MISMATCH");
+      }
+      delete fields.buyer_principal;
+      await authoring.client.createProposal(parentId, fields);
+    }
     try {
       await fullResync();
     } catch (error) {
@@ -1556,6 +2504,34 @@ authLoadButton.addEventListener("click", () => void startLocalAuthentication());
 authGenerateKeyButton.addEventListener("click", () => void generateAuthenticationKey());
 authEstablishButton.addEventListener("click", () => void establishAuthenticationSession());
 authResetButton.addEventListener("click", resetAuthentication);
+acceptProposalButton.addEventListener("click", () => void acceptSelectedProposal());
+resolveProposalAcceptanceButton.addEventListener("click", () => void resolveSelectedProposalAcceptance());
+checkAgreementFormationButton.addEventListener("click", () => void checkSelectedAgreementFormation());
+signAgreementAssentButton.addEventListener("click", () => void signSelectedAgreementAssent());
+publishAgreementButton.addEventListener("click", () => void publishSelectedAgreement());
+claimDeliveryCompleteButton.addEventListener("click", () => void claimSelectedDeliveryComplete());
+prepareAuthenticatedFlightEvidenceButton.addEventListener("click", () => void prepareAuthenticatedFlightEvidence());
+downloadAuthenticatedFlightEvidenceButton.addEventListener("click", downloadAuthenticatedFlightEvidence);
+for (const input of [evidenceMainCommitInput, evidenceCiRunNumberInput]) {
+  input.addEventListener("input", () => {
+    clearAuthenticatedFlightEvidenceDocument();
+    renderAuthenticatedFlightEvidencePreview();
+  });
+  input.addEventListener("change", () => {
+    clearAuthenticatedFlightEvidenceDocument();
+    renderAuthenticatedFlightEvidencePreview();
+  });
+}
+function recordBuyerAuthenticationObservation() {
+  buyerAuthenticationObservation = evidenceBuyerAuthObservedInput.checked === true
+    ? currentBuyerAuthenticationObservationContext()
+    : null;
+  if (buyerAuthenticationObservation === null) evidenceBuyerAuthObservedInput.checked = false;
+  clearAuthenticatedFlightEvidenceDocument();
+  renderAuthenticatedFlightEvidencePreview();
+}
+evidenceBuyerAuthObservedInput.addEventListener("input", recordBuyerAuthenticationObservation);
+evidenceBuyerAuthObservedInput.addEventListener("change", recordBuyerAuthenticationObservation);
 authPrincipalInput.addEventListener("input", renderAuthState);
 authVerificationMethodInput.addEventListener("input", renderAuthState);
 mvpFlightButton.addEventListener("click", () => void runMvpFlight());
@@ -1590,6 +2566,7 @@ renderList();
 renderDetail();
 renderMvpFlightState();
 renderAuthState();
+renderAuthenticatedFlightEvidencePreview();
 void fullResync().catch((error) => {
   setStatus("sync.initialFailed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
 });

@@ -22,6 +22,9 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             './auth_ed25519_key_creation.js',
             './auth_ed25519_proof_provider.js',
             './auth_establishment.js',
+            './agreement_ed25519_assent_provider.js',
+            './agreement_assent_client.js',
+            './proposal_acceptance_client.js',
         ):
             self.assertIn(marker, text)
 
@@ -62,13 +65,52 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
         self.assertIn('authGenerateKeyButton.addEventListener("click"', app)
         self.assertNotIn('import "./auth_bootstrap.js"', app)
 
-    def test_proposal_acceptance_stays_fail_closed_after_auth_activation(self) -> None:
+    def test_agreement_assent_composition_stays_private_while_page_selects_explicit_signing(self) -> None:
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn("function agreementAssentClient()", bootstrap)
+        self.assertIn('stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED")', bootstrap)
+        self.assertIn("keyResult === null", bootstrap)
+        self.assertIn("!session.isActive", bootstrap)
+        self.assertIn("activeVerificationMethod === null", bootstrap)
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementEd25519AssentProvider"),
+            2,
+        )
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebAgreementAssentClient"),
+            2,
+        )
+        self.assertNotIn("signAndSubmit(", bootstrap)
+        index = INDEX.read_text(encoding="utf-8")
+        app = APP.read_text(encoding="utf-8")
+        for marker in (
+            "agreement_ed25519_assent_provider.js",
+            "agreement_assent_client.js",
+        ):
+            self.assertNotIn(marker, index)
+            self.assertNotIn(marker, app)
+        self.assertEqual(app.count("agreementAssentClient()"), 2)
+        self.assertEqual(app.count(".formationStatus("), 1)
+        self.assertEqual(app.count(".signAndSubmit("), 1)
+        self.assertNotIn("createAgreementAssentSignature(", app)
+        self.assertIn('id="sign-agreement-assent" type="button" disabled', index)
+        self.assertIn('signAgreementAssentButton.addEventListener("click"', app)
+
+    def test_proposal_acceptance_client_is_composed_but_bearer_stays_private(self) -> None:
+        bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.assertIn("function proposalAcceptanceClient()", bootstrap)
+        self.assertIn('stableBootstrapError("PROPOSAL_ACCEPTANCE_AUTH_REQUIRED")', bootstrap)
+        self.assertEqual(
+            bootstrap.count("createMarketplaceWebProposalAcceptanceClient"),
+            2,
+        )
+        self.assertNotIn("Bearer ", bootstrap)
         index = INDEX.read_text(encoding="utf-8")
         app = APP.read_text(encoding="utf-8")
         self.assertIn('id="accept-proposal" type="button" disabled', index)
-        self.assertNotIn('acceptProposalButton.addEventListener', app)
-        self.assertIn('"auth.active"', app)
-        self.assertIn("Proposal acceptance is still disabled.", app)
+        self.assertIn('acceptProposalButton.addEventListener("click"', app)
+        self.assertNotIn("proposal_acceptance_client.js", index)
+        self.assertNotIn("proposal_acceptance_client.js", app)
 
     def test_bootstrap_route_is_authenticated_localhost_only(self) -> None:
         site = SITE_HOST.read_text(encoding="utf-8")
@@ -90,8 +132,9 @@ class ProductBrowserAuthBootstrapTests(unittest.TestCase):
             "memory-only",
             "explicit user action",
             "no mutable enrollment API",
-            "no Proposal acceptance",
             "Reset in-memory authentication",
+            "Agreement assent composition",
+            "agreementAssentClient()",
         ):
             self.assertIn(marker, text)
 

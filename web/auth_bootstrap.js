@@ -1,12 +1,21 @@
+
 "use strict";
 
-import { MarketplaceMemorySession } from "./client_session.js";
+import {
+  MarketplaceMemorySession,
+  createMarketplaceSessionClient,
+} from "./client_session.js";
 import {
   PROFILE as KEY_CREATION_PROFILE,
   createMarketplaceWebAuthEd25519KeyCreation,
 } from "./auth_ed25519_key_creation.js";
 import { createMarketplaceWebAuthEd25519ProofProvider } from "./auth_ed25519_proof_provider.js";
 import { createMarketplaceWebAuthEstablishment } from "./auth_establishment.js";
+import { createMarketplaceWebAgreementEd25519AssentProvider } from "./agreement_ed25519_assent_provider.js";
+import { createMarketplaceWebAgreementAssentClient } from "./agreement_assent_client.js";
+import { createMarketplaceWebProposalAcceptanceClient } from "./proposal_acceptance_client.js";
+import { createMarketplaceWebAgreementPublicationClient } from "./agreement_publication_client.js";
+import { createMarketplaceWebFulfillmentCompletionClient } from "./fulfillment_completion_client.js";
 
 const BROWSER_PUBLIC_KEY_PREFIX = "mkpk1_";
 const EVIDENCE_PUBLIC_KEY_PREFIX = "mkp1_";
@@ -41,8 +50,25 @@ function reviewedFetch(value) {
   return value;
 }
 
+// TextEncoder replaces unpaired UTF-16 surrogates with U+FFFD. Reject them
+// before authentication identifier byte measurement or cryptographic use.
+function validUnicodeScalarSequence(value) {
+  for (let index = 0; index < value.length; index += 1) {
+    const unit = value.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return false;
+      index += 1;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function reviewedUri(value) {
-  if (typeof value !== "string" || utf8Bytes(value) > MAX_URI_BYTES || !URI.test(value)) {
+  if (typeof value !== "string" || !validUnicodeScalarSequence(value) ||
+      utf8Bytes(value) > MAX_URI_BYTES || !URI.test(value)) {
     throw stableBootstrapError("AUTH_REQUEST_INVALID");
   }
   return value;
@@ -108,6 +134,69 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
     return result;
   }
 
+  function structuredAuthoringClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("STRUCTURED_AUTHORING_AUTH_REQUIRED");
+    }
+    const client = createMarketplaceSessionClient(
+      reviewedTransport,
+      () => {
+        throw stableBootstrapError("RAW_AUTHORING_UNAVAILABLE");
+      },
+      session,
+    );
+    return Object.freeze({
+      createProductListing: client.createProductListing,
+      createProposal: client.createProposal,
+    });
+  }
+
+  function proposalAcceptanceClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("PROPOSAL_ACCEPTANCE_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebProposalAcceptanceClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
+  function agreementAssentClient() {
+    if (keyResult === null || !session.isActive || activeVerificationMethod === null) {
+      throw stableBootstrapError("AGREEMENT_ASSENT_AUTH_REQUIRED");
+    }
+    const signer = createMarketplaceWebAgreementEd25519AssentProvider({
+      subtle: reviewedCrypto,
+      privateKey: keyResult.privateKey,
+      verificationMethod: activeVerificationMethod,
+    });
+    return createMarketplaceWebAgreementAssentClient({
+      fetchImpl: reviewedTransport,
+      session,
+      signer,
+    });
+  }
+
+  function agreementPublicationClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("AGREEMENT_PUBLICATION_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebAgreementPublicationClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
+  function fulfillmentCompletionClient() {
+    if (!session.isActive) {
+      throw stableBootstrapError("FULFILLMENT_COMPLETION_AUTH_REQUIRED");
+    }
+    return createMarketplaceWebFulfillmentCompletionClient({
+      fetchImpl: reviewedTransport,
+      session,
+    });
+  }
+
   function state() {
     const active = session.isActive;
     return Object.freeze({
@@ -127,6 +216,11 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   return Object.freeze({
     createAuthenticationKey,
     establishSession,
+    structuredAuthoringClient,
+    proposalAcceptanceClient,
+    agreementAssentClient,
+    agreementPublicationClient,
+    fulfillmentCompletionClient,
     state,
     reset,
   });

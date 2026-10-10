@@ -20,6 +20,8 @@ from .auth_static_composition import (
     compose_marketplace_static_authentication,
 )
 from .composition import MarketplaceApplicationComposition
+from .proposal_acceptance import MarketplaceProposalAcceptanceAuthoringService
+from .proposal_acceptance_resolution import MarketplaceProposalAcceptanceResolutionService
 
 
 PROFILE_NAME: Final = "MARKETPLACE_APPLICATION_AUTH_STARTUP_COMPOSITION_V1"
@@ -65,6 +67,8 @@ def compose_marketplace_authenticated_startup(
     runtime_inputs: MarketplaceAuthenticationRuntimeInputs,
     decode_record_json: RecordJsonDecoder,
     record_principal: RecordPrincipalExtractor,
+    proposal_acceptance_authoring: MarketplaceProposalAcceptanceAuthoringService | None = None,
+    proposal_acceptance_resolution: MarketplaceProposalAcceptanceResolutionService | None = None,
 ) -> MarketplaceAuthenticatedStartupComposition:
     """Consume one reviewed clock sample and compose exact O -> P -> R once."""
 
@@ -75,6 +79,16 @@ def compose_marketplace_authenticated_startup(
     if type(runtime_inputs) is not MarketplaceAuthenticationRuntimeInputs:
         _fail()
     if not callable(decode_record_json) or not callable(record_principal):
+        _fail()
+    if (
+        proposal_acceptance_authoring is not None
+        and type(proposal_acceptance_authoring) is not MarketplaceProposalAcceptanceAuthoringService
+    ):
+        _fail()
+    if (
+        proposal_acceptance_resolution is not None
+        and type(proposal_acceptance_resolution) is not MarketplaceProposalAcceptanceResolutionService
+    ):
         _fail()
 
     try:
@@ -92,6 +106,8 @@ def compose_marketplace_authenticated_startup(
             material_source=runtime_inputs.material_source,
             decode_record_json=decode_record_json,
             record_principal=record_principal,
+            proposal_acceptance_authoring=proposal_acceptance_authoring,
+            proposal_acceptance_resolution=proposal_acceptance_resolution,
         )
         asgi = compose_marketplace_authenticated_asgi(
             http=http,

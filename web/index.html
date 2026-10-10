@@ -75,6 +75,41 @@
         <p id="proposal-acceptance-proposal" class="record-id muted"></p>
         <button id="accept-proposal" type="button" disabled>Accept Proposal</button>
       </div>
+      <div id="agreement-formation-handoff" class="intent-card" hidden>
+        <h3>Agreement formation</h3>
+        <p id="agreement-formation-status" class="muted" aria-live="polite">Publish seller acceptance first. No Agreement status request has been made.</p>
+        <p id="agreement-formation-agreement" class="record-id muted"></p>
+        <p id="agreement-formation-evidence" class="muted"></p>
+        <p id="agreement-formation-covered" class="muted"></p>
+        <p id="agreement-formation-missing" class="muted"></p>
+        <p id="agreement-assent-status" class="muted" aria-live="polite">Check current Agreement formation before signing.</p>
+        <button id="resolve-proposal-acceptance" type="button" disabled>Resolve Proposal acceptance</button>
+        <button id="check-agreement-formation" type="button" disabled>Check Agreement formation</button>
+        <button id="sign-agreement-assent" type="button" disabled>Sign Agreement assent</button>
+      </div>
+      <div id="agreement-publication-completion-handoff" class="intent-card" hidden>
+        <p class="eyebrow">Explicit completion evidence</p>
+        <h3>Agreement publication & delivery</h3>
+        <p id="agreement-publication-status" class="muted" aria-live="polite">Check current Agreement formation first. Publication stays disabled.</p>
+        <button id="publish-agreement" type="button" disabled>Publish Agreement</button>
+        <p id="fulfillment-completion-status" class="muted" aria-live="polite">Publish the Agreement first. No completion evidence has been authored.</p>
+        <button id="claim-delivery-complete" type="button" disabled>Claim delivery complete</button>
+        <p class="muted small">Completion creates seller-attributed evidence only. It does not prove universal truth or trigger payment or settlement.</p>
+        <div id="authenticated-flight-evidence-preview" class="intent-card">
+          <p class="eyebrow">Evaluator evidence preview</p>
+          <h3>Authenticated local-flight evidence</h3>
+          <label for="evidence-main-commit">Exact merged main commit</label>
+          <input id="evidence-main-commit" type="text" autocomplete="off" maxlength="40">
+          <label for="evidence-ci-run-number">Successful CI run number</label>
+          <input id="evidence-ci-run-number" type="number" min="1" step="1">
+          <label><input id="evidence-buyer-auth-observed" type="checkbox"> <span>Buyer authentication was separately observed in this local flight</span></label>
+          <button id="prepare-authenticated-flight-evidence" type="button" disabled>Prepare non-secret evidence preview</button>
+          <button id="download-authenticated-flight-evidence" type="button" class="secondary" disabled>Download evidence JSON</button>
+          <p id="authenticated-flight-evidence-status" class="muted" aria-live="polite">Complete Agreement publication and seller delivery evidence first.</p>
+          <pre id="authenticated-flight-evidence-json" class="record-json">{}</pre>
+          <p class="muted small">Preview stays memory-only unless you explicitly download this non-secret JSON. No clipboard, upload, payment, deployment, or public-network action occurs.</p>
+        </div>
+      </div>
     </section>
 
     <section id="local-auth" class="panel detail-panel" aria-labelledby="local-auth-heading">
