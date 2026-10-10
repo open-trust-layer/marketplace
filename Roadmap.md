@@ -1,8 +1,8 @@
 # Hello, World! Marketplace — Roadmap
 
-**Snapshot date:** 2026-10-10  
-**Reviewed baseline:** main merge commit fd12304319938ac0b5a6130ec85feea1bc217c44 (M17.8E / PR #523).  
-**Audience:** product, engineering, security, and Moon Commerce integration.  
+**Snapshot date:** 2026-10-10
+**Reviewed baseline:** main merge commit fd12304319938ac0b5a6130ec85feea1bc217c44 (M17.8E / PR #523).
+**Audience:** product, engineering, security, and Moon Commerce integration.
 **Status semantics:** COMPLETE means the stated *scope* has evidence; it does not imply production readiness.
 
 > Marketplace is a universal economic-coordination layer on Open Layer Protocol (OLP). Evidence of intent, negotiation, and fulfillment is not proof of ownership, legality, payment, universal truth, or trust.
@@ -28,7 +28,7 @@ Source of truth: [README.md](README.md), [MARKETPLACE_MVP_ACCEPTANCE.md](MARKETP
 
 - [x] Merge narrow fail-closed Web auth Unicode-scalar validation after exact-head review and green PR conformance ([#523](https://github.com/open-trust-layer/marketplace/pull/523)).
 - [x] Preserve original URI byte-size limits, signature behavior, routes, and stable errors in the reviewed patch.
-- [ ] Independently capture *post-merge main/push* acceptance result and merged commit provenance. A successful PR-head run alone is not a claim about a later push-triggered run.
+- [x] Independently verified post-merge `main` push acceptance: GitHub Actions run [#38082717846](https://github.com/open-trust-layer/marketplace/actions/runs/38082717846) completed successfully for merge `fd12304319938ac0b5a6130ec85feea1bc217c44`.
 - [ ] Record any additional server-side, enrollment, or Agreement URI validation concerns as separately reviewed scopes; M17.8E does not claim to fix them.
 
 **Exit:** exact merged main accepted and any new finding tracked; no accidental runtime activation.
