@@ -16,6 +16,7 @@ from uuid import UUID
 
 SERVICE_ID = "hello-world-marketplace"
 MAX_FILES = 32
+MAX_DIRECTORY_ENTRIES = 64
 MAX_BYTES = 4096
 MAX_FUTURE_SECONDS = 5
 FIELDS = frozenset({
@@ -81,7 +82,10 @@ def _read_record(path: Path) -> tuple[str, datetime]:
                 or not 1 <= len(value["environment"]) <= 64):
             raise HeartbeatInspectionError("SOURCE_INVALID")
         version = value["version"]
-        if type(version) is not str or not re.fullmatch(r"[0-9a-f]{40}", version):
+        # The producer also supports the metadata-only development default.
+        # Such a valid source is classified as RELEASE_MISMATCH when it does
+        # not match the exact 40-hex expected release.
+        if type(version) is not str or not 1 <= len(version) <= 64:
             raise HeartbeatInspectionError("SOURCE_INVALID")
         instance_id = value["instance_id"]
         if type(instance_id) is not str or len(instance_id) != 36:
@@ -126,7 +130,11 @@ def inspect_heartbeat_source(
         if not stat.S_ISDIR(directory.lstat().st_mode):
             raise HeartbeatInspectionError("SOURCE_INVALID")
         source_files: list[Path] = []
+        scanned = 0
         for entry in directory.iterdir():
+            scanned += 1
+            if scanned > MAX_DIRECTORY_ENTRIES:
+                raise HeartbeatInspectionError("TOO_MANY_FILES")
             # The relay.json receiver snapshot is NOT a source heartbeat.
             if entry.name == "relay.json" or entry.name.endswith(".tmp"):
                 continue
