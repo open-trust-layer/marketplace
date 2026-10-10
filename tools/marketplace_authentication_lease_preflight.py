@@ -43,7 +43,7 @@ def check_provisioning_lease(
     at_time: int,
     minimum_remaining_seconds: int = 1_800,
 ) -> tuple[int, int]:
-    """Return (lease seconds remaining, identity count) after signature validation.
+    """Return (shortest usable identity lease, identity count) after verification.
 
     Expiry categories are emitted *only* after canonical parsing and signature
     verification. A cryptographically invalid bundle must not be described as
@@ -101,16 +101,48 @@ def check_provisioning_lease(
     if remaining < minimum_remaining_seconds:
         raise ProvisioningLeasePreflightError("LEASE_TOO_SHORT")
 
-    # Also exercise the reviewed verification-method projection at this time.
+    # Exercise the reviewed projection first. Its entries can have shorter
+    # signed validity windows than the global evidence lease, so a bundle-level
+    # PASS alone cannot prove that both seller and buyer can authenticate.
     try:
-        materialize_marketplace_authentication_verification_method_snapshot(
+        snapshot = materialize_marketplace_authentication_verification_method_snapshot(
             envelope=envelope,
             trust_verifier=verifier,
             at_time=at_time,
         )
     except Exception:
         raise ProvisioningLeasePreflightError("PROVISIONING_INVALID") from None
-    return remaining, len(claims.entries)
+
+    effective_remaining = remaining
+    for entry in claims.entries:
+        start = max(
+            claims.issued_at,
+            entry.valid_from if entry.valid_from is not None else claims.issued_at,
+        )
+        end = min(
+            claims.expires_at,
+            entry.valid_until if entry.valid_until is not None else claims.expires_at,
+        )
+        if at_time < start:
+            raise ProvisioningLeasePreflightError("IDENTITY_NOT_YET_VALID")
+        if at_time >= end:
+            raise ProvisioningLeasePreflightError("IDENTITY_EXPIRED")
+        # The exact reviewed principal-binding verifier must agree at this
+        # sampled time. Never print the principal or method on failure.
+        try:
+            bound = snapshot.verify(
+                principal=entry.controller_principal,
+                verification_method=entry.verification_method,
+                at_time=at_time,
+            )
+        except Exception:
+            raise ProvisioningLeasePreflightError("PROVISIONING_INVALID") from None
+        if bound is not True:
+            raise ProvisioningLeasePreflightError("PROVISIONING_INVALID")
+        if end - at_time < minimum_remaining_seconds:
+            raise ProvisioningLeasePreflightError("IDENTITY_LEASE_TOO_SHORT")
+        effective_remaining = min(effective_remaining, end - at_time)
+    return effective_remaining, len(claims.entries)
 
 
 def main(argv: list[str] | None = None) -> int:

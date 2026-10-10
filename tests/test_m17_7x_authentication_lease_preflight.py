@@ -1,4 +1,4 @@
-"""M17.7X: isolated signed-lease diagnostics, no runtime or PostgreSQL."""
+"""M17.7X/Y: isolated signed-lease diagnostics, no runtime or PostgreSQL."""
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -45,7 +45,7 @@ class M177XAuthenticationLeasePreflightTests(unittest.TestCase):
         self.folder.mkdir()
         self._write_bundle()
 
-    def _write_bundle(self, *, issued=900, expires=1_100):
+    def _write_bundle(self, *, issued=900, expires=1_100, second_window=None):
         key = Ed25519PrivateKey.generate()
         pub = key.public_key().public_bytes(
             encoding=serialization.Encoding.Raw,
@@ -59,18 +59,27 @@ class M177XAuthenticationLeasePreflightTests(unittest.TestCase):
                 ),),
             ),
         )
+        entries = (AuthenticationVerificationMethodEvidenceClaim(
+            verification_method="did:example:seller#key-1",
+            controller_principal="did:example:seller",
+            public_key=pub,
+            valid_from=issued,
+            valid_until=expires,
+        ),)
+        if second_window is not None:
+            entries += (AuthenticationVerificationMethodEvidenceClaim(
+                verification_method="did:example:buyer#key-1",
+                controller_principal="did:example:buyer",
+                public_key=pub,
+                valid_from=second_window[0],
+                valid_until=second_window[1],
+            ),)
         claims = encode_marketplace_authentication_verification_method_evidence_claims(
             MarketplaceAuthenticationVerificationMethodEvidenceClaims(
                 authority="https://authority.example/auth",
                 issued_at=issued,
                 expires_at=expires,
-                entries=(AuthenticationVerificationMethodEvidenceClaim(
-                    verification_method="did:example:seller#key-1",
-                    controller_principal="did:example:seller",
-                    public_key=pub,
-                    valid_from=issued,
-                    valid_until=expires,
-                ),),
+                entries=entries,
             ),
         )
         attestation = key.sign(build_marketplace_authentication_evidence_trust_transcript(
@@ -110,6 +119,29 @@ class M177XAuthenticationLeasePreflightTests(unittest.TestCase):
 
     def test_invalid_signature_never_masquerades_as_expiry(self):
         self._write_bundle(issued=500, expires=950)
+        path = self.folder / VERIFICATION_METHOD_ATTESTATION_FILENAME
+        path.write_bytes(bytes(len(path.read_bytes())))
+        self._expect("PROVISIONING_INVALID")
+
+    def test_two_identities_report_the_shorter_effective_lease(self):
+        self._write_bundle(second_window=(950, 1070))
+        self.assertEqual(self._check(), (70, 2))
+
+    def test_second_identity_expired_while_signed_bundle_valid(self):
+        self._write_bundle(second_window=(900, 990))
+        self._expect("IDENTITY_EXPIRED")
+
+    def test_second_identity_not_yet_valid_while_bundle_valid(self):
+        self._write_bundle(second_window=(1001, 1090))
+        self._expect("IDENTITY_NOT_YET_VALID")
+
+    def test_second_identity_has_insufficient_remaining_lease(self):
+        self._write_bundle(second_window=(950, 1020))
+        self._expect("IDENTITY_LEASE_TOO_SHORT", minimum=21)
+        self.assertEqual(self._check(minimum=20), (20, 2))
+
+    def test_invalid_attestation_is_not_misreported_as_identity_expiry(self):
+        self._write_bundle(second_window=(900, 990))
         path = self.folder / VERIFICATION_METHOD_ATTESTATION_FILENAME
         path.write_bytes(bytes(len(path.read_bytes())))
         self._expect("PROVISIONING_INVALID")
