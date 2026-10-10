@@ -44,23 +44,36 @@ These controls are reviewable source artifacts. They do **not** equal GitHub bra
 
 ## 3. Current provider verification boundary
 
-Provider-side branch protection/ruleset state MUST be independently read and verified through an authorized GitHub administrative control plane.
+Provider-side branch protection and required checks MUST be independently read from GitHub; source files alone are not evidence of enforcement.
 
-At the 2026-09-21 v1.7 adoption verification, current `main` was `9a090388143690b0a230433b0b828a3dcaf64fef` and GitHub reported:
+At adoption baseline `9a090388143690b0a230433b0b828a3dcaf64fef` on 2026-09-21, the GitHub branch endpoint reported an *unprotected* `main`:
 
 ```text
 main protected: false
 branch protection enabled: false
 required status checks: enforcement off
 repository rulesets: []
-current Marketplace check-run identity: acceptance
+Marketplace check-run identity on main: acceptance
 ```
 
-The detailed branch-protection endpoint was inaccessible to the connected integration, but the branch endpoint directly reports that protection is disabled.
+This is historical provider evidence, **not the current state**. At that time the detailed protection endpoint was inaccessible to the connected integration.
 
-Therefore Marketplace MUST NOT claim `main` is remotely protected. Provider-side protection remains required policy; enabling/changing it is a separate ADMIN capability tracked by Issue #212 and must be separately authorized and independently verified.
+After explicit owner ADMIN authorization, Issue [#212](https://github.com/open-trust-layer/marketplace/issues/212) recorded the 2026-09-27 protection configuration and independent readback. A separate read-only GitHub provider query on 2026-10-10 confirmed:
 
-Until that required provider control exists, source development and PR validation may continue, but routine merge to `main` is blocked unless an applicable explicit narrow exception authorizes that governance gap. Exact-head discipline, CI, CODEOWNERS, agent review, merge-parent verification, and merged-main push verification are compensating/review controls; they are not substitutes for branch protection.
+```text
+main protected: true
+required Marketplace status check: acceptance
+required checks strict/up-to-date: true
+required approving human review count: 0
+conversation resolution required: true
+admin enforcement: true
+force pushes allowed: false
+branch deletion allowed: false
+```
+
+The 2026-10-10 readback was at `main` SHA `fd12304319938ac0b5a6130ec85feea1bc217c44`; it does not establish eternal provider state. Branch protection is an independently administered GitHub control, not a source-code or CODEOWNERS guarantee. This policy PR makes **no provider ADMIN mutation**. Before each routine merge, verify the relevant required check, protection and merge preconditions. If the required provider-side control is later absent, routine merge to `main` is blocked until a separately approved correction or explicit narrow governance exception applies.
+
+Exact-head discipline, CI, CODEOWNERS and review records remain additional source/review controls; they never substitute for provider enforcement.
 
 ## 4. Security-sensitive paths
 
