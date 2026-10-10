@@ -240,6 +240,20 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
                     load_authenticated_local_flight_evidence(path)
                 self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
 
+    def test_excessive_json_integer_returns_stable_invalid_code(self) -> None:
+        canonical = json.dumps(valid_evidence())
+        payload = canonical.replace(
+            '"ci_run_number": 958',
+            '"ci_run_number": ' + '9' * 5_000,
+        )
+        self.assertNotEqual(payload, canonical)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
+
     def test_cli_reports_duplicate_key_with_stable_nonsecret_code(self) -> None:
         canonical = json.dumps(valid_evidence())
         payload = canonical.replace(
