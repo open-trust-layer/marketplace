@@ -23,6 +23,7 @@ class PolicyV17AdoptionTests(unittest.TestCase):
         self.assertIn("ai-automation-department", text)
         self.assertIn("acceptance", text)
         self.assertIn("main protected: false", text)
+        self.assertIn("main protected: true", text)
 
     def test_active_policy_points_to_v1_7_stack(self) -> None:
         text = (ROOT / "DEVELOPMENT_POLICY.md").read_text(encoding="utf-8")
@@ -76,9 +77,13 @@ class PolicyV17AdoptionTests(unittest.TestCase):
         adoption = (ROOT / "docs" / "POLICY_V1_7_ADOPTION.md").read_text(encoding="utf-8")
         governance = (ROOT / "docs" / "REPOSITORY_GOVERNANCE.md").read_text(encoding="utf-8")
         for text in (adoption, governance):
-            self.assertIn("main protected: false", text)
-            self.assertIn("Issue #212", text)
-        self.assertIn("routine merge to `main` is blocked", adoption)
+            self.assertIn("main protected: false", text)  # 2026-09-21 historical snapshot
+            self.assertIn("main protected: true", text)   # 2026-10-10 independent readback
+            self.assertIn("Issue [#212]", text)
+            self.assertIn("no provider ADMIN mutation", text)
+            self.assertIn("routine merge to `main` is blocked", text)
+        self.assertIn("required Marketplace status check: acceptance", adoption)
+        self.assertIn("branch deletion allowed: false", governance)
 
 
 if __name__ == "__main__":
