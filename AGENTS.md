@@ -75,7 +75,7 @@ Batch independent read-only discovery/validation when safe. Prefer exact lookup 
 
 Plan once before first mutation, then execute the coherent authorized scope. Do not repeatedly ask for unchanged authorization merely because a read-only check, deterministic test rerun, conversation continuation, or non-mutating diagnostic occurred.
 
-For an explicitly adopted Marketplace delivery task, routine source delivery includes task-branch commit/push, PR creation/update, and merge after required checks and merge preconditions pass. Marketplace has **zero mandatory human PR approvals**; agent diff review and automated validation still apply.
+For an explicitly adopted Marketplace delivery task, routine source delivery includes task-branch commit/push, PR creation/update, and merge after required checks and merge preconditions pass. Marketplace has **zero mandatory human PR approvals**; agent diff review and automated validation still apply. A zero provider-approval count never waives CRITICAL independent safety review where supported, or separate privileged/runtime authority.
 
 Use **bounded authorization reuse** only while project, target/resource, exact head/version where explicitly specified, scope, risk, capability class, side-effect class, rollback assumptions, and expiry/exception state remain unchanged. Same-scope head changes require revalidation, not renewed task authority, unless the user explicitly pinned authority to the old head.
 
