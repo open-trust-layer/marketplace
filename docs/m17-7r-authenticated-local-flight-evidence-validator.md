@@ -60,6 +60,8 @@ evidence schema is checked. The offline loader now uses a fail-closed parser
 which rejects duplicate JSON object names at every nesting depth with
 `EVIDENCE_JSON_DUPLICATE_KEY`. It also rejects the nonstandard `NaN`,
 `Infinity`, and `-Infinity` tokens with `EVIDENCE_JSON_INVALID`.
+An excessively long JSON integer that triggers Python's integer-decoding limit
+also fails with the stable `EVIDENCE_JSON_INVALID` code rather than a raw traceback.
 The parser never includes a member name, value or file content in its failure
 message. The existing 64 KiB file bound, strict expected keys and offline
 non-authority remain unchanged.
