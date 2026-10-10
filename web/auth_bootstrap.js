@@ -50,8 +50,25 @@ function reviewedFetch(value) {
   return value;
 }
 
+// TextEncoder replaces unpaired UTF-16 surrogates with U+FFFD. Reject them
+// before authentication identifier byte measurement or cryptographic use.
+function validUnicodeScalarSequence(value) {
+  for (let index = 0; index < value.length; index += 1) {
+    const unit = value.charCodeAt(index);
+    if (unit >= 0xd800 && unit <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return false;
+      index += 1;
+    } else if (unit >= 0xdc00 && unit <= 0xdfff) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function reviewedUri(value) {
-  if (typeof value !== "string" || utf8Bytes(value) > MAX_URI_BYTES || !URI.test(value)) {
+  if (typeof value !== "string" || !validUnicodeScalarSequence(value) ||
+      utf8Bytes(value) > MAX_URI_BYTES || !URI.test(value)) {
     throw stableBootstrapError("AUTH_REQUEST_INVALID");
   }
   return value;
