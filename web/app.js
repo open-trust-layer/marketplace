@@ -479,6 +479,7 @@ const authenticatedFlightEvidenceStatus = byId("authenticated-flight-evidence-st
 const authenticatedFlightEvidenceJson = byId("authenticated-flight-evidence-json");
 let authenticatedFlightEvidenceDocument = null;
 let buyerAuthenticationObservation = null;
+let sellerAuthenticationSessionEpoch = 0;
 const authLoadButton = byId("auth-load");
 const authGenerateKeyButton = byId("auth-generate-key");
 const authEstablishButton = byId("auth-establish");
@@ -632,6 +633,8 @@ async function establishAuthenticationSession() {
       authPrincipalInput.value,
       authVerificationMethodInput.value,
     );
+    sellerAuthenticationSessionEpoch += 1;
+    invalidateBuyerAuthenticationObservation();
     state.proposalAcceptanceResolutionResults.clear();
     state.proposalAcceptanceResolutionErrors.clear();
     state.proposalAcceptanceResolutionPending.clear();
@@ -653,6 +656,8 @@ async function establishAuthenticationSession() {
 function resetAuthentication() {
   if (authBootstrap === null) return;
   authBootstrap.reset();
+  sellerAuthenticationSessionEpoch += 1;
+  invalidateBuyerAuthenticationObservation();
   state.proposalAcceptanceResolutionResults.clear();
   state.proposalAcceptanceResolutionErrors.clear();
   state.proposalAcceptanceResolutionPending.clear();
@@ -1320,6 +1325,12 @@ function clearAuthenticatedFlightEvidenceDocument() {
 // Buyer authentication is separately observed by the operator in another browser.
 // Bind that manual observation to the exact selected Proposal, Listing and
 // active seller session; never carry a checked box into another transaction.
+function invalidateBuyerAuthenticationObservation() {
+  buyerAuthenticationObservation = null;
+  evidenceBuyerAuthObservedInput.checked = false;
+  clearAuthenticatedFlightEvidenceDocument();
+}
+
 function currentBuyerAuthenticationObservationContext() {
   if (state.selectedId === null || state.responseParentId === null) return null;
   const proposal = proposalResponseSummary(state.selectedRecord);
@@ -1335,6 +1346,7 @@ function currentBuyerAuthenticationObservationContext() {
     listingRecordId: state.responseParentId,
     sellerPrincipal: listing.sellerPrincipal,
     buyerPrincipal: proposal.buyerPrincipal,
+    sellerSessionEpoch: sellerAuthenticationSessionEpoch,
   };
 }
 
@@ -1347,12 +1359,11 @@ function buyerAuthenticationObservationIsCurrent() {
       current.proposalId === stored.proposalId &&
       current.listingRecordId === stored.listingRecordId &&
       current.sellerPrincipal === stored.sellerPrincipal &&
-      current.buyerPrincipal === stored.buyerPrincipal) return true;
+      current.buyerPrincipal === stored.buyerPrincipal &&
+      current.sellerSessionEpoch === stored.sellerSessionEpoch) return true;
   // Invalidate the checkbox itself, not just the export: returning to an
   // earlier selection must still require a new explicit buyer observation.
-  buyerAuthenticationObservation = null;
-  evidenceBuyerAuthObservedInput.checked = false;
-  clearAuthenticatedFlightEvidenceDocument();
+  invalidateBuyerAuthenticationObservation();
   return false;
 }
 
