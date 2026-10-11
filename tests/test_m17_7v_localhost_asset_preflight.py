@@ -173,6 +173,43 @@ class M177VLocalhostAssetPreflightTests(unittest.TestCase):
             self._verify()
         self.assertEqual(caught.exception.code, "LOCAL_ASSET_TOO_LARGE")
 
+    def test_exact_local_asset_limit_is_accepted_and_byte_compared(self):
+        first_path, first_relative = ASSETS[0]
+        content = b"x" * MAX_ASSET_BYTES
+        (self.root / first_relative).write_bytes(content)
+        self.payloads[first_path] = content
+        self.assertEqual(self._verify(), len(ASSETS))
+        self.assertEqual(len(self.requests), len(ASSETS))
+
+    def test_local_asset_reader_never_requests_unbounded_bytes(self):
+        requested = []
+
+        class ReadSpy(BytesIO):
+            def read(self, size=-1):
+                requested.append(size)
+                if size < 0 or size > MAX_ASSET_BYTES + 1:
+                    raise AssertionError("unbounded local asset read")
+                return super().read(size)
+
+        reader = ReadSpy(b"x" * (MAX_ASSET_BYTES + 4096))
+        with patch.object(Path, "open", return_value=reader) as mocked_open:
+            with self.assertRaises(AssetPreflightError) as caught:
+                self._verify()
+        mocked_open.assert_called_once_with("rb")
+        self.assertEqual(requested, [MAX_ASSET_BYTES + 1])
+        self.assertEqual((caught.exception.code, caught.exception.asset),
+                         ("LOCAL_ASSET_TOO_LARGE", ASSETS[0][0]))
+        self.assertEqual(self.requests, [])
+
+    def test_local_read_error_remains_nonsecret_and_fails_before_http(self):
+        with patch.object(Path, "open", side_effect=OSError("secret-local-path")):
+            with self.assertRaises(AssetPreflightError) as caught:
+                self._verify()
+        self.assertEqual((caught.exception.code, caught.exception.asset),
+                         ("LOCAL_ASSET_UNAVAILABLE", ASSETS[0][0]))
+        self.assertNotIn("secret-local-path", str(caught.exception))
+        self.assertEqual(self.requests, [])
+
     def test_redirect_is_rejected(self):
         self.assertIsNone(_NoRedirect().redirect_request(None, None, 302, "", {}, "http://elsewhere/"))
 
