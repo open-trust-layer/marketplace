@@ -1,7 +1,7 @@
 # Hello, World! Marketplace — Roadmap
 
 **Checkpoint date:** 2026-10-11
-**Reviewed baseline:** `main` merge commit `44a50144d93f86ef7a3e17310b6e3f96040392df` (M17.7U evidence-preview UX / PR #533); its exact-head [acceptance #38112092330](https://github.com/open-trust-layer/marketplace/actions/runs/38112092330) **passed**, while the separate [main-push acceptance #38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) was **in progress** at checkpoint. Prior #529–#532 merged-main runs all succeeded.
+**Reviewed baseline:** `main` merge commit `44a50144d93f86ef7a3e17310b6e3f96040392df` (M17.7U evidence-preview UX / PR #533); its exact-head [acceptance #38112092330](https://github.com/open-trust-layer/marketplace/actions/runs/38112092330) and separate [main-push acceptance #38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) both **completed successfully**. Prior #529–#532 merged-main runs all succeeded.
 **Original planning snapshot:** 2026-10-10. Forward estimates below remain rough engineering forecasts, not elapsed hours.
 **Audience:** product, engineering, security, and Moon Commerce integration.
 **Status semantics:** COMPLETE means the stated *scope* has evidence; it does not imply production readiness.
@@ -19,7 +19,7 @@
 | Repository governance v1.7 | [PR #382](https://github.com/open-trust-layer/marketplace/pull/382) merged at `7616320`; [merged-main acceptance #38087998470](https://github.com/open-trust-layer/marketplace/actions/runs/38087998470) succeeded; strict `acceptance` protection verified | MERGED / MAIN CI VERIFIED |
 | M17.7R offline evidence validation | [PR #526](https://github.com/open-trust-layer/marketplace/pull/526) bounded reads; [#529](https://github.com/open-trust-layer/marketplace/pull/529) matched browser safe-integer bounds; [#530](https://github.com/open-trust-layer/marketplace/pull/530) made nested JSON fail closed; respective merged-main CI [#38104714317](https://github.com/open-trust-layer/marketplace/actions/runs/38104714317), [#38108050763](https://github.com/open-trust-layer/marketplace/actions/runs/38108050763), [#38110494074](https://github.com/open-trust-layer/marketplace/actions/runs/38110494074) succeeded | MERGED / MAIN CI VERIFIED |
 | M17.7V/W read-only localhost asset preflight | [PR #531](https://github.com/open-trust-layer/marketplace/pull/531) bounded local asset reads; [#532](https://github.com/open-trust-layer/marketplace/pull/532) normalized malformed/truncated HTTP errors; merged-main CI [#38111080300](https://github.com/open-trust-layer/marketplace/actions/runs/38111080300) and [#38112073801](https://github.com/open-trust-layer/marketplace/actions/runs/38112073801) succeeded; no live preflight invoked | MERGED / MAIN CI VERIFIED |
-| M17.7U evaluator evidence preview UX | [PR #533](https://github.com/open-trust-layer/marketplace/pull/533) retains prepared status across language/detail re-renders; exact-head [acceptance #38112092330](https://github.com/open-trust-layer/marketplace/actions/runs/38112092330) succeeded; separate main-push [#38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) running | MERGED / MAIN CI PENDING; BROWSER UX NOT VERIFIED |
+| M17.7U evaluator evidence preview UX | [PR #533](https://github.com/open-trust-layer/marketplace/pull/533) retains prepared status across language/detail re-renders; exact-head [acceptance #38112092330](https://github.com/open-trust-layer/marketplace/actions/runs/38112092330) succeeded; separate main-push [#38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) succeeded | MERGED / MAIN CI VERIFIED; BROWSER UX NOT VERIFIED |
 | PostgreSQL-backed authenticated localhost browser flight | [Issue #525](https://github.com/open-trust-layer/marketplace/issues/525) tracks fresh *post-M17.7P* two-party Agreement publication and seller-delivery completion; requires separately authorized loopback execution and non-secret evidence | LIVE ACCEPTANCE PENDING |
 | Android | Source/contract/toolchain wiring exists; no evidenced compiled, installed, signed, or distributed Android build | NOT RUNTIME ACCEPTED |
 | Production Marketplace, payments and settlement | No production hosting, public-network activation, persistent production PostgreSQL, payment/settlement, or Android distribution | NOT ACTIVATED |
@@ -40,10 +40,10 @@ Source of truth: [README.md](README.md), [MARKETPLACE_MVP_ACCEPTANCE.md](MARKETP
 - [x] Merged [PR #527](https://github.com/open-trust-layer/marketplace/pull/527) to reconcile the roadmap baseline and superseded-PR housekeeping; its separate [main push #38106288756](https://github.com/open-trust-layer/marketplace/actions/runs/38106288756) succeeded.
 - [x] Merged source-only hardening [PRs #529](https://github.com/open-trust-layer/marketplace/pull/529), [#530](https://github.com/open-trust-layer/marketplace/pull/530), [#531](https://github.com/open-trust-layer/marketplace/pull/531), and [#532](https://github.com/open-trust-layer/marketplace/pull/532) after separate exact-head full acceptance; their individual merged-main CI runs passed.
 - [x] Merged [PR #533](https://github.com/open-trust-layer/marketplace/pull/533) after exact-head full CI for P2 evidence-preview status; this is source-only, not browser/runtime acceptance.
-- [ ] Independently verify [PR #533 merged-main push #38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) on `44a50144d93f86ef7a3e17310b6e3f96040392df` after the current run completes.
+- [x] Independently verified [PR #533 merged-main push #38113072116](https://github.com/open-trust-layer/marketplace/actions/runs/38113072116) passed on `44a50144d93f86ef7a3e17310b6e3f96040392df`.
 - [ ] Record any additional server-side, enrollment, or Agreement URI validation concerns as separately reviewed scopes; M17.8E does not claim to fix them.
 
-**Exit:** independent merged-main CI verified for each merge, including the separately pending #533 run; further findings tracked as narrow scopes; no accidental runtime activation.
+**Exit:** independent merged-main CI verified for each merge, including #533's independently verified merged-main run; further findings tracked as narrow scopes; no accidental runtime activation.
 
 ### P1 — Complete the authenticated PostgreSQL-backed localhost product flight
 
@@ -99,7 +99,7 @@ The ranges below are **forward-looking engineering estimates only**, now updated
 
 | Next unit | Approximate engineering effort | Key dependency |
 | --- | ---: | --- |
-| P0 merged-main evidence and PR triage | 0 h remaining for completed items; PR #533 push CI still pending independent verification | CI/provider access |
+| P0 merged-main evidence and PR triage | 0 h remaining for completed items; PR #533 main-push CI independently verified green | CI/provider access |
 | P1 authenticated localhost flight and evidence | 6–16 h | Ready local PostgreSQL/auth evaluator + explicit runtime permission |
 | P2 local product UX, negative paths and repeatability | 12–32 h | P1 findings |
 | P3 Android compiled/runtime proof | 8–24 h | Android toolchain and test target |
@@ -114,4 +114,4 @@ Material bugs or external prerequisites may expand these figures. A public produ
 
 ## Краткий статус (RU)
 
-Базовые спецификации и локальный MVP готовы в пределах подтверждённых сценариев. Защита Web-аутентификации M17.8E, политика разработки v1.7, офлайн-проверка доказательств (#526, #529, #530) и безопасная диагностика локальных Web-ресурсов (#531, #532) объединены с `main`; отдельные CI-проверки `main` для этих изменений завершились успешно. Улучшение предпросмотра доказательств (#533) также объединено и прошло проверку PR; отдельная проверка `main` #38113072116 на момент контрольной точки ещё выполнялась. Главная следующая задача — подтвердить в реальном браузере локальный сценарий с PostgreSQL: аутентификация двух участников, публикация Agreement и заявление продавца об исполнении обязательства seller-delivery. Запуск локального сервера, использование PostgreSQL и браузерная проверка требуют отдельного разрешения. Продакшен, публичный доступ, платежи и выпуск Android не активированы.
+Базовые спецификации и локальный MVP готовы в пределах подтверждённых сценариев. Защита Web-аутентификации M17.8E, политика разработки v1.7, офлайн-проверка доказательств (#526, #529, #530) и безопасная диагностика локальных Web-ресурсов (#531, #532) объединены с `main`; отдельные CI-проверки `main` для этих изменений завершились успешно. Улучшение предпросмотра доказательств (#533) также объединено и прошло проверку PR; отдельная проверка `main` #38113072116 также завершилась успешно. Главная следующая задача — подтвердить в реальном браузере локальный сценарий с PostgreSQL: аутентификация двух участников, публикация Agreement и заявление продавца об исполнении обязательства seller-delivery. Запуск локального сервера, использование PostgreSQL и браузерная проверка требуют отдельного разрешения. Продакшен, публичный доступ, платежи и выпуск Android не активированы.
