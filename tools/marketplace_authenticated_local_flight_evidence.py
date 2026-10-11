@@ -205,7 +205,10 @@ def _reject_json_constant(_value: str) -> None:
 def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str, object]:
     path = Path(path_value)
     try:
-        payload = path.read_bytes()
+        # Bound actual I/O and memory, not merely the already-loaded payload.
+        # The extra byte distinguishes exact-limit input from an oversized file.
+        with path.open("rb") as evidence_file:
+            payload = evidence_file.read(MAX_EVIDENCE_BYTES + 1)
     except OSError:
         _fail("EVIDENCE_FILE_UNAVAILABLE")
     if len(payload) > MAX_EVIDENCE_BYTES:

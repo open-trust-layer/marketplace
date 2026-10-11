@@ -6,9 +6,11 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from tools.marketplace_authenticated_local_flight_evidence import (
     AuthenticatedLocalFlightEvidenceError,
+    MAX_EVIDENCE_BYTES,
     PROFILE,
     load_authenticated_local_flight_evidence,
     main,
@@ -192,6 +194,48 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
             self.assertEqual(failure_out.getvalue(), "")
             self.assertIn("status=FAIL code=EVIDENCE_JSON_INVALID", failure_err.getvalue())
 
+
+    def test_file_limit_accepts_exact_size_and_rejects_one_extra_byte(self) -> None:
+        canonical = json.dumps(valid_evidence()).encode("utf-8")
+        self.assertLess(len(canonical), MAX_EVIDENCE_BYTES)
+        exact_limit = canonical + b" " * (MAX_EVIDENCE_BYTES - len(canonical))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_bytes(exact_limit)
+            self.assertEqual(
+                load_authenticated_local_flight_evidence(path)["agreement_record_id"],
+                "rid_agreement_01",
+            )
+            path.write_bytes(exact_limit + b" ")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_FILE_TOO_LARGE")
+
+    def test_oversized_evidence_never_causes_unbounded_file_read(self) -> None:
+        requested: list[int] = []
+
+        class ReadSpy(io.BytesIO):
+            def read(self, size: int = -1) -> bytes:
+                requested.append(size)
+                if size < 0 or size > MAX_EVIDENCE_BYTES + 1:
+                    raise AssertionError("unbounded evidence read")
+                return super().read(size)
+
+        reader = ReadSpy(b"x" * (MAX_EVIDENCE_BYTES + 4096))
+        with patch.object(Path, "open", return_value=reader) as mocked_open:
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence("evidence.json")
+        mocked_open.assert_called_once_with("rb")
+        self.assertEqual(requested, [MAX_EVIDENCE_BYTES + 1])
+        self.assertEqual(caught.exception.code, "EVIDENCE_FILE_TOO_LARGE")
+
+    def test_evidence_read_failure_is_stable_without_path_reflection(self) -> None:
+        with patch.object(Path, "open", side_effect=OSError("sensitive path")):
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence("secret-evidence.json")
+        self.assertEqual(caught.exception.code, "EVIDENCE_FILE_UNAVAILABLE")
+        self.assertNotIn("sensitive path", str(caught.exception))
+        self.assertNotIn("secret-evidence.json", str(caught.exception))
 
     def test_duplicate_top_level_json_key_rejected_before_mapping_validation(self) -> None:
         document = valid_evidence()
