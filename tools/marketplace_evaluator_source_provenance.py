@@ -17,10 +17,11 @@ _GIT_TIMEOUT_SECONDS: Final = 10
 
 
 def _git(arguments: list[str]) -> subprocess.CompletedProcess[str]:
-    # Never use a shell or surface raw stdout/stderr; local Git configuration
-    # must not activate filesystem monitor hooks while inspecting the tree.
+    # Never use a shell or surface raw stdout/stderr. Do not refresh the index
+    # or activate a filesystem-monitor process during a read-only inspection.
     return subprocess.run(
-        ["git", "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", *arguments],
+        ["git", "--no-optional-locks", "-c", "core.fsmonitor=false",
+         "-c", "core.untrackedCache=false", *arguments],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
@@ -67,6 +68,21 @@ def inspect_source(
             return f"{prefix}_REPOSITORY_UNAVAILABLE"
         if dirty.stdout:
             return f"{prefix}_TREE_DIRTY"
+
+        # Git status can report a falsely clean tree when local index flags
+        # suppress checking modified working-tree files. Reject those flags
+        # (and any unexpected index state), rather than accept hidden changes.
+        # -z keeps filenames opaque and unambiguous; none are ever printed.
+        entries = git_runner([*command, "ls-files", "-v", "-z"])
+        if entries.returncode != 0:
+            return f"{prefix}_REPOSITORY_UNAVAILABLE"
+        if not entries.stdout or not entries.stdout.endswith("\x00"):
+            return f"{prefix}_INDEX_UNVERIFIED"
+        if any(
+            not entry.startswith("H ")
+            for entry in entries.stdout.split("\x00") if entry
+        ):
+            return f"{prefix}_INDEX_FLAGS_UNVERIFIED"
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
         return f"{prefix}_REPOSITORY_UNAVAILABLE"
     return None
