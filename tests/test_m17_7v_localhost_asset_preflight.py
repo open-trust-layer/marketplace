@@ -1,5 +1,7 @@
 """Offline contracts for M17.7V/W public localhost asset preflight."""
 import ast
+import stat
+from types import SimpleNamespace
 from http.client import BadStatusLine, IncompleteRead
 from io import BytesIO
 from pathlib import Path
@@ -209,6 +211,34 @@ class M177VLocalhostAssetPreflightTests(unittest.TestCase):
         self.assertEqual((caught.exception.code, caught.exception.asset),
                          ("LOCAL_ASSET_UNAVAILABLE", ASSETS[0][0]))
         self.assertNotIn("secret-local-path", str(caught.exception))
+        self.assertEqual(self.requests, [])
+
+    def test_nonregular_checkout_asset_fails_before_file_or_http_read(self):
+        # Mock filesystem mode values so the guard is tested on Windows and
+        # POSIX without requiring permission to create actual symlinks/FIFOs.
+        for kind in (stat.S_IFLNK, stat.S_IFDIR, stat.S_IFIFO, stat.S_IFCHR):
+            with self.subTest(kind=kind):
+                with patch.object(
+                    Path, "lstat", return_value=SimpleNamespace(st_mode=kind)
+                ), patch.object(Path, "open", side_effect=AssertionError("must not open")) as opened:
+                    with self.assertRaises(AssetPreflightError) as caught:
+                        self._verify()
+                self.assertEqual(
+                    (caught.exception.code, caught.exception.asset),
+                    ("LOCAL_ASSET_UNAVAILABLE", ASSETS[0][0]),
+                )
+                opened.assert_not_called()
+                self.assertEqual(self.requests, [])
+
+    def test_local_metadata_error_is_stable_and_does_not_read_http(self):
+        with patch.object(Path, "lstat", side_effect=OSError("sensitive-asset-path")):
+            with self.assertRaises(AssetPreflightError) as caught:
+                self._verify()
+        self.assertEqual(
+            (caught.exception.code, caught.exception.asset),
+            ("LOCAL_ASSET_UNAVAILABLE", ASSETS[0][0]),
+        )
+        self.assertNotIn("sensitive-asset-path", str(caught.exception))
         self.assertEqual(self.requests, [])
 
     def test_redirect_is_rejected(self):
