@@ -25,6 +25,31 @@ class MarketplaceMvpBilingualUiTests(unittest.TestCase):
         self.assertIn('["Create product listing", "Создать объявление"]', text)
         self.assertIn('["Buyer Proposal", "Предложение покупателя"]', text)
         self.assertIn('document.documentElement.lang = language', text)
+    def test_authenticated_guidance_and_resolution_control_have_ru_catalog_entries(self):
+        html = INDEX.read_text(encoding="utf-8")
+        app = APP.read_text(encoding="utf-8")
+        guidance = (
+            "Create one memory-only browser key. Keep this page open while you "
+            "separately provision its public value and restart/relaunch authenticated "
+            "localhost to load that startup evidence."
+        )
+        self.assertIn(f'<p class="muted">{guidance}</p>', html)
+        self.assertIn('"auth.intro": ["' + guidance + '", ', app)
+        self.assertIn(
+            '<button id="resolve-proposal-acceptance" type="button" disabled>'
+            "Resolve Proposal acceptance</button>",
+            html,
+        )
+        self.assertIn(
+            '"agreementStatus.resolveButton": ["Resolve Proposal acceptance", '
+            '"Разрешить принятие предложения"]',
+            app,
+        )
+        # Static leaf text is mapped to existing i18n entries on first mount,
+        # then re-rendered on EN/RU switches; this is presentation-only.
+        self.assertIn("const key = keyForEnglishText(text);", app)
+        self.assertIn("if (key !== null) element.dataset.i18n = key;", app)
+
     def test_switch_is_in_memory_and_dependency_free(self):
         text = APP.read_text(encoding="utf-8")
         localization = text.split('\n"use strict";\n\nconst API_INTENTS', 1)[0]
