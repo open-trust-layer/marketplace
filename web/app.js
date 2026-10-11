@@ -511,6 +511,16 @@ function reviewedApiPath(path) {
   return path;
 }
 
+function rejectOversizedDeclaredResponse(response) {
+  // Reject an explicitly oversized representation before buffering its body.
+  // Missing or malformed length still uses the existing post-read byte bound.
+  const length = response.headers?.get?.("content-length");
+  if (typeof length === "string" && /^[0-9]+$/.test(length) &&
+      Number(length) > MAX_RESPONSE_JSON_BYTES) {
+    throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
+  }
+}
+
 async function apiFetch(path, { method = "GET", body = null } = {}) {
   const headers = { Accept: "application/json" };
   const init = {
@@ -526,6 +536,7 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
     init.body = body;
   }
   const response = await fetch(reviewedApiPath(path), init);
+  rejectOversizedDeclaredResponse(response);
   const text = await response.text();
   if (new TextEncoder().encode(text).length > MAX_RESPONSE_JSON_BYTES) {
     throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
