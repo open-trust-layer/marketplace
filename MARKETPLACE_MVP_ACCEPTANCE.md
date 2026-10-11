@@ -106,4 +106,6 @@ The validator is offline acceptance tooling only. It does not start the server o
 
 For input safety, the offline validator accepts at most **64 KiB** of UTF-8 JSON evidence. It reads at most **64 KiB plus one sentinel byte** from the specified local file, rejecting larger inputs with stable non-secret `EVIDENCE_FILE_TOO_LARGE` rather than loading the entire file first. This is not an authorization to inspect secrets or to create or execute a flight.
 
+Malformed or excessively nested JSON is rejected using stable `EVIDENCE_JSON_INVALID` output, including when the file stays within the 64 KiB byte limit. Parser failures must never expose local file paths, tokens, or stack traces through normal validator CLI output.
+
 The offline validator also matches the browser evidence producer's `Number.isSafeInteger` contract: `ci_run_number` and any non-null `change_seq` must be positive integers no greater than **9,007,199,254,740,991** (2^53−1). Out-of-range or non-integer inputs fail with stable non-secret codes; a Python-only PASS must not exceed a value the Web exporter itself could represent.
