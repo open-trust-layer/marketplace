@@ -65,6 +65,10 @@ def _manifest_pins(root: Path) -> dict[str, tuple[tuple[str, str], ...]]:
                 name = re.sub(r"[-_.]+", "-", match["name"]).lower()
                 version = match["version"]
                 extra = match["extra"]
+                if group == "postgres" and (name, extra) != ("psycopg", "binary"):
+                    # An ordinary psycopg distribution is insufficient for
+                    # the explicitly reviewed psycopg[binary] evaluator lane.
+                    raise _PinsetUnavailable
                 if extra is not None and (name, extra) != ("psycopg", "binary"):
                     raise _PinsetUnavailable
                 for distribution in (
