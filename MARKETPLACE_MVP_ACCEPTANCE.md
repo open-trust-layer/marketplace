@@ -64,6 +64,17 @@ or server. A `PREREQUISITES_PRESENT_UNVERIFIED` result is **not** the graph
 preflight, a pinned-OLP/CI attestation, or authorization for runtime. Execute
 the authoritative preflight below separately after preparing the evaluator.
 
+### Check reviewed optional dependency versions (no package import)
+
+The optional [inert dependency-pin metadata checker](docs/authenticated-local-flight-dependency-pins.md)
+compares installed distribution versions in the selected Python interpreter
+to the exact `postgres`, `local-server`, and `auth-verify` pins in the
+locally reviewed `pyproject.toml`, including both `psycopg` and
+`psycopg-binary`. It never imports or installs external dependencies.
+A `DEPENDENCY_PINS_PRESENT_UNVERIFIED` result is not dependency origin
+attestation, successful runtime import, graph preflight, or authorization
+to connect to PostgreSQL or start a server.
+
 ### Verify exact local source revisions (no Git fetch)
 
 After the presence-only checker, the optional
