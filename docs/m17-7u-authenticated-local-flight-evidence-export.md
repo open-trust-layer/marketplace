@@ -32,6 +32,12 @@ matches all current evaluator and lifecycle observations:
 If any of those values become stale before export, the prepared document is
 cleared and no file action occurs.
 
+A harmless page re-render, including a switch between the English and Russian
+interface, must retain the **prepared** preview status if that same evidence
+object is still current and the download control remains enabled. A re-render
+must not create or export evidence or turn an invalidated preview back into a
+valid one. An unprepared but eligible view continues to show **ready**.
+
 ## Local file shape
 
 The explicit export serializes the already-reviewed in-memory object with
