@@ -37,7 +37,7 @@ Replace the expected SHA with the **freshly verified full merged-main SHA** when
 
 A source-level regression reads (but does not import or execute) the localhost bootstrap's reviewed `_AUTH_WEB_MODULE_ASSETS` mapping and verifies that this preflight's exact 14-route list is identical. Future additions to that mapping require updating this preflight before CI can pass.
 
-The checker compares SHA-256 digests over **exact raw bytes**. Each response is bounded to 2 MiB with a 5-second request timeout. It sends no auth headers, cookies, credentials, request body, or application mutation. It neither prints nor saves served response bodies.
+The checker compares SHA-256 digests over **exact raw bytes**. Each HTTP response is bounded to 2 MiB with a 5-second request timeout. Each local checkout file is also read using at most **2 MiB plus one sentinel byte**, rather than loading an arbitrarily large local file before detecting oversize input. Exact-limit bytes remain valid; a larger local file fails with `LOCAL_ASSET_TOO_LARGE` before the corresponding HTTP GET. It sends no auth headers, cookies, credentials, request body, or application mutation. It neither prints nor saves served response bodies.
 
 On parity, output is `status=PASS host=127.0.0.1 port=18080 checked_assets=14 public_static_only=true runtime_activated=false`.
 
