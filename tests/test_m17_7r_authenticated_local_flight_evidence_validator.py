@@ -284,6 +284,26 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
                     load_authenticated_local_flight_evidence(path)
                 self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
 
+    def test_deeply_nested_json_under_file_limit_fails_with_stable_cli_code(self) -> None:
+        # A byte-bounded file can still exceed the JSON parser's nesting depth.
+        payload = "[" * 10_000 + "0" + "]" * 10_000
+        self.assertLess(len(payload.encode("utf-8")), MAX_EVIDENCE_BYTES)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "private-auth-evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
+            self.assertNotIn(str(path), str(caught.exception))
+
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                self.assertEqual(main([str(path)]), 1)
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(stderr.getvalue().strip(), "status=FAIL code=EVIDENCE_JSON_INVALID")
+            self.assertNotIn(str(path), stderr.getvalue())
+
     def test_excessive_json_integer_returns_stable_invalid_code(self) -> None:
         canonical = json.dumps(valid_evidence())
         payload = canonical.replace(
