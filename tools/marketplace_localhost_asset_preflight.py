@@ -10,6 +10,7 @@ import hashlib
 from http.client import HTTPException
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
 from urllib import request
@@ -123,9 +124,14 @@ def verify_assets(
         raise AssetPreflightError("CHECKOUT_HEAD_MISMATCH")
     for url_path, relative_path in ASSETS:
         try:
+            asset_path = root / relative_path
+            # Never follow checkout symlinks or open devices/pipes as assets.
+            # lstat checks the link itself; stat() would follow it.
+            if not stat.S_ISREG(asset_path.lstat().st_mode):
+                raise AssetPreflightError("LOCAL_ASSET_UNAVAILABLE", url_path)
             # Enforce the size ceiling during I/O, not after an unbounded read.
             # A single sentinel byte distinguishes an exact-limit asset.
-            with (root / relative_path).open("rb") as source:
+            with asset_path.open("rb") as source:
                 local = source.read(MAX_ASSET_BYTES + 1)
         except OSError:
             raise AssetPreflightError("LOCAL_ASSET_UNAVAILABLE", url_path) from None
