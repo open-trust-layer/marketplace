@@ -521,6 +521,50 @@ function rejectOversizedDeclaredResponse(response) {
   }
 }
 
+async function readBoundedResponseText(response) {
+  // Prefer bounded, incremental decoding when Fetch exposes a body stream.
+  // Retain the existing text() bound for synthetic/legacy responses without one.
+  if (response.body === null || typeof response.body?.getReader !== "function") {
+    const text = await response.text();
+    if (new TextEncoder().encode(text).length > MAX_RESPONSE_JSON_BYTES) {
+      throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
+    }
+    return text;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const fragments = [];
+  let receivedBytes = 0;
+  try {
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      if (!(chunk.value instanceof Uint8Array)) {
+        throw stableClientError("RESPONSE_BODY_READ_FAILED");
+      }
+      if (chunk.value.byteLength > MAX_RESPONSE_JSON_BYTES - receivedBytes) {
+        throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
+      }
+      receivedBytes += chunk.value.byteLength;
+      fragments.push(decoder.decode(chunk.value, { stream: true }));
+    }
+    fragments.push(decoder.decode());
+    return fragments.join("");
+  } catch (error) {
+    // Release the body on oversize/failure, without reflecting provider errors.
+    try {
+      const cancellation = reader.cancel();
+      if (cancellation && typeof cancellation.catch === "function") {
+        cancellation.catch(() => {});
+      }
+    } catch {}
+    if (error?.code === "APPLICATION_HTTP_RESPONSE_TOO_LARGE") throw error;
+    throw stableClientError("RESPONSE_BODY_READ_FAILED");
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 async function apiFetch(path, { method = "GET", body = null } = {}) {
   const headers = { Accept: "application/json" };
   const init = {
@@ -537,7 +581,7 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
   }
   const response = await fetch(reviewedApiPath(path), init);
   rejectOversizedDeclaredResponse(response);
-  const text = await response.text();
+  const text = await readBoundedResponseText(response);
   if (new TextEncoder().encode(text).length > MAX_RESPONSE_JSON_BYTES) {
     throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
   }
