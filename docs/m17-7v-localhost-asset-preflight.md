@@ -39,6 +39,8 @@ A source-level regression reads (but does not import or execute) the localhost b
 
 The checker compares SHA-256 digests over **exact raw bytes**. Each HTTP response is bounded to 2 MiB with a 5-second request timeout. Each local checkout file is also read using at most **2 MiB plus one sentinel byte**, rather than loading an arbitrarily large local file before detecting oversize input. Exact-limit bytes remain valid; a larger local file fails with `LOCAL_ASSET_TOO_LARGE` before the corresponding HTTP GET. It sends no auth headers, cookies, credentials, request body, or application mutation. It neither prints nor saves served response bodies.
 
+Local asset paths must resolve directly to **regular tracked files** at read time; symlinks and special files (directories, pipes, devices) fail with the same non-secret `LOCAL_ASSET_UNAVAILABLE` code before any local content or corresponding HTTP read. This is a fail-closed metadata check, not a claim of race-free filesystem sandboxing or a live runtime health proof.
+
 On parity, output is `status=PASS host=127.0.0.1 port=18080 checked_assets=14 public_static_only=true runtime_activated=false`.
 
 Missing routes, HTTP failure, redirect, non-identity content encoding, oversize content, a stale or locally modified checkout asset, or any byte mismatch produces a stable non-zero `status=FAIL` outcome and the public asset path only. The check must fail rather than silently fallback to an old runtime.
