@@ -1413,7 +1413,8 @@ function authenticatedFlightEvidenceInputs() {
 
 function renderAuthenticatedFlightEvidencePreview() {
   const observed = authenticatedFlightEvidenceInputs();
-  downloadAuthenticatedFlightEvidenceButton.disabled = !authenticatedFlightEvidenceDocumentIsCurrent();
+  const preparedDocumentCurrent = authenticatedFlightEvidenceDocumentIsCurrent();
+  downloadAuthenticatedFlightEvidenceButton.disabled = !preparedDocumentCurrent;
   const mainCommitReady = /^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim());
   const ciRunNumber = Number(evidenceCiRunNumberInput.value);
   const ciReady = Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0;
@@ -1434,6 +1435,10 @@ function renderAuthenticatedFlightEvidencePreview() {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.metadataRequired");
   } else if (!buyerReady) {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.buyerRequired");
+  } else if (preparedDocumentCurrent) {
+    // Re-renders (including language switches) must not relabel a prepared
+    // and still-current JSON document as needing preparation again.
+    authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.prepared");
   } else {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.ready");
   }
