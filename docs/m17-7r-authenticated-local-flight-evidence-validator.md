@@ -16,6 +16,13 @@ The validator reads one local JSON document and either accepts the exact reviewe
 shape or returns a stable error code. It does not infer success from partial
 authentication, source/CI results, or listing/Proposal authoring.
 
+The input must be a directly named **regular local file**. Symlinks,
+directories, pipes/FIFOs and device nodes fail with the non-secret
+`EVIDENCE_FILE_UNAVAILABLE` code **before opening** the input. This `lstat`
+check is defense in depth, not a race-free filesystem sandbox or a guarantee
+of the file's provenance; the existing 64 KiB-plus-sentinel read ceiling
+remains enforced. The validator never echoes an untrusted filename or contents.
+
 ## Exact evidence contract
 
 The top-level record contains:
