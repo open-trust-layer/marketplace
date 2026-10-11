@@ -8,16 +8,20 @@ use `tools/marketplace_evaluator_source_provenance.py` to verify the two
 This has no PostgreSQL, browser, socket, credential or production authority.
 
 The checker uses local Git commands only, with fixed argument arrays (no
-shell), disabled Git filesystem-monitor hooks, bounded command timeouts and
-redacted stdout/stderr. It validates, **for each repository separately**:
+shell), `--no-optional-locks` to avoid incidental Git index-refresh writes,
+disabled Git filesystem-monitor hooks, bounded command timeouts and redacted
+stdout/stderr. It validates, **for each repository separately**:
 
 - the supplied absolute directory is the exact Git worktree root, not a
   nested directory in a larger checkout;
 - `HEAD` equals the operator-supplied expected commit, including a detached
   evaluator checkout;
 - `git status --porcelain=v1 --untracked-files=all
-  --ignore-submodules=none` reports no visible tracked or untracked
-  changes.
+  --ignore-submodules=none` reports no visible tracked or untracked changes;
+- `git ls-files -v -z` reports only ordinary `H` index entries, rejecting
+  `S` skip-worktree, lowercase `h` assume-unchanged, or other unreviewed
+  index flags that could conceal modified worktree content from `git status`.
+  NUL-delimited records preserve opaque filenames without logging them.
 
 The current reviewed OLP pin appears in
 [conformance.yml](../.github/workflows/conformance.yml).
@@ -60,17 +64,19 @@ runtime_acceptance=false credentials_emitted=false
 
 A mismatch emits `status=BLOCKED codes=<stable-codes>` and exits nonzero.
 Valid categories include `MARKETPLACE_REVISION_MISMATCH`,
-`MARKETPLACE_TREE_DIRTY`, `OLP_REVISION_MISMATCH` and
-`OLP_TREE_DIRTY`. Git errors, invalid paths, timeouts, malformed expected
+`MARKETPLACE_TREE_DIRTY`, `MARKETPLACE_INDEX_FLAGS_UNVERIFIED`,
+`OLP_REVISION_MISMATCH`, `OLP_TREE_DIRTY` and
+`OLP_INDEX_FLAGS_UNVERIFIED`. Git errors, invalid paths, timeouts, malformed expected
 SHAs and non-root worktree locations also fail closed. No local paths, Git
 output, or untracked filenames are included in normal reports.
 
 This is a read-only **local checkout consistency** check, not a
 cryptographic attestation of Git object origin, CI provenance or asset
-integrity against a remote trusted source. Git config, ignored files, Git's
-skip-worktree/assume-unchanged flags and a hostile local filesystem remain
-outside the guarantee. Never infer authentication or live acceptance from
-this result.
+integrity against a remote trusted source. Ignored files, malicious Git
+configuration, race conditions, index/object-store tampering, external worktree
+changes and a hostile local filesystem remain outside the guarantee. The tool
+refuses concealed index flags but does not cryptographically attest the Git
+working tree. Never infer authentication or live acceptance from this result.
 
 **Next:** verify independent main CI and relevant source/asset integrity;
 run the authoritative inert fulfillment-completion graph preflight when
