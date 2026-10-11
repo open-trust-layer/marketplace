@@ -17,9 +17,9 @@ From the exact reviewed Marketplace checkout, execute:
 ```bash
 python3 -m tools.marketplace_evaluator_offline_readiness \
   --marketplace-root /absolute/path/to/reviewed/marketplace \
-  --marketplace-sha <reviewed-40-hex-main-commit> \
+  --marketplace-sha "<reviewed-40-hex-main-commit>" \
   --olp-root /absolute/path/to/pinned-olp \
-  --olp-sha <reviewed-40-hex-olp-pin> \
+  --olp-sha "<reviewed-40-hex-olp-pin>" \
   --provisioning-directory /absolute/path/to/marketplace-auth
 ```
 
