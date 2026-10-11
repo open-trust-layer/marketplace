@@ -124,6 +124,28 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
                     self.check()
                 self.assertEqual(caught.exception.code, "SOURCE_INVALID")
 
+    def test_deeply_nested_small_json_is_stable_nonsecret_source_invalid(self) -> None:
+        payload = "[" * 1_500 + "0" + "]" * 1_500
+        self.assertLess(len(payload.encode("utf-8")), 4096)
+        path = self.record()
+        path.write_text(payload, encoding="utf-8")
+        with self.assertRaises(HeartbeatInspectionError) as caught:
+            self.check()
+        self.assertEqual(caught.exception.code, "SOURCE_INVALID")
+        self.assertNotIn(str(path), str(caught.exception))
+
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            code = main([
+                "--state-root", str(self.root),
+                "--expected-release-sha", SHA,
+            ])
+        self.assertEqual(code, 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(stderr.getvalue(), "status=FAIL code=SOURCE_INVALID\\n")
+        self.assertNotIn(str(path), stderr.getvalue())
+
     def test_oversize_record_rejected(self) -> None:
         path = self.record()
         path.write_bytes(b"x" * 4097)
