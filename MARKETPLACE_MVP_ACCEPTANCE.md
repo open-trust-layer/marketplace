@@ -64,6 +64,16 @@ or server. A `PREREQUISITES_PRESENT_UNVERIFIED` result is **not** the graph
 preflight, a pinned-OLP/CI attestation, or authorization for runtime. Execute
 the authoritative preflight below separately after preparing the evaluator.
 
+### Verify exact local source revisions (no Git fetch)
+
+After the presence-only checker, the optional
+[offline Git source verifier](docs/authenticated-local-flight-source-provenance.md)
+checks the *local* Marketplace and pinned OLP worktree roots, exact expected
+commit IDs and Git-visible clean state. It never fetches, starts the app or
+connects to PostgreSQL. A `SOURCE_PROVENANCE_MATCHED_OFFLINE` result is not
+CI provenance, proof of authentication, runtime authorization or product-flight
+acceptance; independently verify the reviewed exact-main CI result.
+
 ### Inert server/database preflight
 
 The fulfillment-completion preflight reads the explicit local provisioning, environment configuration, and reviewed Web assets so it can compose the exact graph. It does **not** connect to PostgreSQL, initialize application/coordination state, bind a socket, or run a server.
