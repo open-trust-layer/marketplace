@@ -111,13 +111,13 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
 
     def test_untrusted_heartbeat_metadata_labels_reject_controls_and_confusables(self) -> None:
         for override in (
-            {"version": "release\\nFRESH_METADATA_UNVERIFIED"},
-            {"version": "release\\x00"},
+            {"version": "release\nFRESH_METADATA_UNVERIFIED"},
+            {"version": "release\x00"},
             {"version": "release/other"},
             {"version": "release✨"},
-            {"environment": "dev\\rprod"},
+            {"environment": "dev\rprod"},
             {"environment": "qa env"},
-            {"environment": "dev\\tprod"},
+            {"environment": "dev\tprod"},
         ):
             with self.subTest(override=override):
                 for file in self.directory.glob("*.json"):
