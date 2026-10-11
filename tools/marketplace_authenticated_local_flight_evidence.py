@@ -20,6 +20,8 @@ COMMITMENT_ID: Final = "seller-delivery"
 EVIDENCE_KIND: Final = "CLAIMED_COMPLETE_PERFORMANCE"
 DISPOSITIONS: Final = frozenset({"STORED", "DUPLICATE"})
 MAX_EVIDENCE_BYTES: Final = 64 * 1024
+# Browser Number.isSafeInteger is the maximum integer in the JS evidence producer.
+MAX_SAFE_INTEGER: Final = (1 << 53) - 1
 
 _TOP_KEYS = frozenset(
     {
@@ -94,7 +96,7 @@ def _disposition(value: object) -> str:
 def _change_seq(value: object) -> int | None:
     if value is None:
         return None
-    if type(value) is not int or value < 1:
+    if type(value) is not int or not 1 <= value <= MAX_SAFE_INTEGER:
         _fail("EVIDENCE_CHANGE_SEQ_INVALID")
     return value
 
@@ -114,7 +116,7 @@ def validate_authenticated_local_flight_evidence(value: object) -> dict[str, obj
         _fail("EVIDENCE_PROFILE_INVALID")
     if type(document["main_commit"]) is not str or _COMMIT_SHA.fullmatch(document["main_commit"]) is None:
         _fail("EVIDENCE_MAIN_COMMIT_INVALID")
-    if type(document["ci_run_number"]) is not int or document["ci_run_number"] < 1:
+    if type(document["ci_run_number"]) is not int or not 1 <= document["ci_run_number"] <= MAX_SAFE_INTEGER:
         _fail("EVIDENCE_CI_RUN_INVALID")
     if document["runtime_host"] != LOOPBACK_HOST:
         _fail("EVIDENCE_RUNTIME_HOST_INVALID")
