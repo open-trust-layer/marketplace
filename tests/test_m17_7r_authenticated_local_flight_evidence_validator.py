@@ -281,6 +281,36 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
         self.assertNotIn("sensitive path", str(caught.exception))
         self.assertNotIn("secret-evidence.json", str(caught.exception))
 
+    def test_malformed_path_metadata_valueerror_is_stable_and_does_not_open(self) -> None:
+        # pathlib may raise ValueError (for example from an embedded NUL)
+        # rather than OSError. Path names and exception text stay private.
+        with patch.object(
+            Path, "lstat", side_effect=ValueError("private filename metadata")
+        ), patch.object(
+            Path, "open", side_effect=AssertionError("must not open")
+        ) as opened:
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence("sensitive-evidence.json")
+        self.assertEqual(caught.exception.code, "EVIDENCE_FILE_UNAVAILABLE")
+        self.assertNotIn("private filename", str(caught.exception))
+        self.assertNotIn("sensitive-evidence.json", str(caught.exception))
+        opened.assert_not_called()
+
+    def test_malformed_path_open_valueerror_has_stable_cli_failure(self) -> None:
+        with patch.object(
+            Path, "lstat", return_value=SimpleNamespace(st_mode=stat.S_IFREG)
+        ), patch.object(
+            Path, "open", side_effect=ValueError("secret local path")
+        ):
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                self.assertEqual(main(["private-evidence.json"]), 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(stderr.getvalue().strip(), "status=FAIL code=EVIDENCE_FILE_UNAVAILABLE")
+        self.assertNotIn("secret local path", stderr.getvalue())
+        self.assertNotIn("private-evidence.json", stderr.getvalue())
+
     def test_nonregular_evidence_refused_without_opening_path(self) -> None:
         # Pure metadata mocks work on Windows where symlink/FIFO creation
         # often needs elevated privileges. No input path is opened.
