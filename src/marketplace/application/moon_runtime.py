@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 from collections.abc import Mapping
 from datetime import UTC, datetime
@@ -17,6 +18,7 @@ DEFAULT_VERSION = "0.0.1.dev0"
 DEFAULT_ENVIRONMENT = "development"
 DEFAULT_INTERVAL_SECONDS = 15.0
 MAX_HEARTBEAT_BYTES = 4096
+_METADATA_LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 
 
 class MarketplaceServerProvider(Protocol):
@@ -198,9 +200,9 @@ def marketplace_moon_heartbeat_from_env(
 
     return MarketplaceMoonHeartbeatLease(
         state_root=state_root,
-        version=values.get("MARKETPLACE_RELEASE_SHA", "").strip() or DEFAULT_VERSION,
+        version=values.get("MARKETPLACE_RELEASE_SHA", "") or DEFAULT_VERSION,
         environment=(
-            values.get("MARKETPLACE_MOON_ENVIRONMENT", "").strip()
+            values.get("MARKETPLACE_MOON_ENVIRONMENT", "")
             or DEFAULT_ENVIRONMENT
         ),
     )
@@ -217,10 +219,13 @@ def wrap_marketplace_server_provider_from_env(
 
 
 def _bounded_text(value: str, field: str) -> str:
-    text = value.strip()
-    if not text or len(text) > 64:
-        raise ValueError(f"Moon heartbeat {field} must contain 1-64 characters")
-    return text
+    # Operational labels are exported as Moon metadata; reject embedded
+    # controls, whitespace and non-ASCII confusables before any file write.
+    if type(value) is not str:
+        raise ValueError(f"Moon heartbeat {field} must be an ASCII token")
+    if _METADATA_LABEL.fullmatch(value) is None:
+        raise ValueError(f"Moon heartbeat {field} must be a 1-64 character ASCII token")
+    return value
 
 
 def _write_heartbeat(path: Path, record: dict[str, object]) -> None:

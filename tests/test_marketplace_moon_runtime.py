@@ -145,6 +145,54 @@ class MarketplaceMoonRuntimeTests(unittest.TestCase):
                 }
             )
 
+    def test_metadata_label_controls_and_confusables_are_rejected_before_lease(self) -> None:
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            for field, label in (
+                ("version", "release\nUNVERIFIED"),
+                ("version", "release\x00"),
+                ("version", " release"),
+                ("version", "release "),
+                ("version", "release\n"),
+                ("version", "release/other"),
+                ("version", "release✨"),
+                ("environment", "dev\rprod"),
+                ("environment", "qa env"),
+                ("environment", "dev\tprod"),
+                ("environment", " dev"),
+                ("environment", "dev "),
+                ("environment", "\tdev"),
+            ):
+                with self.subTest(field=field, label=label):
+                    kwargs = {field: label}
+                    with self.assertRaisesRegex(ValueError, "ASCII token"):
+                        MarketplaceMoonHeartbeatLease(state_root=root, **kwargs)
+                    self.assertFalse((root / "heartbeats").exists())
+
+            for field, raw in (
+                ("MARKETPLACE_RELEASE_SHA", " release"),
+                ("MARKETPLACE_RELEASE_SHA", "release\n"),
+                ("MARKETPLACE_MOON_ENVIRONMENT", "dev "),
+                ("MARKETPLACE_MOON_ENVIRONMENT", "\tdev"),
+            ):
+                with self.subTest(env_name=field, raw=raw):
+                    with self.assertRaisesRegex(ValueError, "ASCII token"):
+                        marketplace_moon_heartbeat_from_env({
+                            "MARKETPLACE_MOON_HEARTBEAT_ENABLED": "1",
+                            "MARKETPLACE_MOON_STATE_ROOT": str(root),
+                            field: raw,
+                        })
+                    self.assertFalse((root / "heartbeats").exists())
+
+            # Ordinary reviewed environment and release identifiers still work.
+            lease = MarketplaceMoonHeartbeatLease(
+                state_root=root, version="0.0.1.dev0", environment="qa-east_1",
+            )
+            self.assertFalse(lease.path.exists())
+            lease.close()
+
     def test_heartbeat_is_lazy_bounded_and_removed_on_close(self) -> None:
         from tempfile import TemporaryDirectory
 

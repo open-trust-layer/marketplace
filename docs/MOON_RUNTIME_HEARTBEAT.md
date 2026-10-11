@@ -44,6 +44,12 @@ Records are bounded below 4096 bytes, written atomically, refreshed every 15 sec
 removed on normal close. Write failure is observability loss only and does not alter Marketplace
 runtime behavior.
 
+Release/version and environment labels are constrained to 1–64 ASCII token characters
+(`A-Z`, `a-z`, `0-9`, `.`, `_`, `-`; the first character is alphanumeric).
+Control characters, whitespace, path separators, and Unicode confusables are
+rejected before an opt-in lease can write a file. The offline inspector enforces
+the same rules for untrusted source files.
+
 ## Opt-in configuration
 
 The primitive accepts:

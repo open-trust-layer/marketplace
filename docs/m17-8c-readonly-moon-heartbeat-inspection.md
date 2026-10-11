@@ -28,8 +28,10 @@ a stale file's claimed version, and a running server are independent facts.
 The tool scans at most 64 directory entries and reads at most 32 source JSON records of 4096 bytes each, requires
 regular files, strict exact JSON fields, duplicate-free standard JSON, a
 canonical UUID filename matching `instance_id`, well-formed UTC timestamps,
-Marketplace service ID, positive integer process ID and bounded version and
-environment strings. Files named `relay.json` are **not** local producer
+Marketplace service ID, positive integer process ID and 1–64-character ASCII
+version/environment tokens (alphanumeric first, followed by alphanumerics,
+periods, underscores or hyphens). Embedded newlines, control characters, spaces,
+path separators, and Unicode confusables fail closed as `SOURCE_INVALID`. Files named `relay.json` are **not** local producer
 evidence and are ignored. The report contains only stable codes, a bounded
 file count and age; it never prints filenames, process identities, record
 contents or raw exception text.
