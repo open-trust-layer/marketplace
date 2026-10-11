@@ -30,6 +30,14 @@ class M17WebApplicationArtifactTests(unittest.TestCase):
             'id="sync-status"',
         ):
             self.assertIn(marker, text)
+    def test_auth_key_placeholders_are_readable_before_js_initializes(self):
+        # The UTF-8 static shell must not render mojibake while bootstrap
+        # and localized runtime messages are still initializing.
+        markup = INDEX.read_text(encoding="utf-8")
+        self.assertIn("Browser enrollment carrier: —", markup)
+        self.assertIn("Provisioning public key: —", markup)
+        self.assertNotIn("â€”", markup)
+
     def test_api_client_uses_only_same_origin_product_routes(self):
         text = APP.read_text(encoding="utf-8")
         for marker in (
