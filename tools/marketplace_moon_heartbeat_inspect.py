@@ -101,7 +101,9 @@ def _read_record(path: Path) -> tuple[str, datetime]:
         return version, observed
     except HeartbeatInspectionError:
         raise
-    except (OSError, ValueError, UnicodeError, json.JSONDecodeError):
+    except (OSError, ValueError, UnicodeError, json.JSONDecodeError, RecursionError):
+        # Even a 4 KiB JSON input can exceed the parser nesting limit.
+        # Never expose local path, parsing details, or a traceback.
         raise HeartbeatInspectionError("SOURCE_INVALID") from None
 
 
