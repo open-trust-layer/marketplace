@@ -21,7 +21,10 @@ directories, pipes/FIFOs and device nodes fail with the non-secret
 `EVIDENCE_FILE_UNAVAILABLE` code **before opening** the input. This `lstat`
 check is defense in depth, not a race-free filesystem sandbox or a guarantee
 of the file's provenance; the existing 64 KiB-plus-sentinel read ceiling
-remains enforced. The validator never echoes an untrusted filename or contents.
+remains enforced. Filesystem `ValueError` failures (such as malformed local
+paths with embedded NUL) are also normalized to `EVIDENCE_FILE_UNAVAILABLE`,
+without leaking path or exception text. The validator never echoes an untrusted
+filename or contents.
 
 ## Exact evidence contract
 
