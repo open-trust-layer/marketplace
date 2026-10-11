@@ -1,5 +1,6 @@
 """Offline contracts for M17.7V/W public localhost asset preflight."""
 import ast
+from http.client import BadStatusLine, IncompleteRead
 from io import BytesIO
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -212,6 +213,37 @@ class M177VLocalhostAssetPreflightTests(unittest.TestCase):
 
     def test_redirect_is_rejected(self):
         self.assertIsNone(_NoRedirect().redirect_request(None, None, 302, "", {}, "http://elsewhere/"))
+
+    def test_malformed_and_truncated_http_fail_closed_without_reflection(self):
+        class BadStatusOpener:
+            def open(self, req, timeout):
+                raise BadStatusLine("sensitive-protocol-header")
+
+        class TruncatedResponse(BytesIO):
+            status = 200
+            headers = {"Content-Encoding": "identity"}
+
+            def read(self, size=-1):
+                raise IncompleteRead(b"sensitive-partial-response", 42)
+
+        class TruncatedResponseOpener:
+            def open(self, req, timeout):
+                return TruncatedResponse(b"")
+
+        for opener in (BadStatusOpener(), TruncatedResponseOpener()):
+            with self.subTest(opener=type(opener).__name__):
+                with patch(
+                    "tools.marketplace_localhost_asset_preflight.request.build_opener",
+                    return_value=opener,
+                ) as factory:
+                    with self.assertRaises(AssetPreflightError) as caught:
+                        _read_asset(18080, "/app.js")
+                self.assertEqual(
+                    (caught.exception.code, caught.exception.asset),
+                    ("HTTP_FAILED", "/app.js"),
+                )
+                self.assertNotIn("sensitive", str(caught.exception))
+                factory.assert_called_once()
 
     def test_actual_reader_is_loopback_only_and_proxy_free(self):
         class Response(BytesIO):

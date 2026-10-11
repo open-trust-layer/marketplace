@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+from http.client import HTTPException
 from pathlib import Path
 import re
 import subprocess
@@ -95,7 +96,9 @@ def _read_asset(port: int, asset: str) -> bytes:
             content = response.read(MAX_ASSET_BYTES + 1)
     except AssetPreflightError:
         raise
-    except (OSError, ValueError):
+    except (OSError, ValueError, HTTPException):
+        # Malformed/truncated HTTP framing raises HTTPException subclasses,
+        # not necessarily OSError. Do not reflect a partial response or header.
         raise AssetPreflightError("HTTP_FAILED", asset) from None
     if len(content) > MAX_ASSET_BYTES:
         raise AssetPreflightError("ASSET_TOO_LARGE", asset)
