@@ -105,3 +105,5 @@ The validator requires profile `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_
 The validator is offline acceptance tooling only. It does not start the server or browser, connect to PostgreSQL, generate the evidence record, or change the requirement for a fresh post-P live browser run.
 
 For input safety, the offline validator accepts at most **64 KiB** of UTF-8 JSON evidence. It reads at most **64 KiB plus one sentinel byte** from the specified local file, rejecting larger inputs with stable non-secret `EVIDENCE_FILE_TOO_LARGE` rather than loading the entire file first. This is not an authorization to inspect secrets or to create or execute a flight.
+
+The offline validator also matches the browser evidence producer's `Number.isSafeInteger` contract: `ci_run_number` and any non-null `change_seq` must be positive integers no greater than **9,007,199,254,740,991** (2^53−1). Out-of-range or non-integer inputs fail with stable non-secret codes; a Python-only PASS must not exceed a value the Web exporter itself could represent.

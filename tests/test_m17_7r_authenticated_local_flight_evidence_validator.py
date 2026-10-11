@@ -11,6 +11,7 @@ from unittest.mock import patch
 from tools.marketplace_authenticated_local_flight_evidence import (
     AuthenticatedLocalFlightEvidenceError,
     MAX_EVIDENCE_BYTES,
+    MAX_SAFE_INTEGER,
     PROFILE,
     load_authenticated_local_flight_evidence,
     main,
@@ -156,6 +157,43 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
         assert type(completion) is dict
         completion["change_seq"] = 0
         self.assert_code(document, "EVIDENCE_CHANGE_SEQ_INVALID")
+
+    def test_javascript_safe_integer_bounds_match_browser_projection(self) -> None:
+        # The Web producer uses Number.isSafeInteger for every numeric field.
+        valid = valid_evidence()
+        valid["ci_run_number"] = MAX_SAFE_INTEGER
+        publication = valid["agreement_publication"]
+        completion = valid["completion"]
+        assert type(publication) is dict and type(completion) is dict
+        publication["change_seq"] = MAX_SAFE_INTEGER
+        completion["change_seq"] = MAX_SAFE_INTEGER
+        validate_authenticated_local_flight_evidence(valid)
+
+        invalid_ci = (0, -1, MAX_SAFE_INTEGER + 1, 1.0, True, "1")
+        for bad in invalid_ci:
+            with self.subTest(field="ci_run_number", value=bad):
+                record = valid_evidence()
+                record["ci_run_number"] = bad
+                self.assert_code(record, "EVIDENCE_CI_RUN_INVALID")
+
+        invalid_sequence = (0, -1, MAX_SAFE_INTEGER + 1, 1.0, True, "1")
+        for field in ("agreement_publication", "completion"):
+            for bad in invalid_sequence:
+                with self.subTest(field=field, value=bad):
+                    record = valid_evidence()
+                    nested = record[field]
+                    assert type(nested) is dict
+                    nested["change_seq"] = bad
+                    self.assert_code(record, "EVIDENCE_CHANGE_SEQ_INVALID")
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "out-of-range.json"
+            record = valid_evidence()
+            record["ci_run_number"] = MAX_SAFE_INTEGER + 1
+            path.write_text(json.dumps(record), encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_CI_RUN_INVALID")
 
     def test_record_identity_shape_is_bounded_and_lifecycle_ids_are_distinct(self) -> None:
         document = valid_evidence()
