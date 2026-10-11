@@ -11,7 +11,6 @@ import argparse
 from dataclasses import dataclass
 import os
 from pathlib import Path
-import re
 from typing import Callable, Mapping
 
 from tools.marketplace_authenticated_flight_prerequisites import assess_prerequisites
