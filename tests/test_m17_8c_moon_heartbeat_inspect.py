@@ -143,7 +143,7 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
             ])
         self.assertEqual(code, 1)
         self.assertEqual(stdout.getvalue(), "")
-        self.assertEqual(stderr.getvalue(), "status=FAIL code=SOURCE_INVALID\\n")
+        self.assertEqual(stderr.getvalue(), "status=FAIL code=SOURCE_INVALID\n")
         self.assertNotIn(str(path), stderr.getvalue())
 
     def test_oversize_record_rejected(self) -> None:
