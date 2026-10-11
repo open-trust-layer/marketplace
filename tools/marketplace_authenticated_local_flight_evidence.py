@@ -216,7 +216,9 @@ def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str
         # The extra byte distinguishes exact-limit input from an oversized file.
         with path.open("rb") as evidence_file:
             payload = evidence_file.read(MAX_EVIDENCE_BYTES + 1)
-    except OSError:
+    except (OSError, ValueError):
+        # Filesystem APIs also raise ValueError for malformed local paths
+        # (for example an embedded NUL). Never echo that path or traceback.
         _fail("EVIDENCE_FILE_UNAVAILABLE")
     if len(payload) > MAX_EVIDENCE_BYTES:
         _fail("EVIDENCE_FILE_TOO_LARGE")
