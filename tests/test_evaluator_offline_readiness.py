@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
 import io
+from pathlib import Path
 from unittest.mock import patch
 import unittest
 
@@ -56,7 +57,7 @@ class OfflineReadinessTests(unittest.TestCase):
         self.assertEqual(calls[0][1]["marketplace_sha"], MAIN_SHA)
         self.assertEqual(calls[0][1]["olp_sha"], OLP_SHA)
         self.assertEqual(calls[1][1], {"marketplace_root": "/synthetic/local/marketplace"})
-        self.assertEqual(calls[2][1]["olp_source_directory"], "/synthetic/local/olp/src")
+        self.assertEqual(calls[2][1]["olp_source_directory"], str(Path("/synthetic/local/olp") / "src"))
         self.assertEqual(calls[2][1]["provisioning_directory"], "/synthetic/nonsecret/auth")
         self.assertEqual(calls[2][1]["environment"], _args()["environment"])
 
