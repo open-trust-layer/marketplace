@@ -173,9 +173,9 @@ class MarketplaceMoonRuntimeTests(unittest.TestCase):
 
             for field, raw in (
                 ("MARKETPLACE_RELEASE_SHA", " release"),
-                ("MARKETPLACE_RELEASE_SHA", "release\\n"),
+                ("MARKETPLACE_RELEASE_SHA", "release\n"),
                 ("MARKETPLACE_MOON_ENVIRONMENT", "dev "),
-                ("MARKETPLACE_MOON_ENVIRONMENT", "\\tdev"),
+                ("MARKETPLACE_MOON_ENVIRONMENT", "\tdev"),
             ):
                 with self.subTest(env_name=field, raw=raw):
                     with self.assertRaisesRegex(ValueError, "ASCII token"):
