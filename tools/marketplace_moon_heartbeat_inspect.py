@@ -19,6 +19,7 @@ MAX_FILES = 32
 MAX_DIRECTORY_ENTRIES = 64
 MAX_BYTES = 4096
 MAX_FUTURE_SECONDS = 5
+_METADATA_LABEL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}")
 FIELDS = frozenset({
     "moon_version", "service_id", "version", "environment", "instance_id",
     "process_id", "started_at", "observed_at",
@@ -80,14 +81,16 @@ def _read_record(path: Path) -> tuple[str, datetime]:
         if (type(value["process_id"]) is not int
                 or not 1 <= value["process_id"] <= 2_147_483_647):
             raise HeartbeatInspectionError("SOURCE_INVALID")
-        if (type(value["environment"]) is not str
-                or not 1 <= len(value["environment"]) <= 64):
+        environment = value["environment"]
+        if (type(environment) is not str
+                or _METADATA_LABEL.fullmatch(environment) is None):
             raise HeartbeatInspectionError("SOURCE_INVALID")
         version = value["version"]
         # The producer also supports the metadata-only development default.
         # Such a valid source is classified as RELEASE_MISMATCH when it does
         # not match the exact 40-hex expected release.
-        if type(version) is not str or not 1 <= len(version) <= 64:
+        if (type(version) is not str
+                or _METADATA_LABEL.fullmatch(version) is None):
             raise HeartbeatInspectionError("SOURCE_INVALID")
         instance_id = value["instance_id"]
         if type(instance_id) is not str or len(instance_id) != 36:
