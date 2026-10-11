@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
+import stat
 import sys
 from typing import Final
 
@@ -207,6 +208,10 @@ def _reject_json_constant(_value: str) -> None:
 def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str, object]:
     path = Path(path_value)
     try:
+        # Fail closed before opening symlinks, directories, devices or FIFOs.
+        # The lstat check is defense in depth, not a race-free sandbox.
+        if not stat.S_ISREG(path.lstat().st_mode):
+            _fail("EVIDENCE_FILE_UNAVAILABLE")
         # Bound actual I/O and memory, not merely the already-loaded payload.
         # The extra byte distinguishes exact-limit input from an oversized file.
         with path.open("rb") as evidence_file:
