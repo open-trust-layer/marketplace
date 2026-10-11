@@ -169,7 +169,18 @@ function requireRawIssuer(session, rawRecordJson, rawIssuerPrincipal) {
   if (issuer !== principal) throw stableClientError("AUTH_PRINCIPAL_MISMATCH");
   return rawRecordJson;
 }
+function rejectOversizedDeclaredResponse(response) {
+  // Reject an explicitly oversized representation before buffering its body.
+  // Missing or malformed length still uses the existing post-read byte bound.
+  const length = response.headers?.get?.("content-length");
+  if (typeof length === "string" && /^[0-9]+$/.test(length) &&
+      Number(length) > MAX_RESPONSE_JSON_BYTES) {
+    throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
+  }
+}
+
 async function decodeResponse(response, session) {
+  rejectOversizedDeclaredResponse(response);
   const text = await response.text();
   if (new TextEncoder().encode(text).length > MAX_RESPONSE_JSON_BYTES) {
     throw stableClientError("APPLICATION_HTTP_RESPONSE_TOO_LARGE");
