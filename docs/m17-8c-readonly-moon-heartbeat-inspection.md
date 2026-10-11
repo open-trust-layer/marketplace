@@ -34,6 +34,11 @@ evidence and are ignored. The report contains only stable codes, a bounded
 file count and age; it never prints filenames, process identities, record
 contents or raw exception text.
 
+Even within the 4096-byte file limit, a pathologically nested JSON value can
+exceed the Python parser's recursion limit. These inputs fail with the same
+stable, non-content-bearing `SOURCE_INVALID` code, without a traceback, file
+path or response-body echo. Parser failure is never promoted into liveness.
+
 ## Fail-closed outcomes
 
 | Result | CLI exit | Meaning |
