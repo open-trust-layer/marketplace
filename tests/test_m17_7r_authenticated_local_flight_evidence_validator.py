@@ -3,7 +3,9 @@ from __future__ import annotations
 from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
+import stat
 from pathlib import Path
+from types import SimpleNamespace
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -260,7 +262,9 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
                 return super().read(size)
 
         reader = ReadSpy(b"x" * (MAX_EVIDENCE_BYTES + 4096))
-        with patch.object(Path, "open", return_value=reader) as mocked_open:
+        with patch.object(
+            Path, "lstat", return_value=SimpleNamespace(st_mode=stat.S_IFREG)
+        ), patch.object(Path, "open", return_value=reader) as mocked_open:
             with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
                 load_authenticated_local_flight_evidence("evidence.json")
         mocked_open.assert_called_once_with("rb")
@@ -268,12 +272,42 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "EVIDENCE_FILE_TOO_LARGE")
 
     def test_evidence_read_failure_is_stable_without_path_reflection(self) -> None:
-        with patch.object(Path, "open", side_effect=OSError("sensitive path")):
+        with patch.object(
+            Path, "lstat", return_value=SimpleNamespace(st_mode=stat.S_IFREG)
+        ), patch.object(Path, "open", side_effect=OSError("sensitive path")):
             with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
                 load_authenticated_local_flight_evidence("secret-evidence.json")
         self.assertEqual(caught.exception.code, "EVIDENCE_FILE_UNAVAILABLE")
         self.assertNotIn("sensitive path", str(caught.exception))
         self.assertNotIn("secret-evidence.json", str(caught.exception))
+
+    def test_nonregular_evidence_refused_without_opening_path(self) -> None:
+        # Pure metadata mocks work on Windows where symlink/FIFO creation
+        # often needs elevated privileges. No input path is opened.
+        for kind in (stat.S_IFLNK, stat.S_IFDIR, stat.S_IFIFO, stat.S_IFCHR):
+            with self.subTest(kind=kind):
+                with patch.object(
+                    Path, "lstat", return_value=SimpleNamespace(st_mode=kind)
+                ), patch.object(
+                    Path, "open", side_effect=AssertionError("must not open")
+                ) as opened:
+                    with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                        load_authenticated_local_flight_evidence("sensitive-evidence.json")
+                self.assertEqual(caught.exception.code, "EVIDENCE_FILE_UNAVAILABLE")
+                self.assertNotIn("sensitive-evidence.json", str(caught.exception))
+                opened.assert_not_called()
+
+    def test_evidence_metadata_error_fails_closed_without_open(self) -> None:
+        with patch.object(
+            Path, "lstat", side_effect=OSError("private-raw-path")
+        ), patch.object(
+            Path, "open", side_effect=AssertionError("must not open")
+        ) as opened:
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence("sensitive-evidence.json")
+        self.assertEqual(caught.exception.code, "EVIDENCE_FILE_UNAVAILABLE")
+        self.assertNotIn("private-raw-path", str(caught.exception))
+        opened.assert_not_called()
 
     def test_duplicate_top_level_json_key_rejected_before_mapping_validation(self) -> None:
         document = valid_evidence()
