@@ -120,7 +120,10 @@ def verify_assets(
         raise AssetPreflightError("CHECKOUT_HEAD_MISMATCH")
     for url_path, relative_path in ASSETS:
         try:
-            local = (root / relative_path).read_bytes()
+            # Enforce the size ceiling during I/O, not after an unbounded read.
+            # A single sentinel byte distinguishes an exact-limit asset.
+            with (root / relative_path).open("rb") as source:
+                local = source.read(MAX_ASSET_BYTES + 1)
         except OSError:
             raise AssetPreflightError("LOCAL_ASSET_UNAVAILABLE", url_path) from None
         if len(local) > MAX_ASSET_BYTES:
