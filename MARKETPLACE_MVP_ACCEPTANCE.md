@@ -85,6 +85,17 @@ connects to PostgreSQL. A `SOURCE_PROVENANCE_MATCHED_OFFLINE` result is not
 CI provenance, proof of authentication, runtime authorization or product-flight
 acceptance; independently verify the reviewed exact-main CI result.
 
+### Consolidated offline evaluator readiness report
+
+The optional [one-command offline receipt](docs/authenticated-local-flight-offline-readiness.md)
+runs the three already reviewed checks together: exact clean source provenance,
+reviewed dependency distribution-version metadata, and DSN/module/directory
+presence. It exposes only stable non-secret codes and does not import optional
+dependencies, open provisioning files, install packages, connect to PostgreSQL,
+or run any server/browser. Even `OFFLINE_CHECKS_PRESENT_UNVERIFIED` does **not**
+imply successful package import, CI provenance, actual graph preflight,
+authentication, runtime acceptance or execution authority.
+
 ### Inert server/database preflight
 
 The fulfillment-completion preflight reads the explicit local provisioning, environment configuration, and reviewed Web assets so it can compose the exact graph. It does **not** connect to PostgreSQL, initialize application/coordination state, bind a socket, or run a server.
