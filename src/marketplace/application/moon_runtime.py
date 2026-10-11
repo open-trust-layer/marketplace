@@ -200,9 +200,9 @@ def marketplace_moon_heartbeat_from_env(
 
     return MarketplaceMoonHeartbeatLease(
         state_root=state_root,
-        version=values.get("MARKETPLACE_RELEASE_SHA", "").strip() or DEFAULT_VERSION,
+        version=values.get("MARKETPLACE_RELEASE_SHA", "") or DEFAULT_VERSION,
         environment=(
-            values.get("MARKETPLACE_MOON_ENVIRONMENT", "").strip()
+            values.get("MARKETPLACE_MOON_ENVIRONMENT", "")
             or DEFAULT_ENVIRONMENT
         ),
     )
@@ -223,10 +223,9 @@ def _bounded_text(value: str, field: str) -> str:
     # controls, whitespace and non-ASCII confusables before any file write.
     if type(value) is not str:
         raise ValueError(f"Moon heartbeat {field} must be an ASCII token")
-    text = value.strip()
-    if _METADATA_LABEL.fullmatch(text) is None:
+    if _METADATA_LABEL.fullmatch(value) is None:
         raise ValueError(f"Moon heartbeat {field} must be a 1-64 character ASCII token")
-    return text
+    return value
 
 
 def _write_heartbeat(path: Path, record: dict[str, object]) -> None:
