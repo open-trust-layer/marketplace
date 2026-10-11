@@ -28,10 +28,36 @@ class M177UAuthenticatedLocalFlightEvidenceExportTests(unittest.TestCase):
             "downloadAuthenticatedFlightEvidenceButton.disabled = true;",
             "authenticatedFlightEvidenceDocument = documentValue;",
             "downloadAuthenticatedFlightEvidenceButton.disabled = false;",
-            "downloadAuthenticatedFlightEvidenceButton.disabled = !authenticatedFlightEvidenceDocumentIsCurrent();",
+            "const preparedDocumentCurrent = authenticatedFlightEvidenceDocumentIsCurrent();",
+            "downloadAuthenticatedFlightEvidenceButton.disabled = !preparedDocumentCurrent;",
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
+
+    def test_prepared_evidence_status_survives_rerender_without_new_action(self) -> None:
+        text = APP.read_text(encoding="utf-8")
+        start = text.index("function renderAuthenticatedFlightEvidencePreview()")
+        end = text.index("async function prepareAuthenticatedFlightEvidence()", start)
+        block = text[start:end]
+        self.assertIn(
+            "const preparedDocumentCurrent = authenticatedFlightEvidenceDocumentIsCurrent();",
+            block,
+        )
+        self.assertIn(
+            "downloadAuthenticatedFlightEvidenceButton.disabled = !preparedDocumentCurrent;",
+            block,
+        )
+        self.assertIn("} else if (preparedDocumentCurrent) {", block)
+        self.assertIn('i18n.t("evidence.prepared")', block)
+        self.assertIn('i18n.t("evidence.ready")', block)
+        self.assertLess(
+            block.index("} else if (preparedDocumentCurrent) {"),
+            block.index('i18n.t("evidence.ready")'),
+        )
+        # Re-rendering is presentation-only; it may not create or export JSON.
+        self.assertNotIn("createMarketplaceAuthenticatedLocalFlightEvidence(", block)
+        self.assertNotIn("downloadAuthenticatedFlightEvidence()", block)
+        self.assertNotIn("URL.createObjectURL(", block)
 
     def test_currentness_rechecks_metadata_lifecycle_and_reviewed_boundaries(self) -> None:
         text = APP.read_text(encoding="utf-8")
