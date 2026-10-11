@@ -76,11 +76,11 @@ def inspect_source(
         entries = git_runner([*command, "ls-files", "-v", "-z"])
         if entries.returncode != 0:
             return f"{prefix}_REPOSITORY_UNAVAILABLE"
-        if not entries.stdout or not entries.stdout.endswith("\\x00"):
+        if not entries.stdout or not entries.stdout.endswith("\x00"):
             return f"{prefix}_INDEX_UNVERIFIED"
         if any(
             not entry.startswith("H ")
-            for entry in entries.stdout.split("\\x00") if entry
+            for entry in entries.stdout.split("\x00") if entry
         ):
             return f"{prefix}_INDEX_FLAGS_UNVERIFIED"
     except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired):
