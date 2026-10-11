@@ -222,8 +222,10 @@ def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str
     except AuthenticatedLocalFlightEvidenceError:
         # Preserve the specific non-secret duplicate-key and constant codes.
         raise
-    except (UnicodeDecodeError, json.JSONDecodeError, ValueError):
-        # Python may raise ValueError for an excessively long JSON integer.
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError, RecursionError):
+        # Python may raise ValueError for an excessively long JSON integer or
+        # RecursionError for a deeply nested JSON value under the byte limit.
+        # Neither parser failure may leak an unhandled traceback or file path.
         _fail("EVIDENCE_JSON_INVALID")
     return validate_authenticated_local_flight_evidence(value)
 
