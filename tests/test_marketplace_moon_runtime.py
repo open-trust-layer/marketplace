@@ -151,13 +151,13 @@ class MarketplaceMoonRuntimeTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             for field, label in (
-                ("version", "release\\nUNVERIFIED"),
-                ("version", "release\\x00"),
+                ("version", "release\nUNVERIFIED"),
+                ("version", "release\x00"),
                 ("version", "release/other"),
                 ("version", "release✨"),
-                ("environment", "dev\\rprod"),
+                ("environment", "dev\rprod"),
                 ("environment", "qa env"),
-                ("environment", "dev\\tprod"),
+                ("environment", "dev\tprod"),
             ):
                 with self.subTest(field=field, label=label):
                     kwargs = {field: label}
