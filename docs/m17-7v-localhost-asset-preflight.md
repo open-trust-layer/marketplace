@@ -43,6 +43,8 @@ On parity, output is `status=PASS host=127.0.0.1 port=18080 checked_assets=14 pu
 
 Missing routes, HTTP failure, redirect, non-identity content encoding, oversize content, a stale or locally modified checkout asset, or any byte mismatch produces a stable non-zero `status=FAIL` outcome and the public asset path only. The check must fail rather than silently fallback to an old runtime.
 
+Malformed HTTP status lines and truncated response bodies are also treated as stable `HTTP_FAILED` errors. The checker must not print partially received response bytes, non-public headers, stack traces, or server-provided protocol text in the normal failure output.
+
 ## Acceptance boundary
 
 A PASS confirms **only** that all 14 reviewed, allowlisted public static responses match their exact local checkout files at check time. It does not independently establish server/process origin, future changes to the asset allowlist without updating this check, active browser cache state, database readiness, correct PostgreSQL schema, authenticated sessions, actual two-party workflow, Agreement publication, seller delivery completion, or live-runtime acceptance.
