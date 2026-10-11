@@ -54,6 +54,16 @@ Prerequisites are intentionally explicit:
 
 Do not place DSN text, provisioning bytes, keys, session material, or other credentials in committed files or acceptance transcripts.
 
+### Inert prerequisite presence check (before provisioning reads)
+
+An optional dependency/path/DSN-*presence* check is available in
+[docs/authenticated-local-flight-prerequisites.md](docs/authenticated-local-flight-prerequisites.md).
+It does not read authentication material or DSN contents, import external
+dependencies, initialize the application, open PostgreSQL, or start a browser
+or server. A `PREREQUISITES_PRESENT_UNVERIFIED` result is **not** the graph
+preflight, a pinned-OLP/CI attestation, or authorization for runtime. Execute
+the authoritative preflight below separately after preparing the evaluator.
+
 ### Inert server/database preflight
 
 The fulfillment-completion preflight reads the explicit local provisioning, environment configuration, and reviewed Web assets so it can compose the exact graph. It does **not** connect to PostgreSQL, initialize application/coordination state, bind a socket, or run a server.
