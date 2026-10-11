@@ -109,6 +109,25 @@ class MarketplaceMoonHeartbeatInspectTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, "SOURCE_INVALID")
                 self.assertNotIn("other", str(caught.exception))
 
+    def test_untrusted_heartbeat_metadata_labels_reject_controls_and_confusables(self) -> None:
+        for override in (
+            {"version": "release\\nFRESH_METADATA_UNVERIFIED"},
+            {"version": "release\\x00"},
+            {"version": "release/other"},
+            {"version": "release✨"},
+            {"environment": "dev\\rprod"},
+            {"environment": "qa env"},
+            {"environment": "dev\\tprod"},
+        ):
+            with self.subTest(override=override):
+                for file in self.directory.glob("*.json"):
+                    file.unlink()
+                path = self.record(**override)
+                with self.assertRaises(HeartbeatInspectionError) as caught:
+                    self.check()
+                self.assertEqual(caught.exception.code, "SOURCE_INVALID")
+                self.assertNotIn(str(path), str(caught.exception))
+
     def test_invalid_json_duplicate_member_and_nonfinite_constant_rejected(self) -> None:
         for mutate in (
             lambda s: s[:-1],
