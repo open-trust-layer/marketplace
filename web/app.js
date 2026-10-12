@@ -1992,6 +1992,10 @@ async function inspectIntent(recordId) {
     if (state.detailRequestSerial !== requestSerial) return false;
     state.selectedId = null;
     state.selectedRecord = null;
+    // Discard transient response-parent context from a failed inspection.
+    state.responseParentId = null;
+    state.responseIds = [];
+    state.responseErrorCode = null;
     state.responseLoading = false;
     responseList.replaceChildren();
     renderList();
