@@ -2107,7 +2107,7 @@ async function applySyncPage(documentValue) {
 async function incrementalSync() {
   if (state.syncCursor === null) return fullResync();
   // A multi-page batch is not accepted until the subsequent list hydration succeeds.
-  // Retain a retry point if a later page or hydration fails after earlier pages advanced it.
+  // Retain a recovery point if a later page or hydration fails after earlier pages advanced it.
   const startingCursor = state.syncCursor;
   setStatus("sync.from", { cursor: state.syncCursor });
   try {
@@ -2128,7 +2128,7 @@ async function incrementalSync() {
     }
     setStatus("sync.done", { cursor: state.syncCursor }, "success");
   } catch (error) {
-    // Retry the entire failed batch; unchanged record cache must not be paired with a newer cursor.
+    // Replay the entire failed batch; unchanged record cache must not be paired with a newer cursor.
     state.syncCursor = startingCursor;
     if (error.code === "SYNC_CURSOR_EXPIRED") return fullResync();
     throw error;
