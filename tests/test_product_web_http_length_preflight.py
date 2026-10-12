@@ -66,7 +66,7 @@ class ProductWebHttpLengthPreflightTests(unittest.TestCase):
                 source = path.read_text(encoding="utf-8")
                 self.assertEqual(source.count("function rejectOversizedDeclaredResponse(response) {"), 1)
                 self.assertIn(
-                    "rejectOversizedDeclaredResponse(response);\n  const text = await response.text();",
+                    "rejectOversizedDeclaredResponse(response);\n  const text = await readBoundedResponseText(response);",
                     source,
                 )
                 self.assertIn(
