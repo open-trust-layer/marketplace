@@ -1950,7 +1950,8 @@ async function renderResponses(recordId) {
     const message = document.createElement("p");
     message.className = "error";
     message.textContent = i18n.t("responses.unavailable", { code: state.responseErrorCode });
-    responseList.append(message);
+    // The failed request is terminal: remove the stale loading indicator.
+    responseList.replaceChildren(message);
     return true;
   }
 }
