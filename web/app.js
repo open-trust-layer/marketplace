@@ -1937,6 +1937,7 @@ async function renderResponses(recordId) {
     const ids = documentValue.record_ids;
     if (!Array.isArray(ids) || ids.length > PAGE_LIMIT) throw stableClientError("RESPONSE_LIST_INVALID");
     for (const value of ids) requireRecordId(value);
+    if (new Set(ids).size !== ids.length) throw stableClientError("RESPONSE_LIST_INVALID");
     state.responseLoading = false;
     state.responseIds = ids;
     state.responseErrorCode = null;
