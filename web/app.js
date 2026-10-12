@@ -1980,6 +1980,12 @@ async function inspectIntent(recordId) {
   try {
     const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(reviewed)}`);
     if (state.detailRequestSerial !== requestSerial) return false;
+    // Never present a different explicitly identified record as the selected one.
+    // Older canonical documents may not carry an embedded record_id field.
+    if (record === null || typeof record !== "object" || Array.isArray(record) ||
+        (Object.prototype.hasOwnProperty.call(record, "record_id") && record.record_id !== reviewed)) {
+      throw stableClientError("INTENT_DETAIL_INVALID");
+    }
     state.selectedId = reviewed;
     state.selectedRecord = record;
     state.responseIds = [];
