@@ -90,6 +90,23 @@ async function run() {
   assert.equal(success.responseList.nodes.length, 1);
   assert.equal(success.responseList.nodes[0].type, "items");
   assert.deepEqual(Array.from(success.state.responseIds), ["child"]);
+
+  const distinct = makeFixture(async () => ({record_ids: ["first", "second"]}));
+  assert.equal(await distinct.call("current-record"), true);
+  assert.equal(distinct.state.responseErrorCode, null);
+  assert.deepEqual(Array.from(distinct.state.responseIds), ["first", "second"]);
+  assert.equal(distinct.responseList.nodes[0].type, "items");
+
+  const duplicates = makeFixture(async () => ({record_ids: ["child", "child"]}));
+  assert.equal(await duplicates.call("current-record"), true);
+  assert.equal(duplicates.state.responseErrorCode, "RESPONSE_LIST_INVALID");
+  assert.deepEqual(Array.from(duplicates.state.responseIds), []);
+  assert.equal(duplicates.state.responseLoading, false);
+  assert.equal(duplicates.responseList.nodes.length, 1);
+  assert.equal(duplicates.responseList.nodes[0].className, "error");
+  assert.equal(duplicates.responseList.nodes[0].textContent,
+    "responses.unavailable:RESPONSE_LIST_INVALID");
+  assert.deepEqual(duplicates.calls, ["replace", "replace"]);
 }
 run().then(
   () => console.log("status=RESPONSE_LOADING_ERROR_STATE_TESTED_OFFLINE"),
@@ -116,6 +133,24 @@ class MarketplaceResponseLoadingErrorStateTests(unittest.TestCase):
         self.assertLess(
             block.rindex("if (state.selectedId !== recordId"),
             block.index("responseList.replaceChildren(message);"),
+        )
+
+    def test_response_ids_are_unique_before_rendering_cards(self) -> None:
+        source = APP.read_text(encoding="utf-8")
+        block = source.split("async function renderResponses(recordId) {", 1)[1].split(
+            "\nfunction selectIntent", 1
+        )[0]
+        self.assertIn(
+            'if (new Set(ids).size !== ids.length) throw stableClientError("RESPONSE_LIST_INVALID");',
+            block,
+        )
+        self.assertLess(
+            block.index("for (const value of ids) requireRecordId(value);"),
+            block.index("new Set(ids).size"),
+        )
+        self.assertLess(
+            block.index("new Set(ids).size"),
+            block.index("state.responseIds = ids;"),
         )
 
     def test_language_switch_error_render_remains_single_terminal_status(self) -> None:
