@@ -19,11 +19,11 @@ The tool deliberately pins distinct demo identities:
 
 ## Explicit local invocation
 
-Use the reviewed Python with its pinned `auth-verify` dependency, and execute from a **clean checked-out Marketplace repo**. The `--output-directory` must be an **absolute path that does not exist** and whose parent already exists **outside any Git worktree**. Do not supply a production-trusted authority or production principal.
+Use the reviewed Python with its pinned `auth-verify` dependency, and execute **from the clean checked-out Marketplace repository root**. Run the generator and lease verifier as `python -m tools.<module>` with both `src` and `.` (the repository root) on `PYTHONPATH`, so the required `tools` import package resolves. Calling the generator by direct script path with only `src;tools` on `PYTHONPATH` fails with `ModuleNotFoundError: No module named 'tools'` and does not create a bundle. The `--output-directory` must be an **absolute path that does not exist** and whose parent already exists **outside any Git worktree**. Do not supply a production-trusted authority or production principal.
 
 ```powershell
-$env:PYTHONPATH = "src;tools"
-python tools/marketplace_local_two_party_provisioning.py `
+$env:PYTHONPATH = "src;."
+python -m tools.marketplace_local_two_party_provisioning `
   --output-directory "D:\MarketplaceEvaluator\fresh-signed-browser-keys" `
   --seller-browser-public-key "<seller browser mkpk1_ public carrier>" `
   --buyer-browser-public-key "<buyer browser mkpk1_ public carrier>" `
@@ -40,8 +40,8 @@ The command requires exact explicit execution opt-in, canonical 32-byte Ed25519 
 Run the **existing signature-verifying** local preflight (not just a superficial presence check):
 
 ```powershell
-$env:PYTHONPATH = "src;tools"
-python tools/marketplace_authentication_lease_preflight.py `
+$env:PYTHONPATH = "src;."
+python -m tools.marketplace_authentication_lease_preflight `
   --authentication-provisioning-directory "D:\MarketplaceEvaluator\fresh-signed-browser-keys" `
   --minimum-remaining-seconds 1800 `
   --minimum-distinct-principals 2
