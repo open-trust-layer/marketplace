@@ -2069,22 +2069,32 @@ async function fullResync() {
   setStatus("sync.done", { cursor: watermark }, "success");
 }
 async function applySyncPage(documentValue) {
-  if (!Array.isArray(documentValue.changes) || documentValue.changes.length > SYNC_LIMIT) {
+  if (documentValue === null || typeof documentValue !== "object" ||
+      Array.isArray(documentValue) ||
+      !Array.isArray(documentValue.changes) || documentValue.changes.length > SYNC_LIMIT) {
     throw stableClientError("SYNC_PAGE_INVALID");
   }
+  // Stage the high watermark until every change and page field is validated.
+  // A rejected page must never advance a persisted synchronization cursor.
+  let candidateCursor = state.syncCursor;
   for (const change of documentValue.changes) {
-    if (change === null || typeof change !== "object") throw stableClientError("SYNC_PAGE_INVALID");
-    const recordId = requireRecordId(change.record_id);
-    if (!Number.isSafeInteger(change.seq) || change.seq <= state.syncCursor) throw stableClientError("SYNC_PAGE_INVALID");
+    if (change === null || typeof change !== "object" || Array.isArray(change)) {
+      throw stableClientError("SYNC_PAGE_INVALID");
+    }
+    requireRecordId(change.record_id);
+    if (!Number.isSafeInteger(change.seq) || change.seq <= candidateCursor) {
+      throw stableClientError("SYNC_PAGE_INVALID");
+    }
     if (change.change_kind !== "DELETE" && change.change_kind !== "UPSERT") {
       throw stableClientError("SYNC_PAGE_INVALID");
     }
-    state.syncCursor = change.seq;
+    candidateCursor = change.seq;
   }
   const nextCursor = requireCursor(documentValue.next_cursor);
-  if (nextCursor < state.syncCursor) throw stableClientError("SYNC_PAGE_INVALID");
+  if (nextCursor < candidateCursor || typeof documentValue.has_more !== "boolean") {
+    throw stableClientError("SYNC_PAGE_INVALID");
+  }
   state.syncCursor = nextCursor;
-  if (typeof documentValue.has_more !== "boolean") throw stableClientError("SYNC_PAGE_INVALID");
   return documentValue.has_more;
 }
 
