@@ -39,6 +39,8 @@ function makeFixture(fetchImplementation) {
     state,
     responseList,
     PAGE_LIMIT: 64,
+    API_INTENTS: "/api/intents",
+    RESPONSES_SUFFIX: "/responses",
     document: {
       createElement(type) {return {type, className:"", textContent:""};},
     },
