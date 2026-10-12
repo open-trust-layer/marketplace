@@ -565,6 +565,14 @@ async function readBoundedResponseText(response) {
   }
 }
 
+function reviewedServerErrorCode(code, status) {
+  // Server JSON is untrusted, even when it came from an application route.
+  // Keep bounded protocol-like error codes; never surface arbitrary response text.
+  if (typeof code === "string" && /^[A-Z][A-Z0-9_]{1,79}$/.test(code)) return code;
+  if (Number.isInteger(status) && status >= 100 && status <= 599) return `HTTP_${status}`;
+  return "APPLICATION_HTTP_FAILED";
+}
+
 async function apiFetch(path, { method = "GET", body = null } = {}) {
   const headers = { Accept: "application/json" };
   const init = {
@@ -595,7 +603,7 @@ async function apiFetch(path, { method = "GET", body = null } = {}) {
   }
   if (!response.ok) {
     const code = documentValue?.error?.code;
-    throw stableClientError(typeof code === "string" ? code : `HTTP_${response.status}`);
+    throw stableClientError(reviewedServerErrorCode(code, response.status));
   }
   return documentValue;
 }
