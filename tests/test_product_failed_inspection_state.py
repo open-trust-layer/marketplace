@@ -38,6 +38,7 @@ function fixture(fetchResult) {
   const ctx = {
     state, responseList,
     requireRecordId(value) {return value;},
+    stableClientError(code) {return Object.assign(new Error("redacted"), {code});},
     apiFetch: fetchResult,
     API_INTENTS: "/api/intents",
     renderList() {calls.push("render-list");},
