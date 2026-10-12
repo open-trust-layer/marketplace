@@ -100,7 +100,7 @@ class MarketplaceLocalTwoPartyProvisioningTests(unittest.TestCase):
     def test_bad_prefix_and_noncanonical_carrier_fail_before_mkdir(self):
         self.assert_rejected("PUBLIC_KEY_INVALID", buyer_public_key="mkp1_" + self.buyer_key[6:])
         self.assert_rejected("PUBLIC_KEY_INVALID", buyer_public_key="mkpk1_bad")
-        self.assert_rejected("PUBLIC_KEY_INVALID", seller_public_key="mkpk1_" + "A" * 43)
+        self.assert_rejected("PUBLIC_KEY_INVALID", seller_public_key="mkpk1_" + "_" * 43)
 
     def test_excessive_and_too_short_lease_fail_closed(self):
         self.assert_rejected("LEASE_INVALID", lease_seconds=1799)
