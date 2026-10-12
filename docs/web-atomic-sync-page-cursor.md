@@ -1,0 +1,9 @@
+# Browser synchronization: atomic per-page cursor validation
+
+Marketplace's Web `applySyncPage()` validates bounded sync changes, their monotonic sequence numbers, the returned next cursor and `has_more` before accepting a sync page. Previously it updated `state.syncCursor` **inside** the change loop. A malformed later change or invalid final page field could throw after advancing the saved cursor, allowing the next attempt to skip valid changes.
+
+The updated handler stages progress in `candidateCursor`. Each change is checked against the staged value; the final next cursor and boolean `has_more` are validated. Only after all checks succeed is the cursor committed **once**. The existing sync-page size limit, individual record ID bound, change-type rules, monotonic sequence requirements and stable error codes remain. Malformed null/array outer pages and array-valued changes are also rejected with `SYNC_PAGE_INVALID`.
+
+`tests/test_product_web_atomic_sync_page_cursor.py` exercises the real extracted JavaScript function in an offline Node.js VM. Positive cases cover a valid page and empty page; negative cases cover a late duplicate/out-of-order sequence, late invalid kind, malformed change, invalid ID, regressing/invalid final cursor, malformed `has_more`, oversized page and invalid outer values. Every rejection checks that the original cursor remains unchanged. No actual network, database, authenticated session, payment or production behavior is invoked.
+
+This makes each page cursor update atomic, **not** the entire multi-page sync transaction. A later failed page cannot roll back already accepted earlier pages; the ordinary full resync remains the existing recovery lane. The implementation does not assert end-to-end PostgreSQL/browser acceptance. Rollback is source-only revert. Full exact-head and merged-main CI remain mandatory.
