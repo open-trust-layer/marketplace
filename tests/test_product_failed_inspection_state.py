@@ -87,6 +87,28 @@ async function run() {
   assert.deepEqual(success.calls, [
     "render-list","render-detail","render-responses:child",
   ]);
+
+  const matching = fixture(async () => ({record_id:"child",kind:"proposal"}));
+  assert.equal(await matching.inspect("child"), true);
+  assert.equal(matching.state.selectedId, "child");
+  assert.equal(matching.state.selectedRecord.record_id, "child");
+  assert.deepEqual(matching.calls, [
+    "render-list","render-detail","render-responses:child",
+  ]);
+
+  for (const invalid of [{record_id:"different"}, {record_id:1}, null, [], "raw-json"]) {
+    const mismatch = fixture(async () => invalid);
+    assert.equal(await mismatch.inspect("child"), true);
+    assert.equal(mismatch.state.selectedId, null);
+    assert.equal(mismatch.state.selectedRecord, null);
+    assert.equal(mismatch.state.responseParentId, null);
+    assert.deepEqual(Array.from(mismatch.state.responseIds), []);
+    assert.equal(mismatch.state.responseErrorCode, null);
+    assert.equal(mismatch.state.responseLoading, false);
+    assert.deepEqual(mismatch.calls, [
+      "clear-list","render-list","render-detail","detail.failed:INTENT_DETAIL_INVALID:error",
+    ]);
+  }
 }
 run().then(
   () => console.log("status=FAILED_INSPECTION_STATE_CLEANUP_TESTED_OFFLINE"),
@@ -119,6 +141,17 @@ class MarketplaceFailedInspectionStateTests(unittest.TestCase):
             catch.index("state.responseParentId = null;"),
             catch.index("renderDetail();"),
         )
+
+    def test_optional_embedded_record_id_must_match_requested_detail(self) -> None:
+        source = APP.read_text(encoding="utf-8")
+        success = source.split("async function inspectIntent(recordId) {", 1)[1].split(
+            "} catch (error) {", 1
+        )[0]
+        self.assertIn('Object.prototype.hasOwnProperty.call(record, "record_id")', success)
+        self.assertIn("record.record_id !== reviewed", success)
+        self.assertIn('throw stableClientError("INTENT_DETAIL_INVALID");', success)
+        self.assertLess(success.index("record.record_id !== reviewed"), success.index("state.selectedId = reviewed;"))
+        self.assertLess(success.index("if (state.detailRequestSerial !== requestSerial) return false;"), success.index("record.record_id !== reviewed"))
 
     def test_success_retains_exact_parent_and_updates_record(self) -> None:
         source = APP.read_text(encoding="utf-8")
