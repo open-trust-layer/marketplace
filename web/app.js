@@ -2036,6 +2036,12 @@ async function hydrateCurrentIntents() {
       const recordId = requireRecordId(rawId);
       if (next.has(recordId)) throw stableClientError("INTENT_LIST_INVALID");
       const record = await apiFetch(`${API_INTENTS}/${encodeURIComponent(recordId)}`);
+      // Reject a fetched record that explicitly identifies a different listing.
+      // Canonical documents without an embedded record_id remain supported.
+      if (record === null || typeof record !== "object" || Array.isArray(record) ||
+          (Object.prototype.hasOwnProperty.call(record, "record_id") && record.record_id !== recordId)) {
+        throw stableClientError("INTENT_LIST_INVALID");
+      }
       next.set(recordId, record);
     }
     if (page.next_cursor === null) {
