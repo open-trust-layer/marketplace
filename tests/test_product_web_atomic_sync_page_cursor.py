@@ -71,7 +71,7 @@ async function run() {
   await rejected({changes:[good,{record_id:"b",seq:12,change_kind:"UNKNOWN"}],next_cursor:20,has_more:false});
   await rejected({changes:[good,null],next_cursor:20,has_more:false});
   await rejected({changes:[good,[]],next_cursor:20,has_more:false});
-  await rejected({changes:[good,{record_id:"",seq:12,change_kind:"UPSERT"}],next_cursor:20,has_more:false},"10","RECORD_ID_INVALID");
+  await rejected({changes:[good,{record_id:"",seq:12,change_kind:"UPSERT"}],next_cursor:20,has_more:false},10,"RECORD_ID_INVALID");
   await rejected({changes:[good],next_cursor:10,has_more:false});
   await rejected({changes:[good],next_cursor:14,has_more:"false"});
   await rejected({changes:[good],next_cursor:-1,has_more:false},10,"SYNC_CURSOR_INVALID");
