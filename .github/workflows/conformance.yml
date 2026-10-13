@@ -85,6 +85,19 @@ jobs:
           "MARKETPLACE_CI_PYTHON=$jobPython" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "PIP_CACHE_DIR=$pipCache" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Reject negated issue-closing keywords on PRs
+        if: github.event_name == 'pull_request'
+        shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
+        working-directory: marketplace
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # Read the GitHub-supplied event JSON as data, never interpolate PR prose
+          # into a shell command or log.
+          & $env:MARKETPLACE_CI_PYTHON -m tools.marketplace_pr_issue_link_guard
+          if ($LASTEXITCODE -ne 0) {
+            throw 'PR issue-link check rejected ambiguous closing language'
+          }
+
       - name: Install reviewed build backend
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         run: |
