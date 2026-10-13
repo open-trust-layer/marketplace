@@ -677,26 +677,36 @@ async function startLocalAuthentication() {
 
 async function generateAuthenticationKey() {
   if (authBootstrap === null) return;
+  const requestedBootstrap = authBootstrap;
+  const requestEpoch = sellerAuthenticationSessionEpoch;
   authGenerateKeyButton.disabled = true;
   try {
-    const created = await authBootstrap.createAuthenticationKey();
+    const created = await requestedBootstrap.createAuthenticationKey();
+    // Ignore an obsolete result if Reset occurred while WebCrypto was pending.
+    if (authBootstrap !== requestedBootstrap || requestEpoch !== sellerAuthenticationSessionEpoch) return;
     authBrowserPublicKeyValue = created.publicKeyValue;
     authEvidencePublicKeyValue = created.evidencePublicKeyValue;
     setAuthStatus("auth.keyReady", {}, "success");
   } catch (error) {
+    if (authBootstrap !== requestedBootstrap || requestEpoch !== sellerAuthenticationSessionEpoch ||
+        error?.code === "AUTH_OPERATION_SUPERSEDED") return;
     setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }
 
 async function establishAuthenticationSession() {
   if (authBootstrap === null) return;
+  const requestedBootstrap = authBootstrap;
+  const requestEpoch = sellerAuthenticationSessionEpoch;
   authEstablishButton.disabled = true;
   setAuthStatus("auth.establishing");
   try {
-    const established = await authBootstrap.establishSession(
+    const established = await requestedBootstrap.establishSession(
       authPrincipalInput.value,
       authVerificationMethodInput.value,
     );
+    // A late authenticated result must not override a subsequent Reset.
+    if (authBootstrap !== requestedBootstrap || requestEpoch !== sellerAuthenticationSessionEpoch) return;
     sellerAuthenticationSessionEpoch += 1;
     invalidateBuyerAuthenticationObservation();
     state.proposalAcceptanceResolutionResults.clear();
@@ -713,6 +723,8 @@ async function establishAuthenticationSession() {
     setAuthStatus("auth.active", { principal: established.principal }, "success");
     renderDetail();
   } catch (error) {
+    if (authBootstrap !== requestedBootstrap || requestEpoch !== sellerAuthenticationSessionEpoch ||
+        error?.code === "AUTH_OPERATION_SUPERSEDED") return;
     setAuthStatus("auth.failed", { code: error.code ?? "CLIENT_FAILURE" }, "error");
   }
 }

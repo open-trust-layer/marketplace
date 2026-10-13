@@ -98,40 +98,82 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   const session = new MarketplaceMemorySession();
   let keyResult = null;
   let activeVerificationMethod = null;
+  let keyCreationPending = false;
+  let sessionEstablishmentPending = false;
+  let operationEpoch = 0;
 
   async function createAuthenticationKey() {
-    if (keyResult !== null || session.isActive) {
+    if (keyCreationPending || keyResult !== null || session.isActive) {
       throw stableBootstrapError("AUTH_KEY_ALREADY_CREATED");
     }
-    const keyCreation = createMarketplaceWebAuthEd25519KeyCreation({ subtle: reviewedCrypto });
-    const created = await keyCreation.createAuthenticationKey({ profile: KEY_CREATION_PROFILE });
-    const evidencePublicKeyValue = evidencePublicKeyFromBrowserCarrier(created.publicKeyValue);
-    keyResult = created;
-    return Object.freeze({
-      profile: created.profile,
-      publicKeyValue: created.publicKeyValue,
-      evidencePublicKeyValue,
-    });
+    keyCreationPending = true;
+    const epoch = operationEpoch;
+    try {
+      const keyCreation = createMarketplaceWebAuthEd25519KeyCreation({ subtle: reviewedCrypto });
+      const created = await keyCreation.createAuthenticationKey({ profile: KEY_CREATION_PROFILE });
+      // A reset must never resurrect an in-flight, now-unprovisioned browser key.
+      if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+      const evidencePublicKeyValue = evidencePublicKeyFromBrowserCarrier(created.publicKeyValue);
+      keyResult = created;
+      return Object.freeze({
+        profile: created.profile,
+        publicKeyValue: created.publicKeyValue,
+        evidencePublicKeyValue,
+      });
+    } finally {
+      keyCreationPending = false;
+    }
   }
 
   async function establishSession(principalValue, verificationMethodValue) {
     if (keyResult === null) throw stableBootstrapError("AUTH_KEY_REQUIRED");
-    if (session.isActive) throw stableBootstrapError("AUTH_SESSION_ALREADY_ACTIVE");
+    if (session.isActive || sessionEstablishmentPending) {
+      throw stableBootstrapError("AUTH_SESSION_ALREADY_ACTIVE");
+    }
     const principal = reviewedUri(principalValue);
     const verificationMethod = reviewedUri(verificationMethodValue);
-    const proofProvider = createMarketplaceWebAuthEd25519ProofProvider({
-      subtle: reviewedCrypto,
-      privateKey: keyResult.privateKey,
-      verificationMethod,
-    });
-    const establishment = createMarketplaceWebAuthEstablishment({
-      fetchImpl: reviewedTransport,
-      session,
-      proofProvider,
-    });
-    const result = await establishment.establishSession(principal, verificationMethod);
-    activeVerificationMethod = verificationMethod;
-    return result;
+    sessionEstablishmentPending = true;
+    const epoch = operationEpoch;
+    try {
+      const proofProvider = createMarketplaceWebAuthEd25519ProofProvider({
+        subtle: reviewedCrypto,
+        privateKey: keyResult.privateKey,
+        verificationMethod,
+      });
+      // The transport and signer remain scoped to this attempt. A reset
+      // invalidates both even if an earlier network promise later resolves.
+      const establishment = createMarketplaceWebAuthEstablishment({
+        fetchImpl: (path, options) => {
+          if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+          return reviewedTransport(path, options);
+        },
+        session: Object.freeze({
+          adoptEstablishedSession(principalValue, token) {
+            if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+            session.adoptEstablishedSession(principalValue, token);
+          },
+        }),
+        proofProvider: Object.freeze({
+          async createAuthenticationProof(request) {
+            if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+            const proof = await proofProvider.createAuthenticationProof(request);
+            if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+            return proof;
+          },
+        }),
+      });
+      const result = await establishment.establishSession(principal, verificationMethod);
+      if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+      activeVerificationMethod = verificationMethod;
+      return result;
+    } catch (error) {
+      // Lower-level transport/proof handling deliberately erases exception details;
+      // preserve a single stable cancellation marker after an explicit reset.
+      if (epoch !== operationEpoch) throw stableBootstrapError("AUTH_OPERATION_SUPERSEDED");
+      throw error;
+    } finally {
+      sessionEstablishmentPending = false;
+    }
   }
 
   function structuredAuthoringClient() {
@@ -208,6 +250,7 @@ function createMarketplaceBrowserAuthBootstrap({ subtle, fetchImpl }) {
   }
 
   function reset() {
+    operationEpoch += 1;
     session.clear();
     keyResult = null;
     activeVerificationMethod = null;
