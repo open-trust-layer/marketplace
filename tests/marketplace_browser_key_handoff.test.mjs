@@ -31,8 +31,8 @@ function transcript(method, nonce) {
 function response(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
 }
-function makeContext(role) {
-  let stage = "preview", key = null, publicCarrier = null, exports = 0;
+function makeContext(role, publicBindings) {
+  let stage = "preview", key = null, exports = 0;
   const requests = [];
   const guardedSubtle = {
     async generateKey(algorithm, extractable, usages) {
@@ -81,14 +81,19 @@ function makeContext(role) {
       assert.equal(data.proof.proofPurpose, PURPOSE);
       assert.equal(data.proof.cryptosuite, SUITE);
       assert.match(data.proof.proofValue, /^mks1_[A-Za-z0-9_-]{86}$/);
-      const publicRaw = Buffer.from(publicCarrier.slice(6), "base64url");
+      // The synthetic verifier uses the public key *enrolled for the claimed method*,
+      // not the key that happens to belong to this client context.
+      const boundCarrier = publicBindings.get(role.method);
+      assert.match(boundCarrier, /^mkpk1_[A-Za-z0-9_-]{43}$/);
+      const publicRaw = Buffer.from(boundCarrier.slice(6), "base64url");
       assert.equal(publicRaw.length, 32);
       const publicKey = await subtle.importKey("raw", publicRaw, "Ed25519", true, ["verify"]);
-      assert.equal(await subtle.verify(
+      const verified = await subtle.verify(
         "Ed25519", publicKey,
         Buffer.from(data.proof.proofValue.slice(5), "base64url"),
         transcript(role.method, role.nonce),
-      ), true);
+      );
+      if (!verified) return response({ error: { code: "AUTH_SIGNATURE_INVALID" } }, 401);
       return response({
         session_token: carrier("mkt1_", role.nonce), principal: role.principal,
         verification_method: role.method, idle_timeout_seconds: 1800,
@@ -108,13 +113,15 @@ function makeContext(role) {
     role, bootstrap, requests,
     get signingKey() { return key; },
     get exports() { return exports; },
-    setPublic(value) { publicCarrier = value; },
+    setPublic(value) { publicBindings.set(role.method, value); },
     startRuntime() { stage = "runtime"; },
   });
 }
 
 test("distinct browser Ed25519 keys survive preview errors and authenticate after same-origin handoff", async () => {
-  const contexts = ROLES.map(makeContext);
+  // Model a signed method-to-key enrollment directory shared by the verifier.
+  const publicBindings = new Map();
+  const contexts = ROLES.map((role) => makeContext(role, publicBindings));
   const browserPublicKeys = [];
   for (const context of contexts) {
     const created = await context.bootstrap.createAuthenticationKey();
@@ -134,6 +141,21 @@ test("distinct browser Ed25519 keys survive preview errors and authenticate afte
   }
   assert.notEqual(browserPublicKeys[0], browserPublicKeys[1]);
   assert.notStrictEqual(contexts[0].signingKey, contexts[1].signingKey);
+  // A mistakenly enrolled buyer public key cannot authenticate the seller:
+  // the seller signs with its original non-extractable private key, but the
+  // verifier must resolve its method against the signed enrollment snapshot.
+  publicBindings.set(ROLES[0].method, browserPublicKeys[1]);
+  contexts[0].startRuntime();
+  await assert.rejects(
+    contexts[0].bootstrap.establishSession(ROLES[0].principal, ROLES[0].method),
+    { code: "AUTH_SIGNATURE_INVALID" },
+  );
+  assert.equal(contexts[0].bootstrap.state().active, false);
+  assert.equal(contexts[0].bootstrap.state().keyReady, true);
+  assert.strictEqual(contexts[0].signingKey.extractable, false);
+  assert.equal(contexts[0].exports, 1);
+  // Correct the signed public binding without regenerating either browser key.
+  publicBindings.set(ROLES[0].method, browserPublicKeys[0]);
   for (const context of contexts) {
     context.startRuntime(); // Existing page, bootstrap, key and relative-path fetch retained.
     const session = await context.bootstrap.establishSession(context.role.principal, context.role.method);
@@ -143,8 +165,9 @@ test("distinct browser Ed25519 keys survive preview errors and authenticate afte
     assert.equal(context.bootstrap.state().keyReady, true);
     assert.equal(context.exports, 1);
     assert.equal(context.signingKey.extractable, false);
-    assert.deepEqual(context.requests.slice(0, 3), [
-      "/api/auth/challenges", "/api/auth/challenges", "/api/auth/sessions",
+    assert.equal(context.requests[0], "/api/auth/challenges");
+    assert.deepEqual(context.requests.slice(-2), [
+      "/api/auth/challenges", "/api/auth/sessions",
     ]);
   }
   const listing = await contexts[0].bootstrap.structuredAuthoringClient().createProductListing({
