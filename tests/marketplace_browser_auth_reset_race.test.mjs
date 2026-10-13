@@ -103,7 +103,7 @@ test("reset during pending challenge refuses signing and session issuance", asyn
   assert.equal(challenges, 1);
   assert.equal(sessions, 0, "no signing/issuance after canceled challenge");
   emptyState(bootstrap);
-  await assert.rejects(bootstrap.structuredAuthoringClient(), {
+  assert.throws(() => bootstrap.structuredAuthoringClient(), {
     code: "STRUCTURED_AUTHORING_AUTH_REQUIRED",
   });
   // The original delayed promise has settled; a new explicitly generated
