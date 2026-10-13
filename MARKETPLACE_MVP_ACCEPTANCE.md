@@ -122,6 +122,8 @@ python tools/marketplace_localhost.py --port 18080 --execute-fulfillment-complet
 
 The reviewed runtime remains bound to exact IPv4 loopback `127.0.0.1`. Open `http://127.0.0.1:18080/` in the evaluator browser and complete the authenticated flow through explicit **Publish Agreement** and **Claim delivery complete** actions.
 
+**Already-occupied port and exact-origin safety:** Port `18080` in the examples and Issue #525 is the original evaluator target, **not** permission to stop or replace an existing process. If occupied, do not launch over it. An operator-reviewed alternative loopback port (for example `18480`, only after checking that it is free immediately before use) may be proposed, but first reconcile the exact-port acceptance language in Issue #525. Pass the **same** explicit port to the isolated browser-key preview, inert graph preflight and authorized authenticated runtime; use the corresponding exact `http://127.0.0.1:<port>/` origin in both buyer and seller browsers. The preflight readiness marker must report the selected port. Keys created at one origin must not be assumed valid at a different port/origin. An alternate port is not a bypass of source, provisioning, identity, runtime authorization or non-secret evidence checks. Neither preview nor runtime execution is implied by this documentation.
+
 A valid evaluator record should capture only non-secret observable evidence:
 
 - successful authentication state without token/key disclosure;
