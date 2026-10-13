@@ -93,9 +93,72 @@ function reviewedSessionResponse(value, principal, verificationMethod) {
   return value;
 }
 
+function rejectOversizedDeclaredAuthResponse(response) {
+  // A valid oversized Content-Length must fail before response body buffering.
+  // A malformed/missing length still receives the same strict streamed byte bound.
+  const declared = response.headers?.get?.("content-length");
+  if (typeof declared === "string" && /^[0-9]+$/.test(declared) &&
+      Number(declared) > MAX_AUTH_BODY_BYTES) {
+    throw stableClientError("AUTH_RESPONSE_INVALID");
+  }
+}
+
+async function readBoundedAuthResponseText(response) {
+  // Synthetic and older transports without a ReadableStream keep the original
+  // text() contract; production fetch streams must never buffer beyond 64 KiB.
+  if (response.body === null || typeof response.body?.getReader !== "function") {
+    let text;
+    try {
+      text = await response.text();
+    } catch {
+      throw stableClientError("AUTH_RESPONSE_INVALID");
+    }
+    if (typeof text !== "string" || utf8Bytes(text) > MAX_AUTH_BODY_BYTES) {
+      throw stableClientError("AUTH_RESPONSE_INVALID");
+    }
+    return text;
+  }
+
+  let reader;
+  try {
+    reader = response.body.getReader();
+  } catch {
+    throw stableClientError("AUTH_RESPONSE_INVALID");
+  }
+  const decoder = new TextDecoder();
+  const fragments = [];
+  let receivedBytes = 0;
+  try {
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      if (!(chunk.value instanceof Uint8Array) ||
+          chunk.value.byteLength > MAX_AUTH_BODY_BYTES - receivedBytes) {
+        throw stableClientError("AUTH_RESPONSE_INVALID");
+      }
+      receivedBytes += chunk.value.byteLength;
+      fragments.push(decoder.decode(chunk.value, { stream: true }));
+    }
+    fragments.push(decoder.decode());
+    return fragments.join("");
+  } catch {
+    // Cancel the response body on read errors or over-limit data, without
+    // reflecting provider failures or leaving an unread response stream alive.
+    try {
+      const cancelled = reader.cancel();
+      if (cancelled && typeof cancelled.catch === "function") {
+        cancelled.catch(() => {});
+      }
+    } catch {}
+    throw stableClientError("AUTH_RESPONSE_INVALID");
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 async function decodeJsonResponse(response) {
-  const text = await response.text();
-  if (utf8Bytes(text) > MAX_AUTH_BODY_BYTES) throw stableClientError("AUTH_RESPONSE_INVALID");
+  rejectOversizedDeclaredAuthResponse(response);
+  const text = await readBoundedAuthResponseText(response);
   let value;
   try {
     value = JSON.parse(text);
