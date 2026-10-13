@@ -2,6 +2,12 @@
 
 Describe the smallest coherent change and what remains intentionally unchanged.
 
+## Issue-link safety
+
+- For a tracked acceptance gate that remains open, use neutral language such as `Tracks #123` or a plain issue URL.
+- GitHub can auto-close an issue after a closing keyword even when the sentence negates it. Do not combine negation with closing verbs immediately before an issue reference.
+- Use a positive GitHub closing keyword only when the PR genuinely fulfills every acceptance criterion. Repository CI checks the common negated form; it is not a substitute for verifying the issue state after merging.
+
 ## Work Unit Contract
 
 - Project / repository:
