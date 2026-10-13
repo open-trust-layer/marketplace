@@ -38,6 +38,18 @@ class SelfHostedCIWorkflowContractTests(unittest.TestCase):
         self.assertIn("marketplace-ci-venv", self.workflow)
         self.assertIn("pip-cache", self.workflow)
 
+    def test_pr_issue_link_guard_uses_event_file_without_shell_interpolation(self) -> None:
+        self.assertIn(
+            "if: github.event_name == 'pull_request'",
+            self.workflow,
+        )
+        self.assertIn(
+            "-m tools.marketplace_pr_issue_link_guard",
+            self.workflow,
+        )
+        self.assertNotIn("github.event.pull_request.body", self.workflow)
+        self.assertNotIn("pull_request_target", self.workflow)
+
     def test_keeps_minimal_token_permissions_and_pinned_checkout(self) -> None:
         self.assertIn("permissions:\n  contents: read", self.workflow)
         self.assertNotIn("secrets.", self.workflow)
