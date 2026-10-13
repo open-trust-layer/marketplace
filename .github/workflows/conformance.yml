@@ -120,7 +120,7 @@ jobs:
         working-directory: marketplace
         run: '& $env:MARKETPLACE_CI_PYTHON tools/conformance_gate.py --olp-root ../olp --timeout 180'
 
-      - name: Verify in-process two-browser key handoff
+      - name: Verify in-process browser authentication security contracts
         shell: powershell -NoProfile -ExecutionPolicy RemoteSigned -File {0}
         working-directory: marketplace
         run: |
@@ -134,9 +134,9 @@ jobs:
           if ($version -ne 'v24.19.0') {
             throw 'Unexpected reviewed Node runtime version'
           }
-          & $node --test tests/marketplace_browser_key_handoff.test.mjs
+          & $node --test tests/marketplace_browser_key_handoff.test.mjs tests/marketplace_auth_bounded_response.test.mjs
           if ($LASTEXITCODE -ne 0) {
-            throw 'Two-browser key handoff synthetic contract failed'
+            throw 'Browser authentication security contracts failed'
           }
 
       - name: Cleanup disposable CI state
