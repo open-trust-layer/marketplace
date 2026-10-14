@@ -49,6 +49,24 @@ python -m tools.marketplace_authentication_lease_preflight `
 
 A valid signed bundle is reported only if the signature, canonical trust anchor, signed controller bindings, lease and two distinct principals all verify at the sampled time. Recheck immediately before startup. If expired, never extend times in place; generate and verify a **new, separately reviewed** test bundle.
 
+### Check exact current browser-to-bundle key binding (offline)
+
+The lease preflight proves that the signed provisioning is valid, but **does not compare it to the browser public keys currently displayed in the two living pages**. Before stopping the static preview, use the separate read-only binding check with the current seller and buyer `mkpk1_` carriers. Obtain them from the original, still-open browser pages at the intended localhost origin; never substitute keys generated outside those pages.
+
+```powershell
+$env:PYTHONPATH = "src;."
+python -m tools.marketplace_browser_bundle_binding_preflight `
+  --authentication-provisioning-directory "D:\MarketplaceEvaluatorFresh\two-party-signed-test" `
+  --seller-browser-public-key "<seller current mkpk1_ public carrier>" `
+  --buyer-browser-public-key "<buyer current mkpk1_ public carrier>" `
+  --minimum-remaining-seconds 1800
+```
+
+Expected non-secret output: `status=BROWSER_BINDING_VERIFIED` with `signature_verified=true public_keys_bound=true` and the remaining lease. Swapped/stale keys, duplicate/noncanonical carriers, tampered claims and insufficient remaining lease all fail closed with stable codes, without printing public keys, paths, exception text or provisioning bytes. The verifier cryptographically verifies the exact bounded claims it compares; it does **not** open private keys, launch browsers/servers, or access PostgreSQL or the network.
+
+This proves only current public-key consistency, not that a page possesses the private key or that either browser session authenticated. Keep both original pages open without reload, confirm their exact origin, and repeat the check before any separately authorized handoff. Expiry or a changed browser key requires a newly approved ceremony and new signed bundle—not weaker lease limits.
+
+
 Remaining independent gates: exact clean main and pinned OLP provenance, reviewed optional dependency versions, isolated **non-Johnny** PostgreSQL connection/DB, a free **127.0.0.1** evaluator port (e.g. inspected but **not reserved** port `18480`, consistently for both preview and authenticated runtime), inert `--preflight-fulfillment-completion-localhost` success, and a separately authorized real buyer/seller browser flight. The evidence must include explicit Agreement publication and seller `CLAIMED_COMPLETE_PERFORMANCE` for `seller-delivery`, validated with `tools/marketplace_authenticated_local_flight_evidence.py`. The source-only bundle creation is not that acceptance.
 
 **No** public endpoint, payments, settlement, production secrets, browser automations, running service mutation or Moon heartbeat are part of this change. Rollback is revert of source/tool/docs; local test artifacts are managed manually by the evaluator owner.
