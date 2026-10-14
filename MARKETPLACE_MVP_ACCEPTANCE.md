@@ -144,6 +144,25 @@ After the operator-authorized browser flight has produced its non-secret evidenc
 python tools/marketplace_authenticated_local_flight_evidence.py .\authenticated-local-flight-evidence.json
 ```
 
+For an additional **offline field comparison**, provide *both* the independently reviewed
+merged-`main` commit SHA and a successful GitHub Actions run **number** (the integer
+shown in the evidence export, which may differ from the Actions run URL/database ID).
+Use the actual values from the flight, not these placeholders:
+
+```powershell
+$reviewedMainSha = "REPLACE_WITH_REVIEWED_40_HEX_COMMIT"
+$reviewedCiRunNumber = "REPLACE_WITH_VERIFIED_CI_RUN_NUMBER"
+python tools/marketplace_authenticated_local_flight_evidence.py .\authenticated-local-flight-evidence.json `
+  --expected-main-sha $reviewedMainSha `
+  --expected-ci-run-number $reviewedCiRunNumber
+```
+
+A mismatch fails with `EVIDENCE_MAIN_COMMIT_MISMATCH` or `EVIDENCE_CI_RUN_MISMATCH`,
+and supplying only one expectation fails closed. This checks the evidence's
+**declared provenance fields against operator-supplied expectations only**. It does
+not query Git or GitHub, verify that any workflow passed, prove that a browser
+flight occurred, or replace the independent CI and live-runtime acceptance gates.
+
 The validator requires profile `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_V1`, exact loopback host `127.0.0.1`, both authenticated parties, sufficient Agreement formation with no missing principals, matching Agreement publication/completion references, commitment `seller-delivery`, and evidence kind `CLAIMED_COMPLETE_PERFORMANCE`. It also requires the universal-truth, payment/settlement, public-network, and public-deployment claims to remain false.
 
 The validator is offline acceptance tooling only. It does not start the server or browser, connect to PostgreSQL, generate the evidence record, or change the requirement for a fresh post-P live browser run.
