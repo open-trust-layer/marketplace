@@ -42,9 +42,22 @@ function reviewedDisposition(value) {
   return value;
 }
 
-function reviewedObject(value, code) {
+function reviewedObject(value, code, requiredKeys) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw stableProjectionError(code);
+  }
+  for (const key of requiredKeys) {
+    // Never fill evidence from the prototype chain or invoke accessor getters.
+    let descriptor;
+    try {
+      descriptor = Object.getOwnPropertyDescriptor(value, key);
+    } catch {
+      // A hostile Proxy must fail with the same stable, non-secret error.
+      throw stableProjectionError(code);
+    }
+    if (descriptor === undefined || !Object.prototype.hasOwnProperty.call(descriptor, "value")) {
+      throw stableProjectionError(code);
+    }
   }
   return value;
 }
@@ -81,7 +94,9 @@ function createMarketplaceAuthenticatedLocalFlightEvidence({
   const listing = reviewedRecordId(listingRecordId);
   const proposal = reviewedRecordId(proposalRecordId);
   const acceptance = reviewedRecordId(acceptanceRecordId);
-  const formationValue = reviewedObject(formation, "EVIDENCE_FORMATION_INVALID");
+  const formationValue = reviewedObject(formation, "EVIDENCE_FORMATION_INVALID", [
+    "agreementRecordId", "formationEvidence", "missingPrincipals",
+  ]);
   const agreement = reviewedRecordId(formationValue.agreementRecordId);
   const lifecycleIds = [listing, proposal, acceptance, agreement];
   if (new Set(lifecycleIds).size !== lifecycleIds.length) {
@@ -95,14 +110,18 @@ function createMarketplaceAuthenticatedLocalFlightEvidence({
     throw stableProjectionError("EVIDENCE_FORMATION_INVALID");
   }
 
-  const publicationValue = reviewedObject(publication, "EVIDENCE_PUBLICATION_INVALID");
+  const publicationValue = reviewedObject(publication, "EVIDENCE_PUBLICATION_INVALID", [
+    "agreementRecordId", "disposition", "changeSeq",
+  ]);
   if (reviewedRecordId(publicationValue.agreementRecordId) !== agreement) {
     throw stableProjectionError("EVIDENCE_AGREEMENT_MISMATCH");
   }
   const publicationDisposition = reviewedDisposition(publicationValue.disposition);
   const publicationChangeSeq = reviewedChangeSeq(publicationValue.changeSeq);
 
-  const completionValue = reviewedObject(completion, "EVIDENCE_COMPLETION_INVALID");
+  const completionValue = reviewedObject(completion, "EVIDENCE_COMPLETION_INVALID", [
+    "recordId", "agreementRecordId", "commitmentId", "evidenceKind", "disposition", "changeSeq",
+  ]);
   const completionRecordId = reviewedRecordId(completionValue.recordId);
   if (lifecycleIds.includes(completionRecordId)) {
     throw stableProjectionError("EVIDENCE_RECORD_ID_COLLISION");
