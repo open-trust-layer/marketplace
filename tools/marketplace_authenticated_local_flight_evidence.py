@@ -6,6 +6,7 @@ deployment, payment, or settlement operation.
 """
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 import re
@@ -266,17 +267,53 @@ def render_authenticated_local_flight_evidence(document: dict[str, object]) -> s
     return "\n".join(lines)
 
 
+class _RedactedArgumentParser(argparse.ArgumentParser):
+    def error(self, _message: str) -> None:
+        self.exit(2, "status=FAIL code=ARGUMENT_INVALID\n")
+
+
+def _review_expected_provenance(
+    main_sha: str | None, ci_run: str | None,
+) -> tuple[str, int] | None:
+    """Validate independently supplied expected labels, without contacting GitHub."""
+    if (main_sha is None) != (ci_run is None):
+        _fail("EXPECTED_PROVENANCE_INCOMPLETE")
+    if main_sha is None or ci_run is None:
+        return None
+    if _COMMIT_SHA.fullmatch(main_sha) is None:
+        _fail("EXPECTED_PROVENANCE_INVALID")
+    if re.fullmatch(r"[1-9][0-9]{0,15}", ci_run) is None:
+        _fail("EXPECTED_PROVENANCE_INVALID")
+    expected_run = int(ci_run)
+    if expected_run > MAX_SAFE_INTEGER:
+        _fail("EXPECTED_PROVENANCE_INVALID")
+    return main_sha, expected_run
+
+
 def main(argv: list[str] | None = None) -> int:
-    arguments = sys.argv[1:] if argv is None else argv
-    if len(arguments) != 1:
-        print("usage: marketplace_authenticated_local_flight_evidence.py <evidence.json>", file=sys.stderr)
-        return 2
+    parser = _RedactedArgumentParser(
+        description="Offline local-flight schema validator; optional expected labels are not CI attestation"
+    )
+    parser.add_argument("evidence_path")
+    parser.add_argument("--expected-main-sha")
+    parser.add_argument("--expected-ci-run-number")
+    arguments = parser.parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        document = load_authenticated_local_flight_evidence(arguments[0])
+        expected = _review_expected_provenance(
+            arguments.expected_main_sha, arguments.expected_ci_run_number
+        )
+        document = load_authenticated_local_flight_evidence(arguments.evidence_path)
+        if expected is not None:
+            if document["main_commit"] != expected[0]:
+                _fail("EVIDENCE_MAIN_COMMIT_MISMATCH")
+            if document["ci_run_number"] != expected[1]:
+                _fail("EVIDENCE_CI_RUN_MISMATCH")
     except AuthenticatedLocalFlightEvidenceError as error:
         print(f"status=FAIL code={error.code}", file=sys.stderr)
         return 1
     print(render_authenticated_local_flight_evidence(document))
+    if expected is not None:
+        print("expected_provenance_fields_match=true actual_git_ci_provenance_verified=false")
     return 0
 
 
