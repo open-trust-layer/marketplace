@@ -14,6 +14,7 @@ import io
 import json
 import os
 import re
+import signal
 import shutil
 import stat
 import subprocess
@@ -181,6 +182,84 @@ def _run(
     return result
 
 
+def _run_bounded_build(
+    argv: Sequence[str],
+    *,
+    cwd: Path,
+    env: Mapping[str, str],
+    timeout: float,
+    label: str,
+) -> None:
+    """Run an isolated wheel-build process tree, not an untracked pip child.
+
+    The parent pip process can time out while setuptools children still hold
+    handles under the temporary source tree. Cleanup must target only this
+    process's descendants, never the shared runner's other workloads.
+    """
+    options = (
+        {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        if os.name == "nt"
+        else {"start_new_session": True}
+    )
+    try:
+        child = subprocess.Popen(
+            list(argv),
+            cwd=cwd,
+            env=dict(env),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            **options,
+        )
+    except OSError:
+        _fail("COMMAND_START_FAILED", f"{label} could not start")
+
+    try:
+        stdout, stderr = child.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        cleaned = False
+        if os.name == "nt":
+            # taskkill /T is restricted to the exact PID started above.
+            system_root = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+            taskkill = system_root / "System32" / "taskkill.exe"
+            try:
+                ended = subprocess.run(
+                    [str(taskkill), "/PID", str(child.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                    timeout=10,
+                )
+                cleaned = ended.returncode == 0
+            except (OSError, subprocess.TimeoutExpired):
+                cleaned = False
+        else:
+            try:
+                # start_new_session guarantees this is not our own process group.
+                os.killpg(child.pid, signal.SIGKILL)
+                cleaned = True
+            except (OSError, ProcessLookupError):
+                cleaned = False
+
+        if not cleaned:
+            # Fallback only kills the directly owned child, never other PIDs.
+            if child.poll() is None:
+                child.kill()
+        try:
+            child.communicate(timeout=10)
+        except subprocess.TimeoutExpired:
+            if child.poll() is None:
+                child.kill()
+            _fail("COMMAND_TIMEOUT_CLEANUP", f"{label} timed out; isolated child cleanup unconfirmed")
+        if not cleaned:
+            _fail("COMMAND_TIMEOUT_CLEANUP", f"{label} timed out; process-tree cleanup unconfirmed")
+        _fail("COMMAND_TIMEOUT", f"{label} exceeded {timeout:g}s timeout")
+    if child.returncode != 0:
+        detail = "\n".join(part for part in (stdout.strip(), stderr.strip()) if part)
+        suffix = f"\n{detail}" if detail else ""
+        _fail("COMMAND_FAILED", f"{label} failed with exit code {child.returncode}{suffix}")
+
+
 def _project_metadata(repo_root: Path) -> tuple[str, str, int]:
     path = repo_root / "pyproject.toml"
     try:
@@ -320,7 +399,7 @@ def _build_wheel(repo_root: Path, build_root: Path, timeout: float, label: str) 
     wheel_dir = build_root / "wheel"
     wheel_dir.mkdir(parents=True)
     _copy_source(repo_root, source_root)
-    _run(
+    _run_bounded_build(
         (
             sys.executable,
             "-m",
