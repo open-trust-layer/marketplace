@@ -87,6 +87,19 @@ for (const [field, code] of [
     err => err?.code === code && !String(err).includes("UNTRUSTED_PROXY_SECRET"),
   );
 
+  // A Proxy can advertise valid own data descriptors but swap or throw on
+  // subsequent property reads. Snapshot descriptor.value exactly once.
+  const readTrapInput = fixture();
+  let proxyGetCalls = 0;
+  readTrapInput[field] = new Proxy(readTrapInput[field], {
+    get() {
+      proxyGetCalls++;
+      throw new Error("UNTRUSTED_PROXY_GET_SECRET");
+    },
+  });
+  assert.deepEqual(project(readTrapInput), accepted);
+  assert.equal(proxyGetCalls, 0);
+
   // One missing own property fails even if the property is present on a
   // prototype; no value may be backfilled from Object.prototype.
   const missing = fixture();

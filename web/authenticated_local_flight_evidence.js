@@ -46,20 +46,21 @@ function reviewedObject(value, code, requiredKeys) {
   if (value === null || typeof value !== "object" || Array.isArray(value)) {
     throw stableProjectionError(code);
   }
+  const snapshot = Object.create(null);
   for (const key of requiredKeys) {
-    // Never fill evidence from the prototype chain or invoke accessor getters.
+    // Use reviewed own data values, not subsequent reads of untrusted Proxy traps.
     let descriptor;
     try {
       descriptor = Object.getOwnPropertyDescriptor(value, key);
     } catch {
-      // A hostile Proxy must fail with the same stable, non-secret error.
       throw stableProjectionError(code);
     }
     if (descriptor === undefined || !Object.prototype.hasOwnProperty.call(descriptor, "value")) {
       throw stableProjectionError(code);
     }
+    snapshot[key] = descriptor.value;
   }
-  return value;
+  return snapshot;
 }
 
 function createMarketplaceAuthenticatedLocalFlightEvidence({
