@@ -197,6 +197,38 @@ class M177XAuthenticationLeasePreflightTests(unittest.TestCase):
         self.assertNotIn("did:example", stderr.getvalue())
         self.assertNotIn(str(self.folder), stderr.getvalue())
 
+    def test_cli_parse_errors_are_redacted_before_provisioning_access(self):
+        # An invalid number or unknown flag must not reflect operator-supplied
+        # provisioning paths or token-like values via argparse's default error.
+        private_path = "SENSITIVE_LOCAL_PROVISIONING_DIRECTORY"
+        private_value = "SENSITIVE_OPERATOR_VALUE"
+        for argv in (
+            ["--authentication-provisioning-directory", private_path,
+             "--minimum-remaining-seconds", private_value],
+            ["--authentication-provisioning-directory", private_path,
+             "--minimum-distinct-principals", private_value],
+            ["--authentication-provisioning-directory", private_path,
+             "--unexpected-option", private_value],
+            ["--minimum-remaining-seconds", private_value],
+        ):
+            with self.subTest(argv=argv):
+                stdout, stderr = StringIO(), StringIO()
+                with patch(
+                    "tools.marketplace_authentication_lease_preflight."
+                    "load_marketplace_authentication_startup_provisioning",
+                    side_effect=AssertionError("must not open provisioning"),
+                ):
+                    with redirect_stdout(stdout), redirect_stderr(stderr):
+                        with self.assertRaises(SystemExit) as caught:
+                            main(argv)
+                self.assertEqual(caught.exception.code, 2)
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertEqual(
+                    stderr.getvalue(), "status=FAIL code=ARGUMENT_INVALID\n"
+                )
+                self.assertNotIn(private_path, stderr.getvalue())
+                self.assertNotIn(private_value, stderr.getvalue())
+
     def test_missing_canonical_evidence_fails_closed(self):
         (self.folder / VERIFICATION_METHOD_CLAIMS_FILENAME).unlink()
         self._expect("PROVISIONING_INVALID")

@@ -159,8 +159,15 @@ def check_provisioning_lease(
     return effective_remaining, len(claims.entries)
 
 
+class _RedactedArgumentParser(argparse.ArgumentParser):
+    def error(self, _message: str) -> None:
+        # argparse's default errors echo malformed arguments, which may include
+        # local provisioning paths or values accidentally pasted by an operator.
+        self.exit(2, "status=FAIL code=ARGUMENT_INVALID\n")
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
+    parser = _RedactedArgumentParser(
         description="Check canonical signed local Marketplace authentication lease without executing the runtime.",
     )
     parser.add_argument("--authentication-provisioning-directory", required=True)
