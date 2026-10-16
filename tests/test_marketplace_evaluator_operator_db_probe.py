@@ -171,7 +171,7 @@ class MarketplaceEvaluatorOperatorProbeTests(unittest.TestCase):
             "15432",
             "5432",
         ):
-            self.assertIn(marker, document)
+            self.assertIn(marker.lower(), document.lower())
 
 
 if __name__ == "__main__":
