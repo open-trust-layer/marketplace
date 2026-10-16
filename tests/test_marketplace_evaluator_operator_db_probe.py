@@ -163,6 +163,7 @@ class MarketplaceEvaluatorOperatorProbeTests(unittest.TestCase):
 
     def test_operator_doc_never_claims_runtime_acceptance(self):
         document = (ROOT / "docs" / "marketplace-evaluator-local-operator-probe.md").read_text("utf-8")
+        normalized = " ".join(document.replace("**", "").lower().split())
         for marker in (
             "#525",
             "operator console",
@@ -171,7 +172,7 @@ class MarketplaceEvaluatorOperatorProbeTests(unittest.TestCase):
             "15432",
             "5432",
         ):
-            self.assertIn(marker.lower(), document.lower())
+            self.assertIn(marker.lower(), normalized)
 
 
 if __name__ == "__main__":
