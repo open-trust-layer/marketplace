@@ -11,7 +11,9 @@ permissions:
 jobs:
   acceptance:
     runs-on: [self-hosted, Windows, X64, marketplace-ci]
-    timeout-minutes: 30
+    # The shared Windows admission broker may legitimately queue beyond 30m.
+    # This is a bounded job budget, not a change to capacity admission or artifact timeouts.
+    timeout-minutes: 65
     env:
       CI_PYTHON: 'C:\CI\marketplace-toolcache\Python\3.12.10\x64\python.exe'
       PIP_DISABLE_PIP_VERSION_CHECK: '1'
