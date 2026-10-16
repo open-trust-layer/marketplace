@@ -67,7 +67,7 @@ class M177UAuthenticatedLocalFlightEvidenceExportTests(unittest.TestCase):
         for marker in (
             'location.hostname === "127.0.0.1"',
             "documentValue.main_commit === evidenceMainCommitInput.value.trim()",
-            "documentValue.ci_run_number === Number(evidenceCiRunNumberInput.value)",
+            "documentValue.ci_run_number === reviewedEvidenceCiRunNumber()",
             "evidenceBuyerAuthObservedInput.checked === true",
             "documentValue.listing_record_id === current.listingRecordId",
             "documentValue.proposal_record_id === current.proposalId",

@@ -18,6 +18,10 @@ must separately attest that buyer authentication was observed during the same lo
 
 The evaluator supplies the exact merged 40-hex main commit, a positive successful CI run number,
 and one explicit checkbox confirming separately observed buyer authentication.
+The CI run number must be written as **plain positive decimal digits** with no leading zeros,
+signs, whitespace, hexadecimal or exponent notation, and must fit JavaScript's safe-integer
+range (at most 9,007,199,254,740,991). This matches the offline validator's expected-label
+input contract and prevents ambiguous UI-to-JSON provenance conversion.
 
 The page derives seller authentication, listing Record Identity, Proposal Record Identity,
 acceptance Record Identity, Agreement formation result, Agreement publication result, and

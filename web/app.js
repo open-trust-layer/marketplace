@@ -1487,13 +1487,22 @@ function authenticatedFlightEvidenceInputs() {
   };
 }
 
+function reviewedEvidenceCiRunNumber() {
+  // Match offline Evidence V1 CLI expectations: canonical positive decimal
+  // digits only, bounded by JavaScript's exact safe-integer representation.
+  const literal = evidenceCiRunNumberInput.value;
+  if (!/^[1-9][0-9]{0,15}$/.test(literal)) return null;
+  const value = Number(literal);
+  return Number.isSafeInteger(value) && value > 0 ? value : null;
+}
+
 function renderAuthenticatedFlightEvidencePreview() {
   const observed = authenticatedFlightEvidenceInputs();
   const preparedDocumentCurrent = authenticatedFlightEvidenceDocumentIsCurrent();
   downloadAuthenticatedFlightEvidenceButton.disabled = !preparedDocumentCurrent;
   const mainCommitReady = /^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim());
-  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
-  const ciReady = Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0;
+  const ciRunNumber = reviewedEvidenceCiRunNumber();
+  const ciReady = ciRunNumber !== null;
   const buyerReady = evidenceBuyerAuthObservedInput.checked === true &&
     buyerAuthenticationObservationIsCurrent();
   prepareAuthenticatedFlightEvidenceButton.disabled = (
@@ -1524,7 +1533,7 @@ async function prepareAuthenticatedFlightEvidence() {
   const observed = authenticatedFlightEvidenceInputs();
   if (observed === null || prepareAuthenticatedFlightEvidenceButton.disabled) return;
   const mainCommit = evidenceMainCommitInput.value.trim();
-  const ciRunNumber = Number(evidenceCiRunNumberInput.value);
+  const ciRunNumber = reviewedEvidenceCiRunNumber();
   const buyerAuthenticated = evidenceBuyerAuthObservedInput.checked === true;
   const proposalId = observed.proposalId;
   const listingRecordId = observed.listingRecordId;
@@ -1546,7 +1555,7 @@ async function prepareAuthenticatedFlightEvidence() {
       current.formation.agreementRecordId !== agreementRecordId ||
       current.completion.recordId !== completionRecordId ||
       evidenceMainCommitInput.value.trim() !== mainCommit ||
-      Number(evidenceCiRunNumberInput.value) !== ciRunNumber ||
+      reviewedEvidenceCiRunNumber() !== ciRunNumber ||
       evidenceBuyerAuthObservedInput.checked !== buyerAuthenticated ||
       !buyerAuthenticationObservationIsCurrent() ||
       location.hostname !== "127.0.0.1"
@@ -1688,7 +1697,7 @@ function authenticatedFlightEvidenceDocumentIsCurrent() {
   return (
     location.hostname === "127.0.0.1" &&
     documentValue.main_commit === evidenceMainCommitInput.value.trim() &&
-    documentValue.ci_run_number === Number(evidenceCiRunNumberInput.value) &&
+    documentValue.ci_run_number === reviewedEvidenceCiRunNumber() &&
     documentValue.runtime_host === location.hostname &&
     documentValue.seller_authenticated === true &&
     documentValue.buyer_authenticated === (evidenceBuyerAuthObservedInput.checked === true) &&

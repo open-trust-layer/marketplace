@@ -87,12 +87,12 @@ class M177TAuthenticatedLocalFlightEvidencePreviewTests(unittest.TestCase):
         text = APP.read_text(encoding="utf-8")
         for marker in (
             "/^[0-9a-f]{40}$/.test(evidenceMainCommitInput.value.trim())",
-            "Number.isSafeInteger(ciRunNumber) && ciRunNumber > 0",
+            "Number.isSafeInteger(value) && value > 0 ? value : null",
             'location.hostname !== "127.0.0.1"',
             "const mainCommit = evidenceMainCommitInput.value.trim();",
-            "const ciRunNumber = Number(evidenceCiRunNumberInput.value);",
+            "const ciRunNumber = reviewedEvidenceCiRunNumber();",
             "evidenceMainCommitInput.value.trim() !== mainCommit",
-            "Number(evidenceCiRunNumberInput.value) !== ciRunNumber",
+            "reviewedEvidenceCiRunNumber() !== ciRunNumber",
             "mainCommit,",
             "ciRunNumber,",
             "runtimeHost: location.hostname",
