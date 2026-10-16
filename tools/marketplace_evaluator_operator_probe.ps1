@@ -34,7 +34,7 @@ function AssertCleanExactGit([string]$Root, [string]$Expected) {
         Fail 'SOURCE_REVISION_MISMATCH'
     }
     $status = & git --no-optional-locks -c core.fsmonitor=false -C $Root status --porcelain=v1 --untracked-files=all 2>$null
-    if ($LASTEXITCODE -ne 0 -or @($status).Count -gt 0) {
+    if ($LASTEXITCODE -ne 0 -or -not [string]::IsNullOrEmpty(($status -join ''))) {
         Fail 'SOURCE_TREE_UNVERIFIED'
     }
 }
