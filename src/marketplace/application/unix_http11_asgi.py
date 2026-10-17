@@ -80,11 +80,12 @@ def _parse_start_and_headers(head: bytes) -> tuple[dict[str, Any], int]:
         raise _RejectedHttpRequest(400)
     if len(target) > MAX_TARGET_BYTES or any(c <= 32 or c >= 127 for c in target):
         raise _RejectedHttpRequest(400)
-    if b"#" in target or b"%" in target or b"\\" in target:
-        # Strict, non-decoding path: no ambiguously encoded routing or traversal.
+    if b"#" in target or b"\\" in target:
         raise _RejectedHttpRequest(400)
     raw_path, _sep, query = target.partition(b"?")
-    if not raw_path or b"?" in query:
+    # Raw paths are intentionally non-decoding; canonical percent escapes in
+    # query values are validated later by the existing reviewed ASGI parser.
+    if not raw_path or b"%" in raw_path or b"?" in query:
         raise _RejectedHttpRequest(400)
     fields = _header_fields(lines[1:])
     body_size: int | None = None
