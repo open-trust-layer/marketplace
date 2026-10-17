@@ -1,7 +1,7 @@
 # Private Web alpha — deployment decision and acceptance gates
 
-**Status:** proposed **source-only** engineering plan for Moon Commerce.  
-**Tracker:** [#528](https://github.com/open-trust-layer/marketplace/issues/528).  
+**Status:** proposed **source-only** engineering plan for Moon Commerce.
+**Tracker:** [#528](https://github.com/open-trust-layer/marketplace/issues/528).
 **Evidence baseline:** Marketplace `main` merge `e1be071a81692c416375f1fd6f36186f696d3f5a`, independently verified by successful [main CI #38983706343](https://github.com/open-trust-layer/marketplace/actions/runs/38983706343). This is **not** live browser acceptance or deployment.
 
 ## Product scope
@@ -17,17 +17,21 @@ The first customer-accessible release should be an **invitation-only HTTPS Web a
 - [Issue #525](https://github.com/open-trust-layer/marketplace/issues/525) was **manually closed** on October 16, 2026. The issue state is not a substitute for its originally specified signed browser session, actual Agreement publication, `seller-delivery` completion, and independent non-secret `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_V1` validator PASS. The release gate remains **BLOCKED** until equivalent freshly reviewed evidence is recorded. Do not silently reopen the owner-closed issue or claim acceptance on closure alone.
 - The Windows operator-only restricted database probe from [PR #584](https://github.com/open-trust-layer/marketplace/pull/584) is merged and passed synthetic tests. Its protected local execution has **not** been performed through ChatGPT. Never route its DPAPI credential handling through remote execution, chat, CI, or GitHub artifacts.
 
-## The host decision (operator-controlled, not assumed)
+## Approved Web destination and remaining operator decisions
 
-Before any live infrastructure work, the operator must record these specific choices under #528:
+On October 17, 2026, the product owner selected **the existing open-trust-layer.org VPS** as the authoritative Marketplace Web deployment target, with the canonical HTTPS origin **https://marketplace.open-trust-layer.org/**. Treat that selection as a *hosting decision*, not authorization to install a service, modify DNS/TLS, open an external port, deploy credentials, or expose users.
 
-1. **Authoritative execution host:** dedicated or strictly isolated Linux VM/VPS for Marketplace, with capacity measured for the actual service, PostgreSQL and expected alpha traffic; no default placement on Windows Machine, the Moon inference node, the shared Johnny 5 database, or a CI runner.
-2. **Canonical alpha FQDN and TLS owner:** an operator-selected domain, certificate issuance/renewal ownership and authorized DNS administration. There is no approved production FQDN in this plan.
-3. **Persistent database and secret boundary:** dedicated private PostgreSQL instance or DB and minimally privileged role; credentials provided by the operator-controlled secret mechanism only. Never copy evaluator DPAPI material or its short-lived signed lease to a hosted environment.
-4. **Operations ownership:** named release/rollback operator, access controls, backup location/retention, restore rehearsal, alerting endpoint and security-contact route.
-5. **Invitation policy:** number of invitees, identity enrollment/revocation design, data-retention consent and launch jurisdiction/legal review for actual economic transactions.
+A read-only external check on October 17 observed that both `open-trust-layer.org` and `marketplace.open-trust-layer.org` resolved to IPv4 `168.113.210.63`. The main domain responded over HTTPS, but an HTTPS request with Marketplace SNI failed during TLS negotiation with an `internal error` alert. **Marketplace HTTPS was not verified or working at the checkpoint.** DNS parity is not proof of VPS administrative ownership, appropriate capacity, an installed Marketplace application or valid TLS certificate. Reconfirm live DNS/A/AAAA resolution, IP and host ownership at deployment time. Never hard-code an observed IP as an application identity or secret.
 
-Infrastructure sizing, host name, DNS and launch date are **TBD** pending these decisions; no sample address, operator, cost or capacity estimate is a real reservation.
+Before any live infrastructure work, the operator must resolve these remaining decisions under #528:
+
+1. **VPS isolation and capacity:** verify operating system, administrative access, CPU/RAM/disk headroom, existing services/vhosts and available resources on the selected **open-trust-layer.org VPS**. Use a dedicated least-privileged Marketplace service identity and isolated storage. Preserve every existing website and workload on that VPS; no default placement on Windows Machine, Moon inference, Johnny 5 PostgreSQL or CI runners.
+2. **Canonical alpha FQDN and TLS:** use exactly **https://marketplace.open-trust-layer.org/** as the Web application's canonical public origin. An operator must approve the DNS records and establish/renew a certificate with valid SAN coverage and SNI routing, secure HTTPS-only behavior and a reviewed reverse-proxy vhost without replacing other hosts' routing or certificates. The current TLS error is a **blocking prerequisite**, not permission to disable certificate verification.
+3. **Persistent database and secret boundary:** provision a logically isolated private PostgreSQL database and minimally privileged role with approved storage/backups; credentials flow only through an operator-controlled secret mechanism. Never copy evaluator DPAPI material or its short-lived signed lease into the VPS.
+4. **Operations ownership:** identify the release/rollback operator, access controls, backup location/retention, demonstrated restore, alerting endpoint and security-contact route.
+5. **Invitation policy:** agree on number of invitees, enrollment/revocation design, data-retention consent, and launch jurisdiction/legal review for actual economic transactions.
+
+The VPS and canonical URL are **selected**. Actual host address, capacity and cost have not been independently verified; the certificate, reverse-proxy configuration, production adapter, live customer access and launch date remain **unverified / not deployed**.
 
 ## Architecture boundary: localhost is not production
 
@@ -36,8 +40,8 @@ The reviewed authenticated fulfillment launcher in `tools/marketplace_localhost.
 A hosted Web alpha needs a separately reviewed deployment application and security composition. The expected boundary is:
 
 ```text
-invited HTTPS browser
-    -> approved TLS reverse proxy / origin policy / rate limits
+invited HTTPS browser at https://marketplace.open-trust-layer.org/
+    -> operator-reviewed VPS TLS reverse proxy / SNI / origin policy / rate limits
     -> reviewed production ASGI HTTP and auth/session adapter (private listener)
     -> Marketplace product/Agreement/fulfillment services
     -> isolated least-privilege persistent PostgreSQL
@@ -74,7 +78,7 @@ The existing [Roadmap](../Roadmap.md) estimates 6–16 engineering hours for loc
 Practical execution order:
 1. Finish gate B/C acceptance; record safe evidence or a narrowly reproducible defect.
 2. Freeze a minimal private-alpha feature set and run user-facing negative/recovery paths.
-3. Choose and review the authoritative host and production adapter; prepare automated build, private service lifecycle, persistence, backup and restore.
+3. Verify isolation/capacity of the selected open-trust-layer.org VPS, fix Marketplace SNI/TLS under separately approved change control, and review the production adapter; prepare automated build, private service lifecycle, persistence, backup and restore.
 4. Validate an HTTPS staging deployment with no customers, then invite a small operator-approved test cohort.
 5. Rehearse rollback and failure modes before any expansion to public beta.
 
