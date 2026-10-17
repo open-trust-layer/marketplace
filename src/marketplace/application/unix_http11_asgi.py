@@ -90,7 +90,7 @@ def _parse_start_and_headers(head: bytes) -> tuple[dict[str, Any], int]:
     body_size: int | None = None
     for name, value in fields:
         if name.lower() == b"content-length":
-            if body_size is not None or not value or not value.isascii() or not value.isdecimal():
+            if body_size is not None or not value or not value.isascii() or not value.isdigit():
                 raise _RejectedHttpRequest(400)
             if len(value) > 1 and value.startswith(b"0"):
                 raise _RejectedHttpRequest(400)
