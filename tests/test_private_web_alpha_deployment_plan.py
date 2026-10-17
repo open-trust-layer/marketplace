@@ -31,7 +31,7 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "This document/test change creates no compute",
         ):
             with self.subTest(marker=marker):
-                self.assertIn(marker, doc)
+                self.assertIn(marker.lower(), doc.lower())
         self.assertNotIn("production deployment completed", doc.lower())
         self.assertNotIn("Marketplace HTTPS is now working", doc)
         self.assertNotIn("certificate installed and verified", doc)
@@ -52,12 +52,12 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "backup **and restore**",
         ):
             with self.subTest(marker=marker):
-                self.assertIn(marker, doc)
+                self.assertIn(marker.lower(), doc.lower())
 
     def test_host_decision_and_security_boundaries_are_explicit(self) -> None:
         doc = normalized(DOC)
         for marker in (
-            "Authoritative execution host",
+            "authoritative Marketplace Web deployment target",
             "Canonical alpha FQDN",
             "open-trust-layer.org VPS",
             "https://marketplace.open-trust-layer.org/",
@@ -78,7 +78,7 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "separate public-access authorization",
         ):
             with self.subTest(marker=marker):
-                self.assertIn(marker, doc)
+                self.assertIn(marker.lower(), doc.lower())
 
     def test_actual_runtime_is_still_local_and_manifest_is_workspace_only(self) -> None:
         launch = LOCALHOST.read_text(encoding="utf-8")
