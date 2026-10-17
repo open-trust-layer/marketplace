@@ -25,7 +25,7 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "Payments, settlement, public self-signup",
             "OFF",
             "not a production service entry point",
-            "is a real reservation",
+            "actual host address, capacity and cost have not been independently verified",
             "not a runtime PASS",
             "separate operator deployment approval",
             "This document/test change creates no compute",
@@ -33,6 +33,8 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, doc)
         self.assertNotIn("production deployment completed", doc.lower())
+        self.assertNotIn("Marketplace HTTPS is now working", doc)
+        self.assertNotIn("certificate installed and verified", doc)
 
     def test_require_real_product_flight_and_safe_evidence(self) -> None:
         doc = normalized(DOC)
@@ -57,6 +59,13 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
         for marker in (
             "Authoritative execution host",
             "Canonical alpha FQDN",
+            "open-trust-layer.org VPS",
+            "https://marketplace.open-trust-layer.org/",
+            "selected",
+            "TLS error",
+            "internal error",
+            "SNI routing",
+            "168.113.210.63",
             "Persistent database and secret boundary",
             "Operations ownership",
             "Invitation policy",
