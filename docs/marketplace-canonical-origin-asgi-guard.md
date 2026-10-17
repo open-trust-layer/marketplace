@@ -1,6 +1,6 @@
 # Marketplace canonical-origin ASGI guard (source only)
 
-**Profile:** `MARKETPLACE_PRIVATE_ALPHA_CANONICAL_ORIGIN_ASGI_BOUNDARY_V1`  
+**Profile:** `MARKETPLACE_PRIVATE_ALPHA_CANONICAL_ORIGIN_ASGI_BOUNDARY_V1`
 **Risk:** MODERATE security boundary, not activated or integrated.
 
 ## Intent
