@@ -124,10 +124,10 @@ class RealUnixHttp11AsgiTests(unittest.IsolatedAsyncioTestCase):
         payload = b'{"signed":true}'
         headers = BASE + ORIGIN + b"Content-Type: application/json\r\nContent-Length: " + str(len(payload)).encode() + b"\r\n"
         status, response, seen = await self.run_request(
-            req(b"POST", b"/api/agreements?ticket=hello", headers, payload), app=app
+            req(b"POST", b"/api/agreements?ticket=hello%2Fworld", headers, payload), app=app
         )
         self.assertEqual(status, 201)
-        self.assertEqual(recorded, [("POST", b"ticket=hello", payload, False)])
+        self.assertEqual(recorded, [("POST", b"ticket=hello%2Fworld", payload, False)])
         self.assertTrue(response.endswith(b"\r\n\r\n{}"))
 
     async def test_missing_or_foreign_origin_rejected_downstream(self):
