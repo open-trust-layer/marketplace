@@ -12,6 +12,7 @@ from .canonical_origin_guard import (
     CANONICAL_HOST,
     MarketplaceCanonicalOriginAsgiGuard,
 )
+from .linux_unix_caddy_peer import ACCEPTED_UNIX_SOCKET_SCOPE_KEY
 
 _MAX_HEADERS: Final = 64
 _MAX_BYTES: Final = 32768
@@ -101,6 +102,8 @@ def _normalized_scope(scope: object) -> dict[str, Any] | None:
     ):
         return None
     result = dict(scope)
+    # Transport socket evidence must never reach auth/application handlers.
+    result.pop(ACCEPTED_UNIX_SOCKET_SCOPE_KEY, None)
     result["headers"] = retained
     result["scheme"] = "https"
     return result
