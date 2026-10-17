@@ -25,7 +25,7 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "Payments, settlement, public self-signup",
             "OFF",
             "not a production service entry point",
-            "not a real reservation",
+            "is a real reservation",
             "not a runtime PASS",
             "separate operator deployment approval",
             "This document/test change creates no compute",
@@ -46,7 +46,7 @@ class PrivateWebAlphaDeploymentPlanTests(unittest.TestCase):
             "seller-delivery",
             "CLAIMED_COMPLETE_PERFORMANCE",
             "independent",
-            "operator-generated **non-secret**",
+            "Operator-generated **non-secret**",
             "backup **and restore**",
         ):
             with self.subTest(marker=marker):
