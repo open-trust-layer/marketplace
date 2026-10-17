@@ -1,7 +1,7 @@
 # Marketplace private-alpha Caddy vhost — review candidate only
 
-**Risk:** MODERATE source-only pre-deployment template.  
-**Tracking:** [Marketplace host authority #528](https://github.com/open-trust-layer/marketplace/issues/528).  
+**Risk:** MODERATE source-only pre-deployment template.
+**Tracking:** [Marketplace host authority #528](https://github.com/open-trust-layer/marketplace/issues/528).
 **Target selected by owner:** existing **open-trust-layer.org VPS**, canonical **https://marketplace.open-trust-layer.org/**.
 
 ## Why this exists
