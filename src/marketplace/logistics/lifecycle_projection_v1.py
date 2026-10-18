@@ -101,7 +101,15 @@ def _allowed_actor(stage: str, issuer: str, *, seller: str, carrier: str, buyer:
         return issuer == carrier
     if stage == "CONFIRMED":
         return issuer == buyer
-    return issuer in {seller, carrier, buyer}
+    if stage in {"CANCELLED", "REFUND_REQUESTED"}:
+        return issuer in {seller, buyer}
+    if stage in {"FAILED_PICKUP", "DAMAGED", "LOST", "DISPUTED"}:
+        return issuer in {seller, carrier, buyer} if stage == "DISPUTED" else issuer in {seller, carrier}
+    if stage in {"FAILED_DELIVERY", "RECIPIENT_UNAVAILABLE", "RETURN_TO_SENDER"}:
+        return issuer == carrier
+    if stage == "PARTIAL_DELIVERY":
+        return issuer in {buyer, carrier}
+    return False
 
 
 def _exception_allowed(stage: str, exception: str) -> bool:
