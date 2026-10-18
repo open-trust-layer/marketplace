@@ -66,6 +66,55 @@ REQUESTS = (
         403,
         b"ORIGIN_REQUIRED",
     ),
+    (
+        b"POST /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"Origin: https://attacker.example\r\n"
+        b"Content-Length: 2\r\n"
+        b"Connection: close\r\n\r\n{}",
+        403,
+        b"ORIGIN_REJECTED",
+    ),
+    (
+        b"GET /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"Forwarded: for=127.0.0.1;host=attacker.example;proto=http\r\n"
+        b"Connection: close\r\n\r\n",
+        200,
+        b"MARKETPLACE_INTEROP_READY",
+    ),
+    (
+        b"GET /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"X-Real-IP: 127.0.0.1\r\n"
+        b"Connection: close\r\n\r\n",
+        200,
+        b"MARKETPLACE_INTEROP_READY",
+    ),
+    (
+        b"GET /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"X-Forwarded-Proto: http\r\n"
+        b"Connection: close\r\n\r\n",
+        200,
+        b"MARKETPLACE_INTEROP_READY",
+    ),
+    (
+        b"GET /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"X-Forwarded-Host: attacker.example\r\n"
+        b"Connection: close\r\n\r\n",
+        200,
+        b"MARKETPLACE_INTEROP_READY",
+    ),
+    (
+        b"GET /api/agreements HTTP/1.1\r\n"
+        b"Host: marketplace.open-trust-layer.org\r\n"
+        b"X-Forwarded-Unknown: spoofed-trust\r\n"
+        b"Connection: close\r\n\r\n",
+        403,
+        b"TRUSTED_EDGE_REQUIRED",
+    ),
 )
 
 
@@ -207,16 +256,20 @@ class RealCaddyUnixInteropTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(int(first.split(b" ")[1]), expected_status, response[:800])
                     self.assertIn(expected_body, response, response[:800])
                     results.append(expected_status)
-                self.assertEqual(results, [200, 201, 403])
+                self.assertEqual(results, [entry[1] for entry in REQUESTS])
                 self.assertEqual(
                     seen,
                     [
                         ("GET", "/api/agreements", b"ticket=hello%2Fworld", b""),
                         ("POST", "/api/agreements", b"", b"{}"),
+                        ("GET", "/api/agreements", b"", b""),
+                        ("GET", "/api/agreements", b"", b""),
+                        ("GET", "/api/agreements", b"", b""),
+                        ("GET", "/api/agreements", b"", b""),
                     ],
                 )
                 finished = await asyncio.wait_for(listener, timeout=8)
-                self.assertEqual(sorted(finished), [200, 201, 403])
+                self.assertEqual(sorted(finished), sorted(results))
             finally:
                 if caddy is not None:
                     caddy.terminate()
