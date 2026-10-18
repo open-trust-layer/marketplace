@@ -207,15 +207,21 @@ def project_delivery_events(
         if next_index >= len(_STAGES) or _STAGES[next_index] != step:
             conflicts.append(evidence_id)
             continue
-        if ("CANCELLED" in exceptions
-            or ("LOST" in exceptions and step in {"DELIVERED", "CONFIRMED"})):
+        # L2-A has no validated remedy/resumption evidence profile. Once
+        # an exception is admitted, later progress claims remain conflicting
+        # rather than silently turning a failed/disputed delivery into success.
+        if exceptions:
             conflicts.append(evidence_id)
             continue
         stage = step
 
     return DeliveryProjection(
         stage=stage,
-        status="CONFLICT" if conflicts else ("INSUFFICIENT" if stage == "UNKNOWN" else "PROVISIONAL"),
+        status=(
+            "CONFLICT" if conflicts else
+            "EXCEPTION" if exceptions else
+            "INSUFFICIENT" if stage == "UNKNOWN" else "PROVISIONAL"
+        ),
         exception_codes=tuple(exceptions),
         admitted_event_ids=tuple(admitted),
         excluded_event_ids=tuple(excluded),
