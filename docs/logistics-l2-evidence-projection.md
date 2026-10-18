@@ -1,7 +1,7 @@
 # L2-A — Read-only delivery lifecycle projection
 
-**Status:** proposed, source-only application-domain evaluator (not activated)  
-**Dependency:** [L1 exact purchase-to-delivery Agreement link](logistics-l1-architecture.md)  
+**Status:** proposed, source-only application-domain evaluator (not activated)
+**Dependency:** [L1 exact purchase-to-delivery Agreement link](logistics-l1-architecture.md)
 **Risk:** MODERATE. No OLP protocol changes, runtime activation, shipping, payment, location access, or proof verification.
 
 ## Purpose and boundary
