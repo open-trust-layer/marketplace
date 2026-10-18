@@ -1,5 +1,7 @@
 # Marketplace private-alpha Caddy vhost — review candidate only
 
+> **October 18, 2026 security compatibility update:** This loopback-TCP Caddy candidate is a historical, source-only review artifact and **must not be used with the newer kernel-attested Marketplace ASGI service**. Loopback TCP does not provide an accepted AF_UNIX socket identity to the verifier. For a new review, see [the inert Caddy Unix upstream candidate](marketplace-caddy-unix-review-candidate.md). Neither candidate authorizes live deployment.
+
 **Risk:** MODERATE source-only pre-deployment template.
 **Tracking:** [Marketplace host authority #528](https://github.com/open-trust-layer/marketplace/issues/528).
 **Target selected by owner:** existing **open-trust-layer.org VPS**, canonical **https://marketplace.open-trust-layer.org/**.
