@@ -56,6 +56,8 @@ REAL_HTTPS_GET = (
 
 def _subprocess_environment(root: Path) -> dict[str, str]:
     result = dict(os.environ)
+    repository = Path(__file__).resolve().parents[1]
+    result["PYTHONPATH"] = os.pathsep.join((str(repository / "src"), str(repository)))
     result["HOME"] = str(root / "caddy-home")
     result["XDG_CONFIG_HOME"] = str(root / "caddy-home" / "config")
     result["XDG_DATA_HOME"] = str(root / "caddy-home" / "data")
