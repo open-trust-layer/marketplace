@@ -37,13 +37,14 @@ Exception actor roles and admissible stages are bounded. E.g., cancellation/refu
 
 ## Outputs and fail-closed conditions
 
-`DeliveryProjection` holds `stage` (UNKNOWN or latest admitted ordered milestone), `status` (INSUFFICIENT, PROVISIONAL, CONFLICT), exception codes and exact OLP Record Identity references for admitted, excluded and conflicting events.
+`DeliveryProjection` holds `stage` (UNKNOWN or latest admitted ordered milestone), `status` (INSUFFICIENT, PROVISIONAL, EXCEPTION, CONFLICT), exception codes and exact OLP Record Identity references for admitted, excluded and conflicting events.
 
 - No evidence → INSUFFICIENT / UNKNOWN.
 - Reviewed but untrusted or unauthorized event → excluded, no status advance.
 - Skipped/out-of-order positive milestone → CONFLICT, never silently fills in missing evidence.
 - Delivered without later buyer-attributed, independently admitted CONFIRMED → **DELIVERED only**, not confirmed.
-- Cancellation followed by asserted fulfillment, or lost goods followed by delivery claims → conflicting evidence preserved, not positive completion.
+- Any admitted exception without later reviewed remedy evidence → EXCEPTION, not clean provisional success (including disputes after buyer receipt).
+- Because this first profile has no accepted remedy/resumption event, subsequent progress after an admitted exception → CONFLICT; no implicit recovery from failed pickup, cancellation, loss, dispute or partial delivery.
 - Wrong purchase/delivery/commitment target, nonconforming event, unexpected extension, duplicate identity or review sequence, invalid actor, ambiguous buyer or oversized input → fail closed with content-free error code.
 
 **PROVISIONAL** is not a platform truth assertion. Even `CONFIRMED` remains method-relative admitted evidence and is not a payment-release trigger, a proof that goods physically arrived or an unconditional final fulfillment conclusion. Positive settlement still requires a separate reviewed authority and rail-specific execution policy.
