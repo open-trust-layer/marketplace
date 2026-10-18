@@ -127,7 +127,8 @@ def _client(path: str, *, expected: str) -> int:
                 if not piece:
                     break
                 data.extend(piece)
-        except ConnectionResetError:
+        except (ConnectionResetError, BrokenPipeError):
+            # A peer rejected by SO_PEERCRED may close before the client sends.
             data = bytearray()
         if expected == "kernel_denied":
             if data and not data.startswith(b"HTTP/1.1 403 "):
