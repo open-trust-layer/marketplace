@@ -26,6 +26,7 @@ def render_caddy_unix_review_candidate() -> str:
         "# existing vhosts, full authenticated ASGI app, DB, backups and rollback.\n"
         f"{CANONICAL_HOST} {{\n"
         f"    reverse_proxy {REVIEW_UNIX_UPSTREAM} {{\n"
+        f"        header_up Host {CANONICAL_HOST}\n"
         "        header_up -Forwarded\n"
         "        header_up -X-Real-IP\n"
         "        header_up -X-Original-*\n"
