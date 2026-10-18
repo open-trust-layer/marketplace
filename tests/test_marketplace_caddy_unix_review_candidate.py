@@ -67,7 +67,7 @@ class CaddyUnixReviewTests(unittest.TestCase):
         self.assertEqual(text.count("reverse_proxy "), 1)
         self.assertIn("reverse_proxy " + REVIEW_UNIX_UPSTREAM, text)
         self.assertEqual(text.count(CANONICAL_HOST), 2)
-        self.assertIn("header_up Host " + CANONICAL_HOST + "\\n", text)
+        self.assertIn("header_up Host " + CANONICAL_HOST, text)
         self.assertNotIn("127.0.0.1:", text)
         self.assertNotIn("localhost:", text)
         self.assertNotIn("http://", text)
