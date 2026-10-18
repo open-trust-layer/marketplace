@@ -65,10 +65,7 @@ def purchase():
 def delivery(source, *, carrier=COURIER):
     return make_record({
         "version": 1,
-        "parties": canonical([
-            {"principal": SELLER},
-            {"principal": carrier},
-        ]),
+        "parties": canonical([{"principal": principal} for principal in {SELLER, carrier}]),
         "subjects": [ITEM],
         "actions": [{"id": ACTION_TRANSPORT}],
         "terms": {TERM_PURCHASE_COMMITMENT: {
@@ -155,7 +152,7 @@ class LogisticsL1AgreementLinkTests(unittest.TestCase):
         source = purchase()
         another = make_record({
             **dict(source.content),
-            "subjects": [{"uri": "urn:example:item:other"}],
+            "terms": {f"{BASE}/term/test-distinct-source": 1},
         })
         other = delivery(source)
         self.assert_rejected(
