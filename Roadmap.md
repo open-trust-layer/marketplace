@@ -8,6 +8,25 @@
 
 > Marketplace is a universal economic-coordination layer on Open Layer Protocol (OLP). Evidence of intent, negotiation, and fulfillment is not proof of ownership, legality, payment, universal truth, or trust.
 
+## October 19 — Logistics & Delivery Network (new workstream)
+
+**Status:** L1 source-only implementation proposed in the logistics PR, CI/unselected status must be verified independently. Previous October 16 source/CI and runtime conclusions below remain as recorded; no new live fulfillment acceptance is claimed.
+
+Marketplace will support three complementary physical-delivery paths: seller-managed, independent verified couriers and replaceable carrier-provider integrations. A delivery service is separately negotiated under its own MarketIntent/MarketAgreement, linked to the exact immutable purchase agreement and commitment; attributable MarketEvents project operational states. Shipping compensation is separate from goods payment, and all real carrier connections, live payments and operational pilots remain separately gated.
+
+- **L1 — Agreement linking:** `docs/logistics-l1-architecture.md` defines the existing-capability gap analysis and ADR. The new optional `src/marketplace/logistics/agreement_link_v1.py` checks exact parent agreement/commitment, seller service-buyer participation and one courier-transport commitment without publishing anything. Added offline negative/positive tests. **No API, runtime, Web or Android selection.**
+- **L2 — Delivery lifecycle:** NEXT. Define event-to-status projection and exceptions (cancellation, failed pickup/delivery, unavailable recipient, damage/loss, returns, partial delivery, disputes) with conflict and authorization guards.
+- **L3 — Seller-managed delivery:** Pending bounded end-to-end local buyer/seller application acceptance.
+- **L4 — Independent courier marketplace:** Pending profiles, job discovery, quotations, competition, matching and assignment.
+- **L5 — Tracking/confirmation:** Pending purpose-scoped event evidence, pickup/handoff and independent receipt/dispute workflows.
+- **L6 — Carrier adapters:** Pending provider-neutral contract and deterministic fake; real carrier connection is not authorized.
+- **L7 — Shipping prices and settlement:** Pending quotes and inert rail-neutral contracts; **no live funds movement**.
+- **L8 — International readiness:** Pending service-region, customs, duties and legal eligibility mechanisms.
+- **L9 — EN/RU Web and Android:** Pending role-specific interfaces and separately verified builds.
+- **L10 — Operational pilot:** Blocked pending explicit geographical, legal, security, privacy, runtime and financial approval.
+
+**Baseline protections:** Existing MarketIntent/MarketAgreement/MarketEvent and OLP RecordV1 remain unchanged; source-only L1 neither validates assent nor authorizes shipping. The authenticated Web flight blockers [#525](https://github.com/open-trust-layer/marketplace/issues/525) and [#528](https://github.com/open-trust-layer/marketplace/issues/528) are not bypassed by logistics.
+
 ## October 16 source/CI closure and remaining gate
 
 - [PR #581](https://github.com/open-trust-layer/marketplace/pull/581) merged at [`aac2376f`](https://github.com/open-trust-layer/marketplace/commit/aac2376f8e7d9cef12d4de49b5c02536959523f3): canonical positive decimal CI-run-number entry for browser Evidence V1, and bounded 65-minute repository-specific runner admission timeout. Exact PR-head [CI #38884902462](https://github.com/open-trust-layer/marketplace/actions/runs/38884902462) and independent merged-main [CI #38888996893](https://github.com/open-trust-layer/marketplace/actions/runs/38888996893) both **SUCCEEDED**. The independent run reported 3,121 Python tests, 816/816 acceptance vectors, audited reproducible wheel, browser-auth contracts and cleanup. Earlier runner-setup cancellation was a capacity-admission scheduling issue, not a conformance failure; shared broker policy and memory floor were not changed.
