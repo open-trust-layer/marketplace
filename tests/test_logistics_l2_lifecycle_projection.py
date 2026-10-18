@@ -198,12 +198,37 @@ class DeliveryLifecycleProjectionTests(unittest.TestCase):
 
     def test_cancellation_blocks_late_claim_of_fulfillment(self):
         rows = list(reviewed(self.delivery, STAGES[:3]))
-        rows.append(ReviewedDeliveryEvent(event(self.delivery, "CANCELLED", COURIER), 4, True, True))
+        rows.append(ReviewedDeliveryEvent(event(self.delivery, "CANCELLED", SELLER), 4, True, True))
         rows.append(ReviewedDeliveryEvent(event(self.delivery, "PICKUP_READY", SELLER), 5, True, True))
         result = self.project(tuple(rows))
         self.assertEqual(result.stage, "ASSIGNED")
         self.assertEqual(result.status, "CONFLICT")
         self.assertIn("CANCELLED", result.exception_codes)
+
+    def test_courier_cannot_unilaterally_cancel_or_request_buyer_refund(self):
+        for kind in ("CANCELLED", "REFUND_REQUESTED"):
+            with self.subTest(kind=kind):
+                claim = ReviewedDeliveryEvent(
+                    event(self.delivery, kind, COURIER), 1, True, True
+                )
+                self.assert_error("LOGISTICS_EVENT_ACTOR_INVALID", (claim,))
+
+    def test_delivery_issuer_cannot_self_certify_receipt_even_if_assessed(self):
+        rows = list(reviewed(self.delivery, STAGES[:-1]))
+        rows.append(ReviewedDeliveryEvent(
+            event(self.delivery, "CONFIRMED", COURIER), len(rows) + 1, True, True
+        ))
+        self.assert_error("LOGISTICS_EVENT_ACTOR_INVALID", tuple(rows))
+
+    def test_separate_attribution_or_authority_gate_blocks_progress(self):
+        source = event(self.delivery, "REQUESTED", SELLER)
+        for attribution, authority in ((False, True), (True, False)):
+            with self.subTest(attribution=attribution, authority=authority):
+                result = self.project((
+                    ReviewedDeliveryEvent(source, 1, attribution, authority),
+                ))
+                self.assertEqual(result.stage, "UNKNOWN")
+                self.assertEqual(result.status, "INSUFFICIENT")
 
     def test_malformed_review_flags_and_buyer_fail_closed(self):
         source = event(self.delivery, "REQUESTED", SELLER)
