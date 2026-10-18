@@ -187,7 +187,7 @@ class DeliveryLifecycleProjectionTests(unittest.TestCase):
         result = self.project(tuple(base))
         self.assertEqual(result.stage, "PICKUP_READY")
         self.assertIn("FAILED_PICKUP", result.exception_codes)
-        self.assertEqual(result.status, "PROVISIONAL")
+        self.assertEqual(result.status, "EXCEPTION")
 
     def test_impossible_exception_is_conflict(self):
         result = self.project((
@@ -195,6 +195,39 @@ class DeliveryLifecycleProjectionTests(unittest.TestCase):
         ))
         self.assertEqual(result.stage, "UNKNOWN")
         self.assertEqual(result.status, "CONFLICT")
+
+    def test_failed_pickup_cannot_resume_without_remedy_evidence(self):
+        rows = list(reviewed(self.delivery, STAGES[:4]))
+        rows.append(ReviewedDeliveryEvent(
+            event(self.delivery, "FAILED_PICKUP", COURIER), 5, True, True
+        ))
+        rows.append(ReviewedDeliveryEvent(
+            event(self.delivery, "PICKED_UP", COURIER), 6, True, True
+        ))
+        result = self.project(tuple(rows))
+        self.assertEqual(result.stage, "PICKUP_READY")
+        self.assertEqual(result.status, "CONFLICT")
+        self.assertIn("FAILED_PICKUP", result.exception_codes)
+        self.assertEqual(len(result.conflicting_event_ids), 1)
+
+    def test_dispute_after_buyer_confirmation_is_not_clean_success(self):
+        rows = list(reviewed(self.delivery, STAGES))
+        rows.append(ReviewedDeliveryEvent(
+            event(self.delivery, "DISPUTED", BUYER), 10, True, True
+        ))
+        result = self.project(tuple(rows))
+        self.assertEqual(result.stage, "CONFIRMED")
+        self.assertEqual(result.status, "EXCEPTION")
+        self.assertEqual(result.exception_codes, ("DISPUTED",))
+
+    def test_refund_request_after_assignment_needs_separate_authority(self):
+        rows = list(reviewed(self.delivery, STAGES[:3]))
+        rows.append(ReviewedDeliveryEvent(
+            event(self.delivery, "REFUND_REQUESTED", BUYER), 4, True, True
+        ))
+        result = self.project(tuple(rows))
+        self.assertEqual(result.status, "EXCEPTION")
+        self.assertIn("REFUND_REQUESTED", result.exception_codes)
 
     def test_cancellation_blocks_late_claim_of_fulfillment(self):
         rows = list(reviewed(self.delivery, STAGES[:3]))
