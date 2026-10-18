@@ -138,8 +138,10 @@ class LogisticsL1AgreementLinkTests(unittest.TestCase):
         self.assert_rejected(
             source, changed(other, terms={}), "LOGISTICS_LINK_TERMS_INVALID"
         )
+        without_source = dict(other.content)
+        without_source.pop("source_records")
         self.assert_rejected(
-            source, changed(other, source_records=()),
+            source, make_record(without_source, profiles=other.profiles),
             "LOGISTICS_PURCHASE_SOURCE_MISSING",
         )
         self.assert_rejected(
