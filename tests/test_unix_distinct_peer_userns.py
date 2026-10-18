@@ -40,12 +40,27 @@ REQUEST = (
     b"X-Forwarded-For: 198.51.100.55\r\n"
     b"\r\n"
 )
+def _isolated_subordinate_id_mapping() -> bool:
+    """Host UID 0 must NEVER satisfy the test's namespace-only opt-in."""
+    try:
+        def inspect(filename: str) -> bool:
+            rows = Path(filename).read_text(encoding="ascii").splitlines()
+            if len(rows) != 1:
+                return False
+            inner, outer, count = (int(part) for part in rows[0].split())
+            return inner == 0 and outer >= 65536 and count > FOREIGN_UID
+        return inspect("/proc/self/uid_map") and inspect("/proc/self/gid_map")
+    except (OSError, UnicodeError, ValueError):
+        return False
+
+
 CAN_RUN = (
     sys.platform.startswith("linux")
     and hasattr(socket, "SO_PEERCRED")
     and os.environ.get("MARKETPLACE_DISTINCT_USERNS_TEST") == OPT_IN
     and os.geteuid() == 0
     and os.getegid() == 0
+    and _isolated_subordinate_id_mapping()
 )
 
 
