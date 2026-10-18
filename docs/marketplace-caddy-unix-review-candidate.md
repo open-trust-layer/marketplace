@@ -1,8 +1,8 @@
 # Marketplace Caddy Unix upstream — review-only candidate
 
-**Status: INERT / NOT VALIDATED AGAINST LIVE CADDY / NOT DEPLOYED.**  
-**Canonical hostname:** `marketplace.open-trust-layer.org`  
-**Selected destination:** existing shared `open-trust-layer.org` VPS  
+**Status: INERT / NOT VALIDATED AGAINST LIVE CADDY / NOT DEPLOYED.**
+**Canonical hostname:** `marketplace.open-trust-layer.org`
+**Selected destination:** existing shared `open-trust-layer.org` VPS
 **Release tracker:** [#528](https://github.com/open-trust-layer/marketplace/issues/528)
 
 ## Why this candidate is different
