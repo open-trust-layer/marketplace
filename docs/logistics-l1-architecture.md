@@ -1,8 +1,8 @@
 # L1 — Logistics agreement linkage (source-only architecture decision)
 
-**Date:** 2026-10-19  
-**Status:** Initial L1 application-domain contract, unselected; not a production capability  
-**Risk:** MODERATE — new domain profile and reference validator only  
+**Date:** 2026-10-19
+**Status:** Initial L1 application-domain contract, unselected; not a production capability
+**Risk:** MODERATE — new domain profile and reference validator only
 **Decision:** Reuse existing OLP RecordV1 / Marketplace MarketIntent, MarketAgreement and MarketEvent. No fourth record type, global courier operator, payment rail, or mutable universal shipment state.
 
 ## Context and verified baseline
