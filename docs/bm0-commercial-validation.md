@@ -7,7 +7,7 @@
 
 ## Non-negotiable boundaries
 
-Marketplace and OLP remain Apache-2.0/open, interoperable, independently implementable and operator-neutral. Competing operators, couriers, hosting providers and self-hosting remain possible. An optional Moon Company operated service can charge transparently for its own value added; protocol access, semantic validity, OLP evidence and federation are never paywalled. MOON is neither required nor currently accepted, and no price support, buyback or peg is promised.
+Marketplace remains Apache-2.0 licensed, open and independently implementable; OLP remains its independent evidence substrate. Both layers preserve interoperability and operator neutrality. Competing operators, couriers, hosting providers and self-hosting remain possible. An optional Moon Company operated service can charge transparently for its own value added; protocol access, semantic validity, OLP evidence and federation are never paywalled. MOON is neither required nor currently accepted, and no price support, buyback or peg is promised.
 
 Keep separate: goods seller/consideration; delivery provider/service; platform operator service; payment processor and settlement; OLP fulfillment/acceptance evidence. A record of delivery does not prove buyer acceptance, legal title, payment, settlement, compliance or truth. Never treat GMV or pass-through payments as Moon Company revenue. Never disguise sponsorship as neutral search ranking.
 
