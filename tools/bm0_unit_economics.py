@@ -5,7 +5,7 @@ inference. Caller supplies explicit Decimal amounts and role classifications.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_CEILING
 import re
 
