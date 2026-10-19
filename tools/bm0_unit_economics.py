@@ -167,6 +167,9 @@ def break_even_eligible_orders(fixed_uncovered: Decimal, per_order_margin: Decim
     fixed = _money(fixed_uncovered)
     if type(per_order_margin) is not Decimal or not per_order_margin.is_finite():
         raise BM0ModelError("MARGIN_INVALID")
+    # Negative contribution remains an explicit infeasible case, but its
+    # magnitude and precision must also be bounded like any other amount.
+    _money(per_order_margin.copy_abs())
     if per_order_margin <= ZERO:
         return None
     return int((fixed / per_order_margin).to_integral_value(rounding=ROUND_CEILING))
