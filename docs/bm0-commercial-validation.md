@@ -1,7 +1,7 @@
 # BM0 — Commercial validation plan (planning only)
 
 **Status (2026-10-19): PROPOSED / NOT TESTED / NOT LAUNCHED.**
-**Decision source:** [Marketplace monetization roadmap PR #604](https://github.com/open-trust-layer/marketplace/pull/604). This document is an independently reviewable BM0 work product; it does **not** claim that #604 is merged. If it has not merged, its strategy is owner-approved but the repository roadmap merge remains pending.
+**Decision source:** [Merged Marketplace monetization roadmap PR #604](https://github.com/open-trust-layer/marketplace/pull/604), merge commit [`0f531496`](https://github.com/open-trust-layer/marketplace/commit/0f531496ea89371b67c6b07d24736751e7366dd6), after exact-head [acceptance CI #39178732984](https://github.com/open-trust-layer/marketplace/actions/runs/39178732984) succeeded. Independent merged-main conformance remains a separate check. This BM0 document provides research methodology, not evidence of a commercial pilot.
 **Risk/capabilities:** LOW, repository documentation only; READ_PROJECT and WRITE_PROJECT.
 **Authority:** Strategy, discovery design and offline financial modelling only. No customers contacted, customer data collected, host activated, courier dispatched, charge initiated, checkout configured, token accepted, or payment processor selected by this file.
 
@@ -17,7 +17,7 @@ BM0 is **completed** only when a reproducible package contains: written hypothes
 
 | Work item | Current state | Evidence required to finish |
 | --- | --- | --- |
-| Business streams and non-activation constraints | OWNER DECIDED | Strategy in #604; confirm merge separately |
+| Business streams and non-activation constraints | OWNER DECIDED | Strategy merged via #604; no activation implied |
 | Hypothesis/pricing research design | DOCUMENTED, UNEXECUTED | Dated provider comparisons with links, product/fee definitions and jurisdictions |
 | Merchant/buyer/courier/enterprise discovery | PLANNED, NO CLAIMED INTERVIEWS | Consented interview notes, coded findings and contradictions |
 | Cost model | FORMULAS ONLY | Source-tagged and dated cost observations with currency/tax treatment |
