@@ -11,7 +11,7 @@ from olp.encoding.record_identity import record_identity_text
 from marketplace.application.delivery_selection_v1 import (
     DeliverySelectionDraft, INDEPENDENT_COURIER, PARTNER_CARRIER, SELLER_DELIVERY,
 )
-from marketplace.application.purchase_delivery_selection_review_v1 import (
+from marketplace.reference.purchase_delivery_selection_review_v1 import (
     PurchaseDeliverySelectionError, review_purchase_delivery_selection,
 )
 from marketplace.reference.record_v1 import BASE, CORE_PROFILE, TYPE_AGREEMENT, validate_market_record
