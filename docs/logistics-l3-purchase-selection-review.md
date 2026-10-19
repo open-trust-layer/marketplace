@@ -5,7 +5,7 @@
 
 ## What this changes
 
-A seller-managed goods order must not silently become a courier job. The existing `DeliverySelectionDraft` proposes one explicit performer for an existing goods purchase Agreement. `review_purchase_delivery_selection` now checks that the choice is consistent with the immutable original `MarketAgreementV1`:
+A seller-managed goods order must not silently become a courier job. The existing `DeliverySelectionDraft` proposes one explicit performer for an existing goods purchase Agreement. The reference-layer adapter `review_purchase_delivery_selection` now checks that the choice is consistent with the immutable original `MarketAgreementV1`:
 
 - Requires the valid Marketplace/OLP purchase Agreement, exactly two known participants (one seller, one buyer), and a uniquely identified `seller-delivery` commitment attributed to that same seller.
 - For `seller_delivery`, keeps the seller as proposed physical executor. The seller's original goods-delivery obligation remains unchanged.
