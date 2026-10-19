@@ -27,6 +27,11 @@ def _money(value: object) -> Decimal:
         raise BM0ModelError("AMOUNT_INVALID")
     if value < ZERO:
         raise BM0ModelError("AMOUNT_NEGATIVE")
+    # Bounded synthetic inputs: up to 18 whole digits and 6 decimal places.
+    # With <=1000 cost lines this also keeps sums exact in the default
+    # 28-digit Decimal arithmetic context; no implicit rounding/overflow.
+    if value.adjusted() > 17 or value.as_tuple().exponent < -6:
+        raise BM0ModelError("AMOUNT_OUT_OF_BOUNDS")
     return value
 
 
