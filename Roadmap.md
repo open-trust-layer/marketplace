@@ -8,6 +8,37 @@
 
 > Marketplace is a universal economic-coordination layer on Open Layer Protocol (OLP). Evidence of intent, negotiation, and fulfillment is not proof of ownership, legality, payment, universal truth, or trust.
 
+## October 19 business model decision — open infrastructure, optional commercial services
+
+**Owner decision (2026-10-19; strategy/planning only):** Keep Hello, World! Marketplace as open-source, interoperable economic infrastructure built on Open Layer Protocol (OLP). Moon Company earns revenue by operating *optional, competitive services above the open layer*, not by controlling access to the protocol, evidence, or source code. The existing Apache 2.0 license remains unchanged. Third parties may lawfully self-host, fork, interoperate, or operate competing services under the applicable licenses. Neither OLP nor Marketplace semantic conformance requires a Moon Company account, proprietary hosting, a mandatory operator fee, a courier monopoly, or MOON token usage.
+
+### Candidate Moon Company revenue streams (not yet launched)
+
+1. **Official operated Marketplace:** offer convenient discovery, buyer/seller support, dispute operations, and optional transaction facilitation. Evaluate a clearly disclosed *operator service fee* for eligible successfully transacted orders, subject to local law, cancellations, refunds, and the actual payment/settlement provider. No protocol-level commission, automatic deduction, or inference of paid status from Agreement/fulfillment evidence.
+2. **Seller Pro subscriptions:** optional storefront, bulk listing, inventory/order workflows, analytics, API/automation, and business reporting. Preserve open protocol interoperability and portability of participant evidence; subscriptions purchase service convenience, not proof validity or mandatory access to the open infrastructure.
+3. **Delivery and logistics services:** optional courier-job matching, dispatch, quotation comparison, tracking integration, and carrier coordination. Shipping is a separately attributable service/Agreement where appropriate; distinguish marketplace service revenue from courier/carrier compensation, delivery evidence, buyer acceptance, and payment.
+4. **Managed Marketplace for organizations:** hosted instances, integrations, migration, operating support, training, and service-level agreements. Keep providers replaceable and avoid creating a mandatory proprietary hosting or federation dependency.
+
+**Pricing is a hypothesis, not a commitment.** No fee percentage, subscription price, guaranteed income, mandatory buyback, sponsored rank, or revenue forecast is approved here. Before charging, validate buyer/seller value, comparable provider costs, customer support burden, consumer terms, taxes/VAT, marketplace/platform obligations, anti-fraud measures, privacy, payments, and relevant jurisdictional constraints. If promoted placement is tested later, make it clearly identifiable and keep evidence evaluation separate from paid promotion.
+
+### Commercial milestones and launch gates
+
+- **BM0 — Validate demand (planning):** conduct merchant, buyer, courier, and enterprise interviews; define pricing experiments, transparent fee displays, billing/refund scenarios, legal boundaries, and baseline unit economics. No live money movement.
+- **BM1 — Official Marketplace pilot proposal:** specify a small, bounded, opt-in hosted service pilot and operator-fee policy. This follows authenticated product-flight acceptance (Issue #525), an authoritative host/lifecycle decision (Issue #528), user-journey/security readiness (P2), and separately reviewed launch/operations requirements (P4). A roadmap entry is not permission to deploy.
+- **BM2 — Seller Pro trial:** test optional paid tools only after real seller demand and reliable baseline order workflows are evidenced. Preserve a functional open-source/self-hostable path.
+- **BM3 — Logistics brokerage pilot:** introduce seller-managed delivery first; then pilot independent couriers and replaceable carrier adapters when transaction density, worker/carrier eligibility, insurance, loss handling, and local compliance are ready. Separate goods, delivery, and operator-fee settlements.
+- **BM4 — Managed-services offering:** trial hosted enterprise installations, integrations, and support contracts with separately approved security, operations, data-processing, and SLA terms.
+
+**Pilot metrics:** active transacting buyers/sellers; successful eligible orders and repeat purchase; gross merchandise value (GMV, not revenue); net operator service/subscription revenue after reversals; disclosed effective take rate; cost to serve and contribution margin per order; seller conversion/churn; logistics quotation-to-acceptance and delivery outcomes; disputes, returns, chargebacks, security/privacy incidents, and support time. Define denominators, time windows, and source quality before publishing figures. Do not combine pass-through carrier payments or seller proceeds with Moon Company revenue.
+
+**Moon Coin relationship:** MOON can be evaluated as an *optional* future payment method where permitted; no mandatory token, pegged exchange rate, company-supported price, guaranteed liquidity, or automatic checkout/settlement is implied. Keep legal and operational approval separate.
+
+**Current activation boundary:** This decision adds **no** production service, public availability, billing, payment/settlement, commission collection, live delivery dispatch, carrier connector, token integration, or customer orders. Existing P1–P4 acceptance, privacy/authorization, review, CI, and rollback gates remain authoritative.
+
+*RU: Marketplace и OLP остаются открытой инфраструктурой. Moon Company сможет зарабатывать на добровольных услугах: официальной площадке, подписках продавцов, организации доставки и корпоративном хостинге. Тарифы и запуск платежей пока не утверждены.*
+
+---
+
 ## October 16 source/CI closure and remaining gate
 
 - [PR #581](https://github.com/open-trust-layer/marketplace/pull/581) merged at [`aac2376f`](https://github.com/open-trust-layer/marketplace/commit/aac2376f8e7d9cef12d4de49b5c02536959523f3): canonical positive decimal CI-run-number entry for browser Evidence V1, and bounded 65-minute repository-specific runner admission timeout. Exact PR-head [CI #38884902462](https://github.com/open-trust-layer/marketplace/actions/runs/38884902462) and independent merged-main [CI #38888996893](https://github.com/open-trust-layer/marketplace/actions/runs/38888996893) both **SUCCEEDED**. The independent run reported 3,121 Python tests, 816/816 acceptance vectors, audited reproducible wheel, browser-auth contracts and cleanup. Earlier runner-setup cancellation was a capacity-admission scheduling issue, not a conformance failure; shared broker policy and memory floor were not changed.
