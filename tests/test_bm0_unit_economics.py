@@ -178,6 +178,27 @@ class BM0OfflineUnitEconomicsTests(unittest.TestCase):
                 self.fails("AMOUNT_INVALID", pro_gross=invalid)
         self.fails("AMOUNT_NEGATIVE", goods_gmv=D("-1"))
 
+    def test_reject_overflow_and_excess_precision_before_arithmetic(self):
+        for invalid in (D("1E18"), D("0.0000001"), D("1.0000000"), D("1E999999")):
+            with self.subTest(value=str(invalid)[:40]):
+                self.fails("AMOUNT_OUT_OF_BOUNDS", pro_gross=invalid)
+                with self.assertRaises(BM0ModelError) as raised:
+                    OperatorCost("bounded", "fixed", invalid)
+                self.assertEqual(raised.exception.code, "AMOUNT_OUT_OF_BOUNDS")
+        for cost_amount, order_margin in (
+            (D("1E18"), D("3")),
+            (D("10"), D("0.0000001")),
+            (D("10"), D("-1E18")),
+        ):
+            with self.subTest(fixed=str(cost_amount), margin=str(order_margin)):
+                with self.assertRaises(BM0ModelError) as raised:
+                    break_even_eligible_orders(cost_amount, order_margin)
+                self.assertEqual(raised.exception.code, "AMOUNT_OUT_OF_BOUNDS")
+        self.assertEqual(
+            break_even_eligible_orders(D("999999999999999999"), D("1")),
+            999999999999999999,
+        )
+
     def test_reject_reversal_greater_than_gross(self):
         self.fails("REVERSAL_EXCEEDS_GROSS", pro_gross=D("1"), pro_reversals=D("2"))
 
