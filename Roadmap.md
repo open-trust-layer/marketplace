@@ -8,6 +8,14 @@
 
 > Marketplace is a universal economic-coordination layer on Open Layer Protocol (OLP). Evidence of intent, negotiation, and fulfillment is not proof of ownership, legality, payment, universal truth, or trust.
 
+### October 19 business delivery checkpoint — documentation and research only
+
+- [PR #604](https://github.com/open-trust-layer/marketplace/pull/604) **MERGED** at [`0f531496`](https://github.com/open-trust-layer/marketplace/commit/0f531496ea89371b67c6b07d24736751e7366dd6) after exact-head [acceptance #39178732984](https://github.com/open-trust-layer/marketplace/actions/runs/39178732984) **SUCCEEDED**. Independent merged-main acceptance is a separately verified gate; this checkpoint does not imply it has passed.
+- **BM0 documentation is under review** in [PR #606](https://github.com/open-trust-layer/marketplace/pull/606): [commercial validation](docs/bm0-commercial-validation.md) and [offline unit economics](docs/bm0-unit-economics.md). Documents define research and model acceptance, not completed customer validation or business viability.
+- Follow-up [#607](https://github.com/open-trust-layer/marketplace/issues/607) comparable pricing, [#608](https://github.com/open-trust-layer/marketplace/issues/608) discovery/Seller Pro, [#609](https://github.com/open-trust-layer/marketplace/issues/609) economics verification, and [#610](https://github.com/open-trust-layer/marketplace/issues/610) legal/tax/privacy readiness remain research activities. Preliminary public-provider fee comparison is not Moon Company pricing.
+- **LIVE ACCEPTANCE BLOCKED:** [#525](https://github.com/open-trust-layer/marketplace/issues/525) authenticated product journey and [#528](https://github.com/open-trust-layer/marketplace/issues/528) authoritative-host classification remain unresolved. No product launch, money movement, subscription billing, customer outreach, logistics dispatch or token integration is authorized by BM0.
+
+---
 ## October 19 business model decision — open infrastructure, optional commercial services
 
 **Owner decision (2026-10-19; strategy/planning only):** Keep Hello, World! Marketplace as open-source, interoperable economic infrastructure built on Open Layer Protocol (OLP). Moon Company earns revenue by operating *optional, competitive services above the open layer*, not by controlling access to the protocol, evidence, or source code. The existing Apache 2.0 license remains unchanged. Third parties may lawfully self-host, fork, interoperate, or operate competing services under the applicable licenses. Neither OLP nor Marketplace semantic conformance requires a Moon Company account, proprietary hosting, a mandatory operator fee, a courier monopoly, or MOON token usage.
