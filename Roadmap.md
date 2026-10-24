@@ -8,6 +8,16 @@
 
 > Marketplace is a universal economic-coordination layer on Open Layer Protocol (OLP). Evidence of intent, negotiation, and fulfillment is not proof of ownership, legality, payment, universal truth, or trust.
 
+### October 24 logistics integration checkpoint — source-only, no dispatch
+
+- **L1 agreement linkage merged** in [PR #602](https://github.com/open-trust-layer/marketplace/pull/602), protected-main commit `0d3f1fe5988b49758878a505f2a4bdd0f161ad4f`. Exact-head [acceptance #39431900640](https://github.com/open-trust-layer/marketplace/actions/runs/39431900640) succeeded on attempt 3.
+- **L2 evidence-bound lifecycle projection merged** in [PR #605](https://github.com/open-trust-layer/marketplace/pull/605), protected-main commit `7c559060bc6d8bc0524fa14f14ae1a6d18ce3e9d`. Exact-head [acceptance #39944343597](https://github.com/open-trust-layer/marketplace/actions/runs/39944343597) succeeded on attempt 3.
+- **L3-A purchase selection preflight merged** in [PR #611](https://github.com/open-trust-layer/marketplace/pull/611), commit `844e3c50fbd73920d475dfb77ae5a93ccdbc10c5`; exact-head [acceptance #39392178674](https://github.com/open-trust-layer/marketplace/actions/runs/39392178674) succeeded. The independent merged-main [acceptance #40042180077](https://github.com/open-trust-layer/marketplace/actions/runs/40042180077) requires independent result verification.
+- **L3-B proposed next:** [source-only proposal/Agreement coherence review](docs/logistics-l3b-proposal-link-review.md) connects the L3-A explicit third-party performer to L1's exact separate logistics Agreement. No assignment, assent, private address, carrier integration, shipment, verified delivery, billing, payment, or settlement activation. The documented L1/L2 descriptions below are historical pre-merge status snapshots.
+- **Operational gates remain open:** authenticated product acceptance [#525](https://github.com/open-trust-layer/marketplace/issues/525), authoritative service-host classification [#528](https://github.com/open-trust-layer/marketplace/issues/528), and readiness/privacy/legal/financial controls. No live pilot is granted by source-only PR acceptance.
+
+---
+
 ### October 19 business delivery checkpoint — documentation and research only
 
 - [PR #604](https://github.com/open-trust-layer/marketplace/pull/604) **MERGED** at [`0f531496`](https://github.com/open-trust-layer/marketplace/commit/0f531496ea89371b67c6b07d24736751e7366dd6) after exact-head [acceptance #39178732984](https://github.com/open-trust-layer/marketplace/actions/runs/39178732984) **SUCCEEDED**. Independent merged-main acceptance is a separately verified gate; this checkpoint does not imply it has passed.
