@@ -100,6 +100,38 @@ class M177TAuthenticatedLocalFlightEvidencePreviewTests(unittest.TestCase):
             with self.subTest(marker=marker):
                 self.assertIn(marker, text)
 
+    def test_preparation_requires_explicit_canonical_http_loopback_port(self) -> None:
+        source = APP.read_text(encoding="utf-8")
+        guard_start = source.index("function reviewedEvidenceOriginIsExplicitLoopback()")
+        guard_end = source.index("function reviewedEvidenceCiRunNumber()", guard_start)
+        guard = source[guard_start:guard_end]
+        for required in (
+            'location.protocol !== "http:"',
+            'location.hostname !== "127.0.0.1"',
+            "const port = location.port;",
+            r"/^[1-9][0-9]{0,4}$/.test(port)",
+            "Number(port) <= 65535",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, guard)
+        preview = source[source.index("function renderAuthenticatedFlightEvidencePreview()"):
+                         source.index("async function prepareAuthenticatedFlightEvidence()")]
+        prepare = source[source.index("async function prepareAuthenticatedFlightEvidence()"):
+                         source.index("async function publishSelectedAgreement()")]
+        self.assertIn("!reviewedEvidenceOriginIsExplicitLoopback()", preview)
+        self.assertIn("!reviewedEvidenceOriginIsExplicitLoopback()", prepare)
+
+    def test_origin_guide_requires_independent_two_browser_port_receipt(self) -> None:
+        guide = DOC.read_text(encoding="utf-8")
+        for marker in (
+            "explicit canonical", "numeric TCP port from 1 to 65535",
+            "runtime_host", "not the port",
+            "both authenticated browser", "non-secret #525 acceptance receipt",
+            "not reserve that port",
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, guide)
+
     def test_projection_is_selected_only_after_explicit_click_and_output_is_cleared(self) -> None:
         text = APP.read_text(encoding="utf-8")
         self.assertEqual(text.count('import("./authenticated_local_flight_evidence.js")'), 1)

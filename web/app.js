@@ -1487,6 +1487,16 @@ function authenticatedFlightEvidenceInputs() {
   };
 }
 
+function reviewedEvidenceOriginIsExplicitLoopback() {
+  // Evidence V1 only records the hostname. An explicit numeric HTTP port
+  // is still required by the separately reviewed localhost evaluator flight.
+  if (location.protocol !== "http:" || location.hostname !== "127.0.0.1") {
+    return false;
+  }
+  const port = location.port;
+  return /^[1-9][0-9]{0,4}$/.test(port) && Number(port) <= 65535;
+}
+
 function reviewedEvidenceCiRunNumber() {
   // Match offline Evidence V1 CLI expectations: canonical positive decimal
   // digits only, bounded by JavaScript's exact safe-integer representation.
@@ -1510,11 +1520,12 @@ function renderAuthenticatedFlightEvidencePreview() {
     !mainCommitReady ||
     !ciReady ||
     !buyerReady ||
+    !reviewedEvidenceOriginIsExplicitLoopback() ||
     location.hostname !== "127.0.0.1"
   );
   if (observed === null) {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.waitingCompletion");
-  } else if (location.hostname !== "127.0.0.1") {
+  } else if (!reviewedEvidenceOriginIsExplicitLoopback() || location.hostname !== "127.0.0.1") {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.loopbackRequired");
   } else if (!mainCommitReady || !ciReady) {
     authenticatedFlightEvidenceStatus.textContent = i18n.t("evidence.metadataRequired");
@@ -1558,6 +1569,7 @@ async function prepareAuthenticatedFlightEvidence() {
       reviewedEvidenceCiRunNumber() !== ciRunNumber ||
       evidenceBuyerAuthObservedInput.checked !== buyerAuthenticated ||
       !buyerAuthenticationObservationIsCurrent() ||
+      !reviewedEvidenceOriginIsExplicitLoopback() ||
       location.hostname !== "127.0.0.1"
     ) {
       throw stableClientError("EVIDENCE_PREVIEW_STALE");
@@ -1696,6 +1708,7 @@ function authenticatedFlightEvidenceDocumentIsCurrent() {
   const completion = documentValue.completion;
   return (
     location.hostname === "127.0.0.1" &&
+    reviewedEvidenceOriginIsExplicitLoopback() &&
     documentValue.main_commit === evidenceMainCommitInput.value.trim() &&
     documentValue.ci_run_number === reviewedEvidenceCiRunNumber() &&
     documentValue.runtime_host === location.hostname &&
