@@ -206,6 +206,26 @@ def _reject_json_constant(_value: str) -> None:
     _fail("EVIDENCE_JSON_INVALID")
 
 
+def _reject_excessive_json_nesting(value: object) -> None:
+    """Bound container nesting independently of the host JSON parser version.
+
+    CPython releases can differ in whether a deeply nested but byte-bounded
+    JSON array raises during decoding. Iterative inspection avoids recursion
+    and preserves the same content-free EVIDENCE_JSON_INVALID result.
+    """
+    stack: list[tuple[object, int]] = [(value, 0)]
+    while stack:
+        node, depth = stack.pop()
+        if type(node) is dict:
+            if depth >= 32:
+                _fail("EVIDENCE_JSON_INVALID")
+            stack.extend((child, depth + 1) for child in node.values())
+        elif type(node) is list:
+            if depth >= 32:
+                _fail("EVIDENCE_JSON_INVALID")
+            stack.extend((child, depth + 1) for child in node)
+
+
 def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str, object]:
     path = Path(path_value)
     try:
@@ -236,6 +256,7 @@ def load_authenticated_local_flight_evidence(path_value: str | Path) -> dict[str
         # Oversized JSON integers and deeply nested values may fail parsing
         # even under the byte limit. Never expose a traceback or input path.
         _fail("EVIDENCE_JSON_INVALID")
+    _reject_excessive_json_nesting(value)
     return validate_authenticated_local_flight_evidence(value)
 
 
