@@ -1,0 +1,13 @@
+# Reviewed offline evaluator wheel set: CPython 3.14, Linux x86_64.
+# Source: Marketplace main 7259d654110f9e23b061af921a347038140a1410.
+# Wheel identities and SHA-256 digests independently checked against PyPI.
+# Not a universal/platform-independent lock; do not use on Windows or other ABIs.
+# Each requirement has a verified hash. No unreviewed dependency substitution.
+cffi==2.1.1 --hash=sha256:b0431303acaea1089ad4b3e9ce4e6518193def1118d4073ca848635ee4ea2e96
+click==8.5.0 --hash=sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360
+cryptography==50.0.1 --hash=sha256:51afcfceb15597cf2635068e4ac9a56b2abde622edde17f37d85fd7b5306497a
+h11==0.16.0 --hash=sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86
+psycopg==3.3.5 --hash=sha256:ce5aa5cdb4f9379f00f487590e5890bfa7df9a164648c969ffa628505e21af4e
+psycopg-binary==3.3.5 --hash=sha256:f45d77e398542ce0937d9fa3cd9d84e9c5fc6b34c50a66404ae840bada312750
+pycparser==3.12 --hash=sha256:a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e
+uvicorn==0.52.4 --hash=sha256:f86e41a149d7d05a9969337e3946a9c171c06a5d42680896daaba624aeac8da1
