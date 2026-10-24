@@ -30,6 +30,26 @@ seller delivery completion result from current in-memory state.
 The preview is enabled only on exact 127.0.0.1, after sufficient formation with no missing
 parties and after both explicit Agreement publication and exact seller-attributed completion exist.
 
+### Explicit loopback origin guard — operator port evidence
+
+Before a browser evidence preview can be prepared or an already-prepared document
+downloaded, the client now requires the document's current browser location to
+have scheme `http:`, exact host `127.0.0.1`, and an **explicit canonical
+numeric TCP port from 1 to 65535**. An implicit/default port, a misleading
+`localhost` alias, HTTPS, a public host, a noncanonical browser-reported port
+or a missing port fails closed. The browser may normalize how a port was typed
+before this guard observes it. This is a *browser-side local guard*, not an
+authentication or proof check. It does not reserve that port or establish that
+the service has been reviewed or authorized to run on it.
+
+The frozen `MARKETPLACE_AUTHENTICATED_LOCAL_FLIGHT_EVIDENCE_V1` JSON still
+records `runtime_host` but **not the port**. The operator must separately
+record the exact origin (`http://127.0.0.1:<reviewed-port>/`) in the
+non-secret #525 acceptance receipt and independently verify that the static
+preview, provisioning, preflight, runtime, and **both authenticated browser
+contexts** use that same reviewed origin. Neither this UI guard nor a JSON
+schema PASS can infer the second browser's port or authorize a socket.
+
 ### M17.7AA — Two-party observation guard
 
 The operator-facing preview and explicit export now additionally require that the
