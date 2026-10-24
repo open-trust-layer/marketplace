@@ -406,6 +406,26 @@ class AuthenticatedLocalFlightEvidenceValidatorTests(unittest.TestCase):
             self.assertEqual(stderr.getvalue().strip(), "status=FAIL code=EVIDENCE_JSON_INVALID")
             self.assertNotIn(str(path), stderr.getvalue())
 
+    def test_nested_unknown_object_is_json_invalid_before_schema_review(self) -> None:
+        # A shallow invalid property retains DOCUMENT_INVALID; pathological
+        # nesting must fail with JSON_INVALID on every supported Python.
+        payload = '{"unexpected":' + '{"k":' * 80 + '0' + '}' * 80 + '}'
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "private-evidence.json"
+            path.write_text(payload, encoding="utf-8")
+            with self.assertRaises(AuthenticatedLocalFlightEvidenceError) as caught:
+                load_authenticated_local_flight_evidence(path)
+            self.assertEqual(caught.exception.code, "EVIDENCE_JSON_INVALID")
+            self.assertNotIn(str(path), str(caught.exception))
+
+    def test_brackets_inside_id_string_do_not_count_as_nesting(self) -> None:
+        document = valid_evidence()
+        document["listing_record_id"] = "rid_" + "[" * 150 + "]" * 150
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "evidence.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            self.assertEqual(load_authenticated_local_flight_evidence(path), document)
+
     def test_excessive_json_integer_returns_stable_invalid_code(self) -> None:
         canonical = json.dumps(valid_evidence())
         payload = canonical.replace(
