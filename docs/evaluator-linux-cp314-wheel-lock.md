@@ -12,6 +12,7 @@ In a **fresh nonproduction disposable environment** after verifying exact Market
 
 ```bash
 set -eu
+SCRATCH="$(mktemp -d "${TMPDIR:-/tmp}/marketplace-evaluator-XXXXXX")"
 test "$(uname -s)" = Linux
 test "$(uname -m)" = x86_64
 python3 -c 'import platform,sys; assert sys.implementation.name=="cpython" and sys.version_info[:2]==(3,14)'
