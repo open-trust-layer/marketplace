@@ -73,9 +73,14 @@ then requires the exact typed phrase RUN AUTHENTICATED LOCAL EVALUATOR
 before touching DPAPI.
 
 The original user-bound DPAPI password is decrypted only inside local
-PowerShell, tested with the existing restricted read-only SQL identity probe,
-and encoded into a loopback evaluator-only DSN in transient process
-environment. No password or DSN is written to disk, logs, GitHub,
+PowerShell and checked by the existing restricted read-only SQL identity
+probe **and** a second read-only schema catalog readiness check. The schema
+check verifies the expected public schema, CREATE capability and ownership
+plus individual DML privileges for existing Marketplace application and
+Agreement-assent tables; it does not create tables or prove future writes.
+Both probes run as bounded, read-only connections solely to 127.0.0.1:15432.
+Only after their PASS is the password encoded into a loopback evaluator-only
+DSN in transient process environment. No password or DSN is written to disk, logs, GitHub,
 or command-line arguments. A finally block clears environment
 variables and frees the unmanaged BSTR. Immutable managed string erasure
 cannot be guaranteed.
@@ -87,7 +92,11 @@ deployment is performed.
 If M17_5Y_DATABASE_INITIALIZATION_FAILED returns, stop and investigate
 the actual evaluator database schema and migration permissions,
 without privilege escalation, resetting data or touching port 5432.
-Read-only identity PASS alone does not establish write access.
+Read-only identity and schema-catalog PASS do not establish actual write,
+migration or runtime success. A schema readiness BLOCK must not trigger an
+automatic GRANT, CREATE, ALTER or database reset. Investigate locally with
+the original operator and the reviewed PostgreSQL configuration first.
+The schema probe yields only stable safe status codes, never a DSN or table data.
 
 ## Real acceptance gate after local server starts
 
