@@ -151,6 +151,9 @@ try {
         try {
             & $PythonPath -B -m tools.marketplace_evaluator_operator_db_probe --execute-operator-probe EXECUTE_MARKETPLACE_EVALUATOR_LOCAL_DB_PROBE_V1
             if ($LASTEXITCODE -ne 0) { Fail 'ISOLATED_DATABASE_IDENTITY_FAILED' }
+            # Fixed-catalog SELECT checks only; does not grant privileges or run migrations.
+            & $PythonPath -B -m tools.marketplace_evaluator_schema_readiness --execute-schema-readiness EXECUTE_MARKETPLACE_EVALUATOR_LOCAL_SCHEMA_READINESS_V1
+            if ($LASTEXITCODE -ne 0) { Fail 'SCHEMA_READINESS_NOT_VERIFIED' }
         } finally {
             Remove-Item Env:MARKETPLACE_EVALUATOR_DB_PASSWORD -ErrorAction SilentlyContinue
         }
