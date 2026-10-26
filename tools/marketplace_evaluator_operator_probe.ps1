@@ -24,6 +24,22 @@ function Fail([string]$Code) {
     exit 1
 }
 
+function TestExactEvaluatorPostgresDataDirectory([object]$CommandLine, [string]$Expected) {
+    # pg_ctl/Postgres on Windows can report an absolute -D path with '/'
+    # even when the reviewed data directory was supplied with '\'.
+    # Accept only the exact -D argument, never a path-like substring.
+    if ($CommandLine -isnot [string] -or [string]::IsNullOrWhiteSpace($CommandLine) -or
+        [string]::IsNullOrWhiteSpace($Expected)) { return $false }
+    $normalized = $CommandLine.Replace('/', '\')
+    # Multiple -D flags can override one another; fail closed on ambiguity.
+    if ([Regex]::Matches($normalized, '(?i)(?:^|\s)-D\s+').Count -ne 1) {
+        return $false
+    }
+    $literal = [Regex]::Escape($Expected.Replace('/', '\'))
+    $pattern = '(?i)(?:^|\s)-D\s+(?:"' + $literal + '"|' + $literal + ')(?=\s|$)'
+    return [Regex]::IsMatch($normalized, $pattern)
+}
+
 function AssertCleanExactGit([string]$Root, [string]$Expected) {
     if ($Expected -cnotmatch '^[0-9a-f]{40}$') { Fail 'EXPECTED_SHA_INVALID' }
     if (-not (Test-Path -LiteralPath $Root -PathType Container)) {
@@ -64,7 +80,7 @@ try {
     if ($listener.Count -ne 1) { Fail 'ISOLATED_POSTGRES_LISTENER_UNAVAILABLE' }
     $server = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $listener[0].OwningProcess) -ErrorAction Stop
     if ($null -eq $server -or $server.Name -ne 'postgres.exe' -or
-        $server.CommandLine -notlike ('*' + $expectedDataDirectory + '*')) {
+        -not (TestExactEvaluatorPostgresDataDirectory $server.CommandLine $expectedDataDirectory)) {
         Fail 'ISOLATED_POSTGRES_PROCESS_UNVERIFIED'
     }
 
