@@ -120,7 +120,7 @@ try {
     $occupied = @(Get-NetTCPConnection -State Listen -LocalPort 18480 -ErrorAction SilentlyContinue)
     if ($occupied.Count -ne 0) { Fail 'AUTHENTICATED_LOOPBACK_PORT_OCCUPIED' }
 
-    $env:PYTHONPATH = $repoRoot + ';' + (Join-Path $OlpRoot 'src')
+    $env:PYTHONPATH = @((Join-Path $repoRoot 'src'), (Join-Path $OlpRoot 'src'), $repoRoot) -join ';'
     Push-Location -LiteralPath $repoRoot
     try {
         # This also independently verifies the 2-party signed lease >=1800s.
