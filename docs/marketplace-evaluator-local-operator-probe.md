@@ -33,7 +33,14 @@ Before using the launcher, obtain the newly verified protected Marketplace
 across later merges. The launcher requires both detached/clean local checkouts
 and the operator's reviewed isolated virtualenv Python. It fails closed if
 the source, executable, database listener or expected PostgreSQL process
-is missing or differs.
+is missing or differs. The listener PID must resolve to `postgres.exe` whose
+Windows process command line contains an **exact** `-D` data-directory
+argument for `D:\MarketplaceEvaluatorFresh\pgdata`. PostgreSQL may render
+the same Windows path as `D:/MarketplaceEvaluatorFresh/pgdata`; the launcher
+normalizes only path separators before matching this exact argument. Merely
+mentioning the expected path elsewhere, a similarly prefixed directory, or a
+different `-D` target is rejected. The data-directory check does not replace
+the explicit local operator confirmation or restricted SQL identity probe.
 
 The reviewed evaluator identity is fixed inside the Python probe:
 
