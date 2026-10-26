@@ -1,8 +1,8 @@
-"""Prevent negated GitHub issue-closing references in Marketplace PR descriptions.
+"""Reject risky GitHub closing references and preserve the real-acceptance tracker.
 
-GitHub can interpret a closing keyword even when the surrounding text negates
-it. This best-effort, read-only PR event check prevents that known footgun;
-it does not decide whether a positively worded closure is justified.
+A PR description can close an acceptance issue on merge even if prose says
+that runtime acceptance has not passed. The #525 flight is closed manually
+only after actual offline evidence validation, never by a source-only PR.
 """
 
 from __future__ import annotations
@@ -25,6 +25,20 @@ _NEGATED_CLOSURE = re.compile(
     r"|https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/issues/[0-9]+)\b",
     re.IGNORECASE,
 )
+
+
+# Avoid GitHub auto-closing the runtime acceptance tracker on a source-only merge.
+# This includes seemingly conditional language such as "can close #525".
+_PROTECTED_ACCEPTANCE_CLOSURE = re.compile(
+    r"\b(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)"
+    r"\s+(?:(?:open-trust-layer/marketplace)?#525"
+    r"|https://github\.com/open-trust-layer/marketplace/issues/525)\b",
+    re.IGNORECASE,
+)
+
+
+def has_protected_acceptance_closure(text: str) -> bool:
+    return bool(_PROTECTED_ACCEPTANCE_CLOSURE.search(text))
 
 
 def has_negated_issue_closure(text: str) -> bool:
@@ -52,8 +66,15 @@ def check_event_file(path: Path) -> str:
             body = ""
         if not isinstance(body, str):
             return "EVENT_INVALID"
+        title = pull_request.get("title")
+        if title is None:
+            title = ""
+        if not isinstance(title, str):
+            return "EVENT_INVALID"
         if has_negated_issue_closure(body):
             return "NEGATED_ISSUE_CLOSING_REFERENCE"
+        if has_protected_acceptance_closure(title + "\n" + body):
+            return "PROTECTED_ACCEPTANCE_ISSUE_CLOSURE"
         return "PASS"
     except (OSError, ValueError, UnicodeError, TypeError):
         return "EVENT_INVALID"
