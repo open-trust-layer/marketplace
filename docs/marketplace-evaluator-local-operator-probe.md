@@ -39,7 +39,7 @@ argument for `D:\MarketplaceEvaluatorFresh\pgdata`. PostgreSQL may render
 the same Windows path as `D:/MarketplaceEvaluatorFresh/pgdata`; the launcher
 normalizes only path separators before matching this exact argument. Merely
 mentioning the expected path elsewhere, a similarly prefixed directory, or a
-different `-D` target is rejected. The data-directory check does not replace
+different `-D` target or ambiguous duplicate `-D` arguments are rejected. The data-directory check does not replace
 the explicit local operator confirmation or restricted SQL identity probe.
 
 The reviewed evaluator identity is fixed inside the Python probe:

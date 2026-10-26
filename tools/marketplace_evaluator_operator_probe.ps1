@@ -31,6 +31,10 @@ function TestExactEvaluatorPostgresDataDirectory([object]$CommandLine, [string]$
     if ($CommandLine -isnot [string] -or [string]::IsNullOrWhiteSpace($CommandLine) -or
         [string]::IsNullOrWhiteSpace($Expected)) { return $false }
     $normalized = $CommandLine.Replace('/', '\')
+    # Multiple -D flags can override one another; fail closed on ambiguity.
+    if ([Regex]::Matches($normalized, '(?i)(?:^|\s)-D\s+').Count -ne 1) {
+        return $false
+    }
     $literal = [Regex]::Escape($Expected.Replace('/', '\'))
     $pattern = '(?i)(?:^|\s)-D\s+(?:"' + $literal + '"|' + $literal + ')(?=\s|$)'
     return [Regex]::IsMatch($normalized, $pattern)

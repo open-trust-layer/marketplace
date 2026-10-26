@@ -48,6 +48,7 @@ $cases = @(
   @{ name='other-directory'; line='postgres.exe -D D:/MarketplaceEvaluatorFresh/pgdata-other -p 15432'; accept=$false },
   @{ name='subdirectory'; line='postgres.exe -D D:/MarketplaceEvaluatorFresh/pgdata/other -p 15432'; accept=$false },
   @{ name='different-d-plus-decoy'; line='postgres.exe -D E:/other --config-file=D:/MarketplaceEvaluatorFresh/pgdata'; accept=$false },
+  @{ name='duplicate-d-override'; line='postgres.exe -D D:/MarketplaceEvaluatorFresh/pgdata -D E:/other'; accept=$false },
   @{ name='missing-d-plus-decoy'; line='postgres.exe --config-file=D:/MarketplaceEvaluatorFresh/pgdata'; accept=$false },
   @{ name='embedded-d'; line='postgres.exe --fake-D D:/MarketplaceEvaluatorFresh/pgdata'; accept=$false },
   @{ name='missing-command'; line=$null; accept=$false },
@@ -57,7 +58,7 @@ foreach ($test in $cases) {
     $observed = TestExactEvaluatorPostgresDataDirectory $test.line $expected
     if ($observed -ne $test.accept) { throw ('CASE_FAILED:' + $test.name) }
 }
-'STRICT_EVALUATOR_D_PATH_CHECK_13_PASS'
+'STRICT_EVALUATOR_D_PATH_CHECK_14_PASS'
 """
         result = subprocess.run(
             [executable, "-NoProfile", "-NonInteractive", "-Command", function_source + cases],
@@ -67,7 +68,7 @@ foreach ($test in $cases) {
             timeout=30,
         )
         self.assertEqual(result.returncode, 0, result.stderr[-1400:])
-        self.assertIn("STRICT_EVALUATOR_D_PATH_CHECK_13_PASS", result.stdout)
+        self.assertIn("STRICT_EVALUATOR_D_PATH_CHECK_14_PASS", result.stdout)
 
 
 if __name__ == "__main__":
