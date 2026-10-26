@@ -30,9 +30,9 @@ _NEGATED_CLOSURE = re.compile(
 # Avoid GitHub auto-closing the runtime acceptance tracker on a source-only merge.
 # This includes seemingly conditional language such as "can close #525".
 _PROTECTED_ACCEPTANCE_CLOSURE = re.compile(
-    r"\\b(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)"
-    r"\\s+(?:(?:open-trust-layer/marketplace)?#525"
-    r"|https://github\\.com/open-trust-layer/marketplace/issues/525)\\b",
+    r"\b(?:close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)"
+    r"\s+(?:(?:open-trust-layer/marketplace)?#525"
+    r"|https://github\.com/open-trust-layer/marketplace/issues/525)\b",
     re.IGNORECASE,
 )
 
@@ -71,7 +71,7 @@ def check_event_file(path: Path) -> str:
             title = ""
         if not isinstance(title, str):
             return "EVENT_INVALID"
-        if has_protected_acceptance_closure(title + "\\n" + body):
+        if has_protected_acceptance_closure(title + "\n" + body):
             return "PROTECTED_ACCEPTANCE_ISSUE_CLOSURE"
         if has_negated_issue_closure(body):
             return "NEGATED_ISSUE_CLOSING_REFERENCE"
