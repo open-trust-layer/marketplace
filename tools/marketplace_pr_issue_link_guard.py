@@ -71,10 +71,10 @@ def check_event_file(path: Path) -> str:
             title = ""
         if not isinstance(title, str):
             return "EVENT_INVALID"
-        if has_protected_acceptance_closure(title + "\n" + body):
-            return "PROTECTED_ACCEPTANCE_ISSUE_CLOSURE"
         if has_negated_issue_closure(body):
             return "NEGATED_ISSUE_CLOSING_REFERENCE"
+        if has_protected_acceptance_closure(title + "\n" + body):
+            return "PROTECTED_ACCEPTANCE_ISSUE_CLOSURE"
         return "PASS"
     except (OSError, ValueError, UnicodeError, TypeError):
         return "EVENT_INVALID"
