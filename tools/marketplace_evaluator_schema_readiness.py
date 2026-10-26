@@ -41,7 +41,10 @@ EXPECTED_TABLES = frozenset((
 TABLE_QUERY = (
     "SELECT c.relname, "
     "pg_catalog.pg_get_userbyid(c.relowner) = current_user, "
-    "has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE') "
+    "(has_table_privilege(c.oid, 'SELECT') AND " 
+    "has_table_privilege(c.oid, 'INSERT') AND " 
+    "has_table_privilege(c.oid, 'UPDATE') AND " 
+    "has_table_privilege(c.oid, 'DELETE')) "
     "FROM pg_catalog.pg_class AS c "
     "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace "
     "WHERE n.nspname = current_schema() "
