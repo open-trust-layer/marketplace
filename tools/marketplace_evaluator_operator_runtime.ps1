@@ -87,8 +87,8 @@ try {
         -not [Environment]::GetEnvironmentVariable('USERNAME', 'Process')) {
         Fail 'LOCAL_INTERACTIVE_OPERATOR_REQUIRED'
     }
-    if (Test-Path Env:MARKETPLACE_POSTGRES_DSN -or
-        Test-Path Env:MARKETPLACE_EVALUATOR_DB_PASSWORD) {
+    if ((Test-Path Env:MARKETPLACE_POSTGRES_DSN) -or
+        (Test-Path Env:MARKETPLACE_EVALUATOR_DB_PASSWORD)) {
         Fail 'EXISTING_CREDENTIAL_ENVIRONMENT'
     }
     if (Test-Path Env:PYTHONHOME) { Fail 'UNREVIEWED_PYTHON_ENVIRONMENT' }
