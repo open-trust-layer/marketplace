@@ -4,6 +4,7 @@ from pathlib import Path
 import unittest
 
 from marketplace.application.postgres_query import PostgresIntentQuery
+from marketplace.application.root_intent_filter import MarketplaceRootIntentQueryFilter
 from marketplace.application.postgres_state import (
     DEFAULT_APPLICATION_STATE_RETENTION_SECONDS,
     PostgresApplicationStateStore,
@@ -49,11 +50,13 @@ class M17InertPostgresReferenceCompositionTests(unittest.TestCase):
         store = plan.composition.state._store
         query = plan.composition.api._intent_query
         self.assertIs(type(store), PostgresApplicationStateStore)
-        self.assertIs(type(query), PostgresIntentQuery)
+        self.assertIs(type(query), MarketplaceRootIntentQueryFilter)
+        raw_query = query._root_query
+        self.assertIs(type(raw_query), PostgresIntentQuery)
         self.assertIs(store._connection_factory, connection_factory)
-        self.assertIs(query._connection_factory, connection_factory)
+        self.assertIs(raw_query._connection_factory, connection_factory)
         self.assertIs(store._clock, clock)
-        self.assertIs(query._clock, clock)
+        self.assertIs(raw_query._clock, clock)
         self.assertEqual(
             store.retention_seconds,
             float(DEFAULT_APPLICATION_STATE_RETENTION_SECONDS),
