@@ -37,6 +37,13 @@ class MarketplaceMvpProposalReadinessTests(unittest.TestCase):
         example = text.split("function fillSyntheticProposalExample() {", 1)[1].split("async function createProductListing", 1)[0]
         self.assertIn("renderProposalDraftReadiness()", example)
 
+    def test_synthetic_example_action_matches_agreement_candidate_profile(self):
+        from marketplace.reference.agreement_candidate_v1 import ACTION_BUY
+
+        text = APP.read_text(encoding="utf-8")
+        example = text.split("const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({", 1)[1].split("});", 1)[0]
+        self.assertIn(f'action_uri: "{ACTION_BUY}"', example)
+
     def test_readiness_copy_is_bilingual_and_dynamic(self):
         text = APP.read_text(encoding="utf-8")
         self.assertIn('"author.proposalDraftIncomplete": [', text)

@@ -394,7 +394,7 @@ const SYNTHETIC_PRODUCT_LISTING_EXAMPLE = Object.freeze({
 });
 const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({
   buyer_principal: "urn:open-layer-marketplace:demo:buyer",
-  action_uri: "urn:open-layer-marketplace:demo:action:buy",
+  action_uri: "https://open-trust-layer.github.io/marketplace/semantics/v1/action/buy",
 });
 
 const state = {
