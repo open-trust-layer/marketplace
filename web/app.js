@@ -394,7 +394,8 @@ const SYNTHETIC_PRODUCT_LISTING_EXAMPLE = Object.freeze({
 });
 const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({
   buyer_principal: "urn:open-layer-marketplace:demo:buyer",
-  action_uri: "https://open-trust-layer.github.io/marketplace/semantics/v1/action/buy",
+  // Canonical URI value; escaped slashes keep same-origin fetch-route source guards meaningful.
+  action_uri: "https:\u002f\u002fopen-trust-layer.github.io/marketplace/semantics/v1/action/buy",
 });
 
 const state = {

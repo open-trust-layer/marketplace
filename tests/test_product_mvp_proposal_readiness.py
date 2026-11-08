@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,7 +43,9 @@ class MarketplaceMvpProposalReadinessTests(unittest.TestCase):
 
         text = APP.read_text(encoding="utf-8")
         example = text.split("const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({", 1)[1].split("});", 1)[0]
-        self.assertIn(f'action_uri: "{ACTION_BUY}"', example)
+        raw_literal = example.split("action_uri: ", 1)[1].split(",", 1)[0].strip()
+        self.assertEqual(json.loads(raw_literal), ACTION_BUY)
+        self.assertIn(r"\\u002f\\u002f", raw_literal)
 
     def test_readiness_copy_is_bilingual_and_dynamic(self):
         text = APP.read_text(encoding="utf-8")

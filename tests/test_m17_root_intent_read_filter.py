@@ -59,7 +59,7 @@ class MarketplaceRootIntentFilterTests(unittest.TestCase):
 
     def test_all_non_intent_roots_produce_empty_page(self):
         roots = ScriptedRootQuery({
-            None: IntentIndexPage(("r-event", "r-agreement"), None),
+            None: IntentIndexPage(("r-agreement", "r-event"), None),
         })
         filter_query = MarketplaceRootIntentQueryFilter(
             root_query=roots, is_root_intent=lambda _: False,
