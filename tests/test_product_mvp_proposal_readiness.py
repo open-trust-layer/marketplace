@@ -45,7 +45,7 @@ class MarketplaceMvpProposalReadinessTests(unittest.TestCase):
         example = text.split("const SYNTHETIC_PROPOSAL_EXAMPLE = Object.freeze({", 1)[1].split("});", 1)[0]
         raw_literal = example.split("action_uri: ", 1)[1].split(",", 1)[0].strip()
         self.assertEqual(json.loads(raw_literal), ACTION_BUY)
-        self.assertIn(r"\\u002f\\u002f", raw_literal)
+        self.assertIn(r"\u002f\u002f", raw_literal)
 
     def test_readiness_copy_is_bilingual_and_dynamic(self):
         text = APP.read_text(encoding="utf-8")
