@@ -8,6 +8,8 @@ param(
     [Parameter(Mandatory = $true)][string]$OlpRoot,
     [Parameter(Mandatory = $true)][string]$PythonPath,
     [Parameter(Mandatory = $true)][string]$AuthenticationProvisioningDirectory,
+    # Only reviewed localhost origins; never accept arbitrary host/port input.
+    [ValidateRange(18480, 18481)][int]$LoopbackPort = 18480,
     [switch]$ExecuteLocalOperatorRuntime
 )
 
@@ -20,6 +22,7 @@ $expectedPythonExe = 'D:\MarketplaceEvaluatorFresh\marketplace-sources-main-94d6
 $secretPointer = [IntPtr]::Zero
 $previousPythonPath = [Environment]::GetEnvironmentVariable('PYTHONPATH', 'Process')
 $hadPythonPath = (Test-Path Env:PYTHONPATH)
+$reviewedOrigin = 'http://127.0.0.1:' + [string]$LoopbackPort + '/'
 
 function Fail([string]$Code) {
     Write-Output ('status=BLOCKED code=' + $Code)
@@ -117,12 +120,20 @@ try {
         Fail 'ISOLATED_POSTGRES_PROCESS_UNVERIFIED'
     }
     # The static preview must be stopped manually first. Never kill it here.
-    $occupied = @(Get-NetTCPConnection -State Listen -LocalPort 18480 -ErrorAction SilentlyContinue)
+    $occupied = @(Get-NetTCPConnection -State Listen -LocalPort $LoopbackPort -ErrorAction SilentlyContinue)
     if ($occupied.Count -ne 0) { Fail 'AUTHENTICATED_LOOPBACK_PORT_OCCUPIED' }
 
     $env:PYTHONPATH = @((Join-Path $repoRoot 'src'), (Join-Path $OlpRoot 'src'), $repoRoot) -join ';'
     Push-Location -LiteralPath $repoRoot
     try {
+        # Separate-origin browser keys are generated locally for this exact port;
+        # never reuse public carriers or private keys from the prior 18480 flight.
+        Write-Host ('Reviewed seller/buyer browser origin: ' + $reviewedOrigin)
+        $confirmedOrigin = Read-Host 'Enter the exact origin displayed in BOTH seller and buyer Chrome tabs'
+        if ($confirmedOrigin -cne $reviewedOrigin) {
+            Fail 'BROWSER_ORIGIN_CONFIRMATION_REQUIRED'
+        }
+
         # This also independently verifies the 2-party signed lease >=1800s.
         # Browser public carriers are collected through hidden local-console
         # input, never argv, and no browser private key is touched.
@@ -167,7 +178,7 @@ try {
         $env:MARKETPLACE_POSTGRES_DSN = $dsn
         Remove-Variable encoded,dsn,password -ErrorAction SilentlyContinue
 
-        & $PythonPath -B -m tools.marketplace_localhost --port 18480 --execute-fulfillment-completion-localhost EXECUTE_FULFILLMENT_COMPLETION_AUTHENTICATED_MARKETPLACE_LOCALHOST_V1 --authentication-provisioning-directory $provisioningRoot
+        & $PythonPath -B -m tools.marketplace_localhost --port $LoopbackPort --execute-fulfillment-completion-localhost EXECUTE_FULFILLMENT_COMPLETION_AUTHENTICATED_MARKETPLACE_LOCALHOST_V1 --authentication-provisioning-directory $provisioningRoot
         if ($LASTEXITCODE -ne 0) { Fail 'AUTHENTICATED_RUNTIME_FAILED' }
     } finally {
         Pop-Location

@@ -69,6 +69,28 @@ class BrowserHandoffTests(unittest.TestCase):
             self.assertEqual(handoff.main(["--authentication-provisioning-directory", r"D:\synthetic"]), 1)
         self.assertEqual(out.getvalue().strip(), "status=BLOCKED code=BROWSER_HANDOFF_FAILED")
 
+    def test_operator_runtime_selects_only_reviewed_origin_and_checks_both_tabs(self):
+        path = Path(__file__).resolve().parents[1] / "tools" / "marketplace_evaluator_operator_runtime.ps1"
+        source = path.read_text(encoding="utf-8")
+        self.assertIn("[ValidateRange(18480, 18481)][int]$LoopbackPort = 18480", source)
+        self.assertIn("$reviewedOrigin = 'http://127.0.0.1:' + [string]$LoopbackPort + '/'", source)
+        self.assertIn(
+            "$occupied = @(Get-NetTCPConnection -State Listen -LocalPort $LoopbackPort",
+            source,
+        )
+        self.assertIn("if ($confirmedOrigin -cne $reviewedOrigin)", source)
+        self.assertIn("Fail 'BROWSER_ORIGIN_CONFIRMATION_REQUIRED'", source)
+        self.assertLess(
+            source.index("if ($confirmedOrigin -cne $reviewedOrigin)"),
+            source.index("tools.marketplace_evaluator_browser_handoff"),
+        )
+        self.assertIn("if ($confirmation -cne 'RUN AUTHENTICATED LOCAL EVALUATOR')", source)
+        self.assertIn("--port $LoopbackPort --execute-fulfillment-completion-localhost", source)
+        self.assertNotIn("--port 18480 --execute-fulfillment-completion-localhost", source)
+        self.assertIn("if ($occupied.Count -ne 0)", source)
+        self.assertIn("LOCAL_INTERACTIVE_OPERATOR_REQUIRED", source)
+        self.assertIn("public carriers are collected through hidden local-console", source)
+
     @unittest.skipUnless(sys.platform == "win32" and shutil.which("powershell"), "Windows PowerShell required")
     def test_operator_runtime_source_parses_without_execution(self):
         path = Path(__file__).resolve().parents[1] / "tools" / "marketplace_evaluator_operator_runtime.ps1"
